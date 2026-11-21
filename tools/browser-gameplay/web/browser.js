@@ -105,7 +105,7 @@ function publish(finalReceipt=false) {
 function dispose() {
   if (stopped) return;
   bulkStaging?.dispose();startupProgress.close();stagedLogin.dispose();
-  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); terrainWorker?.dispose(); gpu?.dispose();
+  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); terrainWorker?.dispose(); surfaceMeshWorker?.dispose(); gpu?.dispose();
   publish(true);
 }
 function finish(reason) {
@@ -141,7 +141,7 @@ const fixturePolicy=deployment.publicAlpha?{properties:[],requested:null,tcpPort
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
 const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
-let terrainWorker;
+let terrainWorker, surfaceMeshWorker;
 const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseInput(window,document,{logicalExtent:()=>({width:gpu?.stats.physicalOutput?.logicalWidth||gpu?.stats.display?.internalWidth||960,height:gpu?.stats.physicalOutput?.logicalHeight||gpu?.stats.display?.internalHeight||540})}) : undefined;
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
@@ -328,6 +328,18 @@ const natives = {
     stats.completedSectors++;
     stats.completedBytes += sector.byteLength;
     return sector;
+  },
+  async Java_orsc_browser_BrowserBootstrap_startSurfaceMeshWorker() {
+    if (deployment.publicAlpha || stopped || typeof Worker !== 'function') return false;
+    const {createBrowserSurfaceMeshWorker} = await import('./browser-surface-mesh-worker-client.js');
+    if (stopped) return false;
+    surfaceMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion);
+    window.browserProof.surfaceMeshWorker = surfaceMeshWorker.stats;
+    return true;
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceMesh(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites) {
+    if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites]);
   },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },

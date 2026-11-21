@@ -8,6 +8,9 @@ import java.util.ArrayDeque;
 public final class BrowserBootstrap {
     private static native boolean terrainWorkerAvailable();
     private static native byte[] inflateTerrainSector(byte[] compressed, int expectedLength);
+    private static native boolean startSurfaceMeshWorker();
+    private static native byte[] buildSurfaceMesh(byte[] source, int offsetX, int offsetZ, int dx, int dz,
+        boolean withRoofs, boolean customSprites);
 
     private BrowserBootstrap() { }
     public static native void report(String message);
@@ -96,6 +99,9 @@ public final class BrowserBootstrap {
         BrowserPublicAlpha.validate(System.getProperties(),webgl);
         if (!publicAlpha && webgl && Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff") && terrainWorkerAvailable()) {
             orsc.NativeLayeredTerrainPacketDecoder.installPredictedSectorInflater(BrowserBootstrap::inflateTerrainSector);
+        }
+        if (!publicAlpha && webgl && Boolean.getBoolean("spoiledmilk.browserSurfaceMeshWorker") && startSurfaceMeshWorker()) {
+            orsc.graphics.three.World.installSurfaceMeshWorker(BrowserBootstrap::buildSurfaceMesh);
         }
         final String assetRoot=BrowserPublicAlpha.assetRoot(System.getProperties());
         final BrowserOptimizedDefaults.Resolution optimizedDefaults=BrowserOptimizedDefaults.apply(webgl,benchmark,

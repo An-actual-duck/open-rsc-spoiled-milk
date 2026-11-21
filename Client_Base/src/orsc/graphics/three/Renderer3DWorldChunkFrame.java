@@ -246,7 +246,8 @@ public final class Renderer3DWorldChunkFrame {
 		return materialFamilyTriangleCounts.clone();
 	}
 
-	public static final class ChunkMesh {
+	public static final class ChunkMesh implements java.io.Serializable {
+		private static final long serialVersionUID = 1L;
 		private final int plane;
 		private final int centerSectionX;
 		private final int centerSectionY;

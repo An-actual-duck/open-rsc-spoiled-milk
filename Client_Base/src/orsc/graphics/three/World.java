@@ -17,6 +17,12 @@ import orsc.util.GenUtil;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -955,6 +961,78 @@ public final class World {
 		return nativeTerrainAuthorityOnlyActive;
 	}
 
+	@FunctionalInterface
+	public interface SurfaceMeshWorker {
+		byte[] build(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs, boolean customSprites);
+	}
+
+	private static volatile SurfaceMeshWorker browserSurfaceMeshWorker;
+
+	public static void installSurfaceMeshWorker(SurfaceMeshWorker worker) {
+		browserSurfaceMeshWorker = worker;
+	}
+
+	/** Entry point for the separate renderer VM. It has the same archive definitions and no game session. */
+	public byte[] buildSurfaceMeshPacket(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs)
+		throws IOException {
+		NativeLayeredTerrainSnapshot terrain = NativeLayeredTerrainSnapshot.readSurfaceWorkerSource(source);
+		int x = worldTileToSection(Math.addExact(Math.multiplyExact(terrain.getCurrentChunkX(), SECTION_SIZE), offsetX));
+		int z = worldTileToSection(Math.addExact(Math.multiplyExact(terrain.getCurrentChunkY(), SECTION_SIZE), offsetZ));
+		WorldGpuChunkMesh geometry = buildPresentationGeometry(0, x, z, terrain, offsetX, offsetZ, includeRoofs, false, null);
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+			output.writeObject(geometry.toRenderer3DFixedSurfaceCell());
+			output.writeObject(geometry.toRenderer3DWorldPresentationCell(dx, dz));
+		}
+		return bytes.toByteArray();
+	}
+
+	private static Renderer3DWorldChunkFrame.ChunkMesh[] readSurfaceMeshPacket(byte[] bytes, int x, int z) throws IOException {
+		if (bytes.length > 8 * 1024 * 1024) throw new IOException("Surface mesh size");
+		try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes)) {
+			@Override protected Class<?> resolveClass(ObjectStreamClass descriptor)
+				throws IOException, ClassNotFoundException {
+				String type = descriptor.getName();
+				if (type.equals(Renderer3DWorldChunkFrame.ChunkMesh.class.getName())
+					|| type.equals("java.lang.Enum") || type.equals("[I") || type.equals("[J") || type.equals("[F")
+					|| type.equals("[L" + Renderer3DModelKind.class.getName() + ";") || type.equals(Renderer3DModelKind.class.getName())
+					|| type.equals("[L" + Renderer3DMaterialFamily.class.getName() + ";") || type.equals(Renderer3DMaterialFamily.class.getName())
+					|| type.equals("[L" + Renderer3DWorldChunkFrame.ShadowCaster.class.getName() + ";")
+					|| type.equals("[L" + Renderer3DWorldChunkFrame.GlowEmitter.class.getName() + ";")) return super.resolveClass(descriptor);
+				throw new IOException("Unexpected surface mesh type");
+			}
+		}) {
+			Renderer3DWorldChunkFrame.ChunkMesh[] meshes = new Renderer3DWorldChunkFrame.ChunkMesh[2];
+			for (int i = 0; i < meshes.length; i++) {
+				Renderer3DWorldChunkFrame.ChunkMesh mesh = (Renderer3DWorldChunkFrame.ChunkMesh) input.readObject();
+				if (mesh != null && (mesh.getPlane() != 0 || mesh.getCenterSectionX() != x || mesh.getCenterSectionY() != z)) {
+					throw new IOException("Surface mesh coordinate mismatch");
+				}
+				meshes[i] = mesh;
+			}
+			return meshes;
+		} catch (ClassNotFoundException invalid) {
+			throw new IOException("Surface mesh type mismatch", invalid);
+		}
+	}
+
+	private WorldGpuChunkMesh buildPresentationGeometry(int plane, int x, int z, NativeLayeredTerrainSnapshot terrain,
+		int offsetX, int offsetZ, boolean includeRoofs, boolean terrainOnly, TerrainPredictionSlice slice) {
+		CpuSectionWindow window = buildNativeLayeredCpuSectionWindow(plane, x, z, terrain, offsetX, offsetZ);
+		if (slice != null) slice.checkpoint();
+		TerrainModelInput faces = buildTerrainModelInput(plane, x, z, window.sectors, slice);
+		if (slice != null) slice.checkpoint();
+		WallModelInput walls = new WallModelInput(new WallSegmentInput[0]);
+		RoofModelInput roofs = null;
+		if (!terrainOnly) {
+			walls = buildWallModelInput(window.sectors);
+			faces = applyWallEndpointShadows(faces, walls);
+			roofs = buildRoofModelInput(window.sectors);
+			if (slice != null) slice.checkpoint();
+		}
+		return buildWorldGpuChunkMesh(plane, x, z, faces, walls, roofs, includeRoofs && !terrainOnly, false, slice);
+	}
+
 	private NativeLayeredTerrainHaloPrebuildResult
 		buildNativeLayeredTerrainHalo(
 			NativeLayeredTerrainSnapshot activeTerrain,
@@ -1087,52 +1165,28 @@ public final class World {
 					}
 				}
 				if (!reused || fixedDraw != null && fixedCell == null) {
-					CpuSectionWindow window =
-						buildNativeLayeredCpuSectionWindow(
-							plane,
-							sectionX,
-							sectionY,
-							haloTerrain,
-							worldOffsetX,
-							worldOffsetZ);
-					if (slice != null) slice.checkpoint();
-					TerrainModelInput terrainInput =
-						buildTerrainModelInput(
-							plane,
-							sectionX,
-							sectionY,
-							window.sectors, slice);
-					if (slice != null) slice.checkpoint();
-					WallModelInput wallInput =
-						new WallModelInput(new WallSegmentInput[0]);
-					RoofModelInput roofInput = null;
-					if (!terrainOnly) {
-						wallInput =
-							buildWallModelInput(window.sectors);
-						terrainInput =
-							applyWallEndpointShadows(
-								terrainInput, wallInput);
-						roofInput =
-							buildRoofModelInput(window.sectors);
-						if (slice != null) slice.checkpoint();
+					Renderer3DWorldChunkFrame.ChunkMesh[] detached = null;
+					SurfaceMeshWorker worker = browserSurfaceMeshWorker;
+					if (worker != null && predicted && fixedDraw != null && fixedCell == null) {
+						try {
+							byte[] source = haloTerrain.surfaceWorkerSource(haloTerrain.getCurrentChunkX() + deltaX,
+								haloTerrain.getCurrentChunkY() + deltaY);
+							byte[] result = worker.build(source, worldOffsetX, worldOffsetZ, deltaX, deltaY, includeRoofGeometry,
+								Config.S_WANT_CUSTOM_SPRITES);
+							if (result != null) detached = readSurfaceMeshPacket(result, sectionX, sectionY);
+						} catch (IOException invalid) {
+							throw new IllegalStateException("Invalid detached surface mesh", invalid);
+						}
 					}
-					WorldGpuChunkMesh mesh =
-						buildWorldGpuChunkMesh(
-							plane,
-							sectionX,
-							sectionY,
-							terrainInput,
-							wallInput,
-							roofInput,
-							includeRoofGeometry && !terrainOnly,
-							false,
-							slice);
+					WorldGpuChunkMesh mesh = detached == null
+						? buildPresentationGeometry(plane, sectionX, sectionY, haloTerrain,
+							worldOffsetX, worldOffsetZ, includeRoofGeometry, terrainOnly, slice) : null;
 					if (radius != 0 && !reused) {
-						presentation = mesh.toRenderer3DWorldPresentationCell(deltaX, deltaY);
+						presentation = detached == null ? mesh.toRenderer3DWorldPresentationCell(deltaX, deltaY) : detached[1];
 						builtCells++;
 					}
 					if (fixedDraw != null && fixedCell == null) {
-						fixedCell = new SurfaceTerrainDrawField.Cell(footprint, mesh.toRenderer3DFixedSurfaceCell());
+						fixedCell = new SurfaceTerrainDrawField.Cell(footprint, detached == null ? mesh.toRenderer3DFixedSurfaceCell() : detached[0]);
 					}
 					if (slice != null) slice.checkpoint();
 				}

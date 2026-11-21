@@ -52,6 +52,7 @@ def main():
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Include the signed source neighbors of outer draw cells')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Publish revisioned scenery meshes ahead of the crossing')
     parser.add_argument('--live-surface-handoff', action='store_true', help='Keep verified playable coverage live through a rolling rebase')
+    parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
@@ -80,6 +81,8 @@ def main():
         parser.error('Scenery draw cells require the expanded terrain sources')
     if args.live_surface_handoff and not args.surface_scenery_draw:
         parser.error('Live surface handoff requires independent scenery draws')
+    if args.surface_mesh_worker and not args.live_surface_handoff:
+        parser.error('The isolated mesh builder requires live surface handoff')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -124,6 +127,7 @@ def main():
            f'        System.setProperty("spoiledmilk.expandedSurfaceDrawBorder", "{str(args.expanded_surface_draw_border).lower()}");\n'
            f'        System.setProperty("spoiledmilk.surfaceSceneryDraw", "{str(args.surface_scenery_draw).lower()}");\n'
            f'        System.setProperty("spoiledmilk.liveSurfaceHandoff", "{str(args.live_surface_handoff).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSurfaceMeshWorker", "{str(args.surface_mesh_worker).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
@@ -210,6 +214,7 @@ def main():
         'expandedSurfaceDrawBorder': args.expanded_surface_draw_border,
         'surfaceSceneryDraw': args.surface_scenery_draw,
         'liveSurfaceHandoff': args.live_surface_handoff,
+        'surfaceMeshWorker': args.surface_mesh_worker,
         'sustainedWalk': args.sustained_walk,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',

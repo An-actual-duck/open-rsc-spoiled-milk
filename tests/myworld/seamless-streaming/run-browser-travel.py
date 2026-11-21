@@ -106,19 +106,24 @@ def run_walk(run, driver_port):
                 return request(prefix + '/execute/sync', {'script': PROOF + script, 'args': []})
 
             deadline = time.monotonic() + 228
-            previous = None
+            previous_state = None
+            reported_events = 0
             while time.monotonic() < deadline:
                 snap = evaluate(WATCH_BROWSER_FRAMES + 'return {state:p.state?.mode,reason:p.stopReason,events:' + ROUTE_EVENTS + '};')
-                if snap != previous:
-                    print(snap, flush=True)
-                    previous = snap
+                state = (snap.get('state'), snap.get('reason'))
+                if state != previous_state:
+                    print(state, flush=True)
+                    previous_state = state
+                for event in snap['events'][reported_events:]:
+                    print(event, flush=True)
+                reported_events = len(snap['events'])
                 if snap.get('reason') or any(event['message'].startswith(('outer-coverage:failed', 'outer-coverage:complete'))
                                              for event in snap['events']):
                     break
                 time.sleep(.85)
 
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
-                region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,
+                region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
                 timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
@@ -141,6 +146,9 @@ def run_walk(run, driver_port):
                 walking = result['walkingSummary']
                 completed = bool(walking and walking['frames'] and not any(
                     walking[key] for key in ('holds', 'blocked', 'transitions')))
+            if completed and fixture.get('surfaceMeshWorker'):
+                detached = result.get('surfaceMeshWorker') or {}
+                completed = detached.get('completed', 0) > 0 and detached.get('error') is None
             (run / 'firefox-result.json').write_text(json.dumps(result, indent=2) + '\n')
             print(result['serverStatus'], result['walkingSummary'], flush=True)
             return 0 if completed else 1

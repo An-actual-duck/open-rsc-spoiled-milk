@@ -270,6 +270,26 @@ public final class NativeLayeredTerrainChunk {
 				: "void");
 	}
 
+	void writeSurfaceWorkerSource(java.io.DataOutput out) throws java.io.IOException {
+		out.writeBoolean(available);
+		if (!available) return;
+		out.writeInt(sourceSectorX);
+		out.writeInt(sourceSectorY);
+		out.writeUTF(sourceEncoding);
+		out.writeUTF(sourcePayloadSha256);
+		out.write(tileBytes);
+	}
+
+	static NativeLayeredTerrainChunk readSurfaceWorkerSource(java.io.DataInput in, int size, int x, int z)
+		throws java.io.IOException {
+		if (!in.readBoolean()) return voidChunk(size, x, z);
+		int sourceX = in.readInt(), sourceZ = in.readInt();
+		String encoding = in.readUTF(), sourceHash = in.readUTF();
+		byte[] tiles = new byte[size * size * wireBytesForEncoding(encoding)];
+		in.readFully(tiles);
+		return available(size, x, z, sourceX, sourceZ, encoding, sourceHash, tiles);
+	}
+
 	public boolean isAvailable() {
 		return available;
 	}

@@ -437,6 +437,54 @@ public final class NativeLayeredTerrainSnapshot {
         return chunks[index];
     }
 
+	/** Exact source footprint for the detached surface renderer. */
+	public byte[] surfaceWorkerSource(int cellX, int cellZ) throws java.io.IOException {
+		if (level != 0 || !"global".equals(worldSpace) || presentationChunkSize != STREAMING_CHUNK_SIZE) {
+			throw new IllegalArgumentException("Surface worker requires checked global terrain");
+		}
+		java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream(256 * 1024);
+		try (java.io.DataOutputStream output = new java.io.DataOutputStream(bytes)) {
+			output.writeUTF(packageId);
+			output.writeUTF(packageVersion);
+			output.writeUTF(manifestSha256);
+			output.writeInt(cellX);
+			output.writeInt(cellZ);
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) {
+					int x = cellX + dx, z = cellZ + dz;
+					NativeLayeredTerrainChunk source = null;
+					for (NativeLayeredTerrainChunk chunk : chunks) {
+						if (chunk.getChunkX() == x && chunk.getChunkY() == z) {
+							source = chunk;
+							break;
+						}
+					}
+					(source == null ? NativeLayeredTerrainChunk.voidChunk(presentationChunkSize, x, z) : source)
+						.writeSurfaceWorkerSource(output);
+				}
+			}
+		}
+		return bytes.toByteArray();
+	}
+
+	public static NativeLayeredTerrainSnapshot readSurfaceWorkerSource(byte[] bytes) throws java.io.IOException {
+		if (bytes == null || bytes.length > 256 * 1024) throw new IllegalArgumentException("Surface worker source bounds");
+		try (java.io.DataInputStream input = new java.io.DataInputStream(new java.io.ByteArrayInputStream(bytes))) {
+			String packageId = input.readUTF(), version = input.readUTF(), manifest = input.readUTF();
+			int x = input.readInt(), z = input.readInt(), size = STREAMING_CHUNK_SIZE;
+			NativeLayeredTerrainChunk[] cells = new NativeLayeredTerrainChunk[9];
+			int index = 0;
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) {
+					cells[index++] = NativeLayeredTerrainChunk.readSurfaceWorkerSource(input, size, x + dx, z + dz);
+				}
+			}
+			if (input.read() != -1) throw new IllegalArgumentException("Trailing surface worker data");
+			return new NativeLayeredTerrainSnapshot(ATOMIC_ACTIVATION_PROTOCOL_VERSION, packageId, version, manifest,
+				size, "global", 0, x, z, 1, cells);
+		}
+	}
+
 	public int getChunkSlotCount() {
 		return isChunkedProtocol() ? chunks.length : 1;
 	}
