@@ -18,6 +18,8 @@ def main():
     parser.add_argument('--ws-port', type=int, default=43529)
     parser.add_argument('--covered-walking-preview', action='store_true')
     parser.add_argument('--persistent-movement', action='store_true', help='Enable the matched private travel movement stream')
+    parser.add_argument('--surface-scenery-cells', action='store_true', help='Publish authoritative incoming scenery cells')
+    parser.add_argument('--surface-scenery-mutation', action='store_true', help='Change scenery during the automated route')
     parser.add_argument('--predicted-scenery', action='store_true', help='Enable the private scenery prediction')
     parser.add_argument('--prebuild-ownership', action='store_true', help='Stage scenery in the ownership transition strips')
     parser.add_argument('--travel-trace', action='store_true', help='Record the disposable character position on each server tick')
@@ -29,6 +31,10 @@ def main():
         parser.error('The outer coverage route requires the covered walking preview')
     if args.persistent_movement and not args.covered_walking_preview:
         parser.error('The private travel stream requires installed surface coverage')
+    if args.surface_scenery_cells and not args.persistent_movement:
+        parser.error('Surface scenery cells require the private travel stream')
+    if args.surface_scenery_mutation and not (args.surface_scenery_cells and args.outer_coverage):
+        parser.error('The scenery mutation fixture requires the outer coverage route and surface scenery cells')
     if args.predicted_scenery and not args.covered_walking_preview:
         parser.error('Predicted scenery requires the covered walking preview')
     if args.prebuild_ownership and not args.predicted_scenery:
@@ -93,6 +99,10 @@ def main():
         command.append('-Dspoiledmilk.coveredWalkingPreview=true')
     if args.persistent_movement:
         command.append('-Dspoiledmilk.persistentMovementPreview=true')
+    if args.surface_scenery_cells:
+        command.append('-Dspoiledmilk.surfaceSceneryCells=true')
+    if args.surface_scenery_mutation:
+        command.append('-Dspoiledmilk.surfaceSceneryMutation=true')
     if args.predicted_scenery:
         command.append('-Dspoiledmilk.predictedSceneryPreview=true')
     if args.prebuild_ownership:

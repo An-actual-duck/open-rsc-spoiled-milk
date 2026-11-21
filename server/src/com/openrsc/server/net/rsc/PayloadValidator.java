@@ -130,6 +130,7 @@ public class PayloadValidator {
 		put(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, LayeredSceneContextStruct.class);
 		put(OpcodeOut.SEND_LAYERED_TERRAIN_STAGE, LayeredTerrainStageStruct.class);
 		put(OpcodeOut.SEND_PREDICTED_SCENERY_CELL, PredictedSceneryCellStruct.class);
+		put(OpcodeOut.SEND_SURFACE_SCENERY_CELL, SurfaceSceneryCellStruct.class);
 	}};
 
 	public static boolean isPayloadCorrectInstance(AbstractStruct<OpcodeOut> payload, OpcodeOut opcode) {

@@ -1,8 +1,11 @@
 import com.openrsc.server.Server;
 import com.openrsc.server.config.ServerConfigurationLoader;
 import com.openrsc.server.database.DatabaseType;
+import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.model.Point;
+import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.json.JSONObject;
@@ -29,9 +32,27 @@ public final class BrowserPrivateServer {
         }
         server.getGameEventHandler().add(new GameTickEvent(server.getWorld(), null, 1, "Private browser proof status", DuplicationStrategy.ONE_PER_SERVER) {
             private final boolean traceTravel = Boolean.getBoolean("spoiledmilk.browserTravelTrace");
+            private final boolean mutateScenery = Boolean.getBoolean("spoiledmilk.surfaceSceneryMutation");
+            private GameObject testScenery;
+            private boolean sceneryRemoved;
             public void run() {
                 try {
                     Player player = server.getWorld().getPlayer(DataConversions.usernameToHash("browserdemo"));
+                    if (mutateScenery && player != null && !sceneryRemoved && player.getY() == 609) {
+                        if (player.getX() == 258 && testScenery == null) {
+                            Point tile = Point.location(305, 620);
+                            if (server.getWorld().getRegionManager().findInteractionScenery(tile, player) != null) {
+                                throw new IllegalStateException("Private scenery fixture needs an empty tile");
+                            }
+                            testScenery = new GameObject(server.getWorld(), tile, SceneryId.ANVIL.id(), 0, 0);
+                            server.getWorld().registerGameObject(testScenery);
+                            System.out.println("PRIVATE_SURFACE_SCENERY added anvil at 305,620");
+                        } else if (player.getX() == 259 && testScenery != null) {
+                            server.getWorld().unregisterGameObject(testScenery);
+                            sceneryRemoved = true;
+                            System.out.println("PRIVATE_SURFACE_SCENERY removed anvil at 305,620");
+                        }
+                    }
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
                     Path temp = run.resolve("status.next"); Files.write(temp, state.toString().getBytes("UTF-8"));

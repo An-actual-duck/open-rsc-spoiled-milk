@@ -504,6 +504,23 @@ public class RegionManager {
 			visibleObjects.version);
 	}
 
+	/** Current viewer-visible objects in a rectangle of logical surface sectors. */
+	public List<GameObject> snapshotSurfaceScenery(Player observer,
+		int minCellX, int minCellY, int maxCellX, int maxCellY) {
+		WorldLocation location = observer.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(observer, location);
+		WorldRegionWindow window = new WorldRegionWindow(location.getWorldSpace(),
+			location.getCoordinate().getLevel(), minCellX, minCellY, maxCellX, maxCellY);
+		List<GameObject> visible = new ArrayList<>();
+		for (GameObject object : layeredSpatialEntityIndex.snapshotGameObjects(window).getGameObjects()) {
+			if ((object.getType() == 0 || object.getType() == 1)
+				&& object.sharesSpatialDomain(observer) && !object.isRemoved() && !object.isInvisibleTo(observer)) {
+				visible.add(object);
+			}
+		}
+		return visible;
+	}
+
 	/**
 	 * Builds the custom client's exact authoritative scene window.
 	 *

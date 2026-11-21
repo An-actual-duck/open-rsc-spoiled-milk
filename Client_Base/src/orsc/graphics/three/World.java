@@ -1412,6 +1412,46 @@ public final class World {
 	public int getStagedSurfaceCollisionCells() { return surfaceCollision == null ? 0 : surfaceCollision.incomingCells(); }
 	public int getEarlySurfaceCollisionCells() { return earlySurfaceCollisionCells; }
 
+	public void clearIncomingSurfaceScenery() {
+		if (surfaceCollision != null) surfaceCollision.clearIncomingScenery();
+	}
+
+	public void invalidateIncomingSurfaceScenery(int cellX, int cellZ) {
+		if (surfaceCollision != null) surfaceCollision.invalidateIncomingScenery(cellX, cellZ);
+	}
+
+	public void publishIncomingSurfaceScenery(int cellX, int cellZ, int revision, List<SurfaceSceneryPlacement> records) {
+		if (surfaceCollisionScope() != null) surfaceCollision.publishIncomingScenery(cellX, cellZ, revision, records);
+	}
+
+	public int getIncomingSurfaceSceneryRevision(int cellX, int cellZ) {
+		return surfaceCollision == null ? 0 : surfaceCollision.incomingSceneryRevision(cellX, cellZ);
+	}
+
+	public int getIncomingSurfaceSceneryCount(int cellX, int cellZ) {
+		return surfaceCollision == null ? -1 : surfaceCollision.incomingSceneryCount(cellX, cellZ);
+	}
+
+	public int getIncomingSurfaceSceneryObjectCount(int x, int z, int id) {
+		return surfaceCollision == null ? -1 : surfaceCollision.incomingSceneryObjectCount(x, z, id);
+	}
+
+	public int getIncomingSurfaceCollisionFlags(int x, int z) {
+		return surfaceCollision == null ? -1 : surfaceCollision.incomingFlags(x, z);
+	}
+
+	public static final class SurfaceSceneryPlacement {
+		final int id, x, z, direction, type;
+
+		public SurfaceSceneryPlacement(int id, int x, int z, int direction, int type) {
+			this.id = id;
+			this.x = x;
+			this.z = z;
+			this.direction = direction;
+			this.type = type;
+		}
+	}
+
 	public void clearSurfaceCollision() {
 		if (surfaceCollision != null) {
 			surfaceCollision.clear();

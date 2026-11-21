@@ -145,6 +145,9 @@ public final class BrowserOuterCoverageProbe {
 		walkLeg(client, walk, 257, 609);
 		int[] before = client.packetHandler.getPersistentMovementReceipt();
 		if (before[0] <= 0 || before[1] <= 0) throw new IllegalStateException("Private travel stream was not applied");
+		if (Boolean.getBoolean("spoiledmilk.surfaceSceneryCells")) {
+			verifyIncomingSceneryMutations(client, walk, before[3]);
+		}
 		walkLeg(client, walk, 278, 609);
 		int afterScene = client.packetHandler.getPersistentMovementReceipt()[3];
 		if (afterScene <= before[3]) throw new IllegalStateException("Route did not cross the terrain center boundary");
@@ -165,6 +168,39 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static void verifyIncomingSceneryMutations(mudclient client, Method walk, int scene) throws Exception {
+		World world = client.getWorld();
+		int initial = awaitIncomingScenery(client, scene, 0, false);
+		int[] counts = new int[3];
+		for (int i = 0; i < counts.length; i++) counts[i] = world.getIncomingSurfaceSceneryCount(6, 11 + i);
+		walkLeg(client, walk, 258, 609);
+		int added = awaitIncomingScenery(client, scene, initial, true);
+		walkLeg(client, walk, 259, 609);
+		int removed = awaitIncomingScenery(client, scene, added, false);
+		BrowserBootstrap.report("outer-coverage:scenery-before-scene-change:cells=" + Arrays.toString(counts)
+			+ ":anvil-revisions=" + initial + "," + added + "," + removed);
+	}
+
+	private static int awaitIncomingScenery(mudclient client, int scene, int previous, boolean present) throws Exception {
+		World world = client.getWorld();
+		long deadline = System.currentTimeMillis() + 25_000;
+		while (System.currentTimeMillis() < deadline) {
+			int revision = world.getIncomingSurfaceSceneryRevision(6, 12);
+			int flags = world.getIncomingSurfaceCollisionFlags(305, 620);
+			if (client.packetHandler.getPersistentMovementReceipt()[3] != scene || client.shouldRetainLastPresentedFrame()) {
+				throw new IllegalStateException("Scene changed or held while the incoming cell was publishing");
+			}
+			if (revision > previous && flags >= 0
+				&& world.getIncomingSurfaceSceneryRevision(6, 11) > 0 && world.getIncomingSurfaceSceneryRevision(6, 13) > 0
+				&& world.getIncomingSurfaceSceneryObjectCount(305, 620, 50) == (present ? 1 : 0)
+				&& ((flags & 64) != 0) == present) return revision;
+			Thread.sleep(100);
+		}
+		throw new IllegalStateException("Missing incoming scenery update after revision " + previous + " expecting anvil=" + present
+			+ " counts=" + world.getIncomingSurfaceSceneryCount(6, 11) + "," + world.getIncomingSurfaceSceneryCount(6, 12)
+			+ "," + world.getIncomingSurfaceSceneryCount(6, 13) + " flags=" + world.getIncomingSurfaceCollisionFlags(305, 620));
 	}
 
 	private static void runSustainedWalk(mudclient client) throws Exception {

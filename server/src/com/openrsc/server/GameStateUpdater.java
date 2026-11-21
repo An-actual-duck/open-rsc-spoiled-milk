@@ -160,6 +160,9 @@ public final class GameStateUpdater {
 	private static final String TRAVEL_GENERATION_ATTRIBUTE = "persistent_travel_generation";
 	private static final boolean PERSISTENT_MOVEMENT_PREVIEW =
 		Boolean.getBoolean("spoiledmilk.persistentMovementPreview");
+	private static final boolean SURFACE_SCENERY_CELLS =
+		Boolean.getBoolean("spoiledmilk.surfaceSceneryCells");
+	private static final String SURFACE_SCENERY_CELLS_ATTRIBUTE = "surface_scenery_cells";
 	private static final String LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE =
 		"layered_scene_context_sequence";
 	private static final String LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE =
@@ -266,6 +269,7 @@ public final class GameStateUpdater {
 		recordUpdateNpcs(() -> updateNpcs(player, visibleNpcs));
 		recordUpdateNpcAppearances(() -> updateNpcAppearances(player));
 		publishTravelBaseline(player);
+		if (SURFACE_SCENERY_CELLS) updateSurfaceSceneryCells(player);
 		final boolean[] sceneryChanged = new boolean[1];
 		final boolean[] wallsChanged = new boolean[1];
 		final boolean[] groundItemsChanged = new boolean[1];
@@ -1216,7 +1220,31 @@ public final class GameStateUpdater {
 		if (!advanceToStructure && sent != null) {
 			int sequence = player.getAttribute(NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE, 0);
 			sendPredictedSceneryCells(player, activeTerrain, stagedTerrain, sequence);
+			if (SURFACE_SCENERY_CELLS && usesIndependentMovement(player) && player.isLoggedIn()) {
+				int stepX = stagedTerrain.currentChunkX - activeTerrain.currentChunkX;
+				int stepY = stagedTerrain.currentChunkY - activeTerrain.currentChunkY;
+				TravelBaseline travel = player.getAttribute(TRAVEL_BASELINE_ATTRIBUTE, null);
+				if (Math.abs(stepX) + Math.abs(stepY) == 1
+					&& travel != null && travel.relocation == player.getMovementRelocation()) {
+					player.setAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE, new SurfaceScenerySubscription(
+						contextSequence, travel.generation, sequence, stagedTerrain.currentChunkX,
+						stagedTerrain.currentChunkY, stepX, stepY));
+				}
+			}
 		}
+	}
+
+	private void updateSurfaceSceneryCells(Player player) {
+		SurfaceScenerySubscription subscription = player.getAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE, null);
+		if (subscription == null) return;
+		TravelBaseline travel = player.getAttribute(TRAVEL_BASELINE_ATTRIBUTE, null);
+		if (!player.isLoggedIn() || player.isTeleporting() || !usesIndependentMovement(player)
+			|| travel == null || travel.generation != subscription.generation
+			|| subscription.context != requireLayeredSceneContextSequence(player)) {
+			player.removeAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE);
+			return;
+		}
+		subscription.update(player);
 	}
 
 	private int[] predictNativeTerrainCenter(
@@ -1324,6 +1352,7 @@ public final class GameStateUpdater {
 	}
 
 	private static void clearNativeTerrainStage(final Player player) {
+		player.removeAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE);
 		player.removeAttribute(NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE);
 		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
 		player.removeAttribute(NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE);

@@ -1,14 +1,19 @@
 package orsc.graphics.three;
 
+import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.entityhandling.defs.GameObjectDef;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /** Published world-coordinate terrain and live collision contributions for the surface. */
 final class SurfaceCollisionCells {
 	private static final int CELL_SIZE = World.SECTION_SIZE;
 	private final Map<Long, int[]> terrain = new HashMap<>();
+	private final Map<Long, IncomingScenery> incomingScenery = new HashMap<>();
 	private final Map<Long, TileContributions> live = new HashMap<>();
 	private final Map<Placement, Integer> placements = new HashMap<>();
 	private String scope;
@@ -24,6 +29,7 @@ final class SurfaceCollisionCells {
 		detachView();
 		scope = null;
 		terrain.clear();
+		incomingScenery.clear();
 		live.clear();
 		placements.clear();
 		incomingCells = 0;
@@ -106,24 +112,32 @@ final class SurfaceCollisionCells {
 
 	void object(int id, int x, int z, int direction, int width, int height, int type, boolean add) {
 		if (!updatePlacement(new Placement(baseX + x, baseZ + z, id, direction, false), add)) return;
+		objectFlags(x, z, direction, width, height, type, (tx, tz, flag) -> change(tx, tz, flag, add));
+	}
+
+	private static void objectFlags(int x, int z, int direction, int width, int height, int type, FlagWriter writer) {
 		for (int dx = 0; dx < width; dx++) {
 			for (int dz = 0; dz < height; dz++) {
 				int atX = x + dx, atZ = z + dz;
-				if (type == 1) change(atX, atZ, CollisionFlag.FULL_BLOCK_C, add);
-				else if (direction == 0) edge(atX, atZ, -1, 0, CollisionFlag.WALL_EAST, CollisionFlag.WALL_WEST, add);
-				else if (direction == 2) edge(atX, atZ, 0, 1, CollisionFlag.WALL_SOUTH, CollisionFlag.WALL_NORTH, add);
-				else if (direction == 4) edge(atX, atZ, 1, 0, CollisionFlag.WALL_WEST, CollisionFlag.WALL_EAST, add);
-				else if (direction == 6) edge(atX, atZ, 0, -1, CollisionFlag.WALL_NORTH, CollisionFlag.WALL_SOUTH, add);
+				if (type == 1) writer.flag(atX, atZ, CollisionFlag.FULL_BLOCK_C);
+				else if (direction == 0) edge(atX, atZ, -1, 0, CollisionFlag.WALL_EAST, CollisionFlag.WALL_WEST, writer);
+				else if (direction == 2) edge(atX, atZ, 0, 1, CollisionFlag.WALL_SOUTH, CollisionFlag.WALL_NORTH, writer);
+				else if (direction == 4) edge(atX, atZ, 1, 0, CollisionFlag.WALL_WEST, CollisionFlag.WALL_EAST, writer);
+				else if (direction == 6) edge(atX, atZ, 0, -1, CollisionFlag.WALL_NORTH, CollisionFlag.WALL_SOUTH, writer);
 			}
 		}
 	}
 
 	void wall(int id, int x, int z, int direction, boolean add) {
 		if (!updatePlacement(new Placement(baseX + x, baseZ + z, id, direction, true), add)) return;
-		if (direction == 0) edge(x, z, 0, -1, CollisionFlag.WALL_NORTH, CollisionFlag.WALL_SOUTH, add);
-		else if (direction == 1) edge(x, z, -1, 0, CollisionFlag.WALL_EAST, CollisionFlag.WALL_WEST, add);
-		else if (direction == 2) change(x, z, CollisionFlag.FULL_BLOCK_A, add);
-		else if (direction == 3) change(x, z, CollisionFlag.FULL_BLOCK_B, add);
+		wallFlags(x, z, direction, (tx, tz, flag) -> change(tx, tz, flag, add));
+	}
+
+	private static void wallFlags(int x, int z, int direction, FlagWriter writer) {
+		if (direction == 0) edge(x, z, 0, -1, CollisionFlag.WALL_NORTH, CollisionFlag.WALL_SOUTH, writer);
+		else if (direction == 1) edge(x, z, -1, 0, CollisionFlag.WALL_EAST, CollisionFlag.WALL_WEST, writer);
+		else if (direction == 2) writer.flag(x, z, CollisionFlag.FULL_BLOCK_A);
+		else if (direction == 3) writer.flag(x, z, CollisionFlag.FULL_BLOCK_B);
 	}
 
 	private boolean updatePlacement(Placement placement, boolean add) {
@@ -135,10 +149,82 @@ final class SurfaceCollisionCells {
 		return true;
 	}
 
-	private void edge(int x, int z, int dx, int dz, int flag, int reciprocal, boolean add) {
-		change(x, z, flag, add);
+	private static void edge(int x, int z, int dx, int dz, int flag, int reciprocal, FlagWriter writer) {
+		writer.flag(x, z, flag);
 		// Keep the reciprocal contribution world-addressed even at the current window's edge.
-		change(x + dx, z + dz, reciprocal, add);
+		writer.flag(x + dx, z + dz, reciprocal);
+	}
+
+	void clearIncomingScenery() { incomingScenery.clear(); }
+
+	void invalidateIncomingScenery(int cellX, int cellZ) { incomingScenery.remove(encode(cellX, cellZ)); }
+
+	void publishIncomingScenery(int cellX, int cellZ, int revision, List<World.SurfaceSceneryPlacement> records) {
+		IncomingScenery cell = new IncomingScenery(revision, records);
+		FlagWriter writer = (x, z, flag) -> cell.blockers.merge(encode(x, z), flag, (first, second) -> first | second);
+		for (World.SurfaceSceneryPlacement record : records) {
+			if (record.type == 1) {
+				if (EntityHandler.getDoorDef(record.id).getDoorType() == 1) {
+					wallFlags(record.x, record.z, record.direction, writer);
+				}
+			} else {
+				GameObjectDef definition = EntityHandler.getObjectDef(record.id);
+				int type = definition.getType();
+				if (type == 1 || type == 2) {
+					boolean straight = record.direction == 0 || record.direction == 4;
+					int width = straight ? definition.getWidth() : definition.getHeight();
+					int height = straight ? definition.getHeight() : definition.getWidth();
+					objectFlags(record.x, record.z, record.direction, width, height, type, writer);
+				}
+			}
+		}
+		incomingScenery.put(encode(cellX, cellZ), cell);
+	}
+
+	int incomingSceneryRevision(int cellX, int cellZ) {
+		IncomingScenery cell = incomingScenery.get(encode(cellX, cellZ));
+		return cell == null ? 0 : cell.revision;
+	}
+
+	int incomingSceneryCount(int cellX, int cellZ) {
+		IncomingScenery cell = incomingScenery.get(encode(cellX, cellZ));
+		return cell == null ? -1 : cell.records.size();
+	}
+
+	int incomingSceneryObjectCount(int x, int z, int id) {
+		IncomingScenery cell = incomingScenery.get(encode(Math.floorDiv(x, CELL_SIZE), Math.floorDiv(z, CELL_SIZE)));
+		if (cell == null) return -1;
+		int count = 0;
+		for (World.SurfaceSceneryPlacement record : cell.records) {
+			if (record.x == x && record.z == z && record.id == id && record.type == 0) count++;
+		}
+		return count;
+	}
+
+	int incomingFlags(int x, int z) {
+		long cellKey = encode(Math.floorDiv(x, CELL_SIZE), Math.floorDiv(z, CELL_SIZE));
+		if (!terrain.containsKey(cellKey) || !incomingScenery.containsKey(cellKey)) return -1;
+		long tile = encode(x, z);
+		int flags = terrainFlags(x, z);
+		TileContributions active = live.get(tile);
+		if (active != null) flags |= active.flags;
+		for (IncomingScenery cell : incomingScenery.values()) flags |= cell.blockers.getOrDefault(tile, 0);
+		return flags;
+	}
+
+	private static final class IncomingScenery {
+		private final int revision;
+		private final List<World.SurfaceSceneryPlacement> records;
+		private final Map<Long, Integer> blockers = new HashMap<>();
+
+		private IncomingScenery(int revision, List<World.SurfaceSceneryPlacement> records) {
+			this.revision = revision;
+			this.records = records;
+		}
+	}
+
+	private interface FlagWriter {
+		void flag(int x, int z, int flag);
 	}
 
 	private void change(int localX, int localZ, int flag, boolean add) {
