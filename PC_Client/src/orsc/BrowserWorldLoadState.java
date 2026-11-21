@@ -52,7 +52,7 @@ final class BrowserWorldLoadState {
             || region[4] != 0 || next[4] != 0 || region[5] != 0 || next[5] != 0) return false;
         long dx = (long)next[0] - region[0], dz = (long)next[1] - region[1];
         int units = orsc.graphics.three.World.SECTION_SIZE * 128;
-        return Math.abs(dx) + Math.abs(dz) == 1
+        return Math.max(Math.abs(dx), Math.abs(dz)) == 1
             && (long)next[2] - region[2] == dx * units
             && (long)next[3] - region[3] == dz * units;
     }

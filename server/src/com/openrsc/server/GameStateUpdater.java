@@ -1224,8 +1224,9 @@ public final class GameStateUpdater {
 				int stepX = stagedTerrain.currentChunkX - activeTerrain.currentChunkX;
 				int stepY = stagedTerrain.currentChunkY - activeTerrain.currentChunkY;
 				TravelBaseline travel = player.getAttribute(TRAVEL_BASELINE_ATTRIBUTE, null);
-				if (Math.abs(stepX) + Math.abs(stepY) == 1
-					&& travel != null && travel.relocation == player.getMovementRelocation()) {
+				boolean adjacent = SURFACE_SCENERY_DRAW ? Math.max(Math.abs(stepX), Math.abs(stepY)) == 1
+					: Math.abs(stepX) + Math.abs(stepY) == 1;
+				if (adjacent && travel != null && travel.relocation == player.getMovementRelocation()) {
 					player.setAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE, new SurfaceScenerySubscription(
 						contextSequence, travel.generation, sequence, stagedTerrain.currentChunkX,
 						stagedTerrain.currentChunkY, stepX, stepY, SURFACE_SCENERY_DRAW));

@@ -162,13 +162,14 @@ final class SurfaceCollisionCells {
 		int nextX = Math.floorDiv(x, CELL_SIZE), nextZ = Math.floorDiv(z, CELL_SIZE);
 		int oldX = Math.floorDiv(baseX, CELL_SIZE), oldZ = Math.floorDiv(baseZ, CELL_SIZE);
 		int dx = nextX - oldX, dz = nextZ - oldZ;
-		if (Math.abs(dx) + Math.abs(dz) != 1) return false;
+		if (Math.max(Math.abs(dx), Math.abs(dz)) != 1) return false;
 		int width = World.LOCAL_TILE_COUNT / CELL_SIZE;
-		int edgeX = nextX + (dx > 0 ? width - 1 : 0);
-		int edgeZ = nextZ + (dz > 0 ? width - 1 : 0);
-		for (int i = 0; i < width; i++) {
-			long key = encode(edgeX + (dx == 0 ? i : 0), edgeZ + (dz == 0 ? i : 0));
-			if (!terrain.containsKey(key) || !incomingScenery.containsKey(key)) return false;
+		for (int cx = nextX; cx < nextX + width; cx++) {
+			for (int cz = nextZ; cz < nextZ + width; cz++) {
+				if (cx >= oldX && cx < oldX + width && cz >= oldZ && cz < oldZ + width) continue;
+				long key = encode(cx, cz);
+				if (!terrain.containsKey(key) || !incomingScenery.containsKey(key)) return false;
+			}
 		}
 		return true;
 	}

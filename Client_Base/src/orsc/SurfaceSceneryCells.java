@@ -24,21 +24,31 @@ final class SurfaceSceneryCells {
 
 	void begin(int stage, int context, int generation, int x, int z, int dx, int dz, boolean prepareDrawCells) {
 		reset();
-		if (generation <= 0 || Math.abs(dx) + Math.abs(dz) != 1) return;
+		if (generation <= 0 || Math.max(Math.abs((long)dx), Math.abs((long)dz)) != 1) return;
 		this.stage = stage;
 		this.context = context;
 		this.generation = generation;
-		addStrip(x, z, dx, dz, RADIUS, RADIUS, Band.ENTERING_PLAY);
-		if (prepareDrawCells) {
-			addStrip(x, z, dx, dz, DRAW_RADIUS, DRAW_RADIUS, Band.ENTERING_DRAW);
-			addStrip(x, z, dx, dz, -DRAW_RADIUS, RADIUS, Band.LEAVING_PLAY);
+		int oldX = x - dx, oldZ = z - dz;
+		for (int ox = -RADIUS; ox <= RADIUS; ox++) {
+			for (int oz = -RADIUS; oz <= RADIUS; oz++) {
+				int cx = x + ox, cz = z + oz;
+				if (distance(cx, cz, oldX, oldZ) > RADIUS) cells.put(key(cx, cz), new Cell(Band.ENTERING_PLAY));
+			}
+		}
+		if (!prepareDrawCells) return;
+		for (int ox = -DRAW_RADIUS; ox <= DRAW_RADIUS; ox++) {
+			for (int oz = -DRAW_RADIUS; oz <= DRAW_RADIUS; oz++) {
+				if (Math.max(Math.abs(ox), Math.abs(oz)) != DRAW_RADIUS) continue;
+				int cx = x + ox, cz = z + oz;
+				int previousDistance = distance(cx, cz, oldX, oldZ);
+				if (previousDistance > DRAW_RADIUS) cells.put(key(cx, cz), new Cell(Band.ENTERING_DRAW));
+				else if (previousDistance <= RADIUS) cells.put(key(cx, cz), new Cell(Band.LEAVING_PLAY));
+			}
 		}
 	}
 
-	private void addStrip(int x, int z, int dx, int dz, int along, int radius, Band band) {
-		for (int across = -radius; across <= radius; across++) {
-			cells.put(key(x + dx * along + dz * across, z + dz * along + dx * across), new Cell(band));
-		}
+	private static int distance(int x, int z, int centerX, int centerZ) {
+		return Math.max(Math.abs(x - centerX), Math.abs(z - centerZ));
 	}
 
 	Cell cell(int stage, int context, int generation, int x, int z) {

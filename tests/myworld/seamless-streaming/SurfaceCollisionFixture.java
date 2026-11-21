@@ -44,6 +44,16 @@ public final class SurfaceCollisionFixture {
 		cells.invalidateIncomingScenery(3, 1);
 		check(!cells.hasIncomingWindow(48, 0), "replacement revision must complete before rolling");
 
+		cells.stage("signed-surface", SurfaceCollisionCells.prepare(48, 48, terrain()));
+		for (int[] cell : new int[][] {{3, 1}, {3, 2}, {1, 3}, {2, 3}}) {
+			cells.publishIncomingScenery(cell[0], cell[1], 1, Collections.emptyList());
+		}
+		check(!cells.hasIncomingWindow(48, 48), "diagonal requires the corner as well as both edges");
+		cells.publishIncomingScenery(3, 3, 1, Collections.emptyList());
+		check(cells.hasIncomingWindow(48, 48), "five ready cells cover a diagonal crossing");
+		cells.invalidateIncomingScenery(1, 3);
+		check(!cells.hasIncomingWindow(48, 48), "unverified edge cannot take part in a diagonal crossing");
+
 		cells.wall(5, 85, 0, 0, true);
 		cells.detachView();
 		int[][] north = terrain();

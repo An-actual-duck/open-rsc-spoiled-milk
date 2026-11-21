@@ -43,11 +43,8 @@ final class SurfaceScenerySubscription {
 		this.terrainStage = terrainStage;
 		this.targetX = targetX;
 		this.targetY = targetY;
-		addStrip(stepX, stepY, RADIUS, RADIUS);
-		if (prepareDrawCells) {
-			addStrip(stepX, stepY, DRAW_RADIUS, DRAW_RADIUS);
-			addStrip(stepX, stepY, -DRAW_RADIUS, RADIUS);
-		}
+		addChangedCells(RADIUS, stepX, stepY);
+		if (prepareDrawCells) addChangedCells(DRAW_RADIUS, stepX, stepY);
 		int west = Integer.MAX_VALUE, south = Integer.MAX_VALUE;
 		int east = Integer.MIN_VALUE, north = Integer.MIN_VALUE;
 		for (Cell cell : cells.values()) {
@@ -62,11 +59,17 @@ final class SurfaceScenerySubscription {
 		maxCellY = north;
 	}
 
-	private void addStrip(int stepX, int stepY, int along, int radius) {
-		for (int across = -radius; across <= radius; across++) {
-			int x = targetX + stepX * along + stepY * across;
-			int y = targetY + stepY * along + stepX * across;
-			cells.put(cellKey(x, y), new Cell(x, y));
+	private void addChangedCells(int radius, int stepX, int stepY) {
+		for (int dx = -radius; dx <= radius; dx++) {
+			for (int dy = -radius; dy <= radius; dy++) {
+				int previousDistance = Math.max(Math.abs(dx + stepX), Math.abs(dy + stepY));
+				boolean changes = radius == RADIUS ? previousDistance > RADIUS
+					: Math.max(Math.abs(dx), Math.abs(dy)) == DRAW_RADIUS
+						&& (previousDistance > DRAW_RADIUS || previousDistance <= RADIUS);
+				if (!changes) continue;
+				int x = targetX + dx, y = targetY + dy;
+				cells.put(cellKey(x, y), new Cell(x, y));
+			}
 		}
 	}
 

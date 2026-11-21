@@ -36,8 +36,19 @@ public final class SurfaceSceneryCellsFixture {
 		require(state.cell(10, 2, 4, 3, 13).band == SurfaceSceneryCells.Band.LEAVING_PLAY, "north play edge missing");
 		require(state.cell(10, 2, 4, 2, 13) == null, "unchanged presentation crossed ownership");
 		require(state.cell(10, 2, 4, 4, 11) == null, "overlapping gameplay was subscribed");
+		state.begin(11, 2, 4, 5, 12, 1, 1, true);
+		int[] bands = new int[3];
+		for (int x = 3; x <= 7; x++) {
+			for (int z = 10; z <= 14; z++) {
+				SurfaceSceneryCells.Cell diagonal = state.cell(11, 2, 4, x, z);
+				if (diagonal != null) bands[diagonal.band.ordinal()]++;
+			}
+		}
+		require(bands[0] == 5 && bands[1] == 9 && bands[2] == 5, "diagonal publishes both axes and their intersection exactly once");
+		require(state.cell(11, 2, 4, 5, 12) == null, "diagonal shares the overlapping gameplay cells");
+
 		state.reset();
-		require(state.cell(10, 2, 4, 2, 9) == null, "scope reset retained a draw cell");
+		require(state.cell(11, 2, 4, 7, 14) == null, "scope reset retained a draw cell");
 		System.out.println("PASS authoritative surface scenery revisions and scope");
 	}
 

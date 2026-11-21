@@ -160,7 +160,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private List<Renderer3DWorldChunkFrame.ChunkMesh> stagedSource = Collections.emptyList();
     private List<Renderer3DWorldChunkFrame.ChunkMesh> stagedScenery = Collections.emptyList();
     private Set<WorldChunkBufferKey> predictedKeys = Collections.emptySet();
-    private PendingStagePack pendingStagePack;
+    private PendingStagePack pendingStagePack, pendingActiveSceneryPack;
     private long lastPredictedUploadNanos;
     private long stagedBytes, preuploadedBytes, adoptedBytes, longestPreuploadNanos;
     private int preuploadedChunks, adoptedChunks;
@@ -229,6 +229,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         overlayDeltaReset=true;
         loadState.beginTransition();
         lastPresentedTravelGeneration=0;
+        pendingActiveSceneryPack=null;
         if(initialized)regionTransition(ordinaryWalking);
     }
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
@@ -694,28 +695,44 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
 
     private void advanceStagePack(Renderer3DFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk, WorldChunkBufferKey key) {
         long started = System.nanoTime();
-        int[] settings = packing.backendPackingSettings();
-        PendingStagePack work = pendingStagePack;
-        if (work == null || !key.equals(work.key) || work.materialRevision != materialRevision
-            || !Arrays.equals(work.settings, settings)) {
-            boolean compact = COMPACT_SCENERY && chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
-            work = new PendingStagePack(key, settings, materialRevision, packing.new PendingBackendVertices(chunk, compact));
-            pendingStagePack = work;
-        } else if (!work.verticesFinished) {
-            work.verticesFinished = work.vertices.advance(frame, started + PREDICTED_PACK_SLICE_NANOS);
-        } else if (work.materials == null) {
-            work.materials = packMaterials(frame, chunk);
+        if (!matchesPack(pendingStagePack, key)) {
+            pendingStagePack = beginPack(chunk, key);
         } else {
             stagingUpload = true;
             try {
-                CachedChunk cached = uploadPacked(frame, chunk, settings, work.materials, work.vertices.compact, work.vertices.legacy);
-                publishStagedUpload(key, cached, started);
-                pendingStagePack = null;
+                CachedChunk cached = advancePack(frame, chunk, pendingStagePack, started);
+                if (cached != null) {
+                    publishStagedUpload(key, cached, started);
+                    pendingStagePack = null;
+                }
             } finally {
                 stagingUpload = false;
             }
         }
         longestPreuploadNanos = Math.max(longestPreuploadNanos, System.nanoTime() - started);
+    }
+
+    private boolean matchesPack(PendingStagePack work, WorldChunkBufferKey key) {
+        return work != null && key.equals(work.key) && work.materialRevision == materialRevision
+            && Arrays.equals(work.settings, packing.backendPackingSettings());
+    }
+
+    private PendingStagePack beginPack(Renderer3DWorldChunkFrame.ChunkMesh chunk, WorldChunkBufferKey key) {
+        boolean compact = COMPACT_SCENERY && chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+        return new PendingStagePack(key, packing.backendPackingSettings(), materialRevision,
+            packing.new PendingBackendVertices(chunk, compact));
+    }
+
+    private CachedChunk advancePack(Renderer3DFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk,
+                                    PendingStagePack work, long started) {
+        if (!work.verticesFinished) {
+            work.verticesFinished = work.vertices.advance(frame, started + PREDICTED_PACK_SLICE_NANOS);
+        } else if (work.materials == null) {
+            work.materials = packMaterials(frame, chunk);
+        } else {
+            return uploadPacked(frame, chunk, work.settings, work.materials, work.vertices.compact, work.vertices.legacy);
+        }
+        return null;
     }
 
     private void publishStagedUpload(WorldChunkBufferKey key, CachedChunk cached, long started) {
@@ -789,10 +806,31 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             // that lets one new oversized chunk make forward progress.
             if(!poseChanged)uploaded+=update.chunk.getVertexCount();
         }
+        if (pendingActiveSceneryPack != null && (required == null || !active.contains(pendingActiveSceneryPack.key)
+            || chunks.containsKey(pendingActiveSceneryPack.key))) pendingActiveSceneryPack = null;
+        boolean advancedScenery = false;
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:sources) {
             WorldChunkBufferKey key=chunkKey(chunk);CachedChunk cached=chunks.get(key);
             boolean needed = required == null || required.contains(key);
-            if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
+            boolean independentScenery = !needed && chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+            if (cached == null && independentScenery) {
+                if (!advancedScenery && (pendingActiveSceneryPack == null || key.equals(pendingActiveSceneryPack.key))) {
+                    advancedScenery = true;
+                    if (!matchesPack(pendingActiveSceneryPack, key)) {
+                        pendingActiveSceneryPack = beginPack(chunk, key);
+                    } else if (reserveOptionalSpace(active, chunkBytes(chunk))) {
+                        cached = advancePack(frame, chunk, pendingActiveSceneryPack, System.nanoTime());
+                        if (cached != null) {
+                            chunks.put(key, cached);
+                            residentChunkBytes += cached.bytes;
+                            uploaded += chunk.getVertexCount();
+                            pendingActiveSceneryPack = null;
+                        }
+                    } else {
+                        pendingActiveSceneryPack = null;
+                    }
+                }
+            } else if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
                 long bytes=chunkBytes(chunk);
                 makeRoom(active,bytes);
                 cached=upload(frame,chunk,packingSettings);chunks.put(key,cached);residentChunkBytes+=cached.bytes;uploaded+=chunk.getVertexCount();
