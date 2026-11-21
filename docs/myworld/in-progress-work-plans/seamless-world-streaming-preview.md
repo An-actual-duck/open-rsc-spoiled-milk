@@ -480,9 +480,9 @@ legacy scene fences matched.
 The later context change still held 18 frames, with about 1.9 seconds
 between the transition and the first fresh submitted frame. The collision
 and scenery cells were ready before the crossing. The remaining blocking
-call is the region-origin change, which dematerializes the local scenery,
-installs new terrain, and rematerializes the objects before the scene
-latch releases. The rolling path needs to retain the overlap and keep
+path changes the region origin, dematerializes and rematerializes local
+scenery, and waits for the replacement browser draw state. The rolling
+path needs to retain the overlap and keep
 the actor and camera coordinate conversion outside that region rebuild.
 Use a separate acknowledgement for interactive coverage and verify that
 changing the origin preserves existing local object identity and picking.
