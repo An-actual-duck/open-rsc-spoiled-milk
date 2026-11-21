@@ -52,7 +52,6 @@ public final class BrowserWholeZoneBaker {
         final Method window=method(World.class,"buildNativeLayeredCpuSectionWindow",int.class,int.class,int.class,NativeLayeredTerrainSnapshot.class,int.class,int.class);
         final Method terrain=method(World.class,"buildTerrainModelInput",int.class,int.class,int.class,Sector[].class),walls=method(World.class,"buildWallModelInput",Sector[].class,int[][].class),roofs=method(World.class,"buildRoofModelInput",Sector[].class,int[][].class);
         final Method endpointShadow=method(World.class,"applyWallEndpointShadows",terrainType,wallType),build=method(World.class,"buildWorldGpuChunkMesh",int.class,int.class,int.class,terrainType,wallType,roofType,boolean.class);
-        final Method objectModel=method(mudclient.class,"createStaticPresentationGameObjectModel",SceneBaselineState.Record.class,int.class,int.class),wallModel=method(mudclient.class,"createStaticPresentationWallObjectModel",SceneBaselineState.Record.class,int.class,int.class,int.class);
         Context(Path root,Path source,Path miniCache,Path output)throws Exception{
             this.root=root;this.source=source;this.output=output;sourceManifestBytes=Files.readAllBytes(source.resolve("manifest.json"));sourceManifestHash=sha(sourceManifestBytes);sourceManifest=new JSONObject(new String(sourceManifestBytes,StandardCharsets.UTF_8));initialExternalAssets=externalAssets(root);derivativeTextureHash=sha(Files.readAllBytes(miniCache.resolve("video/Custom_Sprites.osar")));
             for(Object o:sourceManifest.getJSONArray("terrainSectors")){JSONObject e=(JSONObject)o;if("global".equals(e.getString("worldSpace"))&&e.getInt("level")>=0&&e.getInt("level")<=2)pages.put(e.getInt("level")+":"+e.getInt("sectorX")+":"+e.getInt("sectorY"),e);}
@@ -113,14 +112,20 @@ public final class BrowserWholeZoneBaker {
             int a=stacked[x][z],b=stacked[x+1][z],c=stacked[x][z+1],d=stacked[x+1][z+1];return lx<=128-lz?a+(b-a)*lx/128+(c-a)*lz/128:d+(c-d)*(128-lx)/128+(b-d)*(128-lz)/128;
         }
         void emitObjects(int plane,int sx,int sy,Renderer3DWorldChunkFrame.ChunkMesh anchor,int[][] stacked)throws Exception{
-            Class<?> identityType=Class.forName("orsc.mudclient$ResidentObjectCanonicalIdentity"),builderType=Class.forName("orsc.mudclient$ResidentObjectChunkInputBuilder");
+            Class<?> identityType=Class.forName("orsc.mudclient$ResidentObjectCanonicalIdentity");
+            Class<?> builderType=Class.forName("orsc.mudclient$ResidentObjectChunkInputBuilder");
             Constructor<?> identityCtor=identityType.getDeclaredConstructor(int.class,int.class,int.class,int.class,int.class,int.class,int.class);identityCtor.setAccessible(true);
-            Constructor<?> builderCtor=builderType.getDeclaredConstructor(Renderer3DWorldChunkFrame.ChunkMesh.class,long.class,int.class,int.class,int.class,int.class,int.class,int.class);builderCtor.setAccessible(true);
+            Constructor<?> builderCtor=builderType.getDeclaredConstructor(Renderer3DWorldChunkFrame.ChunkMesh.class,
+                long.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class,int.class);
+            builderCtor.setAccessible(true);
+            Method finishInput=method(builderType,"build");
+            Method buildModels=method(mudclient.class,"buildCanonicalResidentObjectModels",finishInput.getReturnType());
+            Method contentKey=method(builderType,"buildCanonicalContentKey");
             for(int dx=0;dx<2;dx++)for(int dy=0;dy<2;dy++){
                 int cellX=sx*2+dx,cellY=sy*2+dy;List<SceneBaselineState.Record> list=records.get(plane+":"+cellX+":"+cellY);if(list==null)list=Collections.emptyList();
-                Object builder=builderCtor.newInstance(anchor,0L,0,0,cellX,cellY,Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS,24);
-                @SuppressWarnings("unchecked") List<Object> identities=(List<Object>)get(builder,"canonicalIdentities");List<RSModel> models=new ArrayList<RSModel>();
-                set(client,"midRegionBaseX",cellX*24);set(client,"midRegionBaseZ",cellY*24);
+                Object builder=builderCtor.newInstance(anchor,0L,0,0,cellX,cellY,
+                    Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS,24,cellX*24,cellY*24,128);
+                @SuppressWarnings("unchecked") List<Object> identities=(List<Object>)get(builder,"canonicalIdentities");
                 for(SceneBaselineState.Record record:list){
                     int localX=record.x-(sx-1)*48,localZ=record.y-(sy-1)*48,e1,e2,kind;
                     if(record.type==0){com.openrsc.client.entityhandling.defs.GameObjectDef def=EntityHandler.getObjectDef(record.id);int width=record.direction==0||record.direction==4?def.getWidth():def.getHeight(),height=record.direction==0||record.direction==4?def.getHeight():def.getWidth();e1=e2=elevation((2*localX+width)*64,(2*localZ+height)*64,stacked);kind=Renderer3DModelKind.GAME_OBJECT.ordinal();}
@@ -128,12 +133,24 @@ public final class BrowserWholeZoneBaker {
                     if(e1==World.PRESENTATION_ELEVATION_UNAVAILABLE||e2==World.PRESENTATION_ELEVATION_UNAVAILABLE)throw new IllegalStateException("Object source elevation unavailable");
                     Object identity=identityCtor.newInstance(kind,record.x,record.y,record.id,record.direction,e1,e2);identities.add(identity);preparedPlacements++;
                 }
-                @SuppressWarnings({"unchecked","rawtypes"}) List raw=identities;Collections.sort(raw);
-                for(Object identity:identities){int kind=((Integer)get(identity,"kind")).intValue(),id=((Integer)get(identity,"objectId")).intValue(),x=((Integer)get(identity,"worldTileX")).intValue(),z=((Integer)get(identity,"worldTileZ")).intValue(),direction=((Integer)get(identity,"direction")).intValue(),e1=((Integer)get(identity,"elevation1")).intValue(),e2=((Integer)get(identity,"elevation2")).intValue();SceneBaselineState.Record record=new SceneBaselineState.Record(id,x,z,direction,kind==Renderer3DModelKind.GAME_OBJECT.ordinal()?0:1);models.add((RSModel)(record.type==0?objectModel.invoke(client,record,models.size(),e1):wallModel.invoke(client,record,models.size(),e1,e2)));}
-                long key=((Long)method(builderType,"buildCanonicalContentKey").invoke(builder)).longValue();JSONArray canonical=new JSONArray();for(Object id:identities)for(String f:new String[]{"kind","worldTileX","worldTileZ","objectId","direction","elevation1","elevation2"})canonical.put(((Integer)get(id,f)).intValue());
+                Object input=finishInput.invoke(builder);
+                long key=((Long)contentKey.invoke(builder)).longValue();JSONArray canonical=new JSONArray();for(Object id:identities)for(String f:new String[]{"kind","worldTileX","worldTileZ","objectId","direction","elevation1","elevation2"})canonical.put(((Integer)get(id,f)).intValue());
                 JSONObject cell=new JSONObject().put("plane",plane).put("cellX",cellX).put("cellY",cellY).put("canonicalContentKey",hex(key)).put("emptyCanonicalContentKey",hex(mudclient.wholeOverworldEmptyObjectKey(plane,cellX,cellY))).put("placementCount",list.size()).put("identities",canonical);
                 if(list.isEmpty())cell.put("resourceId",JSONObject.NULL).put("vertexCount",0).put("indexCount",0);
-                else {Renderer3DWorldChunkFrame.ChunkMesh mesh=RSModel.buildRenderer3DObjectChunkMesh(plane,sx,sy,cellX*24*128,cellY*24*128,models.toArray(new RSModel[models.size()]),models.size());float[] vertices=packing.copyBackendChunkVertices(mesh,frame);BrowserChunkMaterials.Buffers buffers=BrowserChunkMaterials.pack(packing,frame,mesh);JSONObject resource=emit(vertices,buffers.indices,buffers.batches,plane,Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS,24,cellX,cellY,cellX*24*128,cellY*24*128,"objects",descriptor(mesh,cellX*24*128,cellY*24*128));resource.put("canonicalContentKey",hex(key)).put("placementCount",list.size());cell.put("resourceId",resource.getInt("id")).put("vertexCount",resource.getInt("vertexCount")).put("indexCount",resource.getInt("indexCount"));}
+                else {
+                    int originX=cellX*24*128,originZ=cellY*24*128;
+                    RSModel[] models=(RSModel[])buildModels.invoke(client,input);
+                    Renderer3DWorldChunkFrame.ChunkMesh mesh=RSModel.buildRenderer3DObjectChunkMesh(
+                        plane,sx,sy,originX,originZ,models,models.length);
+                    float[] vertices=packing.copyBackendChunkVertices(mesh,frame);
+                    BrowserChunkMaterials.Buffers buffers=BrowserChunkMaterials.pack(packing,frame,mesh);
+                    JSONObject resource=emit(vertices,buffers.indices,buffers.batches,plane,
+                        Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS,24,cellX,cellY,originX,originZ,
+                        "objects",descriptor(mesh,originX,originZ));
+                    resource.put("canonicalContentKey",hex(key)).put("placementCount",list.size());
+                    cell.put("resourceId",resource.getInt("id")).put("vertexCount",resource.getInt("vertexCount"))
+                        .put("indexCount",resource.getInt("indexCount"));
+                }
                 objectCells.put(cell);
             }
         }

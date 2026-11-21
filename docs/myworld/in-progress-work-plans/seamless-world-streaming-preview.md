@@ -344,9 +344,10 @@ of terrain scene, and no ignored movement outside installed coverage. The
 receipt fixture also checks that ordinary movement cannot open a session and
 that stale, mis-scoped, and out-of-order receipts are ignored.
 
-The run at `ce8a03269` applied 441 movement receipts under one session while
+The run at `d19d39663` applied 426 movement receipts under one session while
 the terrain scene advanced from 1 to 2. The server confirmed `(252, 609)` and
-the client ignored zero receipts for missing installed coverage. The browser
+the client ignored zero receipts for missing installed coverage. The reported
+logical coordinates matched the server destination. The browser
 still held four frames at the scene change. This verifies movement session
 continuity and leaves the live-rendering requirement open.
 
@@ -367,6 +368,14 @@ candidate source of independently addressed terrain meshes. Validate its
 seams and material and lighting parity against the current signed map
 before using it for the live path.
 [Legacy cell crop](../../../Client_Base/src/orsc/graphics/three/World.java#L6905) · [Terrain catalog baker](../../../PC_Client/src/orsc/BrowserWholeZoneBaker.java#L140)
+
+The catalog baker now uses the same canonical placement input as the runtime
+scenery builder. A fresh bake of neighboring ground sectors `(4, 12)` and
+`(5, 12)` produced 48 matching terrain edge segments at `x = 240` and the
+same ground heights at all 49 shared edge vertices. No ground triangle
+straddled the boundary. This was an offline check of drawn ground geometry
+on one edge. Runtime cell publication, lighting, and interactive state still
+need the live walking proof.
 
 ## Reproduce the private preview
 
