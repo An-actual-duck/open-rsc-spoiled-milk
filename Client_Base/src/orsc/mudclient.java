@@ -2587,6 +2587,7 @@ public final class mudclient implements Runnable {
 
 			long pollStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 			this.packetHandler.pollLayeredTerrainStageReady();
+			this.packetHandler.pollSurfaceHandoffPackets();
 			if (TRACE_BROWSER_TRAVEL) travelWorkNanos[4] += System.nanoTime() - pollStart;
 			long var2 = GenUtil.currentTimeMillis();
 			if (this.packetHandler.getClientStream().hasFinishedPackets()) {
@@ -2616,7 +2617,9 @@ public final class mudclient implements Runnable {
 			 */
 			int processedPackets = 0;
 			boolean activationBurst = this.layeredSceneActivationPending;
-			while (LayeredScenePacketDrainPolicy.shouldReadNext(
+			while ((this.packetHandler.isReceivingSurfaceHandoff()
+					&& processedPackets < LayeredScenePacketDrainPolicy.ATOMIC_ACTIVATION_PACKET_LIMIT)
+				|| LayeredScenePacketDrainPolicy.shouldReadNext(
 					processedPackets,
 					activationBurst,
 					this.layeredSceneActivationPending,
@@ -2634,6 +2637,7 @@ public final class mudclient implements Runnable {
 				boolean wasActivationPending =
 					this.layeredSceneActivationPending;
 				int opcode = this.packetHandler.getPacketsIncoming().getUnsignedByte();
+				boolean receivingSurface = this.packetHandler.isReceivingSurfaceHandoff();
 				long handleStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 				this.packetHandler.handlePacket(opcode, len);
 				if (TRACE_BROWSER_TRAVEL) {
@@ -2645,6 +2649,7 @@ public final class mudclient implements Runnable {
 					}
 				}
 				processedPackets++;
+				if (receivingSurface && !this.packetHandler.isReceivingSurfaceHandoff()) break;
 				activationBurst |= wasActivationPending
 					|| this.layeredSceneActivationPending;
 			}

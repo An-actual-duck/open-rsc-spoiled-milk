@@ -15,6 +15,24 @@ PROOF = "const w=document.querySelector('#runtime')?.contentWindow||window;const
 ROUTE_EVENTS = "p.events?.filter(e=>e.message.startsWith('outer-coverage:'))||[]"
 
 
+WATCH_BROWSER_FRAMES = """
+if (p.state?.mode === 'GAME' && !w.travelBrowserFrames) {
+    const browserFrames = w.travelBrowserFrames = {gaps: [], count: 0};
+    let previous;
+    const sample = stamp => {
+        browserFrames.count++;
+        if (previous !== undefined && stamp - previous >= 100) {
+            browserFrames.gaps.push({from: previous, to: stamp});
+            if (browserFrames.gaps.length > 96) browserFrames.gaps.shift();
+        }
+        previous = stamp;
+        w.requestAnimationFrame(sample);
+    };
+    w.requestAnimationFrame(sample);
+}
+"""
+
+
 def summarize_walking(result):
     """Measure fresh WebGL submissions over the real walk, including time between the legs."""
     rows = (result.get('travel') or {}).get('rows', [])
@@ -90,7 +108,7 @@ def run_walk(run, driver_port):
             deadline = time.monotonic() + 228
             previous = None
             while time.monotonic() < deadline:
-                snap = evaluate('return {state:p.state?.mode,reason:p.stopReason,events:' + ROUTE_EVENTS + '};')
+                snap = evaluate(WATCH_BROWSER_FRAMES + 'return {state:p.state?.mode,reason:p.stopReason,events:' + ROUTE_EVENTS + '};')
                 if snap != previous:
                     print(snap, flush=True)
                     previous = snap
@@ -101,7 +119,8 @@ def run_walk(run, driver_port):
 
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,
-                display:p.gpu?.display, visibility:w.document.visibilityState, timeOrigin:w.performance.timeOrigin};''')
+                display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
+                timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
             server_status = json.loads((run / 'status.json').read_text())

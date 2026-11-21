@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +64,12 @@ public class PacketHandler {
 	private final SurfaceSceneryCells surfaceScenery = SURFACE_SCENERY_CELLS ? new SurfaceSceneryCells() : null;
 	private int pendingLiveSurfaceContext, pendingSurfaceRolls, verifiedLiveSurfaceContext;
 	private PredictedTerrainDecode pendingPredictedTerrainDecode;
+	private SurfaceHandoffPackets surfaceHandoffPackets;
 
 	int getVerifiedLiveSurfaceContext() { return verifiedLiveSurfaceContext; }
 
-	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
+	private RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
+	private RSBuffer_Bits surfaceHandoffReplay;
 	private Network_Socket clientStream;
 	private mudclient mc;
 	private boolean browserStagedPacket;
@@ -282,6 +285,7 @@ public class PacketHandler {
 	}
 
 	public void resetLayeredSceneProtocolState() {
+		surfaceHandoffPackets = null;
 		cancelPredictedTerrainDecode();
 		pendingLiveSurfaceContext = verifiedLiveSurfaceContext = 0;
 		if (pendingLayeredTerrainPrebuild != null) {
@@ -547,6 +551,11 @@ public class PacketHandler {
 		if (length <= 0) {
 			return;
 		}
+		if (mudclient.LIVE_SURFACE_HANDOFF && !browserStagedPacket && receiveSurfaceHandoffPacket(opcode, length)) return;
+		dispatchPacket(opcode, length);
+	}
+
+	private void dispatchPacket(int opcode, int length) {
 		long packetStartedNanos = BoundaryLoadingDiagnostics.now();
 		try {
 			handlePacket1(opcode, length);
@@ -566,6 +575,78 @@ public class PacketHandler {
 		browserStagedPacket=true;
 		try{handlePacket(opcode,length);}finally{browserStagedPacket=false;}
 	}
+	boolean isReceivingSurfaceHandoff() { return surfaceHandoffPackets != null; }
+
+	private boolean receiveSurfaceHandoffPacket(int opcode, int length) {
+		if (surfaceHandoffPackets == null) {
+			if (opcode != 157 || !isPreparedSurfaceHandoffContext(length)) return false;
+			surfaceHandoffPackets = new SurfaceHandoffPackets();
+		}
+		SurfaceHandoffPackets pending = surfaceHandoffPackets;
+		pending.packets.add(Arrays.copyOf(packetsIncoming.dataBuffer, length));
+		pending.bytes += length;
+		byte[] bytes = packetsIncoming.dataBuffer;
+		boolean fence = opcode == 143 && length >= 14 && (bytes[1] & 255) == SceneBaselineState.ATOMIC_FENCE_PROTOCOL_VERSION;
+		if (fence || pending.packets.size() >= 32 || pending.bytes >= 256 * 1024) {
+			publishSurfaceHandoffPackets();
+		}
+		return true;
+	}
+
+	void pollSurfaceHandoffPackets() {
+		if (surfaceHandoffPackets != null
+			&& System.nanoTime() - surfaceHandoffPackets.receivedAt >= 1_000_000_000L) {
+			publishSurfaceHandoffPackets();
+		}
+	}
+
+	private void publishSurfaceHandoffPackets() {
+		SurfaceHandoffPackets pending = surfaceHandoffPackets;
+		surfaceHandoffPackets = null;
+		// A receive may have left an incomplete wire packet in the socket parser's buffer.
+		RSBuffer_Bits wire = packetsIncoming;
+		if (surfaceHandoffReplay == null) surfaceHandoffReplay = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
+		packetsIncoming = surfaceHandoffReplay;
+		try {
+			for (byte[] packet : pending.packets) {
+				packetsIncoming.ensureCapacity(packet.length);
+				System.arraycopy(packet, 0, packetsIncoming.dataBuffer, 0, packet.length);
+				packetsIncoming.packetEnd = 1;
+				dispatchPacket(packet[0] & 255, packet.length);
+			}
+		} finally {
+			packetsIncoming = wire;
+		}
+	}
+
+	private boolean isPreparedSurfaceHandoffContext(int length) {
+		NativeLayeredTerrainSnapshot predicted = readyPredictedLayeredTerrainStructureStage;
+		if (predicted == null || nativeTerrainRecovery.isPending() || persistentMovement.generation() == 0
+			|| !mc.isRenderer3DWorldReady() || mc.shouldRetainLastPresentedFrame() || length < 22) return false;
+		int offset = packetsIncoming.packetEnd;
+		try {
+			if (packetsIncoming.getUnsignedByte() != LayeredSceneContextState.ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION) return false;
+			if (packetsIncoming.get32() != layeredSceneContextState.getSequence() + 1) return false;
+			packetsIncoming.get32(); // server tick
+			if (!"global".equals(packetsIncoming.readString())) return false;
+			packetsIncoming.readString(); // projection identity is checked on dispatch
+			int x = packetsIncoming.get32(), z = packetsIncoming.get32(), level = packetsIncoming.get32();
+			return packetsIncoming.packetEnd + 4 <= length && level == 0 && predicted.getLevel() == level
+				&& Math.floorDiv(x, World.SECTION_SIZE) == predicted.getCurrentChunkX()
+				&& Math.floorDiv(z, World.SECTION_SIZE) == predicted.getCurrentChunkY();
+		} catch (IndexOutOfBoundsException truncated) {
+			return false;
+		} finally {
+			packetsIncoming.packetEnd = offset;
+		}
+	}
+
+	private static final class SurfaceHandoffPackets {
+		private final List<byte[]> packets = new ArrayList<>();
+		private final long receivedAt = System.nanoTime();
+		private int bytes;
+	}
+
 	boolean browserStagedContextMatches(BrowserStagedLogin.Destination d,int sequence) {
 		NativeLayeredTerrainSnapshot source=layeredSceneContextState.getNativeTerrainSnapshot();
 		return layeredSceneContextState.hasContext()&&layeredSceneContextState.getSequence()==sequence
