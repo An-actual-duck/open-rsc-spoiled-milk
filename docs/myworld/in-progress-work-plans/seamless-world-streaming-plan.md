@@ -10,6 +10,13 @@ validation. Create new fixtures and routes from the maintained code and map.
 Prior experiment branches, prototypes, routes, captures, and results are
 excluded as implementation inputs and acceptance evidence for this plan.
 
+**Current direction.** Replace the ordinary-walking whole-scene transaction.
+The next implementation on the worker is the independent movement and
+cell-publication path, starting with preinstalled authoritative terrain for
+one crossing and then exercising actual cell arrivals. A build that still
+starts a loading cover or produces a repeatable streaming hitch during
+ordinary walking fails the player outcome below.
+
 ## Player outcome
 
 An ordinary walk across a map section should feel like any other stretch of
@@ -162,143 +169,61 @@ continuity by themselves. Pass this gate with the existing movement
 cadence before removing either presentation hold or adding new movement
 packet behavior. [Actor rebase](../../../Client_Base/src/orsc/ORSCharacter.java) · [Focused waypoint fixture](../../../tests/myworld/seamless-streaming/ActorWaypointRebase.java)
 
-### Prepare browser draw buffers before the scene handoff
+### Implementation order
 
-Sodium builds render sections from captured world slices, queues the mesh jobs
-on workers, and budgets mesh work and graphics uploads separately. Its
-renderer uploads section results through region-owned buffers. It can defer
-routine work while still waiting for selected urgent work or an explicit
-immediate update. The relevant design is the handoff between captured inputs,
-completed mesh work, and render-owned uploads. [Sodium section capture and scheduling](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager.java#L654) · [Sodium mesh workers](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkBuilder.java#L19) · [Sodium region uploads](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/region/RenderRegionManager.java#L60)
+1. Give ordinary walking a server and client movement lifetime independent of
+   the terrain center. The server already has an actor scope that excludes
+   the center. Use it as the starting point for visibility and add an explicit
+   relocation identity so a same-floor teleport still resets the right state.
+   The current movement snapshot is already sequenced. Its layered variant
+   validates against the scene sequence, so changing only the server's fast
+   send guard would leave the two ends coupled. A matched opt-in protocol
+   must validate movement against the travel lifetime on both ends. Reuse
+   the existing walk requests, server path rules, tick cadence, and actor
+   waypoint application.
+   [Server actor scope](../../../server/src/com/openrsc/server/GameStateUpdater.java#L3166) · [Fast movement sender](../../../server/src/com/openrsc/server/GameStateUpdater.java#L3358) · [Client snapshot validation](../../../Client_Base/src/orsc/PacketHandler.java#L3085)
+2. Serve immutable terrain and prepared geometry independently of the ordered
+   gameplay stream. One option is versioned map files fetched through the
+   browser asset path and read from the installed package on desktop. Start
+   by proving whether a compact, manifest-matched surface collision base can
+   stay resident. The installed global surface has 445 sectors of 48×48
+   tiles and about 9.8 MiB of raw source files. A hypothetical packed
+   four-byte-per-tile collision-and-height base would take about 3.9 MiB
+   before indexing. That is a sizing estimate from the current manifest.
+   The real format must prove flag width, resolved heights, boundary wall
+   parity, and startup and memory cost. Doors, walls, items, and other live
+   changes still need viewer-authorized server state and ordered revisions.
+   [Terrain sector](../../../server/src/com/openrsc/server/io/NativeLayeredTerrainSector.java#L12) · [Neighbor-aware collision derivation](../../../server/src/com/openrsc/server/model/world/region/NativeLayeredTerrainCollisionPlan.java#L10)
+3. Use one live world with a rolling set of published cells. A worker builds
+   incoming resources from immutable inputs and the renderer adopts completed
+   cells in small batches. Keep the surrounding draw resources resident and
+   apply collision, picking, and live-scene revisions consistently. Remove
+   ordinary travel from the client's atomic presentation latch and browser
+   whole-view readiness path by giving cell membership its own publication
+   path. When data for a cell is late, interaction and motion on already
+   installed ground keep running. No global loading cover or retained world
+   image is part of an ordinary cell update.
+   [Client scene context](../../../Client_Base/src/orsc/PacketHandler.java#L724) · [Browser replacement gate](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L328)
 
-RSC already builds the adjacent center's terrain and structural meshes on the
-sector preload executor. The completed prediction includes immutable mesh
-products. The browser still packs the replacement frame's vertices, material
-batches and indices and submits the uploads through its active frame path.
-Materials depend on texture metadata and packing settings captured from the
-client. The existing immutable storage key permits rebased meshes to reuse
-their buffers. Reuse requires matching mesh and material variants. [Prediction worker](../../../Client_Base/src/orsc/graphics/three/World.java#L566) · [Browser upload path](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L331) · [Vertex packing](../../../PC_Client/src/orsc/OpenGLWorldChunkRenderer.java#L2923) · [Material dependencies](../../../PC_Client/src/orsc/BrowserChunkVariant.java)
+The browser's bounded catalog and render worker are candidates for reuse after
+the independent movement and publication path exists. Today the renderer
+still derives catalog scope from the authoritative terrain snapshot, and a
+region transition suspends its residency and enters world readiness. Reuse
+the cell addressing, resource cache, and worker handoff where they help.
+Supply their selection from the persistent world instead of its scene epoch.
+[Catalog scope](../../../PC_Client/src/orsc/BrowserWholeOverworldZone.java#L132) · [Browser transition](../../../tools/browser-gameplay/web/webgl.js#L185)
 
-Run the first private browser experiment with the existing movement packets,
-path queue, actor presentation, and scene activation. Stage one adjacent
-prediction and walk through `x = 264` with the current origin and scene
-ownership rules. The candidate changes where draw buffers are packed and
-uploaded. The existing preview supplies the control. Use the same signed map
-and fresh route in both runs.
+Unreal's World Partition uses one persistent level and streams spatial cells
+around a player or another streaming source. Sodium builds and uploads
+individual render sections for Minecraft's live world. That scheduling model
+can help the third step after ownership and publication are independent.
+[Unreal World Partition](https://dev.epicgames.com/documentation/en-us/unreal-engine/world-partition-in-unreal-engine) · [Sodium section manager](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager.java#L654)
 
-1. Start with incoming static terrain and structure meshes whose final
-   browser storage keys can be matched to the predicted product. Capture
-   the needed texture metadata and packing settings in an immutable input.
-   Pack vertices, indices, and material batches off the live frame and
-   compare the result with the current packer. The worker may read only
-   captured inputs. Keep dynamic actors, animations, and live scenery
-   changes on their existing paths during this experiment.
-2. Budget render-owned uploads during ordinary frames before the boundary.
-   Retain active buffers and admit only as many pending bytes as fit beside
-   them. Give visible and soon-needed cells the first slots. A reversed
-   route, changed renderer settings, replaced source, or graphics context
-   reset can invalidate the pending product. Reject stale results and use
-   the existing path for mismatches. The first implementation can use
-   the browser's existing graphics backend for upload ownership. Validate
-   actual completion separately from Java packing and native submission.
-3. At the handoff, record which predicted buffers the active renderer
-   adopts. Separate initial upload bytes from changed material variants and
-   dynamic content. Record work completed before the handoff, remaining
-   uploads, frame intervals throughout the walk, peak pending and resident
-   bytes, Java scene retention, and the browser's world-input gate. A useful
-   result moves verified work earlier without creating a new hitch in the
-   approach. Keep the movement continuity gate for any subsequent change to
-   scene publication. Browser buffer readiness alone cannot authorize new
-   collision coverage or replace viewer-specific live object state.
-
-Worker scratch and finished results need separate ownership. Sodium gives
-each build worker its own context and hands off finished buffers separately.
-For RSC, measure allocations before pooling mesh scratch. Reuse temporary
-arrays whose contents expire with the current job. Keep completed buffers
-owned by the result through submission, and bound both scratch capacity per
-worker and bytes in flight. Start from the existing single terrain worker.
-Increase the worker count only if fresh traces show that preparation misses
-its lead time and extra CPU work leaves live frame cadence intact. [Sodium build context](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext.java) · [Sodium mesh scratch and finished buffers](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildBuffers.java#L39)
-
-Native OpenGL already reuses direct vertex and index scratch buffers. A
-later native experiment can add a bounded staging ring with explicit GPU
-completion before reusing its space. Sodium checks for persistent mapping and
-uses a write path when it is unavailable. Browser uploads already cross a
-Java-to-JavaScript copy boundary and use WebGL buffer commands. Measure this
-submission cost and GPU completion separately before changing that backend
-or adding Java direct buffers. [Sodium upload fallback](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/gpu/arena/staging/MojangStagingBuffer.java#L7) · [RSC native upload scratch](../../../PC_Client/src/orsc/OpenGLWorldChunkRenderer.java#L2886) · [RSC WebGL buffer upload](../../../tools/browser-gameplay/web/webgl.js#L206)
-
-The private browser scenery experiment uses the server's existing adjacent
-terrain prediction. At a cardinal surface handoff, the server sends
-viewer-filtered placements for complete 24×24-tile cells in the entering outer
-strip. The client derives heights from the immutable terrain prediction and
-paces mesh builds after terrain preparation. The normal activation and
-baseline still establish the scene. A prepared mesh must be complete and
-match the final cell's sorted placements and sampled heights before the
-renderer can use it. A missing or changed cell takes the existing build
-path. The preview measures mesh adoption and frame spacing on the approach
-and at the handoff. [Private preview and results](seamless-world-streaming-preview.md)
-
-Allow the current and incoming buffers to occupy the same budget by using
-the browser's compact layout for exact static scenery. The first trial
-moved the entire terrain upload ahead of the handoff and cut remaining
-upload bytes substantially. The end-to-end input pause still measured over
-one second. Evaluate release against frame timing and interactive coverage
-as well as transfer bytes. [GPU staging comparison](seamless-world-streaming-preview.md#gpu-staging-and-compact-scenery)
-
-Preparing the cells that cross the inner ownership boundary reduced the
-remaining browser upload to 6.26 MB. The browser still waited nearly a
-second for the new scene on the controlled surface route. Move the exact
-local collision and scenery installation out of the recenter transaction,
-then allow distant presentation cells to publish independently of the live
-interaction area. Measure the early build and upload intervals as well as
-the boundary so the work does not create a new pause during the approach.
-
-The browser preview now prepares the exact native terrain collision window,
-structural elevation, minimap layout, and wall and roof models before the
-recenter. It also prepares models for the authoritative incoming scenery
-delta. The controlled route matched collision, elevation, and minimap
-checksums with the preparation enabled. The remaining hold includes
-unprepared mesh cells and the browser waiting on the full draw set. A
-later publication change must prove that the first live frame has all
-interactive and visible geometry it needs before opening input.
-[Prepared local terrain results](seamless-world-streaming-preview.md#prepared-local-terrain)
-
-### Publish the next coverage
-
-The first Firefox handoff trace identified resident scenery construction as
-the largest Java wait. The player and scenery baseline were both accepted
-about 290 ms after context receipt. The first frame then spent 658 ms in
-resident object frame assembly. The second spent 3 ms and released the
-presentation latch. Terrain prediction had matched the destination.
-Prepare static object cells before the context change, then compare their
-content against the authoritative scenery baseline at publication.
-[Firefox route evidence](seamless-world-streaming-preview.md#java-handoff-trace)
-
-For the first private scenery stage, attach a candidate placement snapshot
-to the existing adjacent terrain prediction. Use the same viewer-specific
-queries as the normal baseline. Carry the destination center, signed map
-and level, and exact placement revision or descriptor. Deliver pages within
-the existing traffic budget. Keep the candidate snapshot separate from
-the active collision and object lists, and capture the destination origin
-and terrain heights in each worker input. At publication, adopt matching
-cell meshes and build changed cells from the authoritative state. A door,
-wall, or object changed during preparation must invalidate the affected
-cell. Missing or stale predictions should use the existing full-scene
-path during this first experiment.
-
-At this handoff, keep the server's existing movement stream and the
-client's current collision view active. Build the incoming strip and its
-neighbors as one publishable group while the live frame still consumes
-the overlap. Replace the derived collision view at a game-tick boundary
-after confirming its map identity, coverage, and live-object revision.
-Publish drawing resources per ready group. Track interactive coverage
-and optional surrounding presentation separately. A late roof or an
-offscreen mesh should add work to the queue without opening a world-wide
-load epoch. Keep the full readiness path for login, relocation, and
-recovery. Use an explicit server travel identity to distinguish these
-cases. Firefox already identified this fixture as ordinary walking and
-still blocked world input until the replacement's resources were ready.
+The scene-swap preview is the comparison build. Packing, speculative uploads,
+and browser socket buffering are recorded in its implementation notes. A
+shorter time spent in the ordinary-walking scene swap does not advance this
+plan.
+[Preview findings](seamless-world-streaming-preview.md#sustained-travel-and-delayed-stutter)
 
 ### 1. Establish continuity across a former boundary
 
@@ -357,15 +282,16 @@ map fingerprint, route, graphics and network settings, hardware, and CPU/GPU
 residency and queue peaks. Keep fixtures and replay procedures in Git and their
 generated evidence in declared workspace output categories. [Workspace output layout](../../workspaces/asset-output-organization.txt)
 
-For normal delivery, require ordinary crossings to remain playable and their
-frame pacing to match nearby ordinary walking on the same client and machine.
-Use repeated boundary and non-boundary samples and report the longest gap and
-the distribution. Record the route-specific frame pacing threshold from fresh
-control runs before judging the candidate. Verify that every visible motion
-trace remains continuous through publication and that sustained travel stays
-within the measured resource budgets. For deliberate delay cases, require
-bounded recovery and correctness in ready coverage. Confirm the result in
-owner play on both clients before making it the default.
+For normal delivery, require zero ordinary-walking scene swaps, held world
+frames, loading covers, and global input closures. Compare frame pacing during
+streaming with ordinary walking on the same machine. Use sustained travel,
+multiple cell arrivals, reversals, and first visits. Record browser frame gaps
+and the server and displayed movement together. Any repeatable visible hitch
+caused by streaming fails acceptance, including a hitch displaced from the cell
+edge. A millisecond target or a single scripted crossing cannot override owner
+play. For deliberate delivery delays, verify that ready terrain remains
+playable and that stale data cannot publish. Confirm the result in owner play
+on both clients before making it the default.
 
 ## Stop conditions and follow-up decisions
 
