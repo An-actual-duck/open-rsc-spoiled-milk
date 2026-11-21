@@ -2941,28 +2941,73 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         boolean unbaked = shouldUseUnbakedRemasterMaterialBase();
         for (int i = 0; i < count; i++) {
             writeChunkVertex(vertex, 0, chunk, frame, i, false, true, diffuse, null, unbaked);
-            int at = i * 12;
-            for (int axis = 0; axis < 3; axis++) {
-                words[at + axis] = Float.floatToIntBits(vertex[axis]);
-                words[at + 5 + axis] = Float.floatToIntBits(vertex[18 + axis]);
-            }
-            words[at + 3] = Float.floatToIntBits(vertex[7]);
-            words[at + 4] = Float.floatToIntBits(vertex[8]);
-            long color = compactBytes(vertex, 3, 4);
-            int raw = (int) compactBytes(vertex, 15, 3);
-            int blend = (int) compactBytes(vertex, 24, 3);
-            int light = compactByte(vertex[14], false);
-            int kind = compactByte(vertex[21], false);
-            int family = compactByte(vertex[22], false);
-            int variation = compactByte(vertex[23], false);
-            int strength = compactByte(vertex[27], false);
-            if (color < 0 || raw < 0 || blend < 0 || light < 0 || kind < 0 || family < 0 || variation < 0 || strength < 0) return null;
-            words[at + 8] = (int) color;
-            words[at + 9] = raw | light << 24;
-            words[at + 10] = blend | kind << 24;
-            words[at + 11] = family | variation << 8 | strength << 16;
+            if (!writeCompactVertex(words, i * 12, vertex)) return null;
         }
         return words;
+    }
+
+    private static boolean writeCompactVertex(int[] words, int at, float[] vertex) {
+        for (int axis = 0; axis < 3; axis++) {
+            words[at + axis] = Float.floatToIntBits(vertex[axis]);
+            words[at + 5 + axis] = Float.floatToIntBits(vertex[18 + axis]);
+        }
+        words[at + 3] = Float.floatToIntBits(vertex[7]);
+        words[at + 4] = Float.floatToIntBits(vertex[8]);
+        long color = compactBytes(vertex, 3, 4);
+        int raw = (int) compactBytes(vertex, 15, 3);
+        int blend = (int) compactBytes(vertex, 24, 3);
+        int light = compactByte(vertex[14], false);
+        int kind = compactByte(vertex[21], false);
+        int family = compactByte(vertex[22], false);
+        int variation = compactByte(vertex[23], false);
+        int strength = compactByte(vertex[27], false);
+        if (color < 0 || raw < 0 || blend < 0 || light < 0 || kind < 0 || family < 0 || variation < 0 || strength < 0) return false;
+        words[at + 8] = (int) color;
+        words[at + 9] = raw | light << 24;
+        words[at + 10] = blend | kind << 24;
+        words[at + 11] = family | variation << 8 | strength << 16;
+        return true;
+    }
+
+    /** Owns an unpublished vertex buffer until packing completes under matching renderer inputs. */
+    final class PendingBackendVertices {
+        private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
+        private final int[] diffuse;
+        private final boolean unbaked;
+        private final float[] scratch = new float[FLOATS_PER_VERTEX];
+        int[] compact;
+        float[] legacy;
+        private int nextVertex;
+
+        PendingBackendVertices(Renderer3DWorldChunkFrame.ChunkMesh chunk, boolean preferCompact) {
+            this.chunk = chunk;
+            int count = chunk.getVertexCount();
+            this.diffuse = buildChunkSmoothDiffuseLights(chunk, count);
+            this.unbaked = shouldUseUnbakedRemasterMaterialBase();
+            if (preferCompact) compact = new int[count * 12];
+            else legacy = new float[count * FLOATS_PER_VERTEX];
+        }
+
+        boolean advance(Renderer3DFrame frame, long stopAtNanos) {
+            int count = chunk.getVertexCount();
+            while (nextVertex < count) {
+                if (compact == null) {
+                    writeChunkVertex(legacy, nextVertex * FLOATS_PER_VERTEX, chunk, frame,
+                        nextVertex, false, true, diffuse, null, unbaked);
+                } else {
+                    writeChunkVertex(scratch, 0, chunk, frame, nextVertex, false, true, diffuse, null, unbaked);
+                    if (!writeCompactVertex(compact, nextVertex * 12, scratch)) {
+                        legacy = new float[count * FLOATS_PER_VERTEX];
+                        compact = null;
+                        nextVertex = 0;
+                        return false;
+                    }
+                }
+                nextVertex++;
+                if ((nextVertex & 127) == 0 && System.nanoTime() >= stopAtNanos) break;
+            }
+            return nextVertex == count;
+        }
     }
 
     private static long compactBytes(float[] vertex, int first, int count) {

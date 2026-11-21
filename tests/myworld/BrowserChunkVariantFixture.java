@@ -51,6 +51,12 @@ public final class BrowserChunkVariantFixture {
             int[] compactVertices = packing.copyBackendCompactChunkVertices(mesh, b);
             require(compactVertices != null && compactVertices.length == mesh.getVertexCount() * 12,
                 "Compact fixture mesh could not be represented");
+            OpenGLWorldChunkRenderer.PendingBackendVertices slicedCompact = packing.new PendingBackendVertices(mesh, true);
+            OpenGLWorldChunkRenderer.PendingBackendVertices slicedLegacy = packing.new PendingBackendVertices(mesh, false);
+            require(slicedCompact.advance(b, Long.MAX_VALUE) && Arrays.equals(compactVertices, slicedCompact.compact),
+                "Speculative compact packing changed vertex bits");
+            require(slicedLegacy.advance(b, Long.MAX_VALUE) && Arrays.equals(legacyVertices, slicedLegacy.legacy),
+                "Speculative legacy packing changed vertex bits");
             ByteBuffer legacyBytes = ByteBuffer.allocate(legacyVertices.length * 4).order(ByteOrder.LITTLE_ENDIAN);
             ByteBuffer compactBytes = ByteBuffer.allocate(compactVertices.length * 4).order(ByteOrder.LITTLE_ENDIAN);
             legacyBytes.asFloatBuffer().put(legacyVertices);

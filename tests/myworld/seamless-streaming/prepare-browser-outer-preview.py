@@ -42,12 +42,15 @@ def main():
     parser.add_argument('--prepare-incoming-scenery', action='store_true', help='Clone incoming interactive object models before their authoritative update')
     parser.add_argument('--travel-trace', action='store_true', help='Record real submitted frames and server positions through extended travel')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
+    parser.add_argument('--slice-preupload', action='store_true', help='Pack large speculative vertex buffers across frames')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
     args = parser.parse_args()
     if args.sustained_walk and (args.manual or not args.travel_trace):
         parser.error('The automated sustained walk requires travel tracing')
+    if args.slice_preupload and not args.preupload_scene:
+        parser.error('Sliced packing requires scene uploads')
     if args.preupload_scene and not (args.preupload and args.predicted_scenery):
         parser.error('Scene uploads require terrain uploads and scenery preparation')
     if args.compact_scenery and not args.preupload_scene:
@@ -90,6 +93,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserPrepareLocalTerrain", "{str(args.prepare_local_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPrepareIncomingScenery", "{str(args.prepare_incoming_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserTravelTrace", "{str(args.travel_trace).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSlicePreupload", "{str(args.slice_preupload).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
@@ -152,6 +156,7 @@ def main():
         'prepareLocalTerrain': args.prepare_local_terrain,
         'prepareIncomingScenery': args.prepare_incoming_scenery,
         'travelTrace': args.travel_trace,
+        'slicePreupload': args.slice_preupload,
         'sustainedWalk': args.sustained_walk,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',

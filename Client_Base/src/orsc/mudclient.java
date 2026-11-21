@@ -128,6 +128,9 @@ public final class mudclient implements Runnable {
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
+	private static final boolean TRACE_BROWSER_TRAVEL = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.browserTravelTrace");
+	private final long[] travelWorkNanos = TRACE_BROWSER_TRAVEL ? new long[4] : null;
 	static final boolean PREDICTED_SCENERY_PREVIEW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
 	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
@@ -8924,6 +8927,7 @@ public final class mudclient implements Runnable {
 						this.drawLoadingPleaseWaitFrame();
 					} else if (this.world.playerAlive) {
 						long drawPreparationStart = RenderTelemetry.now();
+						long travelDrawStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
 						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
@@ -9391,10 +9395,14 @@ public final class mudclient implements Runnable {
 					BrowserRegionHandoffTrace.finishFramePhase("world-frame", handoffPhaseStart);
 					long beforeSceneNanos = RenderTelemetry.elapsedSince(drawPreparationStart);
 					long sceneRenderStart = RenderTelemetry.now();
+					long travelSceneStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
+					if (TRACE_BROWSER_TRAVEL) travelWorkNanos[1] += travelSceneStart - travelDrawStart;
 					handoffPhaseStart = traceHandoffFrame ? System.nanoTime() : 0L;
 					this.scene.setRendererSignedWorldLevel(this.packetHandler.getLogicalWorldLevel(
 						this.midRegionBaseZ + (this.localPlayer == null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize)));
 					this.scene.endScene(-113);
+					long travelObjectsStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
+					if (TRACE_BROWSER_TRAVEL) travelWorkNanos[2] += travelObjectsStart - travelSceneStart;
 					BrowserRegionHandoffTrace.finishFramePhase("scene-render", handoffPhaseStart);
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					long residentObjectsStart = RenderTelemetry.now();
@@ -9407,6 +9415,7 @@ public final class mudclient implements Runnable {
 								this.world.getRenderer3DWorldChunkFrame());
 						renderer3DFrame.setWorldChunkFrame(
 							presentedWorldChunkFrame);
+						if (TRACE_BROWSER_TRAVEL) travelWorkNanos[3] += System.nanoTime() - travelObjectsStart;
 						BrowserRegionHandoffTrace.finishFramePhase("object-frame", handoffPhaseStart);
 						this.completeLayeredSceneActivationFreshFrame(
 							presentedWorldChunkFrame);
@@ -18608,7 +18617,9 @@ public final class mudclient implements Runnable {
 					this.elixirTimer = 0;
 				}
 			}
+			long travelNetworkStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 			this.checkConnection();
+			if (TRACE_BROWSER_TRAVEL) travelWorkNanos[0] += System.nanoTime() - travelNetworkStart;
 			if (this.logoutTimeout > 0) {
 				--this.logoutTimeout;
 			}
@@ -26962,6 +26973,15 @@ public final class mudclient implements Runnable {
 
 	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedSceneryMeshes() {
 		return preparedSceneryMeshes;
+	}
+
+	/** Network, pre-scene work, scene construction, then resident object assembly. */
+	public void drainTravelTimings(float[] target, int offset) {
+		if (!TRACE_BROWSER_TRAVEL) return;
+		for (int i = 0; i < travelWorkNanos.length; i++) {
+			target[offset + i] = travelWorkNanos[i] / 1_000_000f;
+			travelWorkNanos[i] = 0L;
+		}
 	}
 
 	public boolean shouldRetainLastPresentedFrame() {

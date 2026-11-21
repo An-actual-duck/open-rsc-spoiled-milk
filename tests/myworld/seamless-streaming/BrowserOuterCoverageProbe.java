@@ -139,7 +139,7 @@ public final class BrowserOuterCoverageProbe {
 		Method walk = mudclient.class.getDeclaredMethod("walkToArea", int.class, int.class, int.class,
 			int.class, int.class, int.class, boolean.class, boolean.class);
 		walk.setAccessible(true);
-		int[][] destinations = {{284, 609}, {291, 597}, {322, 597}, {254, 609}};
+		int[][] destinations = {{284, 609}, {291, 597}, {322, 597}, {291, 597}, {284, 609}, {255, 609}};
 		for (int[] destination : destinations) {
 			int x = destination[0], z = destination[1];
 			BrowserBootstrap.report("outer-coverage:walking:" + worldX(client) + "," + worldZ(client) + "->" + x + "," + z);

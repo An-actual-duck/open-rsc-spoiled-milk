@@ -68,7 +68,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   function commitOwnedState(){if(pendingOwnedState===null)return;const before=!!ownedFrame.active;ownedFrame.active=pendingOwnedState;pendingOwnedState=null;stats.pendingOwnedState=null;stats.ownedStateActive=ownedFrame.active;stats.ownedStateTransitions.push({afterJavaFrame:stats.javaFrames,afterWorldFrame:stats.javaWorldFrames,before,enabled:ownedFrame.active,milliseconds:performance.now()});if(stats.ownedStateTransitions.length>64)stats.ownedStateTransitions.shift();}
   const worldReady=createWorldReadiness(gl,{stats});
   const travel=options.travelTrace===true?{rows:[],dropped:0}:null;
-  if(travel)stats.travelTrace=travel;
+  if(travel)Object.defineProperty(stats,'travelTrace',{value:travel});
   function recordTravel(row){
     if(!travel)return;
     if(travel.rows.length===8192){travel.rows.splice(0,1024);travel.dropped+=1024;}
@@ -399,6 +399,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(travel&&p.length===18&&stats.javaBridgeReportedWorldFrames<stats.javaWorldFrames&&lastWorld>0){
         recordTravel({kind:'frame',submittedAt:performance.timeOrigin+lastWorld,receipt:[p[14],p[15]],
           shown:[p[16],p[17]],work:Array.from(values).slice(0,10),stagingMs:values[14],
+          clientWorkMs:Array.from(values).slice(15,19),
           js:stats.jsSubmissionSamples[stats.jsSubmissionSamples.length-1]});
       }
       stats.pose={cameraOffset:Array.from(p.subarray(0,3)),rotation:Array.from(p.subarray(3,6)),center:Array.from(p.subarray(6,8)),viewport:Array.from(p.subarray(8,10)),perspectiveShift:p[10],fogStart:p[11],fogEnd:p[12],signedLevel:p[13]};stats.spriteCompositeCache={enabled:values[10]===1,hits:values[11],misses:values[12],bytes:values[13]};stats.javaSkyExportMs=values[9];stats.cpuDepthFramePresent=values[7]===1;stats.javaLightingExportMs=values[8];stats.javaCacheEntries=values[5];stats.javaCacheResidentBytes=values[6];stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>(stats.measurement?4096:600))stats.javaBridgeWorkSamples.shift();uploadValidation.frameComplete();commitOwnedState();stats.javaBridgeReportedWorldFrames=stats.javaWorldFrames;
