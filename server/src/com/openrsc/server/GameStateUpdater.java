@@ -167,6 +167,8 @@ public final class GameStateUpdater {
 		Boolean.getBoolean("spoiledmilk.surfaceSceneryCells");
 	private static final boolean SURFACE_SCENERY_DRAW = SURFACE_SCENERY_CELLS && EXPANDED_SURFACE_DRAW_BORDER
 		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
+	private static final boolean LIVE_SURFACE_HANDOFF = SURFACE_SCENERY_DRAW
+		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
 	private static final String SURFACE_SCENERY_CELLS_ATTRIBUTE = "surface_scenery_cells";
 	private static final String LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE =
 		"layered_scene_context_sequence";
@@ -530,7 +532,11 @@ public final class GameStateUpdater {
 		context.legacyX = expectedLegacy.getX();
 		context.legacyY = expectedLegacy.getY();
 		if (nativeTerrain != null) {
-			nativeTerrain.populate(context);
+			boolean preparedSurface = LIVE_SURFACE_HANDOFF && predictedSymmetricReady && usesCoveredWalkingPreview(player)
+				&& context.protocolVersion == ATOMIC_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION
+				&& !player.isTeleporting() && player.isLoggedIn()
+				&& !player.getAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, false);
+			nativeTerrain.populate(context, preparedSurface);
 		}
 		if (SURFACE_SCENERY_DRAW && predictedSymmetricReady) {
 			SurfaceScenerySubscription subscription = player.getAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE, null);
@@ -2835,7 +2841,7 @@ public final class GameStateUpdater {
 			}
 		}
 
-		private void populate(final LayeredSceneContextStruct context) {
+		private void populate(final LayeredSceneContextStruct context, boolean preparedSurface) {
 			context.nativePackageId = terrainPackage.getPackageId();
 			context.nativePackageVersion = terrainPackage.getPackageVersion();
 			context.nativeManifestSha256 =
@@ -2852,7 +2858,7 @@ public final class GameStateUpdater {
 				context.nativePackageVersion,
 				context.nativeManifestSha256,
 				context.nativePresentationChunkSize,
-				context.nativeChunks);
+				context.nativeChunks, NATIVE_LAYERED_CHUNK_RADIUS, false, preparedSurface);
 		}
 
 		private void populate(final LayeredTerrainStageStruct stage) {
@@ -2886,27 +2892,7 @@ public final class GameStateUpdater {
 				stage.nativePresentationChunkSize,
 				stage.nativeChunks,
 				chunkRadius,
-				structuralOnly);
-		}
-
-		private void populateChunks(
-			final String worldSpace,
-			final int logicalLevel,
-			final String packageId,
-			final String packageVersion,
-			final String manifestSha256,
-			final int presentationChunkSize,
-			final List<LayeredSceneTerrainChunkStruct> chunks) {
-			populateChunks(
-				worldSpace,
-				logicalLevel,
-				packageId,
-				packageVersion,
-				manifestSha256,
-				presentationChunkSize,
-				chunks,
-				NATIVE_LAYERED_CHUNK_RADIUS,
-				false);
+				structuralOnly, false);
 		}
 
 		private void populateChunks(
@@ -2918,7 +2904,7 @@ public final class GameStateUpdater {
 			final int presentationChunkSize,
 			final List<LayeredSceneTerrainChunkStruct> chunks,
 			final int chunkRadius,
-			final boolean structuralOnly) {
+			final boolean structuralOnly, final boolean preparedSurface) {
 			if (residencyTransaction != null) {
 				throw new IllegalStateException(
 					"Native terrain residency receipt was populated twice");
@@ -3008,6 +2994,9 @@ public final class GameStateUpdater {
 										logicalLevel,
 										presentationChunkSize,
 										output));
+						// The accepted visual input stage already delivered the exact raw inner sectors.
+						// Keep the normal residency transaction so both peers promote them in the same order.
+						if (preparedSurface && residencyTransaction != null) output.payloadPresent = false;
 						if (output.payloadPresent) {
 							payloadSectors++;
 							final int expectedRawBytes =

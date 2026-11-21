@@ -77,7 +77,7 @@ def main():
         command.append('--outer-coverage')
     if args.live_surface:
         command.extend(['--persistent-movement', '--surface-scenery-cells', '--expanded-surface-draw-border',
-                        '--surface-scenery-draw', '--safe-walk-fixture'])
+                        '--surface-scenery-draw', '--live-surface-handoff', '--safe-walk-fixture'])
     subprocess.run(command, cwd=ROOT, check=True)
 
     launcher = run / 'Open Covered Walking Preview.sh'

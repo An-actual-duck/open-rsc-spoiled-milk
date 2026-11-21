@@ -176,6 +176,7 @@ def main():
         *(['--surface-scenery-cells'] if args.surface_scenery_cells else []),
         *(['--expanded-surface-draw-border'] if args.expanded_surface_draw_border else []),
         *(['--surface-scenery-draw'] if args.surface_scenery_draw else []),
+        *(['--live-surface-handoff'] if args.live_surface_handoff else []),
         *(['--surface-scenery-mutation'] if args.surface_scenery_cells and not args.manual else []),
     ], cwd=ROOT, check=True)
     staged_hashes = {

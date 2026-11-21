@@ -107,6 +107,17 @@ public final class NativeLayeredTerrainPacketDecoder {
 			null);
 	}
 
+	static NativeLayeredTerrainSnapshot decodeV8WithPreparedSurface(byte[] payload, String worldSpace, int level,
+		NativeLayeredTerrainResidentCache residentCache, NativeLayeredTerrainSnapshot preparedSurface) {
+		ChunkedDecode decoder = startChunkedDecode(payload, worldSpace, level,
+			NativeLayeredTerrainSnapshot.ATOMIC_ACTIVATION_PROTOCOL_VERSION, residentCache, null, false);
+		if (preparedSurface != null && preparedSurface.matchesPreparedSurface(worldSpace, level, decoder.packageId,
+			decoder.packageVersion, decoder.manifestSha256, decoder.centerX(), decoder.centerY())) {
+			decoder.preparedSurface = preparedSurface;
+		}
+		return decoder.advance(Long.MAX_VALUE);
+	}
+
 	public static NativeLayeredTerrainSnapshot decodeV7Stage(
 		byte[] payload,
 		String worldSpace,
@@ -269,6 +280,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 		private final NativeLayeredTerrainResidentCache.Transaction residentTransaction;
 		private final NativeLayeredTerrainChunk[] chunks;
 		private final SectorInflater inflater;
+		private NativeLayeredTerrainSnapshot preparedSurface;
 		private int index;
 
 		private ChunkedDecode(byte[] payload, String worldSpace, int level, int protocolVersion,
@@ -382,6 +394,10 @@ public final class NativeLayeredTerrainPacketDecoder {
 						Math.multiplyExact(chunkSize, chunkSize),
 						visualTileBytes)
 					: expandedTileBytes;
+				String content = residentTransaction == null ? null : residentContentIdentity(
+					packageId, packageVersion, manifestSha256, worldSpace, level, chunkSize,
+					chunkX, chunkY, sourceSectorX, sourceSectorY, sourceEncoding, sourcePayloadSha256);
+
 				NativeLayeredTerrainChunk chunk;
 				if (payloadPresent) {
 					int wireByteCount = input.getShort() & 0xffff;
@@ -439,38 +455,16 @@ public final class NativeLayeredTerrainPacketDecoder {
 						throw new IllegalArgumentException(
 							"Native terrain reference requires protocol v6");
 					}
-					chunk = residentTransaction.resolveReference(
-						residentContentIdentity(
-							packageId,
-							packageVersion,
-							manifestSha256,
-							worldSpace,
-							level,
-							chunkSize,
-							chunkX,
-							chunkY,
-							sourceSectorX,
-							sourceSectorY,
-							sourceEncoding,
-							sourcePayloadSha256));
+					try {
+						chunk = residentTransaction.resolveReference(content);
+					} catch (NativeLayeredTerrainResidentCache.MissingReferenceException missing) {
+						chunk = preparedSurface == null ? null : preparedSurface.findPreparedSurfaceChunk(
+							chunkX, chunkY, sourceSectorX, sourceSectorY, sourceEncoding, sourcePayloadSha256);
+						if (chunk == null) throw missing;
+						residentTransaction.acceptPreparedReference(content, chunk);
+					}
 				}
-				if (residentTransaction != null && payloadPresent) {
-					residentTransaction.acceptPayload(
-						residentContentIdentity(
-							packageId,
-							packageVersion,
-							manifestSha256,
-							worldSpace,
-							level,
-							chunkSize,
-							chunkX,
-							chunkY,
-							sourceSectorX,
-							sourceSectorY,
-							sourceEncoding,
-							sourcePayloadSha256),
-						chunk);
-				}
+				if (residentTransaction != null && payloadPresent) residentTransaction.acceptPayload(content, chunk);
 				chunks[index] = chunk;
 			} else {
 				throw new IllegalArgumentException(

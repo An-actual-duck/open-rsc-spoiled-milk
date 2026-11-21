@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--persistent-movement', action='store_true', help='Enable the matched private travel movement stream')
     parser.add_argument('--surface-scenery-cells', action='store_true', help='Publish authoritative incoming scenery cells')
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Send source neighbors for every render cell')
+    parser.add_argument('--live-surface-handoff', action='store_true')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Stream scenery revisions for draw cells')
     parser.add_argument('--safe-walk-fixture', action='store_true', help='Protect the disposable walk probe from incidental combat')
     parser.add_argument('--surface-scenery-mutation', action='store_true', help='Change scenery during the automated route')
@@ -40,6 +41,8 @@ def main():
         parser.error('Expanded draw sources require private surface scenery cells')
     if args.surface_scenery_draw and not args.expanded_surface_draw_border:
         parser.error('Scenery draw cells require the expanded terrain sources')
+    if args.live_surface_handoff and not args.surface_scenery_draw:
+        parser.error('Live surface references require the matched scenery stream')
     if args.surface_scenery_mutation and not (args.surface_scenery_cells and args.outer_coverage):
         parser.error('The scenery mutation fixture requires the outer coverage route and surface scenery cells')
     if args.predicted_scenery and not args.covered_walking_preview:
@@ -112,6 +115,8 @@ def main():
         command.append('-Dspoiledmilk.expandedSurfaceDrawBorder=true')
     if args.surface_scenery_draw:
         command.append('-Dspoiledmilk.surfaceSceneryDraw=true')
+    if args.live_surface_handoff:
+        command.append('-Dspoiledmilk.liveSurfaceHandoff=true')
     if args.safe_walk_fixture:
         command.append('-Dspoiledmilk.privateSafeWalkFixture=true')
     if args.surface_scenery_mutation:

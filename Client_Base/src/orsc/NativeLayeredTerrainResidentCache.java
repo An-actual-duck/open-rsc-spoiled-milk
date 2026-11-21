@@ -173,6 +173,12 @@ public final class NativeLayeredTerrainResidentCache {
 			return checkedChunk;
 		}
 
+		void acceptPreparedReference(String contentIdentity, NativeLayeredTerrainChunk chunk) {
+			acceptPayload(contentIdentity, chunk);
+			payloads--;
+			references = Math.addExact(references, 1);
+		}
+
 		public NativeLayeredTerrainChunk resolveReference(
 			final String contentIdentity) {
 			requireOpen();

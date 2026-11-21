@@ -485,6 +485,21 @@ public final class NativeLayeredTerrainSnapshot {
 		}
 	}
 
+	boolean matchesPreparedSurface(String space, int level, String id, String version, String manifest, int x, int z) {
+		return level == 0 && "global".equals(space) && this.level == level && worldSpace.equals(space)
+			&& protocolVersion == SYMMETRIC_RESIDENCY_PROTOCOL_VERSION && currentChunkX == x && currentChunkY == z
+			&& packageId.equals(id) && packageVersion.equals(version) && manifestSha256.equals(manifest);
+	}
+
+	NativeLayeredTerrainChunk findPreparedSurfaceChunk(int x, int z, int sourceX, int sourceZ, String encoding, String hash) {
+		for (NativeLayeredTerrainChunk chunk : chunks) {
+			if (chunk.isAvailable() && chunk.getChunkX() == x && chunk.getChunkY() == z
+				&& chunk.getSourceSectorX() == sourceX && chunk.getSourceSectorY() == sourceZ
+				&& chunk.getSourceEncoding().equals(encoding) && chunk.getSourcePayloadSha256().equals(hash)) return chunk;
+		}
+		return null;
+	}
+
 	public int getChunkSlotCount() {
 		return isChunkedProtocol() ? chunks.length : 1;
 	}

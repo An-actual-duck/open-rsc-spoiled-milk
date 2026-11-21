@@ -180,6 +180,11 @@ public final class BrowserOuterCoverageProbe {
 				throw new IllegalStateException("Verified walking opened a load epoch or lacked coverage: "
 					+ Arrays.toString(coverageBefore) + " -> " + Arrays.toString(coverage));
 			}
+			String terrain = client.packetHandler.getLayeredSceneContextDebugSummary();
+			if (!terrain.contains("lastPayloads=0 lastReferences=9")) {
+				throw new IllegalStateException("The ordinary context resent terrain already accepted from the prediction: " + terrain);
+			}
+			BrowserBootstrap.report("outer-coverage:live-handoff:terrain-references=9:payloads=0");
 			BrowserBootstrap.report("outer-coverage:live-handoff:gpu-coverage=" + Arrays.toString(coverage)
 				+ ":input=ready:prepared-pick-models=" + client.getAdoptedSurfaceInteractiveModels());
 		}

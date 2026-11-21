@@ -968,6 +968,10 @@ public class PacketHandler {
 					worldSpace,
 					logicalLevel,
 					contextCache);
+			} else if (mudclient.LIVE_SURFACE_HANDOFF && !nativeTerrainRecovery.isPending()
+				&& readyPredictedLayeredTerrainStructureStage != null) {
+				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV8WithPreparedSurface(
+					body, worldSpace, logicalLevel, contextCache, readyPredictedLayeredTerrainStage);
 			} else {
 				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV8(
 					body,
