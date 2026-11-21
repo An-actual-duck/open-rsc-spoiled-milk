@@ -1416,8 +1416,16 @@ public class PacketHandler {
 					: protocolVersion == 5
 						? " predicted symmetric structure queued"
 					: " prebuild queued");
-		System.out.println(summary);
-		ClientRuntimeLogger.log(summary);
+		logTerrainStreaming(summary);
+	}
+
+	private static void logTerrainStreaming(String summary) {
+		if (mudclient.LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()) {
+			ClientRuntimeLogger.logStreaming(summary);
+		} else {
+			System.out.println(summary);
+			ClientRuntimeLogger.log(summary);
+		}
 	}
 
 	private void beginSurfaceSceneryPrediction(int stage, int context, int x, int z,
@@ -1617,8 +1625,7 @@ public class PacketHandler {
 					BoundaryLoadingDiagnostics.now();
 				final String retry =
 					"predicted terrain halo scope changed before ack; retrying";
-				System.out.println(retry);
-				ClientRuntimeLogger.log(retry);
+				logTerrainStreaming(retry);
 				return;
 			}
 			if (readyPredictedLayeredTerrainHalo != null
@@ -1661,8 +1668,7 @@ public class PacketHandler {
 				result.summary()
 					+ " cachedForActivation="
 					+ pendingLayeredTerrainStageSequence;
-			System.out.println(summary);
-			ClientRuntimeLogger.log(summary);
+			logTerrainStreaming(summary);
 			clearPendingLayeredTerrainPrebuild();
 			return;
 		}
@@ -1685,8 +1691,7 @@ public class PacketHandler {
 					BoundaryLoadingDiagnostics.now();
 				final String retry =
 					"predicted terrain structure scope changed before ack; retrying";
-				System.out.println(retry);
-				ClientRuntimeLogger.log(retry);
+				logTerrainStreaming(retry);
 				return;
 			}
 			readyPredictedLayeredTerrainHalo = result;
@@ -1736,8 +1741,7 @@ public class PacketHandler {
 				result.summary()
 					+ " completeForActivation="
 					+ pendingLayeredTerrainStageSequence;
-			System.out.println(summary);
-			ClientRuntimeLogger.log(summary);
+			logTerrainStreaming(summary);
 			clearPendingLayeredTerrainPrebuild();
 			return;
 		}

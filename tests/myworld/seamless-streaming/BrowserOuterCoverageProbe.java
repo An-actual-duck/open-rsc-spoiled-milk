@@ -213,12 +213,15 @@ public final class BrowserOuterCoverageProbe {
 			walkLeg(client, walk, 291, 597);
 			if (liveHandoff && Boolean.getBoolean("spoiledmilk.sustainedBrowserWalk")) {
 				verifySurfaceWalkLeg(client, walk, 322, 597, coverageBefore[1], actor);
-				verifySurfaceWalkLeg(client, walk, 276, 597, coverageBefore[1], actor);
 				walkLeg(client, walk, 291, 597);
 			}
 			walkLeg(client, walk, 284, 609);
 		}
-		walkLeg(client, walk, 252, 609);
+		if (liveHandoff && Boolean.getBoolean("spoiledmilk.sustainedBrowserWalk")) {
+			verifySurfaceWalkLeg(client, walk, 252, 609, coverageBefore[1], actor);
+		} else {
+			walkLeg(client, walk, 252, 609);
+		}
 		int[] after = client.packetHandler.getPersistentMovementReceipt();
 		if (after[0] != before[0] || after[1] <= before[1] || after[2] != 0) {
 			throw new IllegalStateException("Unexpected travel receipts " + Arrays.toString(before) + " to " + Arrays.toString(after));
