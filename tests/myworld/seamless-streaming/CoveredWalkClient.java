@@ -17,7 +17,8 @@ import orsc.graphics.three.World;
 public final class CoveredWalkClient {
 
 	public static void main(String[] args) throws Exception {
-		boolean longerRoute = args.length == 3 && "--outer-coverage".equals(args[2]);
+		boolean live = args.length == 3 && "--live-surface".equals(args[2]);
+		boolean longerRoute = live || args.length == 3 && "--outer-coverage".equals(args[2]);
 		if ((args.length != 2 && !longerRoute) || (!"true".equals(args[1]) && !"false".equals(args[1]))) {
 			throw new IllegalArgumentException("Expected the private server status path, preview flag, and optional outer route");
 		}
@@ -34,7 +35,7 @@ public final class CoveredWalkClient {
 			throw new IllegalArgumentException("Start the disposable preview and supply its test login");
 		}
 		try {
-			run(status, preview, password, longerRoute);
+			run(status, preview, password, longerRoute, live);
 			System.exit(0);
 		} catch (Throwable failure) {
 			failure.printStackTrace();
@@ -42,7 +43,13 @@ public final class CoveredWalkClient {
 		}
 	}
 
-	private static void run(Path status, boolean preview, String password, boolean longerRoute) throws Exception {
+	private static void run(Path status, boolean preview, String password, boolean longerRoute, boolean live) throws Exception {
+		if (live) {
+			for (String feature : new String[] {"persistentMovementPreview", "persistentSurfaceCollision", "surfaceSceneryCells",
+				"rollingSurfaceWindow", "fixedSurfaceDraw", "expandedSurfaceDrawBorder", "surfaceSceneryDraw", "liveSurfaceHandoff"}) {
+				System.setProperty("spoiledmilk." + feature, "true");
+			}
+		}
 		OpenRSC.main(new String[0]);
 		Field game = field(ORSCApplet.class, "mudclient");
 		Field loginPanel = field(mudclient.class, "panelLogin");
@@ -90,6 +97,24 @@ public final class CoveredWalkClient {
 		if (longerRoute) {
 			if (startX != 239 || startZ != 609) {
 				throw new AssertionError("Outer coverage route needs the private spawn at 239,609");
+			}
+			if (live) {
+				ORSCharacter actor = client.getLocalPlayer();
+				long travelDeadline = deadline(10);
+				while (client.packetHandler.getPersistentMovementGeneration() == 0 && System.nanoTime() < travelDeadline) Thread.sleep(20);
+				int generation = client.packetHandler.getPersistentMovementGeneration();
+				int sequence = context.getSequence();
+				int[][] legs = {{257, 609, 264}, {278, 609, 264}, {284, 609, 312}, {291, 597, 312},
+					{322, 597, 312}, {291, 597, 264}, {284, 609, 264}, {252, 609, 264}};
+				for (int[] leg : legs) walk(client, status, context, leg[0], leg[1], leg[2], false, true);
+				int[] movement = client.packetHandler.getPersistentMovementReceipt();
+				if (generation <= 0 || movement[0] != generation || movement[2] != 0 || client.getLocalPlayer() != actor
+					|| client.getRollingSurfaceWindows() != 3 || context.getSequence() != sequence + 3) {
+					throw new AssertionError("Native walking replaced authority or missed a verified crossing");
+				}
+				System.out.printf("PASS native rolling travel, generation %d, contexts %d/%d, rolls %d%n",
+					generation, sequence, context.getSequence(), client.getRollingSurfaceWindows());
+				return;
 			}
 			int startSequence = context.getSequence();
 			int result = walk(client, status, context, 269, 609, 264, false, true);

@@ -10,12 +10,14 @@ validation. Create new fixtures and routes from the maintained code and map.
 Prior experiment branches, prototypes, routes, captures, and results are
 excluded as implementation inputs and acceptance evidence for this plan.
 
-**Current direction.** Replace the ordinary-walking whole-scene transaction.
-The next implementation on the worker is the independent movement and
-cell-publication path, starting with preinstalled authoritative terrain for
-one crossing and then exercising actual cell arrivals. A build that still
-starts a loading cover or produces a repeatable streaming hitch during
-ordinary walking fails the player outcome below.
+**Current direction.** Ordinary surface travel uses a rolling gameplay window,
+verified collision and scenery receipts, and independently resident terrain
+draw cells. The private trial keeps the same movement generation and browser
+epoch through repeated crossings. The remaining acceptance requirement is
+continuous rendering and input while cells are built and published. Keep
+working through architectural dependencies before tuning individual stages.
+Use [fresh travel evidence](seamless-world-streaming-preview.md#repeated-crossings-with-live-coverage)
+to compare the remaining frame gaps with steady walking.
 
 ## Player outcome
 

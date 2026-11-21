@@ -21,6 +21,7 @@ def main():
     parser.add_argument('--surface-scenery-cells', action='store_true', help='Publish authoritative incoming scenery cells')
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Send source neighbors for every render cell')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Stream scenery revisions for draw cells')
+    parser.add_argument('--safe-walk-fixture', action='store_true', help='Protect the disposable walk probe from incidental combat')
     parser.add_argument('--surface-scenery-mutation', action='store_true', help='Change scenery during the automated route')
     parser.add_argument('--predicted-scenery', action='store_true', help='Enable the private scenery prediction')
     parser.add_argument('--prebuild-ownership', action='store_true', help='Stage scenery in the ownership transition strips')
@@ -111,6 +112,8 @@ def main():
         command.append('-Dspoiledmilk.expandedSurfaceDrawBorder=true')
     if args.surface_scenery_draw:
         command.append('-Dspoiledmilk.surfaceSceneryDraw=true')
+    if args.safe_walk_fixture:
+        command.append('-Dspoiledmilk.privateSafeWalkFixture=true')
     if args.surface_scenery_mutation:
         command.append('-Dspoiledmilk.surfaceSceneryMutation=true')
     if args.predicted_scenery:

@@ -302,7 +302,10 @@ public class PacketHandler {
 			mc.resetLayeredSceneActivationPresentation();
 			mc.clearStaticScenePresentation();
 			if (mudclient.SURFACE_SCENERY_DRAW) mc.clearSurfaceSceneryDraw();
-			if (mc.getWorld() != null) mc.getWorld().clearSurfaceCollision();
+			if (mc.getWorld() != null) {
+				mc.getWorld().clearSurfaceCollision();
+				if (mudclient.LIVE_SURFACE_HANDOFF) mc.getWorld().invalidateIncomingSurfaceDraws();
+			}
 		}
 		nativeLayeredTerrainResidentCache.clear();
 		layeredTerrainStageAssembler.reset();
@@ -340,6 +343,7 @@ public class PacketHandler {
 
 	private void cancelPendingLayeredTerrainPrebuild() {
 		cancelPredictedTerrainDecode();
+		if (mudclient.LIVE_SURFACE_HANDOFF && mc.getWorld() != null) mc.getWorld().invalidateIncomingSurfaceDraws();
 		if (pendingLayeredTerrainPrebuild != null) {
 			pendingLayeredTerrainPrebuild.cancel(true);
 		}
@@ -356,8 +360,10 @@ public class PacketHandler {
 	}
 
 	List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedFixedSurfaceDraw() {
-		return readyPredictedLayeredTerrainStructureStage == null ? java.util.Collections.emptyList()
-			: mc.getWorld().getPreparedFixedSurfaceDraw(readyPredictedLayeredTerrainHalo);
+		World world = mc.getWorld();
+		if (world == null) return java.util.Collections.emptyList();
+		return readyPredictedLayeredTerrainStructureStage == null ? world.getIncomingSurfaceDraws()
+			: world.getPreparedFixedSurfaceDraw(readyPredictedLayeredTerrainHalo);
 	}
 
 	private void clearReadyPredictedLayeredTerrainHalo() {

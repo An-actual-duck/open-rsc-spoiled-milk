@@ -32,12 +32,14 @@ public final class BrowserPrivateServer {
         }
         server.getGameEventHandler().add(new GameTickEvent(server.getWorld(), null, 1, "Private browser proof status", DuplicationStrategy.ONE_PER_SERVER) {
             private final boolean traceTravel = Boolean.getBoolean("spoiledmilk.browserTravelTrace");
+            private final boolean protectWalk = Boolean.getBoolean("spoiledmilk.privateSafeWalkFixture");
             private final boolean mutateScenery = Boolean.getBoolean("spoiledmilk.surfaceSceneryMutation");
             private GameObject testScenery;
             private boolean sceneryRemoved;
             public void run() {
                 try {
                     Player player = server.getWorld().getPlayer(DataConversions.usernameToHash("browserdemo"));
+                    if (protectWalk && player != null && !player.stateIsInvulnerable()) player.setCacheInvulnerable(true);
                     if (mutateScenery && player != null && !sceneryRemoved && player.getY() == 609) {
                         if (player.getX() == 258 && testScenery == null) {
                             Point tile = Point.location(305, 620);

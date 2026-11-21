@@ -164,6 +164,8 @@ public final class BrowserOuterCoverageProbe {
 		Map<RSModel, Long> overlapModels = rolling ? snapshotOverlapModels(client, false) : null;
 		Map<RSModel, Long> overlapWalls = rolling ? snapshotOverlapModels(client, true) : null;
 		Object actor = client.getLocalPlayer();
+		if (liveHandoff) BrowserBootstrap.report("outer-coverage:terrain-cells-before-context="
+			+ client.getWorld().getIncomingSurfaceDraws().size());
 		int[] coverageBefore = liveHandoff ? BrowserWebGLBridge.getSurfaceCoverageReceipt() : null;
 		if (liveHandoff && (coverageBefore.length == 0 || worldInputReady() != 1)) {
 			throw new IllegalStateException("Installed area never became interactive");

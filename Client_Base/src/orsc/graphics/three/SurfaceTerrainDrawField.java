@@ -33,11 +33,12 @@ final class SurfaceTerrainDrawField {
 		return old != null && Arrays.equals(old.footprint, footprint) ? old : null;
 	}
 
-	void add(int x, int z, Cell cell) {
+	Renderer3DWorldChunkFrame.ChunkMesh add(int x, int z, Cell cell) {
 		cells.put(key(x, z), cell);
-		if (cell.mesh != null) {
-			draws.add(cell.mesh.rebasePresentation((x - centerX) * CELL_UNITS, (z - centerZ) * CELL_UNITS));
-		}
+		if (cell.mesh == null) return null;
+		Renderer3DWorldChunkFrame.ChunkMesh draw = cell.mesh.rebasePresentation((x - centerX) * CELL_UNITS, (z - centerZ) * CELL_UNITS);
+		draws.add(draw);
+		return draw;
 	}
 
 	boolean matches(NativeLayeredTerrainSnapshot source, int x, int z, boolean withRoofs) {

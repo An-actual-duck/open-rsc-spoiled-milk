@@ -620,6 +620,47 @@ python3 tests/myworld/seamless-streaming/prepare-browser-outer-preview.py <fresh
   --fixed-surface-draw --expanded-surface-draw-border --surface-scenery-draw --compact-scenery
 ```
 
+## Repeated crossings with live coverage
+
+The current private surface path keeps gameplay ready when an exact Player
+receipt, static fence, and prepared collision window agree. The browser uses
+the installed terrain coverage for readiness. It can draw each scenery cell
+as its own buffer becomes ready, and the server still owns movement and
+interactions. Login and deliberate relocation retain their readiness checks.
+
+The fresh `live-surface-single-terrain-build` run at `dcf5f460e` walked from
+`(239,609)` through the first handoff, continued to `(322,597)`, and returned
+to `(252,609)`. The server confirmed the destination. During that walk,
+Firefox recorded 3,211 fresh WebGL frames, zero held frames, zero sampled
+input blocks, and zero new browser load epochs. Movement stayed in generation
+1 across four terrain contexts, with zero out-of-coverage movement receipts.
+All nine incoming collision cells arrived before their corresponding draw
+geometry completed. The fixture checked player identity, scene ownership,
+retained GPU IDs, and a staged anvil addition and removal. [Firefox capture](../../../output/tests/browser-gameplay-spike/live-surface-single-terrain-build/firefox-result.json)
+
+The same run recorded gaps of 391 ms during lookahead, 379 ms around the
+first scene receipt, and 244 ms at the second crossing. It removed the
+second full terrain preparation from the prediction sequence and kept the
+Java terrain build cooperative. The gaps still fail the travel target.
+Browser scheduling and Java presentation intervals are recorded independently
+in the capture. The native client and a real diagonal route need separate
+playthroughs.
+
+CheerpJ Java threads share their owning browser thread. A separate browser
+worker can run its own Java VM. The renderer experiment sends the checked
+nine-sector footprint to that worker and receives fixed-cell and compatibility
+meshes built by the same terrain code. The active client still prepares
+interaction data and applies the server fence. Measure worker output parity
+and real frame gaps over the same route before using this path for a player
+preview. [CheerpJ architecture](https://cheerpj.com/docs/explanation/architecture)
+
+The isolated mesher at `798e9a200` returned 15 entering terrain cells across
+three crossings. The fixture completed at `(252,609)` with 3,355 fresh
+WebGL frames, no held frames and no input blocks. The longest gap was 379 ms.
+The worker removes a source of contention during lookahead. Exact window
+installation and the Java render/packing path still have work on the frame
+owner. [Isolated mesher capture](../../../output/tests/browser-gameplay-spike/live-surface-isolated-mesher/firefox-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

@@ -59,6 +59,9 @@ public final class World {
 	private static final boolean FIXED_SURFACE_DRAW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
 	private volatile SurfaceTerrainDrawField fixedSurfaceDraw;
+	private volatile SurfaceDrawPreparation preparedSurfaceDraw;
+	private static final boolean LIVE_SURFACE_DRAW_PREPARATION = FIXED_SURFACE_DRAW
+		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
 	private final SurfaceCollisionCells surfaceCollision = PERSISTENT_SURFACE_COLLISION ? new SurfaceCollisionCells() : null;
 	private final AtomicReference<IncomingSurfaceCollision> incomingSurfaceCollision =
 		PERSISTENT_SURFACE_COLLISION ? new AtomicReference<>() : null;
@@ -628,6 +631,10 @@ public final class World {
 		final Renderer3DWorldChunkFrame reusableChunks =
 			reusableNativeLayeredTerrainChunks(
 				activeTerrain, worldOffsetX, worldOffsetZ);
+		final SurfaceDrawPreparation drawPreparation = LIVE_SURFACE_DRAW_PREPARATION
+			&& "global".equals(presentationTerrain.getWorldSpace()) && presentationTerrain.getLevel() == 0
+			? new SurfaceDrawPreparation(activeTerrain, sourceRevision, worldOffsetX, worldOffsetZ, includeRoofGeometry) : null;
+		preparedSurfaceDraw = drawPreparation;
 		return sectorPreloadExecutor.submit(
 			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
 				@Override
@@ -642,7 +649,8 @@ public final class World {
 						worldOffsetZ,
 						sourceRevision,
 						includeRoofGeometry,
-						reusableChunks);
+						reusableChunks,
+						drawPreparation);
 				}
 			});
 	}
@@ -836,6 +844,42 @@ public final class World {
 			|| result.worldOffsetX != syntheticDeepFixtureOffsetX || result.worldOffsetZ != syntheticDeepFixtureOffsetZ
 			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) return Collections.emptyList();
 		return result.fixedDraw.draws();
+	}
+
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getIncomingSurfaceDraws() {
+		SurfaceDrawPreparation preparation = preparedSurfaceDraw;
+		if (preparation == null || preparation.active != nativeLayeredTerrainSnapshot
+			|| preparation.revision != worldEditorTerrainRevision.get() || preparation.offsetX != syntheticDeepFixtureOffsetX
+			|| preparation.offsetZ != syntheticDeepFixtureOffsetZ || preparation.withRoofs != !Config.C_HIDE_ROOFS) {
+			return Collections.emptyList();
+		}
+		return preparation.ready;
+	}
+
+	public void invalidateIncomingSurfaceDraws() {
+		preparedSurfaceDraw = null;
+	}
+
+	private static final class SurfaceDrawPreparation {
+		private final NativeLayeredTerrainSnapshot active;
+		private final long revision;
+		private final int offsetX, offsetZ;
+		private final boolean withRoofs;
+		private volatile List<Renderer3DWorldChunkFrame.ChunkMesh> ready = Collections.emptyList();
+
+		private SurfaceDrawPreparation(NativeLayeredTerrainSnapshot active, long revision, int offsetX, int offsetZ, boolean withRoofs) {
+			this.active = active;
+			this.revision = revision;
+			this.offsetX = offsetX;
+			this.offsetZ = offsetZ;
+			this.withRoofs = withRoofs;
+		}
+
+		private void add(Renderer3DWorldChunkFrame.ChunkMesh mesh) {
+			List<Renderer3DWorldChunkFrame.ChunkMesh> next = new ArrayList<>(ready);
+			next.add(mesh);
+			ready = Collections.unmodifiableList(next);
+		}
 	}
 
 	public boolean canAcceptPredictedNativeLayeredTerrainStructure(
@@ -1045,6 +1089,23 @@ public final class World {
 			long sourceRevision,
 			boolean includeRoofGeometry,
 			Renderer3DWorldChunkFrame reusableChunks) {
+		return buildNativeLayeredTerrainHalo(activeTerrain, haloTerrain, receivedHaloScopeIdentity,
+			receivedProtocolVersion, activeScopeIdentity, worldOffsetX, worldOffsetZ, sourceRevision,
+			includeRoofGeometry, reusableChunks, null);
+	}
+
+	private NativeLayeredTerrainHaloPrebuildResult
+		buildNativeLayeredTerrainHalo(
+			NativeLayeredTerrainSnapshot activeTerrain,
+			NativeLayeredTerrainSnapshot haloTerrain,
+			String receivedHaloScopeIdentity,
+			int receivedProtocolVersion,
+			String activeScopeIdentity,
+			int worldOffsetX,
+			int worldOffsetZ,
+			long sourceRevision,
+			boolean includeRoofGeometry,
+			Renderer3DWorldChunkFrame reusableChunks, SurfaceDrawPreparation drawPreparation) {
 		long buildStart = System.nanoTime();
         WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forCaptured(haloTerrain,worldOffsetX,worldOffsetZ,includeRoofGeometry);
         if(ram!=null){
@@ -1190,7 +1251,14 @@ public final class World {
 					}
 					if (slice != null) slice.checkpoint();
 				}
-				if (fixedDraw != null) fixedDraw.add(sectionX, sectionY, fixedCell);
+				if (fixedDraw != null) {
+					Renderer3DWorldChunkFrame.ChunkMesh draw = fixedDraw.add(sectionX, sectionY, fixedCell);
+					if (drawPreparation != null && draw != null
+						&& Math.max(Math.abs(haloTerrain.getCurrentChunkX() + deltaX - activeTerrain.getCurrentChunkX()),
+							Math.abs(haloTerrain.getCurrentChunkY() + deltaY - activeTerrain.getCurrentChunkY())) > 2) {
+						drawPreparation.add(draw);
+					}
+				}
 				if (radius == 0) continue;
 				if (presentation != null) {
 					retentionChunks.add(presentation);
