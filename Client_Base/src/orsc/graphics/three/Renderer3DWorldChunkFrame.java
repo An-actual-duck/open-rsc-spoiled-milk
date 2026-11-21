@@ -253,6 +253,7 @@ public final class Renderer3DWorldChunkFrame {
 		private final int centerSectionY;
 		private final int originWorldX;
 		private final int originWorldZ;
+		private boolean residentFishingPose;
 		private final int[] vertexCoords;
 		private final int vertexOffsetX;
 		private final int vertexOffsetZ;
@@ -1696,6 +1697,15 @@ public final class Renderer3DWorldChunkFrame {
 		 */
 		public long getStorageSignature() {
 			return storageSignature;
+		}
+
+		public void markResidentFishingPose() {
+			if (chunkRole != CHUNK_ROLE_ANIMATED_OBJECTS) throw new IllegalStateException("Fishing pose requires animated scenery");
+			residentFishingPose = true;
+		}
+
+		public boolean isResidentFishingPose() {
+			return residentFishingPose;
 		}
 
 		public int getVertexOffsetX() {

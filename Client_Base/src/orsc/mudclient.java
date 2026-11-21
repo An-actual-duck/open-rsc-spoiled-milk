@@ -1021,6 +1021,9 @@ public final class mudclient implements Runnable {
 	private int[] residentStaticInputProbe;
 	private int[] residentAnimatedInputIndices;
 	private int residentAnimatedInputCount;
+	private final LinkedHashMap<ResidentFishingPoseKey, Renderer3DWorldChunkFrame.ChunkMesh> residentFishingPoses =
+		new LinkedHashMap<>(32, 0.75f, true);
+	private long residentFishingPoseBytes;
 	private long builtStaticPresentationRevision = -1L;
 	private int builtStaticPresentationBaseX = Integer.MIN_VALUE;
 	private int builtStaticPresentationBaseZ = Integer.MIN_VALUE;
@@ -4668,7 +4671,8 @@ public final class mudclient implements Runnable {
 					continue;
 				}
 				cacheMisses++;
-				if (parallelBuild) {
+				if (parallelBuild && !(LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()
+					&& input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)) {
 					if (pendingBuilds.isEmpty()) {
 						parallelBuildStartNanos =
 							System.nanoTime();
@@ -4690,7 +4694,7 @@ public final class mudclient implements Runnable {
 					continue;
 				}
 				ResidentObjectChunkBuildResult result =
-					buildResidentObjectChunkMeshMeasured(input);
+					buildResidentObjectChunkMeshForPresentation(input);
 				meshBuildNanos += result.durationNanos;
 				meshCpuNanos += result.durationNanos;
 				objectChunk = result.chunk;
@@ -5469,6 +5473,37 @@ public final class mudclient implements Runnable {
 			input.chunkRole);
 	}
 
+	private ResidentObjectChunkBuildResult buildResidentObjectChunkMeshForPresentation(ResidentObjectChunkInput input) {
+		if (!LIVE_SURFACE_HANDOFF || !Renderer3DSettings.isBrowserPresentationAvailable()
+			|| input.chunkRole != Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) {
+			return buildResidentObjectChunkMeshMeasured(input);
+		}
+		ResidentFishingPoseKey key = ResidentFishingPoseKey.forInput(input);
+		if (key == null) return buildResidentObjectChunkMeshMeasured(input);
+		long start = System.nanoTime();
+		Renderer3DWorldChunkFrame.ChunkMesh cached = residentFishingPoses.get(key);
+		if (cached != null) return new ResidentObjectChunkBuildResult(cached, System.nanoTime() - start);
+		ResidentObjectChunkBuildResult built = buildResidentObjectChunkMeshMeasured(input);
+		if (built.chunk == null) return built;
+		built.chunk.markResidentFishingPose();
+		long bytes = residentFishingPoseCost(built.chunk);
+		long byteLimit = 12L * 1024 * 1024;
+		if (bytes <= byteLimit) {
+			Iterator<Renderer3DWorldChunkFrame.ChunkMesh> oldest = residentFishingPoses.values().iterator();
+			while (residentFishingPoses.size() >= 96 || residentFishingPoseBytes + bytes > byteLimit) {
+				residentFishingPoseBytes -= residentFishingPoseCost(oldest.next());
+				oldest.remove();
+			}
+			residentFishingPoses.put(key, built.chunk);
+			residentFishingPoseBytes += bytes;
+		}
+		return built;
+	}
+
+	private static long residentFishingPoseCost(Renderer3DWorldChunkFrame.ChunkMesh mesh) {
+		return 128L * mesh.getVertexCount() + 32L * mesh.getTriangleCount();
+	}
+
 	private RSModel[] buildCanonicalResidentObjectModels(
 		ResidentObjectChunkInput input) {
 		ResidentObjectCanonicalIdentity[] identities =
@@ -5634,6 +5669,8 @@ public final class mudclient implements Runnable {
 		pendingDistantSceneryInput = null;
 		pendingDistantScenery = null;
 		emptyDistantScenery.clear();
+		residentFishingPoses.clear();
+		residentFishingPoseBytes = 0;
 		clearResidentStaticInputCache();
 		this.cachedResidentObjectChunks.clear();
 		this.cachedResidentObjectChunkCurrentViewCells.clear();
@@ -5908,6 +5945,47 @@ public final class mudclient implements Runnable {
 				|| this.revision != revision || descriptors.length != used) return false;
 			for (int i = 0; i < used; i++) if (descriptors[i] != probe[i]) return false;
 			return true;
+		}
+	}
+
+	private static final class ResidentFishingPoseKey {
+		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
+		private final int originX, originZ;
+		private final RSModel[] models;
+		private final int[] basesAndPhases;
+
+		private ResidentFishingPoseKey(ResidentObjectChunkInput input, int[] basesAndPhases) {
+			anchor = input.anchor;
+			originX = input.localOriginTileX * input.tileSize;
+			originZ = input.localOriginTileZ * input.tileSize;
+			models = input.models;
+			this.basesAndPhases = basesAndPhases;
+		}
+
+		private static ResidentFishingPoseKey forInput(ResidentObjectChunkInput input) {
+			int[] basesAndPhases = new int[2 * input.modelCount];
+			for (int i = 0; i < input.modelCount; i++) {
+				RSModel model = input.models[i];
+				int phase = model.getFishingPose();
+				if (phase < 0) return null;
+				basesAndPhases[2 * i] = model.getFishingPoseBasisVersion();
+				basesAndPhases[2 * i + 1] = phase;
+			}
+			return new ResidentFishingPoseKey(input, basesAndPhases);
+		}
+
+		@Override public int hashCode() {
+			int hash = 31 * (31 * System.identityHashCode(anchor) + originX) + originZ;
+			for (RSModel model : models) hash = 31 * hash + System.identityHashCode(model);
+			return 31 * hash + Arrays.hashCode(basesAndPhases);
+		}
+
+		@Override public boolean equals(Object other) {
+			if (!(other instanceof ResidentFishingPoseKey)) return false;
+			ResidentFishingPoseKey key = (ResidentFishingPoseKey) other;
+			if (anchor != key.anchor || originX != key.originX || originZ != key.originZ || models.length != key.models.length) return false;
+			for (int i = 0; i < models.length; i++) if (models[i] != key.models[i]) return false;
+			return Arrays.equals(basesAndPhases, key.basesAndPhases);
 		}
 	}
 

@@ -5,6 +5,9 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.entityhandling.defs.GameObjectDef;
 import orsc.ORSCApplet;
 import orsc.NativeLayeredTerrainSnapshot;
 import orsc.PacketHandler;
@@ -149,6 +152,7 @@ public final class BrowserOuterCoverageProbe {
 
 	private static void runPersistentMovementWalk(mudclient client) throws Exception {
 		Method walk = fieldWalk();
+		if (Boolean.getBoolean("spoiledmilk.browserTravelTrace")) reportAnimatedScenery(client);
 		walkLeg(client, walk, 257, 609);
 		int[] before = client.packetHandler.getPersistentMovementReceipt();
 		if (before[0] <= 0 || before[1] <= 0) throw new IllegalStateException("Private travel stream was not applied");
@@ -311,6 +315,21 @@ public final class BrowserOuterCoverageProbe {
 		}
 		BrowserBootstrap.report("outer-coverage:diagonal:overlap=16:gameplay-terrain=9");
 
+	}
+
+	private static void reportAnimatedScenery(mudclient client) throws Exception {
+		Method animated = mudclient.class.getDeclaredMethod("isAnimatedResidentObjectChunkModel",
+			orsc.graphics.three.Renderer3DModelKind.class, int.class);
+		animated.setAccessible(true);
+		Map<String, Integer> seen = new TreeMap<>();
+		for (int i = 0; i < client.getGameObjectInstanceCount(); i++) {
+			int id = client.getGameObjectInstanceID(i);
+			if (!client.isGameObjectInstanceMaterialized(i)
+				|| !(Boolean) animated.invoke(client, orsc.graphics.three.Renderer3DModelKind.GAME_OBJECT, id)) continue;
+			GameObjectDef def = EntityHandler.getObjectDef(id);
+			seen.merge(id + "/" + def.getObjectModel(), 1, Integer::sum);
+		}
+		BrowserBootstrap.report("outer-coverage:scenery-animation-models:" + seen);
 	}
 
 	private static void awaitPreparedCenter(mudclient client, int sequence, Field field, int x, int z) throws Exception {

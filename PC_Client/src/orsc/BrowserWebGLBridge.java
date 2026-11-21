@@ -183,13 +183,22 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         BrowserWebGLBridge bridge = installedBridge;
         return bridge == null ? "unavailable" : "terrain=" + bridge.submittedSceneBytes[0]
             + ":scenery=" + bridge.submittedSceneBytes[1] + ":animated=" + bridge.submittedSceneBytes[2]
-            + ":adoptedScenery=" + bridge.adoptedScenery + ":compactUploads=" + bridge.compactSceneryUploads;
+            + ":adoptedScenery=" + bridge.adoptedScenery + ":compactUploads=" + bridge.compactSceneryUploads
+            + ":fishingPoseHits=" + bridge.fishingPoseHits + ":fishingPoseUploads=" + bridge.fishingPoseUploads;
     }
+
+    private long fishingPoseHits, fishingPoseUploads;
 
     private static final boolean ANIMATED_BUFFER_REUSE=Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true"));
     /** Actual Java-selected private control; never changes desktop renderer policy. */
     public static boolean isAnimatedBufferReuseEnabled(){return ANIMATED_BUFFER_REUSE;}
     static WorldChunkBufferKey chunkKey(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+        if (chunk.isResidentFishingPose()) {
+            // Finite animation keeps the exact current pose as immutable storage for this cell.
+            return new WorldChunkBufferKey(chunk.getPlane(), chunk.getCenterSectionX(), chunk.getCenterSectionY(),
+                chunk.getOriginWorldX(), chunk.getOriginWorldZ(), true, chunk.getChunkRole(), true,
+                chunk.getStorageSignature(), 0L);
+        }
         if(!ANIMATED_BUFFER_REUSE&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) {
             // Native from(chunk,false) still gives animated positional identity.
             // The private control explicitly restores immutable per-pose storage.
@@ -823,6 +832,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:sources) {
             WorldChunkBufferKey key=chunkKey(chunk);CachedChunk cached=chunks.get(key);
             boolean needed = required == null || required.contains(key);
+            boolean fishingPose = chunk.isResidentFishingPose();
+            if (fishingPose && cached != null) fishingPoseHits++;
             boolean independentDraw = !needed && chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS;
             if (cached == null && independentDraw) {
                 if (!advancedOptional && (pendingOptionalDrawPack == null || key.equals(pendingOptionalDrawPack.key))) {
@@ -841,10 +852,12 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                         pendingOptionalDrawPack = null;
                     }
                 }
-            } else if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
+            } else if(cached==null && (fishingPose||uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
                 long bytes=chunkBytes(chunk);
                 makeRoom(active,bytes);
-                cached=upload(frame,chunk,packingSettings);chunks.put(key,cached);residentChunkBytes+=cached.bytes;uploaded+=chunk.getVertexCount();
+                cached=upload(frame,chunk,packingSettings);chunks.put(key,cached);residentChunkBytes+=cached.bytes;
+                if (fishingPose) fishingPoseUploads++;
+                else uploaded+=chunk.getVertexCount();
             }
             if(cached==null)continue;
             if (needed) requiredReady++;

@@ -109,6 +109,7 @@ public final class RSModel {
 	private int translateZ;
 	private int vertexCount2;
 	private int renderer3DTransformVersion;
+	private int fishingPoseUpdates;
 	private int fishingSpotClarityAnimationState = -1;
 	private int[] fishingSpotClarityBaseX;
 	private int[] fishingSpotClarityBaseY;
@@ -561,8 +562,18 @@ public final class RSModel {
 		if (changed) {
 			this.m_Yb = 1;
 			this.renderer3DTransformVersion++;
+			this.fishingPoseUpdates++;
 		}
 		return changed;
+	}
+
+	/** The geometry of this ripple repeats at the same phase for a given model basis. */
+	public int getFishingPose() {
+		return fishingSpotClarityAnimationState;
+	}
+
+	public int getFishingPoseBasisVersion() {
+		return renderer3DTransformVersion - fishingPoseUpdates;
 	}
 
 	private static RSModel createFishingSpotClarityOverlay() {

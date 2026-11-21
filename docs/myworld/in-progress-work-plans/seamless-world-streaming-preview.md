@@ -716,6 +716,17 @@ and `(278,609)`. The approach trace also captured repeated three-buffer
 geometry updates totaling approximately 364 KiB each while terrain uploads
 were idle. [Sustained capture with independent terrain](../../../output/tests/browser-gameplay-spike/live-surface-direct-install/firefox-result.json)
 
+The browser can now select an immutable GPU buffer for a recurring fishing
+ripple pose. The original animation computes the pose. A focused fixture
+reproduced the same mesh signatures over two cycles and checked that a model
+rotation invalidates its pose basis. The sustained run finished at `(252,609)`
+with 3,360 fresh frames and zero holds, input blocks, or new load epochs.
+By the first crossing, Firefox had reused 1,308 fishing draws after 96 pose
+uploads. The remaining animated geometry still repacked a 258 KiB buffer
+in the approach. The encounter contains three fishing spots, a windmill
+sail and four fires. The longest submission gap was 334 ms at the first
+crossing. [Resident animation capture](../../../output/tests/browser-gameplay-spike/live-surface-resident-fishing/firefox-result.json) · [Latest diagonal capture](../../../output/tests/browser-gameplay-spike/live-surface-late-draws-final/firefox-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
