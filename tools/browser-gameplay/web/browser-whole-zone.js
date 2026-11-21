@@ -153,16 +153,17 @@ export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,client
   await finishGpu();assertAlive();Object.assign(stats,{phase:'ready',ready:true,startupGpuCompleted:true});return m;
 }
 /** Per-frame selection keeps the bounded live renderer and the immutable arena distinct. */
-export function createWholeZoneSelection(catalog,stats){
+export function createWholeZoneSelection(catalog,stats,{liveCells=false}={}){
   const world=new Map(),objects=new Map(),objectCells=new Map();
   for(const c of catalog.chunks)(c.sourceKind==='world'?world:objects).set(c.plane+':'+c.cellX+':'+c.cellY,c);
   for(const c of catalog.objectCells||[])objectCells.set(c.plane+':'+c.cellX+':'+c.cellY,c);
   let current=null,pending=false,lastEpoch=null;
   function frame(metadata,overrides){
     metadata=ints(metadata);overrides=ints(overrides);
-    if(metadata.length!==18||overrides.length%6||overrides.length>3*25*4*6)throw new Error('Whole zone frame shape');
+    if(metadata.length!==(liveCells?21:18)||overrides.length%6||overrides.length>3*25*4*6)throw new Error('Whole zone frame shape');
     const v=Array.from(metadata);if(v[0]!==1||![0,1].includes(v[1])||v[2]<-32||v[2]>32||v[7]!==2||![0,1].includes(v[17])||v.slice(11,15).some((x,n)=>x!==catalog.settings[n]))throw new Error('Whole zone frame contract/settings');
     if(v[1]&&(v[2]!==0||v[17]!==0))throw new Error('Whole zone applies to overworld only');
+    if(liveCells&&(v[18]<0||Math.abs(v[19]-v[5])>1||Math.abs(v[20]-v[6])>1))throw new Error('Invalid live-cell travel identity or draw center');
     for(const n of [8,9,10])if(v[n]<0)throw new Error('Whole zone visibility mask');
     const epoch=[v[16]>>>0,v[15]>>>0];if(lastEpoch&&(epoch[0]<lastEpoch[0]||epoch[0]===lastEpoch[0]&&epoch[1]<lastEpoch[1]))throw new Error('Whole zone source epoch moved backwards');
     const rows=new Map();for(let at=0;at<overrides.length;at+=6){const plane=overrides[at],x=overrides[at+1],y=overrides[at+2],reason=overrides[at+5],key=plane+':'+x+':'+y;
@@ -178,9 +179,10 @@ export function createWholeZoneSelection(catalog,stats){
     for(let at=0;at<input.length;at+=8)if(input[at]>=PIN_BASE)throw new Error('Pinned chunk appeared in local Java draw list');
     if(!v[1]){if(level===0&&v[17]===0)throw new Error('Whole zone overworld source inactive');Object.assign(stats,{currentPinnedDraws:0,currentMergedDraws:input.length/8,verifiedObjectCells:0,mutatedObjectCells:0,animatedObjectCells:0,authoredBaselineObjectCells:0,selectedObjectCells:0,selectedPinnedFirstIds:[],selectedPinnedIdHash:0,maskedObjectCellSamples:[],authoredBaselineCellSamples:[]});return input;}
     const out=[],changedSamples=[],animatedSamples=[],baselineSamples=[];let unchanged=0,mutated=0,animated=0,baseline=0,knownCells=0;
+    const centerX=liveCells?v[19]:v[5],centerY=liveCells?v[20]:v[6];
     const add=c=>{if(!c||c.sourceKind==='objects'&&c.plane>0)return;const dx=c.originX-v[3],dz=c.originZ-v[4];integer(dx,-2147483648,2147483647,'rebased X');integer(dz,-2147483648,2147483647,'rebased Z');out.push(c.id,dx,dz,v[3],v[4],v[8+c.plane]&c.visibilityMask,c.plane,c.role);};
-    for(let plane=0;plane<3;plane++)for(let x=v[5]-2;x<=v[5]+2;x++)for(let y=v[6]-2;y<=v[6]+2;y++)add(world.get(plane+':'+x+':'+y));
-    for(let plane=0;plane<3;plane++)for(let x=(v[5]-2)*2;x<(v[5]+3)*2;x++)for(let y=(v[6]-2)*2;y<(v[6]+3)*2;y++){
+    for(let plane=0;plane<3;plane++)for(let x=centerX-2;x<=centerX+2;x++)for(let y=centerY-2;y<=centerY+2;y++)add(world.get(plane+':'+x+':'+y));
+    for(let plane=0;plane<3;plane++)for(let x=(centerX-2)*2;x<(centerX+3)*2;x++)for(let y=(centerY-2)*2;y<(centerY+3)*2;y++){
       const key=plane+':'+x+':'+y,cell=objectCells.get(key);if(!cell)continue;knownCells++;const row=rows.get(key);if(!row)throw new Error('Missing whole zone object authority: '+key);
       const matches=row.key===cell.canonicalContentKey;
       if(row.reason===0){if(!matches)throw new Error('Whole zone unchanged key mismatch');unchanged++;add(objects.get(key));}
@@ -191,5 +193,8 @@ export function createWholeZoneSelection(catalog,stats){
     const merged=new Int32Array(out.length+input.length);merged.set(out);merged.set(input,out.length);let idHash=2166136261;const firstIds=[];for(let at=0;at<out.length;at+=8){idHash=Math.imul(idHash^out[at],16777619)>>>0;if(firstIds.length<16)firstIds.push(out[at]);}
     Object.assign(stats,{currentPinnedDraws:pinned,currentMergedDraws:merged.length/8,verifiedObjectCells:unchanged,mutatedObjectCells:mutated,animatedObjectCells:animated,authoredBaselineObjectCells:baseline,selectedObjectCells:knownCells,selectedPinnedFirstIds:firstIds,selectedPinnedIdHash:idHash,maskedObjectCellSamples:changedSamples.concat(animatedSamples).slice(0,8),authoredBaselineCellSamples:baselineSamples});return merged;
   }
-  return {frame,merge,get scope(){return current?.v||null;},get generationKey(){return lastEpoch?.join(':')||'';}};
+  return {frame,merge,get scope(){return current?.v||null;},get generationKey(){
+    if(liveCells&&current?.v[1])return 'surface:'+current.v[18];
+    return lastEpoch?.join(':')||'';
+  }};
 }

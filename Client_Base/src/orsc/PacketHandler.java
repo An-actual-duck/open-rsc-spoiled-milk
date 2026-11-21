@@ -78,6 +78,9 @@ public class PacketHandler {
 		return new int[]{persistentMovement.generation(), persistentMovementApplied, persistentMovementOutsideCoverage,
 			layeredSceneContextState.getSequence()};
 	}
+	public int getPersistentMovementGeneration() {
+		return persistentMovement.generation();
+	}
 	private final LayeredSceneContextState layeredSceneContextState =
 		new LayeredSceneContextState();
 	private final LayeredSceneActivationState layeredSceneActivationState =

@@ -377,6 +377,45 @@ straddled the boundary. This was an offline check of drawn ground geometry
 on one edge. Runtime cell publication, lighting, and interactive state still
 need the live walking proof.
 
+## Live publication of baked draw cells
+
+The private bounded WebGL renderer accepts `livecells=on` on its existing
+catalog path. Its requested draw area follows the player's server-confirmed
+sector and can advance while the installed gameplay window stays in place.
+The overlap remains drawable. Outer cells join the next live frame after
+their individual uploads publish. The installed window still requires ready
+ground and matching interactive scenery. A change outside that window does
+not block clicks inside it.
+
+Pending work shared by two consecutive draw areas keeps running in the
+same movement session. Reversal cancels work that has left the desired
+area, and relocation invalidates unfinished work from the previous session.
+An optional download failure leaves active draws available. The cell can
+retry if it becomes required. Existing GPU byte and resource bounds apply
+to resident and partially uploaded buffers.
+
+The fresh Firefox WebGL proof baked three cells from the signed map and
+deliberately delayed delivery of the third. It submitted eight live frames
+and sampled actual pixels from the first two cells during the delay. The
+third produced pixels after it was published. Changing direction removed
+that cell's draw while its GPU buffer was still cached. The scheduler
+fixture also checks that an unfinished upload can move from optional to
+required at capacity, and that an outer change does not invalidate the
+input acknowledgement for the installed window.
+
+This proves the draw-side behavior in isolation. The browser gameplay
+crossing still needs an independently published collision and scenery
+window so Java can keep submitting live frames through the current scene
+transition. The full game path still uses the existing scene latch. The
+draw proof has no actors, interactive clicks, or game-server traffic.
+
+Run the focused scheduler fixture with
+`node tests/myworld/seamless-streaming/live-cell-residency.mjs`. After a client
+build, use `python3 tests/myworld/seamless-streaming/run-live-cell-webgl.py
+<fresh-name>` with a loopback geckodriver. It bakes three signed ground cells
+with the current client and saves the browser result and local logs under
+`output/tests/persistent-terrain-cells/`.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

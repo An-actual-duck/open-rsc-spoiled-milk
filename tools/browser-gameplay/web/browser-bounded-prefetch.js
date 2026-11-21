@@ -5,7 +5,7 @@ export function createBoundedPrefetch(catalog){
   let previous=null,direction=[0,0],signature=null,cached=[];
   function plan(scope){
     if(!scope?.[1]){previous=null;direction=[0,0];signature=null;cached=[];return cached;}
-    const x=scope[5],y=scope[6];
+    const x=scope[19]??scope[5],y=scope[20]??scope[6];
     if(previous){const dx=Math.sign(x-previous[0]),dy=Math.sign(y-previous[1]);if(dx||dy)direction=[dx,dy];}
     previous=[x,y];const key=x+':'+y+':'+direction.join(':');if(key===signature)return cached;signature=key;
     const sides=[[1,0],[-1,0],[0,1],[0,-1]].sort((a,b)=>(b[0]*direction[0]+b[1]*direction[1])-(a[0]*direction[0]+a[1]*direction[1]));
