@@ -19,7 +19,8 @@ def run_walk(run, driver_port):
     server = json.loads((run / 'server-command.json').read_text())
     stage = json.loads((run / 'stage.json').read_text())
     fixture = json.loads((run / 'outer-coverage-fixture.json').read_text())
-    if (not fixture['sustainedWalk'] or not stage['http'].startswith('127.0.0.1:')
+    if (fixture['manual'] or not (fixture['sustainedWalk'] or fixture.get('persistentMovement'))
+            or not stage['http'].startswith('127.0.0.1:')
             or Path(server['cwd']).resolve() != run / 'server' or (run / 'STOP').exists()
             or (run / 'firefox-result.json').exists() or (run / 'server.pid').exists()):
         raise ValueError('Use a fresh private sustained-walk stage')
@@ -79,7 +80,8 @@ def run_walk(run, driver_port):
             result['serverStatus'] = json.loads((run / 'status.json').read_text())
             (run / 'firefox-result.json').write_text(json.dumps(result, indent=2) + '\n')
             print(result['serverStatus'], result.get('stream'), flush=True)
-            completed = any(event['message'] == 'outer-coverage:complete:sustained' for event in result['events'])
+            route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
+            completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
             return 0 if completed else 1
         finally:
             if session:

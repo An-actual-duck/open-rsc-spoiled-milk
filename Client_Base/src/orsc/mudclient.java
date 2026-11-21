@@ -26074,6 +26074,22 @@ public final class mudclient implements Runnable {
 		appendCustomMovementWaypoint(this.localPlayer, this.playerLocalX, this.playerLocalZ, direction);
 	}
 
+	/** Apply a server waypoint on installed ground without initiating scene or terrain work. */
+	boolean applyCoveredMovement(int worldX, int worldZ, int direction) {
+		if (this.localPlayer == null || this.loadingArea || this.deathScreenTimeout != 0
+			|| !this.hasCompletedInitialRegionLoad || !isValidCustomMovementDirection(direction)) return false;
+		int localX = worldX - this.midRegionBaseX;
+		int localZ = worldZ - this.midRegionBaseZ;
+		if (!this.world.isTerrainLoadedAtLocalTile(localX, localZ)) return false;
+		this.playerLocalX = localX;
+		this.playerLocalZ = localZ;
+		int currentX = localX * this.tileSize + 64;
+		int currentZ = localZ * this.tileSize + 64;
+		traceLocalWalkServerUpdate(localX, localZ, currentX, currentZ, this.localPlayer);
+		appendCustomMovementWaypoint(this.localPlayer, localX, localZ, direction);
+		return true;
+	}
+
 	private void preloadTerrainForLocalTarget(int localTileX, int localTileZ) {
 		this.predictiveTerrainPreloader.preloadLocalTarget(
 			this.world,

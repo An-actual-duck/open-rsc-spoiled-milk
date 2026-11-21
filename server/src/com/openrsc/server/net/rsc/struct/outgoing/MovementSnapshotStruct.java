@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MovementSnapshotStruct extends AbstractStruct<OpcodeOut> {
+	public static final int INDEPENDENT_TRAVEL_VERSION = 3;
 	public int protocolVersion;
 	public int locationContextSequence;
+	public int travelGeneration;
 	public int serverTick;
 	public int sequence;
 	public int localX;

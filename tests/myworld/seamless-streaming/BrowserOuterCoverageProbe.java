@@ -63,6 +63,10 @@ public final class BrowserOuterCoverageProbe {
 		}
 		if (worldReady() != 1) throw new IllegalStateException("Initial graphics did not become ready");
 		if (worldX(client) != 239 || worldZ(client) != 609) throw new IllegalStateException("Wrong private spawn");
+		if (Boolean.getBoolean("spoiledmilk.persistentMovementPreview")) {
+			runPersistentMovementWalk(client);
+			return;
+		}
 		if (Boolean.getBoolean("spoiledmilk.sustainedBrowserWalk")) {
 			runSustainedWalk(client);
 			return;
@@ -135,29 +139,53 @@ public final class BrowserOuterCoverageProbe {
 	private static int worldX(mudclient client) { return client.getMidRegionBaseX() + client.getLocalPlayerX(); }
 	private static int worldZ(mudclient client) { return client.getMidRegionBaseZ() + client.getLocalPlayerZ(); }
 
-	private static void runSustainedWalk(mudclient client) throws Exception {
-		Method walk = mudclient.class.getDeclaredMethod("walkToArea", int.class, int.class, int.class,
-			int.class, int.class, int.class, boolean.class, boolean.class);
-		walk.setAccessible(true);
-		int[][] destinations = {{284, 609}, {291, 597}, {322, 597}, {291, 597}, {284, 609}, {255, 609}};
-		for (int[] destination : destinations) {
-			int x = destination[0], z = destination[1];
-			BrowserBootstrap.report("outer-coverage:walking:" + worldX(client) + "," + worldZ(client) + "->" + x + "," + z);
-			int localX = x - client.getMidRegionBaseX(), localZ = z - client.getMidRegionBaseZ();
-			walk.invoke(client, client.getLocalPlayerX(), client.getLocalPlayerZ(), localX, localZ, localX, localZ, false, false);
-			long deadline = System.currentTimeMillis() + 48_000;
-			while ((worldX(client) != x || worldZ(client) != z || worldReady() != 1) && System.currentTimeMillis() < deadline) {
-				Thread.sleep(75L);
-			}
-			if (worldX(client) != x || worldZ(client) != z || worldReady() != 1) {
-				throw new IllegalStateException("Sustained walk ended at " + worldX(client) + "," + worldZ(client)
-					+ " while walking to " + x + "," + z);
-			}
-			BrowserBootstrap.report("outer-coverage:arrived:" + x + "," + z);
+	private static void runPersistentMovementWalk(mudclient client) throws Exception {
+		Method walk = fieldWalk();
+		walkLeg(client, walk, 257, 609);
+		int[] before = client.packetHandler.getPersistentMovementReceipt();
+		if (before[0] <= 0 || before[1] <= 0) throw new IllegalStateException("Private travel stream was not applied");
+		walkLeg(client, walk, 278, 609);
+		int afterScene = client.packetHandler.getPersistentMovementReceipt()[3];
+		if (afterScene <= before[3]) throw new IllegalStateException("Route did not cross the terrain center boundary");
+		walkLeg(client, walk, 252, 609);
+		int[] after = client.packetHandler.getPersistentMovementReceipt();
+		if (after[0] != before[0] || after[1] <= before[1] || after[2] != 0) {
+			throw new IllegalStateException("Unexpected travel receipts " + Arrays.toString(before) + " to " + Arrays.toString(after));
 		}
+		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
+			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
+		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static void runSustainedWalk(mudclient client) throws Exception {
+		Method walk = fieldWalk();
+		int[][] destinations = {{284, 609}, {291, 597}, {322, 597}, {291, 597}, {284, 609}, {255, 609}};
+		for (int[] destination : destinations) walkLeg(client, walk, destination[0], destination[1]);
 		Thread.sleep(8_000L);
 		reportTerrainState(client.getWorld());
 		BrowserBootstrap.report("outer-coverage:complete:sustained");
+	}
+
+	private static Method fieldWalk() throws Exception {
+		Method walk = mudclient.class.getDeclaredMethod("walkToArea", int.class, int.class, int.class,
+			int.class, int.class, int.class, boolean.class, boolean.class);
+		walk.setAccessible(true);
+		return walk;
+	}
+
+	private static void walkLeg(mudclient client, Method walk, int x, int z) throws Exception {
+		BrowserBootstrap.report("outer-coverage:walking:" + worldX(client) + "," + worldZ(client) + "->" + x + "," + z);
+		int localX = x - client.getMidRegionBaseX(), localZ = z - client.getMidRegionBaseZ();
+		walk.invoke(client, client.getLocalPlayerX(), client.getLocalPlayerZ(), localX, localZ, localX, localZ, false, false);
+		long deadline = System.currentTimeMillis() + 48_000;
+		while ((worldX(client) != x || worldZ(client) != z || worldReady() != 1) && System.currentTimeMillis() < deadline) {
+			Thread.sleep(75L);
+		}
+		if (worldX(client) != x || worldZ(client) != z || worldReady() != 1) {
+			throw new IllegalStateException("Walk ended at " + worldX(client) + "," + worldZ(client)
+				+ " while walking to " + x + "," + z);
+		}
+		BrowserBootstrap.report("outer-coverage:arrived:" + x + "," + z);
 	}
 
 	private static void reportTerrainState(World world) throws ReflectiveOperationException {

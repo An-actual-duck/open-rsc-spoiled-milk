@@ -17,6 +17,7 @@ def main():
     parser.add_argument('--tcp-port', type=int, default=43629)
     parser.add_argument('--ws-port', type=int, default=43529)
     parser.add_argument('--covered-walking-preview', action='store_true')
+    parser.add_argument('--persistent-movement', action='store_true', help='Enable the matched private travel movement stream')
     parser.add_argument('--predicted-scenery', action='store_true', help='Enable the private scenery prediction')
     parser.add_argument('--prebuild-ownership', action='store_true', help='Stage scenery in the ownership transition strips')
     parser.add_argument('--travel-trace', action='store_true', help='Record the disposable character position on each server tick')
@@ -26,6 +27,8 @@ def main():
         parser.error('Use two different nonprivileged loopback ports')
     if args.outer_coverage and not args.covered_walking_preview:
         parser.error('The outer coverage route requires the covered walking preview')
+    if args.persistent_movement and not args.covered_walking_preview:
+        parser.error('The private travel stream requires installed surface coverage')
     if args.predicted_scenery and not args.covered_walking_preview:
         parser.error('Predicted scenery requires the covered walking preview')
     if args.prebuild_ownership and not args.predicted_scenery:
@@ -45,6 +48,8 @@ def main():
                   layered_native_world_runtime_profile='world-builder-installed')
     if args.outer_coverage:
         values.update(respawn_location_x='239', respawn_location_y='609')
+    if args.persistent_movement:
+        values.update(want_sync_movement_snapshot='true')
     for key, value in values.items():
         config, count = re.subn(r'(?m)^([ \t]*)' + key + r':.*$', lambda m: m[1] + key + ': ' + value, config)
         if not count: config += '\n' + key + ': ' + value + '\n'
@@ -86,6 +91,8 @@ def main():
     command = ['java', '-Xmx2g', '-XX:+UseSerialGC']
     if args.covered_walking_preview:
         command.append('-Dspoiledmilk.coveredWalkingPreview=true')
+    if args.persistent_movement:
+        command.append('-Dspoiledmilk.persistentMovementPreview=true')
     if args.predicted_scenery:
         command.append('-Dspoiledmilk.predictedSceneryPreview=true')
     if args.prebuild_ownership:

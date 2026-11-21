@@ -53,6 +53,9 @@ public class PacketHandler {
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PRESENTATION_PAGE_SIZE = 512;
 	private static final int SCENE_BASELINE_SECTOR_SIZE = 48;
+	private static final boolean PERSISTENT_MOVEMENT_PREVIEW =
+		!Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+			&& Boolean.getBoolean("spoiledmilk.persistentMovementPreview");
 
 	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 	private Network_Socket clientStream;
@@ -67,6 +70,14 @@ public class PacketHandler {
     public boolean isWholeZoneObjectCellAuthoritative(int tileX,int tileY,int size){return sceneBaselineState.wholeZoneObjectCellAuthoritative(tileX,tileY,size);}
 	private final MovementSnapshotDiagnostics movementSnapshotDiagnostics = new MovementSnapshotDiagnostics();
 	private final MovementSnapshotStage movementSnapshotStage = new MovementSnapshotStage();
+	private final PersistentMovementReceipt persistentMovement = new PersistentMovementReceipt();
+	private int persistentMovementApplied;
+	private int persistentMovementOutsideCoverage;
+
+	public int[] getPersistentMovementReceipt() {
+		return new int[]{persistentMovement.generation(), persistentMovementApplied, persistentMovementOutsideCoverage,
+			layeredSceneContextState.getSequence()};
+	}
 	private final LayeredSceneContextState layeredSceneContextState =
 		new LayeredSceneContextState();
 	private final LayeredSceneActivationState layeredSceneActivationState =
@@ -268,6 +279,8 @@ public class PacketHandler {
         browserBaselineReuse.clear();
         if(mc!=null)mc.clearBrowserPresentationCloneCache();
 		movementSnapshotStage.reset();
+		persistentMovement.reset();
+		persistentMovementApplied = persistentMovementOutsideCoverage = 0;
 		appliedSceneBaselineKey = 0;
 		appliedScenePresentationKey = 0;
 		layeredTerrainReadySequence = 0;
@@ -886,6 +899,7 @@ public class PacketHandler {
 				legacyY,
 				nativeTerrain);
 		if (nativeTerrainRecovery.isPending()) {
+			persistentMovement.reset();
 			nativeLayeredTerrainResidentCache.replaceFrom(contextCache);
 			String recovered = "NATIVE_TERRAIN_RECOVERED context=" + sequence
 				+ " failedContexts=" + nativeTerrainRecovery.rejectedContextCount()
@@ -906,6 +920,7 @@ public class PacketHandler {
 			== LayeredSceneContextState
 				.ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION;
 		if (result.isScopeChanged()) {browserBaselineReuse.clear();mc.clearBrowserPresentationCloneCache();}
+		if (result.isScopeChanged()) persistentMovement.reset();
 		if (result.isScopeChanged() || atomicActivation) {
 			sceneBaselineState.resetForScopeChange(
 				layeredSceneContextState.scopeIdentity());
@@ -3092,6 +3107,10 @@ public class PacketHandler {
 		boolean quarantinedContext = false;
 		if (packetsIncoming.packetEnd + 16 <= length) {
 			protocolVersion = packetsIncoming.getUnsignedByte();
+			if (protocolVersion == PersistentMovementReceipt.PROTOCOL_VERSION && PERSISTENT_MOVEMENT_PREVIEW) {
+				updatePersistentMovementSnapshot(length);
+				return;
+			}
 			if (protocolVersion != 1 && protocolVersion != 2) {
 				throw new IllegalArgumentException("Unsupported movement snapshot protocol");
 			}
@@ -3180,6 +3199,45 @@ public class PacketHandler {
 			playerCount,
 			npcCount);
 		packetsIncoming.packetEnd = length;
+	}
+
+	private void updatePersistentMovementSnapshot(int length) {
+		if (length - packetsIncoming.packetEnd < 25) {
+			throw new IllegalArgumentException("Incomplete travel movement header");
+		}
+		int anchor = packetsIncoming.get32();
+		int generation = packetsIncoming.get32();
+		int tick = packetsIncoming.get32();
+		int sequence = packetsIncoming.get32();
+		MovementSnapshotStage.Frame frame = new MovementSnapshotStage.Frame(
+			PersistentMovementReceipt.PROTOCOL_VERSION, tick, sequence);
+		frame.setLocal(packetsIncoming.getShort(), packetsIncoming.getShort(), packetsIncoming.getUnsignedByte());
+		int players = packetsIncoming.getShort();
+		if (length - packetsIncoming.packetEnd < players * 7 + 2) {
+			throw new IllegalArgumentException("Incomplete travel player movements");
+		}
+		for (int i = 0; i < players; i++) {
+			frame.addPlayer(packetsIncoming.getShort(), packetsIncoming.getShort(),
+				packetsIncoming.getShort(), packetsIncoming.getUnsignedByte());
+		}
+		int npcs = packetsIncoming.getShort();
+		if (length - packetsIncoming.packetEnd != npcs * 7) {
+			throw new IllegalArgumentException("Incomplete travel NPC movements");
+		}
+		for (int i = 0; i < npcs; i++) {
+			frame.addNpc(packetsIncoming.getShort(), packetsIncoming.getShort(),
+				packetsIncoming.getShort(), packetsIncoming.getUnsignedByte());
+		}
+		if (!layeredSceneContextState.hasContext() || nativeTerrainRecovery.isPending()
+			|| !persistentMovement.accept(generation, anchor, sequence, layeredSceneContextState.getSequence())) {
+			return;
+		}
+		if (frame.applyToInstalledTerrain(mc)) {
+			persistentMovementApplied++;
+			MovementTimingDiagnostics.recordMovementSnapshot(tick, sequence, players, npcs);
+		} else {
+			persistentMovementOutsideCoverage++;
+		}
 	}
 
 	private void updateWorldTime(int length) {

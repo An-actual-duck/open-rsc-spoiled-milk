@@ -156,6 +156,10 @@ public final class GameStateUpdater {
 		"layered_actor_scene_scope";
 	private static final String LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE =
 		"layered_actor_baseline_reset";
+	private static final String TRAVEL_BASELINE_ATTRIBUTE = "persistent_travel_baseline";
+	private static final String TRAVEL_GENERATION_ATTRIBUTE = "persistent_travel_generation";
+	private static final boolean PERSISTENT_MOVEMENT_PREVIEW =
+		Boolean.getBoolean("spoiledmilk.persistentMovementPreview");
 	private static final String LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE =
 		"layered_scene_context_sequence";
 	private static final String LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE =
@@ -261,6 +265,7 @@ public final class GameStateUpdater {
 		recordUpdatePlayerAppearances(() -> updatePlayerAppearances(player));
 		recordUpdateNpcs(() -> updateNpcs(player, visibleNpcs));
 		recordUpdateNpcAppearances(() -> updateNpcAppearances(player));
+		publishTravelBaseline(player);
 		final boolean[] sceneryChanged = new boolean[1];
 		final boolean[] wallsChanged = new boolean[1];
 		final boolean[] groundItemsChanged = new boolean[1];
@@ -613,6 +618,7 @@ public final class GameStateUpdater {
 		 */
 		if (previous == null || !previous.equals(next)
 			|| player.getAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, false)) {
+			if (PERSISTENT_MOVEMENT_PREVIEW) player.removeAttribute(TRAVEL_BASELINE_ATTRIBUTE);
 			player.getLocalNpcs().clear();
 			player.getLocalPlayers().clear();
 			player.getKnownPlayerAppearanceIDs().clear();
@@ -638,6 +644,7 @@ public final class GameStateUpdater {
 			player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
 			player.removeAttribute(NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE);
 			player.removeAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE);
+			if (PERSISTENT_MOVEMENT_PREVIEW) player.removeAttribute(TRAVEL_BASELINE_ATTRIBUTE);
 			player.setAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, Boolean.TRUE);
 			return;
 		}
@@ -3355,7 +3362,7 @@ public final class GameStateUpdater {
 	}
 
 	public boolean sendMovementUpdatePacket(final Player player, final List<Player> movedPlayers, final List<Npc> movedNpcs) {
-		if (!player.isUsingCustomClient()) {
+		if (!player.isUsingCustomClient() || usesIndependentMovement(player)) {
 			return false;
 		}
 		if (!hasEstablishedLayeredSceneContext(player)) {
@@ -3410,7 +3417,10 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT) {
 			return false;
 		}
-		if (!hasEstablishedLayeredSceneContext(player)) {
+		final boolean independent = usesIndependentMovement(player);
+		final TravelBaseline travel = independent ? player.getAttribute(TRAVEL_BASELINE_ATTRIBUTE, null) : null;
+		if (independent ? travel == null || travel.relocation != player.getMovementRelocation()
+			: !hasEstablishedLayeredSceneContext(player)) {
 			return false;
 		}
 		updateCustomMovementClientRegion(player);
@@ -3418,12 +3428,13 @@ public final class GameStateUpdater {
 		MovementSnapshotStruct struct = new MovementSnapshotStruct();
 		final boolean layeredProtocol =
 			getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
-		struct.protocolVersion = layeredProtocol
+		struct.protocolVersion = independent ? MovementSnapshotStruct.INDEPENDENT_TRAVEL_VERSION : layeredProtocol
 			? LAYERED_MOVEMENT_SNAPSHOT_PROTOCOL_VERSION
 			: MOVEMENT_SNAPSHOT_PROTOCOL_VERSION;
-		struct.locationContextSequence = layeredProtocol
+		struct.locationContextSequence = independent ? travel.anchorContext : layeredProtocol
 			? requireLayeredSceneContextSequence(player)
 			: 0;
+		struct.travelGeneration = independent ? travel.generation : 0;
 		struct.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
 		struct.sequence = ++movementSnapshotSequence;
 		struct.localX = player.getX();
@@ -3469,8 +3480,41 @@ public final class GameStateUpdater {
 			1 + struct.players.size() + struct.npcs.size(),
 			MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES
 				+ (layeredProtocol ? LAYERED_CONTEXT_SEQUENCE_BYTES : 0)
+				+ (independent ? Integer.BYTES : 0)
 				+ ((struct.players.size() + struct.npcs.size()) * MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES));
 		return true;
+	}
+
+	private boolean usesIndependentMovement(final Player player) {
+		return PERSISTENT_MOVEMENT_PREVIEW
+			&& getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT
+			&& getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
+			&& player.isUsingCustomClient()
+			&& usesCoveredWalkingPreview(player);
+	}
+
+	/** Establish a stream only after the corresponding normal actor baseline was sent. */
+	private void publishTravelBaseline(final Player player) {
+		if (!usesIndependentMovement(player)) return;
+		final int relocation = player.getMovementRelocation();
+		final TravelBaseline previous = player.getAttribute(TRAVEL_BASELINE_ATTRIBUTE, null);
+		if (previous != null && previous.relocation == relocation) return;
+		final int generation = Math.addExact(player.getAttribute(TRAVEL_GENERATION_ATTRIBUTE, 0), 1);
+		player.setAttribute(TRAVEL_GENERATION_ATTRIBUTE, generation);
+		player.setAttribute(TRAVEL_BASELINE_ATTRIBUTE, new TravelBaseline(
+			generation, requireLayeredSceneContextSequence(player), relocation));
+	}
+
+	private static final class TravelBaseline {
+		private final int generation;
+		private final int anchorContext;
+		private final int relocation;
+
+		private TravelBaseline(int generation, int anchorContext, int relocation) {
+			this.generation = generation;
+			this.anchorContext = anchorContext;
+			this.relocation = relocation;
+		}
 	}
 
 	private static boolean isWithinClientLocalTileWindow(final Player viewer, final int worldX, final int worldY) {

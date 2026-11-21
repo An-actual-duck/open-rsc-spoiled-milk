@@ -148,6 +148,17 @@ final class MovementSnapshotStage {
 			npcTargets.add(new MovementSnapshotTarget(serverIndex, worldX, worldZ, direction));
 		}
 
+		boolean applyToInstalledTerrain(mudclient client) {
+			if (!client.applyCoveredMovement(localTarget.worldX, localTarget.worldZ, localTarget.direction)) return false;
+			for (MovementSnapshotTarget target : playerTargets) {
+				client.applyCustomPlayerMovementUpdate(target.serverIndex, target.worldX, target.worldZ, target.direction);
+			}
+			for (MovementSnapshotTarget target : npcTargets) {
+				client.applyCustomNpcMovementUpdate(target.serverIndex, target.worldX, target.worldZ, target.direction);
+			}
+			return true;
+		}
+
 		private int recordCount() {
 			return (localTarget == null ? 0 : 1) + playerTargets.size() + npcTargets.size();
 		}
