@@ -1322,7 +1322,7 @@ public final class World {
 	}
 
 	public void publishPendingSurfaceCollision(Future<?> geometry) {
-		if (incomingSurfaceCollision == null) return;
+		if (incomingSurfaceCollision == null || incomingSurfaceCollision.get() == null) return;
 		IncomingSurfaceCollision incoming = incomingSurfaceCollision.getAndSet(null);
 		if (incoming == null || incoming.source != nativeLayeredTerrainSnapshot
 			|| incoming.revision != worldEditorTerrainRevision.get()

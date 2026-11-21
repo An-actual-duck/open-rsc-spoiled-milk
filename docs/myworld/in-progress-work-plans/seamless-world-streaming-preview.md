@@ -416,6 +416,30 @@ build, use `python3 tests/myworld/seamless-streaming/run-live-cell-webgl.py
 with the current client and saves the browser result and local logs under
 `output/tests/persistent-terrain-cells/`.
 
+## Collision cells and live blockers
+
+The opt-in `--persistent-collision` client path separates static terrain from
+live objects and walls. The normal pathfinder still reads its existing local
+grid. The grid receives the combined flags for each tile while installed
+terrain and object contributions remain separately owned. A removed object
+changes only the flags it contributed. Overlapping blocks and reciprocal
+wall edges survive until their own contributors are removed.
+
+The terrain prediction worker can hand the game a prepared collision strip
+as soon as the terrain and wall flags are known. It assembles the cells
+before roof and mesh construction, and the game publishes cells outside the
+interactive window under the matching signed-map scope. The current grid
+continues to serve walks and interactions during that publication. A
+predicted terrain cell alone cannot authorize a walk into the incoming area.
+The live scenery and collision information for that area must also be
+available before the playable window can expand.
+
+The focused fixture covers overlapping objects, side-by-side cell edges,
+terrain flags beneath a wall, and a changed origin and map scope. The private
+browser route checks whether the predicted strip arrived while its render
+product was still pending. The legacy whole-scene activation remains the
+comparison until interactive cells can enter the live view independently.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

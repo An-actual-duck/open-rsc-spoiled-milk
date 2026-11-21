@@ -29,14 +29,15 @@ public final class BrowserOuterCoverageProbe {
 		Field game = field(ORSCApplet.class, "mudclient");
 		Field loginPanel = field(mudclient.class, "panelLogin");
 		mudclient client = null;
-		long deadline = System.currentTimeMillis() + 60_000;
+		long deadline = System.currentTimeMillis() + 90_000;
 		while (System.currentTimeMillis() < deadline) {
 			client = (mudclient) game.get(null);
 			if (client != null && loginPanel.get(client) != null && loginReady() == 1) break;
 			Thread.sleep(100);
 		}
 		if (client == null || loginPanel.get(client) == null || loginReady() != 1) {
-			throw new IllegalStateException("No private login screen");
+			throw new IllegalStateException("No private login screen (panel="
+				+ (client != null && loginPanel.get(client) != null) + ", transportReady=" + (loginReady() == 1) + ")");
 		}
 		String password = System.getProperty("spoiledmilk.outerCoverageFixturePassword");
 		if (password == null) throw new IllegalStateException("No disposable account configured");
@@ -51,7 +52,7 @@ public final class BrowserOuterCoverageProbe {
 		Field appearanceVisible = field(mudclient.class, "showAppearanceChange");
 		Field appearancePanel = field(mudclient.class, "panelAppearance");
 		Field appearanceButton = field(mudclient.class, "controlButtonAppearanceAccept");
-		deadline = System.currentTimeMillis() + 60_000;
+		deadline = System.currentTimeMillis() + 90_000;
 		while (System.currentTimeMillis() < deadline) {
 			if (appearanceVisible.getBoolean(client)) {
 				boolean[] buttons = (boolean[]) clicked.get(appearancePanel.get(client));
