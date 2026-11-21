@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a staged sustained walk in a fresh Firefox WebDriver session."""
+"""Run a staged sustained walk in a fresh browser WebDriver session."""
 
 import argparse
 import contextlib
@@ -35,9 +35,10 @@ if (p.state?.mode === 'GAME' && !w.travelBrowserFrames) {
 
 WATCH_PRESENTATION = """
 if (p.state?.mode === 'GAME' && !w.travelPresentation) {
-    const samples = w.travelPresentation = {gaps: [], frames: 0, holds: 0, blocked: 0, epochs: []};
-    let first, last, startingFrame, startingHolds, lastUploadBytes;
-    const sample = () => {
+    const samples = w.travelPresentation = {gaps: [], intervals: [], callbackGaps: [],
+        frames: 0, holds: 0, blocked: 0, epochs: [], unobservedIntervals: 0};
+    let first, last, startingFrame, startingHolds, lastUploadBytes, previousCount, previousCallback;
+    const sample = stamp => {
         const events = p.events || [];
         if (first === undefined) {
             const walking = events.find(event => event.message.startsWith('outer-coverage:walking:'));
@@ -46,6 +47,11 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
         if (events.some(event => event.message.startsWith('outer-coverage:complete:'))) return;
         const gpu = p.gpu;
         if (first !== undefined && gpu?.lastFrame > first) {
+            if (previousCallback !== undefined && stamp - previousCallback >= 50) {
+                samples.callbackGaps.push(stamp - previousCallback);
+                if (samples.callbackGaps.length > 256) samples.callbackGaps.shift();
+            }
+            previousCallback = stamp;
             if (startingFrame === undefined) {
                 startingFrame = gpu.javaWorldFrames;
                 startingHolds = gpu.heldWorldFrames;
@@ -55,6 +61,15 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
             if (w.browserWorldInputAllowed() === false) samples.blocked++;
             samples.frames = gpu.javaWorldFrames - startingFrame + 1;
             samples.holds = gpu.heldWorldFrames - startingHolds;
+            if (previousCount !== undefined && gpu.javaWorldFrames > previousCount) {
+                const count = gpu.javaWorldFrames - previousCount;
+                const intervals = gpu.worldFrameSamples;
+                const firstAvailable = Math.max(0, intervals.length - count);
+                samples.unobservedIntervals += count - (intervals.length - firstAvailable);
+                for (let i = firstAvailable; i < intervals.length; i++) samples.intervals.push(intervals[i]);
+                if (samples.intervals.length > 16384) samples.intervals.splice(0, 1024);
+            }
+            previousCount = gpu.javaWorldFrames;
             if (gpu.lastFrame !== last) {
                 if (last !== undefined && gpu.lastFrame - last >= 50) {
                     samples.gaps.push({from: last, to: gpu.lastFrame, geometryUploadBytes: gpu.uploadedBytes - lastUploadBytes,
@@ -101,16 +116,19 @@ def summarize_walking(result):
             'slowestFrameGaps': intervals[:8]}
 
 
-def run_walk(run, driver_port):
+def run_walk(run, driver_port, browser, wasmgc=False):
     server = json.loads((run / 'server-command.json').read_text())
     stage = json.loads((run / 'stage.json').read_text())
     fixture = json.loads((run / 'outer-coverage-fixture.json').read_text())
+    capture = run / (browser + '-result.json')
     if (fixture['manual'] or not (fixture['sustainedWalk'] or fixture.get('persistentMovement'))
             or not stage['http'].startswith('127.0.0.1:')
             or Path(server['cwd']).resolve() != run / 'server' or (run / 'STOP').exists()
-            or (run / 'firefox-result.json').exists() or (run / 'server.pid').exists()):
+            or capture.exists() or (run / 'server.pid').exists()):
         raise ValueError('Use a fresh private sustained-walk stage')
     url = 'http://' + stage['http'] + '/?mode=webgl'
+    if wasmgc:
+        url += '&wasmgc=1'
 
     def request(path, payload=None, method='POST'):
         data = json.dumps(payload or {}).encode() if method == 'POST' else None
@@ -137,9 +155,15 @@ def run_walk(run, driver_port):
             else:
                 raise TimeoutError('Private fixture was not ready')
 
-            firefox = {'args': ['-headless'], 'prefs': {'webgl.force-enabled': True, 'layout.css.devPixelsPerPx': '1'}}
-            session = request('/session', {'capabilities': {'alwaysMatch': {
-                'browserName': 'firefox', 'moz:firefoxOptions': firefox}}})['sessionId']
+            capabilities = {'browserName': browser}
+            if browser == 'firefox':
+                capabilities['moz:firefoxOptions'] = {'args': ['-headless'],
+                    'prefs': {'webgl.force-enabled': True, 'layout.css.devPixelsPerPx': '1'}}
+            else:
+                capabilities['goog:chromeOptions'] = {'args': ['--headless', '--window-size=1280,900',
+                    '--use-gl=angle', '--use-angle=gl']}
+            started = request('/session', {'capabilities': {'alwaysMatch': capabilities}})
+            session = started['sessionId']
             prefix = '/session/' + session
             request(prefix + '/url', {'url': url})
             element = request(prefix + '/element', {'using': 'css selector', 'value': '#start'})
@@ -171,6 +195,8 @@ def run_walk(run, driver_port):
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
+                geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
+                javaRuntime:{version:p.javaVersion,release:p.runtimeVersion,wasmGC:p.wasmGC},
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
                 presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
@@ -188,6 +214,7 @@ def run_walk(run, driver_port):
                 else:
                     completed = False
             result['serverStatus'] = server_status
+            result['browser'] = {key: started['capabilities'].get(key) for key in ('browserName', 'browserVersion')}
             result['walkingSummary'] = summarize_walking(result)
             if completed and fixture.get('liveSurfaceHandoff'):
                 if fixture.get('presentationOnly'):
@@ -203,12 +230,23 @@ def run_walk(run, driver_port):
                 completed = detached.get('completed', 0) > 0 and detached.get('error') is None
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
-            (run / 'firefox-result.json').write_text(json.dumps(result, indent=2) + '\n')
             presentation = result.get('presentation')
             if presentation is not None:
-                print({key: value for key, value in presentation.items() if key != 'gaps'},
+                intervals = sorted(presentation['intervals'])
+                if intervals:
+                    presentation['intervalSummary'] = {
+                        'samples': len(intervals),
+                        'medianMs': round(intervals[len(intervals) // 2], 1),
+                        'p95Ms': round(intervals[math.ceil(len(intervals) * .95) - 1], 1),
+                        'p99Ms': round(intervals[math.ceil(len(intervals) * .99) - 1], 1),
+                        'maxMs': round(intervals[-1], 1),
+                        'over100Ms': sum(interval >= 100 for interval in intervals),
+                    }
+                print({key: value for key, value in presentation.items()
+                       if key not in ('gaps', 'intervals', 'callbackGaps')},
                       'largest sampled frame gap:',
                       round(max((g['to'] - g['from'] for g in presentation['gaps']), default=0), 1), flush=True)
+            capture.write_text(json.dumps(result, indent=2) + '\n')
             print(result['serverStatus'], result['walkingSummary'], flush=True)
             return 0 if completed else 1
         finally:
@@ -224,9 +262,12 @@ def run_walk(run, driver_port):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run', type=Path)
-    parser.add_argument('--driver-port', type=int, default=44495, help='Port of the local Firefox WebDriver')
+    parser.add_argument('--browser', choices=('firefox', 'chrome'), default='firefox')
+    parser.add_argument('--driver-port', type=int, help='Port of the local WebDriver')
+    parser.add_argument('--wasmgc', action='store_true', help='Test the experimental CheerpJ 5.0 engine')
     args = parser.parse_args()
-    return run_walk(args.run.resolve(), args.driver_port)
+    driver_port = args.driver_port if args.driver_port is not None else {'firefox': 44495, 'chrome': 9515}[args.browser]
+    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc)
 
 
 if __name__ == '__main__':

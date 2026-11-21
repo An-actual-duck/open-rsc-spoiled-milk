@@ -839,6 +839,39 @@ worker. It crossed while the nine optional terrain meshes were held and
 reported 206 frames carrying both declarations. The walk had zero holds,
 input blocks, or new load epochs. [Render worker capture](../../../output/tests/browser-gameplay-spike/live-surface-inline-overlay-worker-proof/firefox-result.json)
 
+#### Follow-up frame pacing checks
+
+The presentation control now collects the browser backend's individual
+world submission intervals and separately observes browser animation frame
+callbacks. The 960×540 Firefox reference recorded a median of 18 ms, a
+95th percentile of 30 ms, a 99th percentile of 62 ms, and a maximum of
+220 ms. All 3,644 intervals were observed.
+[Firefox reference](../../../output/tests/browser-gameplay-spike/live-surface-pacing-baseline/firefox-result.json)
+
+| Candidate | 95th percentile | 99th percentile | Longest gap | Result |
+| --- | ---: | ---: | ---: | --- |
+| Compact animation geometry | 35 ms | 68 ms | 220 ms | Removed. A repeated upload fell from 258 KiB to 116 KiB while frame times worsened. |
+| 30 FPS presentation cap | 47 ms | 90 ms | 306 ms | Removed. The client kept its update cadence and the presentation gaps grew. |
+| 768×432 render surface | 29 ms | 60 ms | 263 ms | Removed. Typical gains were small and the worst gap grew. |
+| Chrome with the Radeon renderer at 960×540 | 22.5 ms | 64.2 ms | 235.6 ms | Typical frames improved. The long gaps persisted. |
+
+Each timed candidate completed all three crossings with zero loading holds
+or sampled input blocks. CheerpJ's experimental WasmGC run exited before
+login and produced no frame timing for this client.
+[Compact animation](../../../output/tests/browser-gameplay-spike/live-surface-compact-animation/firefox-result.json) · [30 FPS](../../../output/tests/browser-gameplay-spike/live-surface-half-rate-candidate/firefox-result.json) · [Reduced surface](../../../output/tests/browser-gameplay-spike/live-surface-reduced-resolution/firefox-result.json) · [Chrome](../../../output/tests/browser-gameplay-spike/live-surface-chrome-pacing/chrome-result.json) · [WasmGC startup](../../../output/tests/browser-gameplay-spike/live-surface-wasmgc-trial/firefox-result.json)
+
+The private layout candidate measured the GPU canvas and its AWT reference
+only when the layout changed. In Firefox it measured 5 of 5,089
+alignment requests. The route completed at 960×540 with zero holds or
+sampled input blocks. Its maximum gap was 179 ms, with a 95th percentile
+of 31 ms and a 99th percentile of 66 ms. The smaller maximum appeared
+alongside slightly higher frame intervals at both percentiles. In Chrome
+it measured 5 of 5,424 requests, with a 95th percentile of 22.3 ms and a
+99th percentile of 63.3 ms. The longest gap grew from 235.6 to 268.9 ms.
+The pacing gains varied by browser and by metric, so the layout trial was
+removed.
+[Firefox layout candidate](../../../output/tests/browser-gameplay-spike/live-surface-cached-layout/firefox-result.json) · [Chrome layout candidate](../../../output/tests/browser-gameplay-spike/live-surface-cached-layout-chrome/chrome-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
@@ -904,6 +937,9 @@ the sustained route and streaming features, remove `--trace` and
 `--travel-trace`, and add `--presentation-only`. This records fresh WebGL
 submission gaps from the page and checks the same actor and server-confirmed
 endpoint. Add `--frame-stages` for the narrower bridge-stage timings. For a
+Chrome comparison, start a loopback ChromeDriver and use `--browser chrome`.
+Each presentation capture includes the browser's renderer and the
+distribution of fresh frame intervals. For a
 manual trace, stage with
 `--manual --travel-trace` and serve it with `--travel-log
 <run>/manual-travel.ndjson`. Omit `--travel-trace` for an ordinary manual
