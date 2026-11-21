@@ -809,6 +809,16 @@ sample spent 124 ms in the sprite path with no geometry upload. Those
 samples point to browser frame production as the next performance target.
 [First presentation control](../../../output/tests/browser-gameplay-spike/live-surface-presentation-control/firefox-result.json) · [Repeat with more host headroom](../../../output/tests/browser-gameplay-spike/live-surface-headroom-control/firefox-result.json) · [Host counters](../../../output/tests/browser-gameplay-spike/live-surface-headroom-control/vmstat.log)
 
+The first frame-pacing optimization reuses each sprite layer's source
+columns across its rows and writes the browser's RGBA bytes directly. The
+baseline and candidate produced byte-identical pixel and cache receipts.
+Two isolated Java raster comparisons ran about 15% faster. On the same
+Firefox walking route, sampled gaps of at least 100 ms went from 16 to 14
+and the longest gap went from 223 to 194 ms. The candidate completed all
+three crossings with zero loading holds or sampled input blocks. These
+browser timings describe one matched pair of runs.
+[Baseline walk](../../../output/tests/browser-gameplay-spike/live-surface-sprite-opt-baseline/firefox-result.json) · [Optimized walk](../../../output/tests/browser-gameplay-spike/live-surface-sprite-opt-candidate/firefox-result.json) · [Isolated raster timings](../../../output/tests/seamless-world-streaming/browser-sprite-raster-matching/benchmark.log)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

@@ -86,11 +86,9 @@ final class BrowserWorldSpriteCache {
 			}
 		}
 		misses++;
-		CompositeWorldSpriteTexture composite =
-			OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(commands, workspace);
-		if (composite == null) return null;
-		byte[] rgba = new byte[(int) (width * height * 4)];
-		composite.textureData.pixels().get(rgba);
+		byte[] rgba = OpenGLSpriteTextureBuilder.buildCompositeSpriteRgba(commands, minX, minY,
+			(int) width, (int) height, workspace);
+		if (rgba == null) return null;
 		int imageId=nextImageId();
 		long cost = probe.retainedBytes + rgba.length + 256;
 		if (cost <= byteBudget) {
@@ -104,7 +102,7 @@ final class BrowserWorldSpriteCache {
 			entries.add(new Entry(probe.ownedCopy(), rgba, cost, imageId));
 			cacheBytes += cost;
 		}
-		return new Result(composite.x, composite.y, composite.width, composite.height, rgba, imageId);
+		return new Result(minX, minY, (int) width, (int) height, rgba, imageId);
 	}
 
 	/** Release retained cache data on context reset; statistics are lifetime totals. */

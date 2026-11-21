@@ -12,6 +12,7 @@ final class OpenGLPixelWorkspace {
 	static final int MAX_RETAINED_PIXELS = 1 << 20;
 	private static final int[] EMPTY = new int[0];
 	private int[] composite = EMPTY;
+	private int[] spriteColumns = EMPTY;
 	private ByteBuffer rgba;
 
 	int[] clearedComposite(int pixels) {
@@ -22,6 +23,12 @@ final class OpenGLPixelWorkspace {
 			Arrays.fill(composite, 0, pixels, 0);
 		}
 		return composite;
+	}
+
+	int[] spriteColumns(int width) {
+		if (width > MAX_RETAINED_PIXELS) return new int[width];
+		if (spriteColumns.length < width) spriteColumns = new int[capacity(width)];
+		return spriteColumns;
 	}
 
 	ByteBuffer rgba(int bytes) {
@@ -37,6 +44,7 @@ final class OpenGLPixelWorkspace {
 
 	void clear() {
 		composite = EMPTY;
+		spriteColumns = EMPTY;
 		rgba = null;
 	}
 

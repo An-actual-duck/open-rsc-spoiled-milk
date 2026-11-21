@@ -2,6 +2,8 @@ package orsc;
 
 import com.openrsc.client.model.Sprite;
 import orsc.graphics.Renderer2DFrame;
+import orsc.graphics.RendererSpriteTransform;
+import orsc.graphics.RendererTransparency;
 import orsc.graphics.three.Renderer3DFrame;
 
 import java.nio.ByteBuffer;
@@ -88,6 +90,23 @@ final class OpenGLSpriteTextureBuilder {
 		return buildCompositeCharacterSpriteTexture(null, layers, workspace);
 	}
 
+	/** Produces owned WebGL upload bytes for the bounds verified by the sprite cache. */
+	static byte[] buildCompositeSpriteRgba(List<Renderer2DFrame.SpriteCommand> layers,
+		int x, int y, int width, int height, OpenGLPixelWorkspace workspace) {
+		int pixelCount = width * height;
+		int[] raster = rasterizeComposite(null, layers, layers.size(), x, y, width, pixelCount, workspace);
+		if (raster == null) return null;
+		byte[] rgba = new byte[pixelCount * 4];
+		for (int i = 0, offset = 0; i < pixelCount; i++, offset += 4) {
+			int pixel = raster[i];
+			rgba[offset] = (byte) (pixel >>> 24);
+			rgba[offset + 1] = (byte) (pixel >>> 16);
+			rgba[offset + 2] = (byte) (pixel >>> 8);
+			rgba[offset + 3] = (byte) pixel;
+		}
+		return rgba;
+	}
+
 	private static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
 		Renderer3DFrame.WorldSpriteSnapshot snapshot,
 		List<Renderer2DFrame.SpriteCommand> layerCommands,
@@ -124,21 +143,9 @@ final class OpenGLSpriteTextureBuilder {
 		int width = maxX - minX;
 		int height = maxY - minY;
 		int pixelCount = width * height;
-		int[] compositePixels = workspace == null
-			? new int[pixelCount] : workspace.clearedComposite(pixelCount);
-		int visiblePixelCount = 0;
-		for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
-			Renderer2DFrame.SpriteCommand command = snapshot == null
-				? layerCommands.get(layerIndex)
-				: snapshot.getLayer(layerIndex);
-			if (command == null) {
-				continue;
-			}
-			visiblePixelCount += compositeSpriteCommandInto(command, minX, minY, width, compositePixels);
-		}
-		if (visiblePixelCount <= 0) {
-			return null;
-		}
+		int[] compositePixels = rasterizeComposite(snapshot, layerCommands, layerCount, minX, minY, width,
+			pixelCount, workspace);
+		if (compositePixels == null) return null;
 		ByteBuffer pixels = workspace == null
 			? ByteBuffer.allocateDirect(pixelCount * 4) : workspace.rgba(pixelCount * 4);
 		int finalVisiblePixelCount = 0;
@@ -158,12 +165,25 @@ final class OpenGLSpriteTextureBuilder {
 			new DynamicTextureData(width, height, pixels, finalVisiblePixelCount));
 	}
 
-	private static int compositeSpriteCommandInto(
+	private static int[] rasterizeComposite(Renderer3DFrame.WorldSpriteSnapshot snapshot,
+		List<Renderer2DFrame.SpriteCommand> layers, int layerCount, int x, int y, int width,
+		int pixelCount, OpenGLPixelWorkspace workspace) {
+		int[] pixels = workspace == null ? new int[pixelCount] : workspace.clearedComposite(pixelCount);
+		boolean visible = false;
+		for (int i = 0; i < layerCount; i++) {
+			Renderer2DFrame.SpriteCommand layer = snapshot == null ? layers.get(i) : snapshot.getLayer(i);
+			if (layer != null) visible |= compositeSpriteCommandInto(layer, x, y, width, pixels, workspace);
+		}
+		return visible ? pixels : null;
+	}
+
+	private static boolean compositeSpriteCommandInto(
 		Renderer2DFrame.SpriteCommand command,
 		int originX,
 		int originY,
 		int compositeWidth,
-		int[] compositePixels) {
+		int[] compositePixels,
+		OpenGLPixelWorkspace workspace) {
 		Sprite sprite = command.getSprite();
 		int[] sourcePixels = sprite.getPixels();
 		int spriteWidth = sprite.getWidth();
@@ -176,34 +196,48 @@ final class OpenGLSpriteTextureBuilder {
 			|| width <= 0
 			|| height <= 0
 			|| alpha <= 0) {
-			return 0;
+			return false;
 		}
-		long xDelta16 = (long) command.getBottomX16() - command.getTopX16();
-		int visiblePixelCount = 0;
+		// A layer's source columns are independent of both the row and destination skew.
+		int[] sourceColumns = workspace == null ? new int[width] : workspace.spriteColumns(width);
+		long sourceX16 = command.getSourceStartX16();
+		int sourceStepX16 = command.getSourceScaleX16();
+		for (int column = 0; column < width; column++, sourceX16 += sourceStepX16) {
+			sourceColumns[column] = (int) (sourceX16 >> 16);
+		}
+		int topX16 = command.getTopX16();
+		long xDelta16 = (long) command.getBottomX16() - topX16;
+		int y = command.getY();
+		int sourceStartY16 = command.getSourceStartY16();
+		int sourceStepY16 = command.getSourceScaleY16();
+		RendererSpriteTransform transform = command.getTransform();
+		boolean opaque = alpha >= Renderer2DFrame.SpriteCommand.FULL_ALPHA;
+		boolean visible = false;
 		for (int row = 0; row < height; row++) {
-			int targetY = command.getY() + row - originY;
-			int screenX0 = (int) ((command.getTopX16() + xDelta16 * row / height) >> 16);
-			int sourceY = (int) ((command.getSourceStartY16() + (long) row * command.getSourceScaleY16()) >> 16);
+			int targetY = y + row - originY;
+			int sourceY = (int) ((sourceStartY16 + (long) row * sourceStepY16) >> 16);
 			if (targetY < 0 || sourceY < 0 || sourceY >= spriteHeight) {
 				continue;
 			}
+			int screenX0 = (int) ((topX16 + xDelta16 * row / height) >> 16);
+			int targetRow = targetY * compositeWidth;
+			int sourceRow = sourceY * spriteWidth;
 			for (int column = 0; column < width; column++) {
 				int targetX = screenX0 + column - originX;
-				int sourceX =
-					(int) ((command.getSourceStartX16() + (long) column * command.getSourceScaleX16()) >> 16);
+				int sourceX = sourceColumns[column];
 				if (targetX < 0
 					|| targetX >= compositeWidth
 					|| sourceX < 0
 					|| sourceX >= spriteWidth) {
 					continue;
 				}
-				int sourcePixel = sourcePixels[sourceY * spriteWidth + sourceX];
-				if (!orsc.graphics.RendererTransparency.isVisibleSpritePixel(sourcePixel)) {
+				int sourcePixel = sourcePixels[sourceRow + sourceX];
+				if (!RendererTransparency.isVisibleSpritePixel(sourcePixel)) {
 					continue;
 				}
-				int rgb = command.getTransform().apply(sourcePixel) & orsc.graphics.RendererTransparency.RGB_MASK;
-				int targetIndex = targetY * compositeWidth + targetX;
-				if (alpha >= Renderer2DFrame.SpriteCommand.FULL_ALPHA) {
+				int rgb = transform.apply(sourcePixel) & RendererTransparency.RGB_MASK;
+				int targetIndex = targetRow + targetX;
+				if (opaque) {
 					compositePixels[targetIndex] = (rgb << 8) | 0xFF;
 				} else {
 					compositePixels[targetIndex] = OpenGLSpriteAlpha.blendStraightRgbaOver(
@@ -211,10 +245,10 @@ final class OpenGLSpriteTextureBuilder {
 						rgb,
 						alpha);
 				}
-				visiblePixelCount++;
+				visible = true;
 			}
 		}
-		return visiblePixelCount;
+		return visible;
 	}
 
 }
