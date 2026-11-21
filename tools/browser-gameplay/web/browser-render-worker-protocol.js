@@ -7,7 +7,7 @@ const P='Java_orsc_BrowserWebGLBridge_';
 export const RENDER_WORKER_SCHEMA=Object.freeze({
   initialize:['s','s'],initializeWholeZone:['s','I','I'],wholeZoneFrame:['I','I'],initializeLighting:['s','s'],initializeSky:[],
   uploadLightingMask:['i','i','i','B','F'],lightingFrame:['F'],uploadSkyGeometry:['F','I','i'],skyFrame:['F','F'],
-  overlayFrame:['i','i','i','n','n','i','b','N'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
+  overlayFrame:['i','i','i','n','n','i','b','N'],uploadCompactSceneChunk:['i','I','I','I'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],
   present:['i','i','b','F','F','I','I'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
   planWorldSprites:['i','n','I'],commitWorldSprites:['i','n','B','F'],
@@ -63,7 +63,11 @@ export function validateRenderBatch(packet){
   if(total!==packet.bytes)throw new Error('Render byte receipt mismatch');
   return total;
 }
-export function renderWorkerPolicy(mode,options){
+export function renderWorkerPolicy(mode,options,surfaceFixture=false){
+  if(surfaceFixture){
+    if(mode!=='webgl'||options.has('benchmark'))throw new Error('Live surface renderer requires the private gameplay route');
+    return {requested:true,enabled:true};
+  }
   const v=options.get('renderworker');if(v!==null&&!['on','off'].includes(v))throw new Error('Invalid private renderworker policy');
   const enabled=v==='on';if(enabled&&(mode!=='webgl'||!options.has('benchmark')||options.get('overlay')!=='coverage'||!['off',null].includes(options.get('overlaydelta'))||options.get('nativecalls')==='sync'))throw new Error('Render worker requires private async WebGL full coverage');
   return {requested:enabled,enabled};

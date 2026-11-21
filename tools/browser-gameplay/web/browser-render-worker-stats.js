@@ -13,7 +13,7 @@ function bounded(value,depth=0,budget={left:512,chars:16384}){
   throw new Error('Unsupported worker statistic metadata');
 }
 export function createWorkerStatsSnapshot(stats){
-  const counts={},submitted={};
+  const counts={},submitted={};let submittedTravel=0;
   for(const key of WORKER_SAMPLE_FIELDS){
     const array=stats[key];if(!Array.isArray(array))throw new Error('Missing worker statistics history');counts[key]=0;submitted[key]=0;
     // Track actual pushes, including equal intervals and rings at full capacity.
@@ -30,11 +30,20 @@ export function createWorkerStatsSnapshot(stats){
     }
     for(const key of WORKER_SAMPLE_FIELDS){const n=counts[key]-submitted[key];if(n){const a=stats[key];const selected=a.slice(-Math.min(n,a.length,4096));
       samples[key]=selected.map(sample=>{
-        if(key==='javaBridgeWorkSamples'){if(!Array.isArray(sample)||sample.length!==14||sample.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw new Error('Invalid worker bridge sample');return sample.slice();}
+        if(key==='javaBridgeWorkSamples'){if(!Array.isArray(sample)||sample.length!==(stats.travelTrace?24:14)||sample.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw new Error('Invalid worker bridge sample');return sample.slice();}
         if(key==='worldFramePolicies'){if(typeof sample!=='boolean')throw new Error('Invalid worker policy sample');}
         else if(typeof sample!=='number'||!Number.isFinite(sample)||sample<0)throw new Error('Invalid worker interval sample');
         return sample;
       });submitted[key]=counts[key];}}
-    return {value,samples,measurementActive:stats.measurement===true,timeOrigin:performance.timeOrigin};
+    const travel=stats.travelTrace;
+    let travelRows;
+    if(travel){
+      const received=travel.dropped+travel.rows.length;
+      const next=received-submittedTravel;
+      if(next<0||next>32)throw new Error('Unexpected render worker travel events');
+      travelRows=next?travel.rows.slice(-next).map(row=>bounded(row,0,budget)):[];
+      submittedTravel=received;
+    }
+    return {value,samples,travelRows,measurementActive:stats.measurement===true,timeOrigin:performance.timeOrigin};
   };
 }

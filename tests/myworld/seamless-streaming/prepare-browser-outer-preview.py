@@ -52,6 +52,7 @@ def main():
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Include the signed source neighbors of outer draw cells')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Publish revisioned scenery meshes ahead of the crossing')
     parser.add_argument('--live-surface-handoff', action='store_true', help='Keep verified playable coverage live through a rolling rebase')
+    parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
@@ -81,8 +82,8 @@ def main():
         parser.error('Scenery draw cells require the expanded terrain sources')
     if args.live_surface_handoff and not args.surface_scenery_draw:
         parser.error('Live surface handoff requires independent scenery draws')
-    if args.surface_mesh_worker and not args.live_surface_handoff:
-        parser.error('The isolated mesh builder requires live surface handoff')
+    if (args.surface_mesh_worker or args.surface_draw_worker) and not args.live_surface_handoff:
+        parser.error('Surface workers require live surface handoff')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -135,7 +136,8 @@ def main():
                '        System.setProperty("spoiledmilk.outerCoverageFixturePassword", "BrowserProof13");\n'
                '        new Thread(BrowserOuterCoverageProbe::run, "outer-coverage-fixture").start();')
     insert(web / 'runtime.html', "    await import('./browser.js');",
-           f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/'}};")
+           f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/', "
+           f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}}};")
     if args.manual and args.travel_trace:
         (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
         insert(web / 'runtime.html', "    await import('./browser.js');",
@@ -216,6 +218,7 @@ def main():
         'surfaceSceneryDraw': args.surface_scenery_draw,
         'liveSurfaceHandoff': args.live_surface_handoff,
         'surfaceMeshWorker': args.surface_mesh_worker,
+        'surfaceDrawWorker': args.surface_draw_worker,
         'sustainedWalk': args.sustained_walk,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',

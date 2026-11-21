@@ -7,6 +7,8 @@ export async function createBrowserRenderWorker(canvas,report=()=>{},options={})
   const worker=options.workerFactory?options.workerFactory():new Worker(new URL('./browser-render-worker-entry.js',import.meta.url),{type:'module',name:'Spoiled Milk private renderer'});
   let disposed=false,readyResolve,readyReject,readyTimer,epoch=0,lastLayout=null,dirty=true,rect=null,dpr=0,readId=1;
   const readers=new Map(),controls=new Map();let measurement=false,disposeWaiter=null;const stats={backend:'WebGL2 resident production geometry / private Worker',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,frameSamples:[],worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],worldFramePolicies:[],worldFrameSpriteGroups:[],physicalOutputWorldFramePolicies:[]};
+  const travel=options.travelTrace===true?{rows:[],dropped:0}:null;
+  if(travel)Object.defineProperty(stats,'travelTrace',{value:travel});
   const invalidate=()=>{dirty=true;},win=globalThis.window;
   const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(invalidate):null;observer?.observe(canvas);
   for(const e of ['resize','browser-display-change'])win?.addEventListener(e,invalidate);
@@ -20,13 +22,20 @@ export async function createBrowserRenderWorker(canvas,report=()=>{},options={})
     for(const [key,values]of Object.entries(snapshot.samples)){if(!Array.isArray(stats[key])||!Array.isArray(values)||values.length>4096)throw new Error('Unknown worker sample field');for(const value of values){stats[key].push(value);if(stats[key].length>4096)stats[key].shift();}}
   stats.renderWorker=transport.stats;stats.renderWorker.lastCompletedPacket=ack.id;if(ack.frameId)stats.renderWorker.lastCompletedFrame=ack.frameId;stats.renderWorker.layoutEpoch=ack.layoutEpoch;stats.renderWorker.executionMilliseconds=ack.executionMilliseconds;stats.renderWorker.measurementActive=snapshot.measurementActive===true;
     options.onComplete?.(ack);
+    if(travel&&Array.isArray(snapshot.travelRows)){
+      if(snapshot.travelRows.length>32)throw new Error('Render worker travel sample cap');
+      for(const row of snapshot.travelRows){
+        if(travel.rows.length===8192){travel.rows.splice(0,1024);travel.dropped+=1024;}
+        travel.rows.push({...row,inputAllowed:options.worldInputAllowed?.()??null});
+      }
+    }
   }});
     Object.defineProperty(stats,'measurement',{enumerable:true,get:()=>measurement,set:v=>{if(typeof v!=='boolean')throw new Error('Invalid worker measurement policy');measurement=v;controls.set('$measurement',v);}});
   stats.renderWorker=transport.stats;
   const ready=new Promise((a,b)=>{readyResolve=a;readyReject=b;readyTimer=setTimeout(()=>{transport.fail(new Error('Render worker startup timed out'));},30000);});
   const onMessage=event=>{const m=event.data;if(m?.type==='ready'){clearTimeout(readyTimer);readyResolve();return;}if(m?.type==='report'){report(m.text);return;}if(m?.type==='pixels'){const p=readers.get(m.id);if(!p){transport.fail(new Error('Unknown worker readback'));return;}readers.delete(m.id);p.resolve(m);return;}if(m?.type==='disposed'){if(disposeWaiter){clearTimeout(disposeWaiter.timer);disposeWaiter.resolve(m.stats);disposeWaiter=null;}return;}transport.receive(m);};
   worker.addEventListener('message',onMessage);worker.addEventListener('error',event=>transport.fail(new Error(event.message||'Render worker error')));worker.addEventListener('messageerror',()=>transport.fail(new Error('Render worker message decode failed')));
-  try{const offscreen=canvas.transferControlToOffscreen();worker.postMessage({type:'init',version:1,canvas:offscreen,oracle:options.oracle===true,options:{wholeZone:options.wholeZone===true,geometryFormat:options.geometryFormat||'legacy',gpuResidency:options.gpuResidency,gpuBudgetMiB:options.gpuBudgetMiB,wholeZoneCatalog:options.wholeZoneCatalog||null,nativeCallDispatch:'async',ownedState:options.ownedState===true,opaqueProof:options.opaqueProof===true,streamUploadValidation:options.streamUploadValidation===true,overlayDeltaTransport:false,overlayRectMode:'off',overlayJournalObserve:false,physicalOutput:options.physicalOutput===true,physicalOutputControl:options.physicalOutputControl===true,benchmarkControl:options.benchmarkControl===true}},[offscreen]);await ready;}
+  try{const offscreen=canvas.transferControlToOffscreen();worker.postMessage({type:'init',version:1,canvas:offscreen,oracle:options.oracle===true,options:{travelTrace:options.travelTrace===true,compactScene:options.compactScene===true,wholeZone:options.wholeZone===true,geometryFormat:options.geometryFormat||'legacy',gpuResidency:options.gpuResidency,gpuBudgetMiB:options.gpuBudgetMiB,wholeZoneCatalog:options.wholeZoneCatalog||null,nativeCallDispatch:'async',ownedState:options.ownedState===true,opaqueProof:options.opaqueProof===true,streamUploadValidation:options.streamUploadValidation===true,overlayDeltaTransport:false,overlayRectMode:'off',overlayJournalObserve:false,physicalOutput:options.physicalOutput===true,physicalOutputControl:options.physicalOutputControl===true,benchmarkControl:options.benchmarkControl===true}},[offscreen]);await ready;}
   catch(error){clearTimeout(readyTimer);transport.fail(error);dispose();throw error;}
   const natives={};for(const name of Object.keys(RENDER_WORKER_SCHEMA))if(name[0]!=='$')natives[renderNativeName(name)]=(lib,...args)=>{for(const [key,v]of controls)transport.enqueue(key,[v]);controls.clear();return transport.enqueue(name,args);};
   function dispose(){if(disposed)return;disposed=true;invalidateZone('disposed');clearTimeout(readyTimer);observer?.disconnect();for(const e of ['resize','browser-display-change'])win?.removeEventListener(e,invalidate);for(const p of readers.values())p.reject(new Error('Render worker disposed'));readers.clear();if(disposeWaiter){clearTimeout(disposeWaiter.timer);disposeWaiter.reject(new Error('Render worker disposed'));disposeWaiter=null;}transport.dispose();try{worker.postMessage({type:'dispose'});}finally{worker.terminate();}stats.disposed=true;}

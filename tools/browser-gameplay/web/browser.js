@@ -38,7 +38,8 @@ function nativeCallPolicy(mode,parameters){
   return value;
 }
 const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',options);
-const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options);
+const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options,
+  !deployment.publicAlpha&&window.browserPrivateTestRoute?.surfaceDrawWorker===true);
 const wholeZone=wholeZonePolicy(options.get('mode')||'software',options);
 if(deployment.publicAlpha&&wholeZone.liveCells)throw new Error('Live cells are a private renderer path');
 const cloneTemplates=cloneTemplatePolicy(options.get('mode')||'software',options);
@@ -394,7 +395,7 @@ try {
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
     const gpuOptions={wholeZone:wholeZone.enabled,liveCells:wholeZone.liveCells,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
     ensureStarting();
-    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;ensureStarting();gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(stopped)return;boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});if(stopped)gpu.dispose();ensureStarting();}
+    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;ensureStarting();gpu=await factory(canvas,report,{...gpuOptions,worldInputAllowed:()=>window.browserWorldInputAllowed(),onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(stopped)return;boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});if(stopped)gpu.dispose();ensureStarting();}
     else gpu=createBrowserWebGL(canvas,report,gpuOptions);
     window.browserProof.renderWorker={...renderWorker,actual:renderWorker.enabled===true};
     window.browserProof.wholeZoneRequested=wholeZone.requested;window.browserProof.wholeRamRequested=wholeRam.requested;
