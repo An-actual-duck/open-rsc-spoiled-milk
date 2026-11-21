@@ -165,6 +165,8 @@ public final class GameStateUpdater {
 		Boolean.getBoolean("spoiledmilk.persistentMovementPreview");
 	private static final boolean SURFACE_SCENERY_CELLS =
 		Boolean.getBoolean("spoiledmilk.surfaceSceneryCells");
+	private static final boolean SURFACE_SCENERY_DRAW = SURFACE_SCENERY_CELLS && EXPANDED_SURFACE_DRAW_BORDER
+		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
 	private static final String SURFACE_SCENERY_CELLS_ATTRIBUTE = "surface_scenery_cells";
 	private static final String LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE =
 		"layered_scene_context_sequence";
@@ -529,6 +531,12 @@ public final class GameStateUpdater {
 		context.legacyY = expectedLegacy.getY();
 		if (nativeTerrain != null) {
 			nativeTerrain.populate(context);
+		}
+		if (SURFACE_SCENERY_DRAW && predictedSymmetricReady) {
+			SurfaceScenerySubscription subscription = player.getAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE, null);
+			if (subscription != null && subscription.matchesTarget(nativeTerrain.currentChunkX, nativeTerrain.currentChunkY)) {
+				updateSurfaceSceneryCells(player);
+			}
 		}
 		if (!tryFinalizeAndSendPacketChecked(
 				OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, context, player)) {
@@ -1220,7 +1228,7 @@ public final class GameStateUpdater {
 					&& travel != null && travel.relocation == player.getMovementRelocation()) {
 					player.setAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE, new SurfaceScenerySubscription(
 						contextSequence, travel.generation, sequence, stagedTerrain.currentChunkX,
-						stagedTerrain.currentChunkY, stepX, stepY));
+						stagedTerrain.currentChunkY, stepX, stepY, SURFACE_SCENERY_DRAW));
 				}
 			}
 		}

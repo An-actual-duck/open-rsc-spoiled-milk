@@ -1483,7 +1483,7 @@ public final class World {
 	}
 
 	public static final class SurfaceSceneryPlacement {
-		final int id, x, z, direction, type;
+		public final int id, x, z, direction, type;
 
 		public SurfaceSceneryPlacement(int id, int x, int z, int direction, int type) {
 			this.id = id;

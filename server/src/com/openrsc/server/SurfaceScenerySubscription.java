@@ -11,13 +11,15 @@ import com.openrsc.server.net.rsc.struct.outgoing.SurfaceSceneryCellStruct;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Keeps the incoming edge of the next surface window current for one viewer. */
 final class SurfaceScenerySubscription {
 	private static final int CELL_SIZE = WorldRegionKey.REGION_SIZE;
 	private static final int RADIUS = 1;
-	private static final int WIDTH = RADIUS * 2 + 1;
+	private static final int DRAW_RADIUS = 2;
 	private static final int MAX_PAGES = 64;
 	private static final int PAGES_PER_CELL_PER_TICK = 2;
 	private static final Comparator<ObjectRecord> ORDER = Comparator
@@ -30,33 +32,59 @@ final class SurfaceScenerySubscription {
 	final int context;
 	final int generation;
 	private final int terrainStage;
-	private final int minCellX, minCellY, stepX;
-	private final Cell[] cells = new Cell[WIDTH];
+	private final int targetX, targetY;
+	private final int minCellX, minCellY, maxCellX, maxCellY;
+	private final Map<Long, Cell> cells = new LinkedHashMap<>();
 
 	SurfaceScenerySubscription(int context, int generation, int terrainStage,
-		int targetX, int targetY, int stepX, int stepY) {
+		int targetX, int targetY, int stepX, int stepY, boolean prepareDrawCells) {
 		this.context = context;
 		this.generation = generation;
 		this.terrainStage = terrainStage;
-		this.stepX = stepX;
-		minCellX = targetX + (stepX == 0 ? -RADIUS : stepX * RADIUS);
-		minCellY = targetY + (stepY == 0 ? -RADIUS : stepY * RADIUS);
-		for (int i = 0; i < WIDTH; i++) {
-			cells[i] = new Cell(minCellX + (stepX == 0 ? i : 0), minCellY + (stepX == 0 ? 0 : i));
+		this.targetX = targetX;
+		this.targetY = targetY;
+		addStrip(stepX, stepY, RADIUS, RADIUS);
+		if (prepareDrawCells) {
+			addStrip(stepX, stepY, DRAW_RADIUS, DRAW_RADIUS);
+			addStrip(stepX, stepY, -DRAW_RADIUS, RADIUS);
+		}
+		int west = Integer.MAX_VALUE, south = Integer.MAX_VALUE;
+		int east = Integer.MIN_VALUE, north = Integer.MIN_VALUE;
+		for (Cell cell : cells.values()) {
+			west = Math.min(west, cell.x);
+			south = Math.min(south, cell.y);
+			east = Math.max(east, cell.x);
+			north = Math.max(north, cell.y);
+		}
+		minCellX = west;
+		minCellY = south;
+		maxCellX = east;
+		maxCellY = north;
+	}
+
+	private void addStrip(int stepX, int stepY, int along, int radius) {
+		for (int across = -radius; across <= radius; across++) {
+			int x = targetX + stepX * along + stepY * across;
+			int y = targetY + stepY * along + stepX * across;
+			cells.put(cellKey(x, y), new Cell(x, y));
 		}
 	}
 
+	boolean matchesTarget(int x, int y) {
+		return x == targetX && y == targetY;
+	}
+
 	void update(Player viewer) {
-		for (Cell cell : cells) cell.current.clear();
+		for (Cell cell : cells.values()) cell.current.clear();
 		List<GameObject> objects = viewer.getWorld().getRegionManager().snapshotSurfaceScenery(
-			viewer, minCellX, minCellY, cells[WIDTH - 1].x, cells[WIDTH - 1].y);
+			viewer, minCellX, minCellY, maxCellX, maxCellY);
 		for (GameObject object : objects) {
-			int index = stepX == 0 ? Math.floorDiv(object.getX(), CELL_SIZE) - minCellX
-				: Math.floorDiv(object.getY(), CELL_SIZE) - minCellY;
-			cells[index].current.add(new ObjectRecord(object.getID(), object.getX(), object.getY(),
+			Cell cell = cells.get(cellKey(Math.floorDiv(object.getX(), CELL_SIZE), Math.floorDiv(object.getY(), CELL_SIZE)));
+			if (cell == null) continue;
+			cell.current.add(new ObjectRecord(object.getID(), object.getX(), object.getY(),
 				object.getDirection(), object.getType()));
 		}
-		for (Cell cell : cells) {
+		for (Cell cell : cells.values()) {
 			cell.current.sort(ORDER);
 			if (cell.sent == null || !sameContents(cell.current, cell.sent)) {
 				cell.sent = new ArrayList<>(cell.current);
@@ -66,6 +94,8 @@ final class SurfaceScenerySubscription {
 			sendPages(viewer, cell);
 		}
 	}
+
+	private static long cellKey(int x, int y) { return ((long)x << 32) | (y & 0xffffffffL); }
 
 	private void sendPages(Player viewer, Cell cell) {
 		int pageSize = SurfaceSceneryCellStruct.PAGE_SIZE;

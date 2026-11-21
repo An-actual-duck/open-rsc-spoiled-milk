@@ -290,6 +290,7 @@ public class PacketHandler {
 		if (mc != null) {
 			mc.resetLayeredSceneActivationPresentation();
 			mc.clearStaticScenePresentation();
+			if (mudclient.SURFACE_SCENERY_DRAW) mc.clearSurfaceSceneryDraw();
 			if (mc.getWorld() != null) mc.getWorld().clearSurfaceCollision();
 		}
 		nativeLayeredTerrainResidentCache.clear();
@@ -1001,6 +1002,7 @@ public class PacketHandler {
 			clearReadyPredictedLayeredTerrainHalo();
 		}
 		if (surfaceScenery != null && !keepSurfaceScenery) mc.getWorld().clearIncomingSurfaceScenery();
+		if (mudclient.SURFACE_SCENERY_DRAW) mc.finishSurfaceSceneryDraw(keepSurfaceScenery);
 		BoundaryLoadingDiagnostics.recordPhase(
 			"context",
 			"prediction-and-activation",
@@ -1328,8 +1330,10 @@ public class PacketHandler {
 			if (surfaceScenery != null && activeTerrain != null && logicalLevel == 0 && "global".equals(worldSpace)) {
 				clearSurfaceSceneryPrediction();
 				int x = stagedTerrain.getCurrentChunkX(), z = stagedTerrain.getCurrentChunkY();
+				int dx = x - activeTerrain.getCurrentChunkX(), dz = z - activeTerrain.getCurrentChunkY();
 				surfaceScenery.begin(stageSequence, contextSequence, persistentMovement.generation(), x, z,
-					x - activeTerrain.getCurrentChunkX(), z - activeTerrain.getCurrentChunkY());
+					dx, dz, mudclient.SURFACE_SCENERY_DRAW);
+				if (mudclient.SURFACE_SCENERY_DRAW && Math.abs(dx) + Math.abs(dz) == 1) mc.beginSurfaceSceneryDraw(stagedTerrain);
 			}
 			if (mudclient.PREDICTED_SCENERY_PREVIEW) {
 				mc.clearPredictedScenery();
@@ -1383,6 +1387,7 @@ public class PacketHandler {
 	}
 
 	public void pollLayeredTerrainStageReady() {
+		if (mudclient.SURFACE_SCENERY_DRAW) mc.pollSurfaceSceneryDraw();
 		if (mc.getWorld() != null) mc.getWorld().publishPendingSurfaceCollision(pendingLayeredTerrainHaloPrebuild);
 		if (pendingLayeredTerrainHaloPrebuild != null) {
 			pollLayeredTerrainHaloReady();
@@ -1758,6 +1763,7 @@ public class PacketHandler {
 		if (surfaceScenery == null) return;
 		surfaceScenery.reset();
 		if (mc != null && mc.getWorld() != null) mc.getWorld().clearIncomingSurfaceScenery();
+		if (mc != null && mudclient.SURFACE_SCENERY_DRAW) mc.clearSurfaceSceneryDraw();
 	}
 
 	private void updateSurfaceSceneryCell(int length) {
@@ -1796,9 +1802,16 @@ public class PacketHandler {
 			}
 			records.add(new World.SurfaceSceneryPlacement(id, tx, tz, direction, type));
 		}
-		if (cell.startsRevision(revision, page)) mc.getWorld().invalidateIncomingSurfaceScenery(x, z);
+		boolean interactive = cell.band == SurfaceSceneryCells.Band.ENTERING_PLAY;
+		if (cell.startsRevision(revision, page)) {
+			if (interactive) mc.getWorld().invalidateIncomingSurfaceScenery(x, z);
+			if (mudclient.SURFACE_SCENERY_DRAW) mc.invalidateSurfaceSceneryDraw(x, z);
+		}
 		List<World.SurfaceSceneryPlacement> complete = cell.accept(revision, page, pages, records);
-		if (complete != null) mc.getWorld().publishIncomingSurfaceScenery(x, z, revision, complete);
+		if (complete != null) {
+			if (interactive) mc.getWorld().publishIncomingSurfaceScenery(x, z, revision, complete);
+			if (mudclient.SURFACE_SCENERY_DRAW) mc.stageSurfaceSceneryDraw(x, z, cell.band, complete);
+		}
 	}
 
 	private void sendLayeredTerrainStageReady(

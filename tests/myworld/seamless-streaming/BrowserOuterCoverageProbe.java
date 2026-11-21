@@ -155,6 +155,9 @@ public final class BrowserOuterCoverageProbe {
 		int[] previousDraws = fixedDraw ? awaitSurfaceDrawBuffers() : null;
 		int[] liveOuterDraws = Boolean.getBoolean("spoiledmilk.expandedSurfaceDrawBorder")
 			? awaitLiveOuterDrawBuffers(client, before[3]) : new int[0];
+		boolean sceneryDraw = Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
+		int[] liveScenery = sceneryDraw ? awaitOptionalSceneryDraws(client, before[3]) : new int[0];
+		if (sceneryDraw) BrowserBootstrap.report("outer-coverage:scenery-draw:before-uploads:" + BrowserWebGLBridge.getSceneUploadReceipt());
 		boolean rolling = Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow");
 		Map<RSModel, Long> overlapModels = rolling ? snapshotOverlapModels(client, false) : null;
 		Map<RSModel, Long> overlapWalls = rolling ? snapshotOverlapModels(client, true) : null;
@@ -162,6 +165,15 @@ public final class BrowserOuterCoverageProbe {
 		walkLeg(client, walk, 278, 609);
 		int afterScene = client.packetHandler.getPersistentMovementReceipt()[3];
 		if (afterScene <= before[3]) throw new IllegalStateException("Route did not cross the terrain center boundary");
+		if (sceneryDraw) {
+			int adopted = client.getAdoptedSurfaceSceneryDraws();
+			int promoted = countMatchingSurfaceDrawBuffers(liveScenery, BrowserWebGLBridge.getSceneryDrawBuffers(false), true);
+			if (adopted <= 0 || promoted <= 0) {
+				throw new IllegalStateException("Prepared scenery did not become active. Adopted=" + adopted + " promoted=" + promoted);
+			}
+			BrowserBootstrap.report("outer-coverage:scenery-draw:after-uploads:" + BrowserWebGLBridge.getSceneUploadReceipt());
+			BrowserBootstrap.report("outer-coverage:scenery-draw:adopted=" + adopted + ":gpu-promoted=" + promoted);
+		}
 		if (fixedDraw) {
 			int[] activeDraws = awaitSurfaceDrawBuffers();
 			compareSurfaceDrawBuffers(previousDraws, activeDraws);
@@ -202,6 +214,23 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static int[] awaitOptionalSceneryDraws(mudclient client, int scene) throws InterruptedException {
+		long deadline = System.currentTimeMillis() + 15_000;
+		do {
+			if (client.packetHandler.getPersistentMovementReceipt()[3] != scene || client.shouldRetainLastPresentedFrame()) {
+				throw new IllegalStateException("The installed area stopped presenting while scenery cells arrived");
+			}
+			int[] draws = BrowserWebGLBridge.getSceneryDrawBuffers(true);
+			if (draws.length >= 3 && worldReady() == 1) {
+				BrowserBootstrap.report("outer-coverage:scenery-draw:before-rebase=" + draws.length / 3);
+				return draws;
+			}
+			Thread.sleep(50);
+		} while (System.currentTimeMillis() < deadline);
+		throw new IllegalStateException("No ready scenery cells joined the live view. Meshes prepared="
+			+ client.getPreparedSurfaceSceneryDraws().size());
 	}
 
 	private static int[] awaitLiveOuterDrawBuffers(mudclient client, int scene) throws InterruptedException {
