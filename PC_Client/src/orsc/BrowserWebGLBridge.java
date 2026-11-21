@@ -133,7 +133,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     private static final boolean PREUPLOAD_SCENE_MESHES = PREUPLOAD_PREDICTED
         && Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes");
-    private static final boolean COMPACT_SCENERY = PREUPLOAD_SCENE_MESHES
+    private static final boolean COMPACT_SCENERY = (PREUPLOAD_SCENE_MESHES || LIVE_SCENERY_DRAW)
         && Boolean.getBoolean("spoiledmilk.browserCompactScenery");
     private static final boolean SLICE_PREUPLOAD = PREUPLOAD_SCENE_MESHES
         && Boolean.getBoolean("spoiledmilk.browserSlicePreupload");

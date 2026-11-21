@@ -61,7 +61,7 @@ def main():
         parser.error('Sliced packing requires scene uploads')
     if args.preupload_scene and not (args.preupload and args.predicted_scenery):
         parser.error('Scene uploads require terrain uploads and scenery preparation')
-    if args.compact_scenery and not args.preupload_scene:
+    if args.compact_scenery and not (args.preupload_scene or args.surface_scenery_draw):
         parser.error('Compact scenery requires scene uploads')
     if args.prebuild_ownership and not args.predicted_scenery:
         parser.error('Scenery ownership prediction requires the scenery preview')
