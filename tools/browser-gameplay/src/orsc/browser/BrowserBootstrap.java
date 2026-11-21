@@ -5,6 +5,9 @@ import java.net.*;
 
 /** Private browser spike entry point. Not part of the desktop/client build. */
 public final class BrowserBootstrap {
+    private static native boolean terrainWorkerAvailable();
+    private static native byte[] inflateTerrainSector(byte[] compressed, int expectedLength);
+
     private BrowserBootstrap() { }
     public static native void report(String message);
     public static native void reportState(String mode, int fps, int loadingPercent);
@@ -90,6 +93,9 @@ public final class BrowserBootstrap {
         final boolean benchmark=Boolean.getBoolean("spoiledmilk.browserBenchmark");
         final boolean publicAlpha=BrowserPublicAlpha.enabled(System.getProperties());
         BrowserPublicAlpha.validate(System.getProperties(),webgl);
+        if (!publicAlpha && webgl && Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff") && terrainWorkerAvailable()) {
+            orsc.NativeLayeredTerrainPacketDecoder.installPredictedSectorInflater(BrowserBootstrap::inflateTerrainSector);
+        }
         final String assetRoot=BrowserPublicAlpha.assetRoot(System.getProperties());
         final BrowserOptimizedDefaults.Resolution optimizedDefaults=BrowserOptimizedDefaults.apply(webgl,benchmark,
             BrowserOptimizedDefaults.capabilities(BrowserBootstrap.class.getClassLoader()));

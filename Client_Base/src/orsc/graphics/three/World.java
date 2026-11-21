@@ -521,6 +521,10 @@ public final class World {
 			});
 	}
 
+	public Future<NativeLayeredTerrainSnapshot> decodePredictedSurfaceTerrain(Callable<NativeLayeredTerrainSnapshot> decode) {
+		return sectorPreloadExecutor.submit(decode);
+	}
+
 	/**
 	 * Prepares the complete radius-two visual field and exact radius-one world
 	 * product for one adjacent, server-predicted center. Nothing in this method

@@ -179,7 +179,7 @@ public final class BrowserOuterCoverageProbe {
 					+ Arrays.toString(coverageBefore) + " -> " + Arrays.toString(coverage));
 			}
 			BrowserBootstrap.report("outer-coverage:live-handoff:gpu-coverage=" + Arrays.toString(coverage)
-				+ ":input=ready");
+				+ ":input=ready:prepared-pick-models=" + client.getAdoptedSurfaceInteractiveModels());
 		}
 		if (sceneryDraw) {
 			int adopted = client.getAdoptedSurfaceSceneryDraws();
@@ -211,6 +211,11 @@ public final class BrowserOuterCoverageProbe {
 			BrowserBootstrap.report("outer-coverage:rolled:retained=" + objects + "/" + walls);
 			walkLeg(client, walk, 284, 609);
 			walkLeg(client, walk, 291, 597);
+			if (liveHandoff && Boolean.getBoolean("spoiledmilk.sustainedBrowserWalk")) {
+				verifySurfaceWalkLeg(client, walk, 322, 597, coverageBefore[1], actor);
+				verifySurfaceWalkLeg(client, walk, 276, 597, coverageBefore[1], actor);
+				walkLeg(client, walk, 291, 597);
+			}
 			walkLeg(client, walk, 284, 609);
 		}
 		walkLeg(client, walk, 252, 609);
@@ -230,6 +235,21 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static void verifySurfaceWalkLeg(mudclient client, Method walk, int x, int z, int epoch, Object actor) throws Exception {
+		int rolling = client.getRollingSurfaceWindows();
+		int sequence = client.packetHandler.getPersistentMovementReceipt()[3];
+		walkLeg(client, walk, x, z);
+		int[] coverage = BrowserWebGLBridge.getSurfaceCoverageReceipt();
+		if (client.getRollingSurfaceWindows() != rolling + 1
+			|| client.packetHandler.getPersistentMovementReceipt()[3] != sequence + 1
+			|| client.getLocalPlayer() != actor || coverage.length != 5 || coverage[0] != 1
+			|| coverage[1] != epoch || coverage[2] != coverage[3] || worldInputReady() != 1) {
+			throw new IllegalStateException("Repeated crossing did not keep the current world at " + x + "," + z
+				+ " rolling=" + rolling + "->" + client.getRollingSurfaceWindows() + " coverage=" + Arrays.toString(coverage));
+		}
+		BrowserBootstrap.report("outer-coverage:live-handoff:repeated:" + x + "," + z + ":coverage=" + Arrays.toString(coverage));
 	}
 
 	private static int[] awaitOptionalSceneryDraws(mudclient client, int scene) throws InterruptedException {

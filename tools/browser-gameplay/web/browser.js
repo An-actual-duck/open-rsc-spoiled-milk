@@ -21,6 +21,7 @@ import {browserSpriteKeyBenchmarkControls} from './browser-sprite-key-policy.js'
 import {browserUploadValidationBenchmarkPolicy} from './browser-upload-validation.js';
 const started = performance.now();
 import {createTransport} from './transport.js';
+import {createBrowserTerrainWorker} from './browser-terrain-worker.js';
 import {createWorldCover} from './browser-world-cover.js';
 import {createWorldPreparationProgress} from './browser-world-preparation.js';
 import {createStagedLoginGate} from './browser-staged-login.js';
@@ -104,7 +105,7 @@ function publish(finalReceipt=false) {
 function dispose() {
   if (stopped) return;
   bulkStaging?.dispose();startupProgress.close();stagedLogin.dispose();
-  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); terrainWorker?.dispose(); gpu?.dispose();
   publish(true);
 }
 function finish(reason) {
@@ -140,6 +141,7 @@ const fixturePolicy=deployment.publicAlpha?{properties:[],requested:null,tcpPort
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
 const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
+let terrainWorker;
 const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseInput(window,document,{logicalExtent:()=>({width:gpu?.stats.physicalOutput?.logicalWidth||gpu?.stats.display?.internalWidth||960,height:gpu?.stats.physicalOutput?.logicalHeight||gpu?.stats.display?.internalHeight||540})}) : undefined;
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
@@ -314,6 +316,18 @@ const natives = {
     if (window.browserProof.samples.length > 300) window.browserProof.samples.shift();
     setStatus(`${window.browserProof.mode === 'webgl' ? 'Experimental WebGL client' : 'Software client'} · ${mode} · ${fps} reported Java loop frames/s · private loopback world`);
     publish();
+  },
+  async Java_orsc_browser_BrowserBootstrap_terrainWorkerAvailable() {
+    return !deployment.publicAlpha && typeof Worker === 'function' && typeof DecompressionStream === 'function';
+  },
+  async Java_orsc_browser_BrowserBootstrap_inflateTerrainSector(lib, compressed, expectedLength) {
+    if (deployment.publicAlpha || stopped) throw new Error('Private terrain worker is unavailable');
+    terrainWorker ??= createBrowserTerrainWorker();
+    const stats = window.browserProof.terrainWorker ??= {completedSectors: 0, completedBytes: 0};
+    const sector = await terrainWorker.inflate(compressed, expectedLength);
+    stats.completedSectors++;
+    stats.completedBytes += sector.byteLength;
+    return sector;
   },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },

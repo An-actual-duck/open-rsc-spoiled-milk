@@ -17,6 +17,7 @@ import orsc.graphics.gui.SocialLists;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.World;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
+import orsc.graphics.three.Renderer3DSettings;
 import orsc.multiclient.ClientPort;
 import orsc.net.Network_Socket;
 import orsc.net.Opcodes;
@@ -281,7 +282,7 @@ public class PacketHandler {
 	}
 
 	public void resetLayeredSceneProtocolState() {
-		pendingPredictedTerrainDecode = null;
+		cancelPredictedTerrainDecode();
 		pendingLiveSurfaceContext = verifiedLiveSurfaceContext = 0;
 		if (pendingLayeredTerrainPrebuild != null) {
 			pendingLayeredTerrainPrebuild.cancel(true);
@@ -334,7 +335,7 @@ public class PacketHandler {
 	}
 
 	private void cancelPendingLayeredTerrainPrebuild() {
-		pendingPredictedTerrainDecode = null;
+		cancelPredictedTerrainDecode();
 		if (pendingLayeredTerrainPrebuild != null) {
 			pendingLayeredTerrainPrebuild.cancel(true);
 		}
@@ -945,6 +946,7 @@ public class PacketHandler {
 			nativeTerrainRecovery.reset();
 		}
 		layeredTerrainStageAssembler.reset();
+		cancelPredictedTerrainDecode();
 		if (surfaceScenery != null) surfaceScenery.reset();
 		pendingLiveSurfaceContext = verifiedLiveSurfaceContext = 0;
 		BoundaryLoadingDiagnostics.recordPhase(
@@ -1249,7 +1251,10 @@ public class PacketHandler {
 			}
 			NativeLayeredTerrainPacketDecoder.ChunkedDecode decoder = NativeLayeredTerrainPacketDecoder.beginPredictedStage(
 				body, worldSpace, logicalLevel, nativeLayeredTerrainResidentCache, activeTerrain, protocolVersion == 5);
-			pendingPredictedTerrainDecode = new PredictedTerrainDecode(decoder, protocolVersion, stageSequence,
+			Future<NativeLayeredTerrainSnapshot> background = NativeLayeredTerrainPacketDecoder.hasPredictedSectorInflater()
+				|| !Renderer3DSettings.isBrowserPresentationAvailable()
+				? mc.getWorld().decodePredictedSurfaceTerrain(() -> decoder.advance(Long.MAX_VALUE)) : null;
+			pendingPredictedTerrainDecode = new PredictedTerrainDecode(decoder, background, protocolVersion, stageSequence,
 				contextSequence, serverTick, worldSpace, logicalLevel, bodyCopyNanos);
 			if (protocolVersion == 4) beginSurfaceSceneryPrediction(stageSequence, contextSequence,
 				decoder.centerX(), decoder.centerY(), activeTerrain);
@@ -1423,18 +1428,25 @@ public class PacketHandler {
 		surfaceScenery.begin(stage, context, persistentMovement.generation(), x, z, dx, dz, mudclient.SURFACE_SCENERY_DRAW);
 	}
 
+	private void cancelPredictedTerrainDecode() {
+		if (pendingPredictedTerrainDecode != null && pendingPredictedTerrainDecode.background != null) {
+			pendingPredictedTerrainDecode.background.cancel(true);
+		}
+		pendingPredictedTerrainDecode = null;
+	}
+
 	private void pollPredictedTerrainDecode() {
 		PredictedTerrainDecode pending = pendingPredictedTerrainDecode;
 		if (pending == null) return;
 		if (!layeredSceneContextState.matchesSequence(pending.contextSequence)) {
-			pendingPredictedTerrainDecode = null;
+			cancelPredictedTerrainDecode();
 			return;
 		}
+		if (pending.background != null && !pending.background.isDone()) return;
 		long started = System.nanoTime();
 		NativeLayeredTerrainSnapshot terrain;
 		try {
-			// Bound ingress work by a sector. The gameplay loop can keep reading movement between slices.
-			terrain = pending.decoder.advance(2_000_000L);
+			terrain = pending.background == null ? pending.decoder.advance(2_000_000L) : completedTerrainDecode(pending.background);
 		} catch (NativeLayeredTerrainResidentCache.MissingReferenceException missing) {
 			requestNativeTerrainResynchronization(pending.worldSpace, pending.level, "stage", missing);
 			return;
@@ -1447,15 +1459,30 @@ public class PacketHandler {
 			pending.decodeNanos, BoundaryLoadingDiagnostics.now(), true);
 	}
 
+	private static NativeLayeredTerrainSnapshot completedTerrainDecode(Future<NativeLayeredTerrainSnapshot> background) {
+		try {
+			return background.get();
+		} catch (InterruptedException interrupted) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted reading prepared surface terrain", interrupted);
+		} catch (ExecutionException failed) {
+			if (failed.getCause() instanceof RuntimeException) throw (RuntimeException) failed.getCause();
+			throw new IllegalStateException("Surface terrain preparation failed", failed.getCause());
+		}
+	}
+
 	private static final class PredictedTerrainDecode {
 		private final NativeLayeredTerrainPacketDecoder.ChunkedDecode decoder;
+		private final Future<NativeLayeredTerrainSnapshot> background;
 		private final int protocolVersion, stageSequence, contextSequence, serverTick, level;
 		private final String worldSpace;
 		private long decodeNanos;
 
-		private PredictedTerrainDecode(NativeLayeredTerrainPacketDecoder.ChunkedDecode decoder, int protocolVersion,
+		private PredictedTerrainDecode(NativeLayeredTerrainPacketDecoder.ChunkedDecode decoder,
+			Future<NativeLayeredTerrainSnapshot> background, int protocolVersion,
 			int stageSequence, int contextSequence, int serverTick, String worldSpace, int level, long decodeNanos) {
 			this.decoder = decoder;
+			this.background = background;
 			this.protocolVersion = protocolVersion;
 			this.stageSequence = stageSequence;
 			this.contextSequence = contextSequence;

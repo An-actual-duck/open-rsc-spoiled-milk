@@ -968,7 +968,8 @@ public final class mudclient implements Runnable {
 	private final Map<Long, SurfaceSceneryWork> surfaceSceneryWork = new LinkedHashMap<>();
 	private NativeLayeredTerrainSnapshot surfaceSceneryTerrain;
 	private SurfaceSceneryWork activeSurfaceSceneryWork;
-	private Future<List<PreparedSceneryDraw>> activeSurfaceSceneryBuild;
+	private Future<PreparedSurfaceScenery> activeSurfaceSceneryBuild;
+	private int adoptedSurfaceInteractiveModels;
 	private ResidentObjectChunkInput pendingDistantSceneryInput;
 	private Future<ResidentObjectChunkBuildResult> pendingDistantScenery;
 	private final Map<Long, Long> emptyDistantScenery = new HashMap<>();
@@ -4032,7 +4033,7 @@ public final class mudclient implements Runnable {
 			if (!activeSurfaceSceneryBuild.isDone()) return;
 			SurfaceSceneryWork work = activeSurfaceSceneryWork;
 			try {
-				List<PreparedSceneryDraw> result = activeSurfaceSceneryBuild.get();
+				PreparedSurfaceScenery result = activeSurfaceSceneryBuild.get();
 				if (surfaceSceneryTerrain != null && surfaceSceneryWork.get(SurfaceSceneryCells.key(work.x, work.z)) == work) {
 					work.prepared = result;
 					publishSurfaceSceneryDraws();
@@ -4062,12 +4063,16 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private List<PreparedSceneryDraw> prepareSurfaceSceneryDraws(SurfaceSceneryWork work,
+	private PreparedSurfaceScenery prepareSurfaceSceneryDraws(SurfaceSceneryWork work,
 		NativeLayeredTerrainSnapshot terrain, Renderer3DWorldChunkFrame.ChunkMesh anchor, int baseX, int baseZ, int scale) {
 		int role = Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
 		int size = residentObjectChunkTileSize(role);
 		Map<Long, ResidentObjectChunkInputBuilder> cells = new LinkedHashMap<>();
+		List<SceneBaselineState.Record> interactive = new ArrayList<>();
 		for (World.SurfaceSceneryPlacement record : work.records) {
+			if (LIVE_SURFACE_HANDOFF && work.band == SurfaceSceneryCells.Band.ENTERING_PLAY && record.type == 0) {
+				interactive.add(new SceneBaselineState.Record(record.id, record.x, record.z, record.direction, record.type));
+			}
 			Renderer3DModelKind kind = record.type == 0 ? Renderer3DModelKind.GAME_OBJECT : Renderer3DModelKind.WALL_OBJECT;
 			if (work.band == SurfaceSceneryCells.Band.ENTERING_PLAY && isAnimatedResidentObjectChunkModel(kind, record.id)) continue;
 			int x = Math.floorDiv(record.x, size), z = Math.floorDiv(record.z, size);
@@ -4083,13 +4088,13 @@ public final class mudclient implements Runnable {
 			Renderer3DWorldChunkFrame.ChunkMesh mesh = buildResidentObjectChunkMesh(input);
 			if (mesh != null && mesh.getTriangleCount() != 0) ready.add(new PreparedSceneryDraw(input, mesh));
 		}
-		return ready;
+		return new PreparedSurfaceScenery(ready, prepareIncomingSceneryModels(interactive));
 	}
 
 	private void publishSurfaceSceneryDraws() {
 		List<Renderer3DWorldChunkFrame.ChunkMesh> ready = new ArrayList<>();
 		for (SurfaceSceneryWork work : surfaceSceneryWork.values()) {
-			if (work.prepared != null) for (PreparedSceneryDraw draw : work.prepared) ready.add(draw.mesh);
+			if (work.prepared != null) for (PreparedSceneryDraw draw : work.prepared.draws) ready.add(draw.mesh);
 		}
 		surfacePreparedScenery = Collections.unmodifiableList(ready);
 	}
@@ -4100,7 +4105,7 @@ public final class mudclient implements Runnable {
 		int sectorZ = Math.floorDiv(actual.localOriginTileZ + actual.baseZ, World.SECTION_SIZE);
 		SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(sectorX, sectorZ));
 		if (work == null || work.prepared == null) return null;
-		for (PreparedSceneryDraw draw : work.prepared) {
+		for (PreparedSceneryDraw draw : work.prepared.draws) {
 			ResidentObjectChunkInput built = draw.input;
 			if (built.cellKey != actual.cellKey || !matchingStaticScenery(actual, built)) continue;
 			adoptedSurfaceScenery++;
@@ -4115,7 +4120,7 @@ public final class mudclient implements Runnable {
 		private final SurfaceSceneryCells.Band band;
 		private final List<World.SurfaceSceneryPlacement> records;
 		private boolean started;
-		private List<PreparedSceneryDraw> prepared;
+		private PreparedSurfaceScenery prepared;
 
 		private SurfaceSceneryWork(int x, int z, SurfaceSceneryCells.Band band, List<World.SurfaceSceneryPlacement> records) {
 			this.x = x;
@@ -4124,6 +4129,18 @@ public final class mudclient implements Runnable {
 			this.records = records;
 		}
 	}
+
+	private static final class PreparedSurfaceScenery {
+		private final List<PreparedSceneryDraw> draws;
+		private final Map<IncomingSceneryPlacement, IncomingSceneryModel> interactive;
+
+		private PreparedSurfaceScenery(List<PreparedSceneryDraw> draws, Map<IncomingSceneryPlacement, IncomingSceneryModel> interactive) {
+			this.draws = draws;
+			this.interactive = interactive;
+		}
+	}
+
+	public int getAdoptedSurfaceInteractiveModels() { return adoptedSurfaceInteractiveModels; }
 
 	private static final class PreparedSceneryDraw {
 		private final ResidentObjectChunkInput input;
@@ -4232,6 +4249,11 @@ public final class mudclient implements Runnable {
 		ResidentObjectChunkBuildResult mesh = needsMesh ? buildResidentObjectChunkMeshMeasured(input)
 			: new ResidentObjectChunkBuildResult(null, 0L);
 		if (records.isEmpty()) return mesh;
+		return new ResidentObjectChunkBuildResult(mesh.chunk, mesh.durationNanos, prepareIncomingSceneryModels(records));
+	}
+
+	private Map<IncomingSceneryPlacement, IncomingSceneryModel> prepareIncomingSceneryModels(List<SceneBaselineState.Record> records) {
+		if (records.isEmpty()) return Collections.emptyMap();
 		Map<IncomingSceneryPlacement, IncomingSceneryModel> incoming = new HashMap<>();
 		long lastYield = System.nanoTime();
 		for (SceneBaselineState.Record record : records) {
@@ -4248,24 +4270,40 @@ public final class mudclient implements Runnable {
 					Thread.sleep(1L);
 				} catch (InterruptedException interrupted) {
 					Thread.currentThread().interrupt();
-					return mesh;
+					return Collections.emptyMap();
 				}
 				lastYield = System.nanoTime();
 			}
 		}
-		return new ResidentObjectChunkBuildResult(mesh.chunk, mesh.durationNanos, incoming);
+		return incoming;
 	}
 
 	RSModel takePreparedIncomingScenery(int localX, int localZ, int id, int direction) {
+		if (LIVE_SURFACE_HANDOFF && adoptSurfaceScenery) {
+			int x = midRegionBaseX + localX, z = midRegionBaseZ + localZ;
+			SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(
+				Math.floorDiv(x, World.SECTION_SIZE), Math.floorDiv(z, World.SECTION_SIZE)));
+			if (work != null && work.prepared != null && work.band == SurfaceSceneryCells.Band.ENTERING_PLAY) {
+				IncomingSceneryModel prepared = work.prepared.interactive.remove(new IncomingSceneryPlacement(x, z, id, direction));
+				if (isCurrentIncomingSceneryModel(id, prepared)) {
+					adoptedSurfaceInteractiveModels++;
+					return prepared.model;
+				}
+			}
+		}
 		if (!predictedSceneryAuthorized || preparedIncomingScenery.isEmpty()) return null;
 		IncomingSceneryModel prepared = preparedIncomingScenery.remove(new IncomingSceneryPlacement(
 			midRegionBaseX + localX, midRegionBaseZ + localZ, id, direction));
-		if (prepared == null) return null;
-		GameObjectDef def = EntityHandler.getObjectDef(id);
-		if (def != prepared.definition || def.modelID < 0 || prepared.source != getModelCacheItem(def.modelID)
-			|| prepared.sourceVersion != prepared.source.getRenderer3DTransformVersion()) return null;
+		if (!isCurrentIncomingSceneryModel(id, prepared)) return null;
 		adoptedIncomingScenery++;
 		return prepared.model;
+	}
+
+	private boolean isCurrentIncomingSceneryModel(int id, IncomingSceneryModel prepared) {
+		if (prepared == null) return false;
+		GameObjectDef def = EntityHandler.getObjectDef(id);
+		return def == prepared.definition && def.modelID >= 0 && prepared.source == getModelCacheItem(def.modelID)
+			&& prepared.sourceVersion == prepared.source.getRenderer3DTransformVersion();
 	}
 
 	private ResidentObjectChunkBuildResult takePreparedScenery(ResidentObjectChunkInput actual) {

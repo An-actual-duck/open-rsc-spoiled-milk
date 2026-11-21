@@ -8,6 +8,21 @@ import java.util.zip.Inflater;
 
 /** Strict protocol-v4 native terrain body decoder, isolated for wire tests. */
 public final class NativeLayeredTerrainPacketDecoder {
+	@FunctionalInterface
+	public interface SectorInflater {
+		byte[] inflate(byte[] compressed, int expectedLength);
+	}
+
+	private static volatile SectorInflater predictedSectorInflater;
+
+	public static void installPredictedSectorInflater(SectorInflater inflater) {
+		predictedSectorInflater = inflater;
+	}
+
+	static boolean hasPredictedSectorInflater() {
+		return predictedSectorInflater != null;
+	}
+
 	private static final int MAX_ID_BYTES = 128;
 	private static final int MAX_VERSION_BYTES = 128;
 	private static final int SHA256_BYTES = 64;
@@ -253,6 +268,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 		private final NativeLayeredTerrainSnapshot activeTerrain;
 		private final NativeLayeredTerrainResidentCache.Transaction residentTransaction;
 		private final NativeLayeredTerrainChunk[] chunks;
+		private final SectorInflater inflater;
 		private int index;
 
 		private ChunkedDecode(byte[] payload, String worldSpace, int level, int protocolVersion,
@@ -264,6 +280,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 			this.protocolVersion = protocolVersion;
 			this.activeTerrain = activeTerrain;
 			this.predictedSymmetric = predictedSymmetric;
+			this.inflater = predictedSymmetric ? predictedSectorInflater : null;
 			residentTransaction = residentCache == null ? null : residentCache.begin();
 			input = ByteBuffer.wrap(payload);
 			packageId = readString(input, MAX_ID_BYTES, "package ID");
@@ -384,7 +401,11 @@ public final class NativeLayeredTerrainPacketDecoder {
 								== NativeLayeredTerrainSnapshot
 									.LEGACY_CHUNKED_PROTOCOL_VERSION
 							? wireBytes
-							: inflateSector(wireBytes, expectedTileBytes);
+							: inflater == null ? inflateSector(wireBytes, expectedTileBytes)
+								: inflater.inflate(wireBytes, expectedTileBytes);
+					if (tileBytes == null || tileBytes.length != expectedTileBytes) {
+						throw new IllegalArgumentException("Compressed native terrain sector has an invalid length");
+					}
 					if (visualPayload) {
 						if (protocolVersion
 								!= NativeLayeredTerrainSnapshot

@@ -77,7 +77,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     if(travel.rows.length===8192){travel.rows.splice(0,1024);travel.dropped+=1024;}
     travel.rows.push({...row,time:performance.timeOrigin+performance.now(),epoch:stats.worldReadiness?.epoch,
       uploadedBytes:stats.uploadedBytes,uploads:stats.uploadedChunks,repacks:stats.repackedChunks||0,
-      gpuBytes:stats.gpuBytes});
+      gpuBytes:stats.gpuBytes,inputAllowed:globalThis.browserWorldInputAllowed?.()??null});
   }
   const uploadValidation=createStreamUploadValidation(gl,{stats,enabled:options.streamUploadValidation===true,poison:error=>worldReady.fail(String(error))});
   const gpuTimer=gl.getExtension("EXT_disjoint_timer_query_webgl2"),pendingQueries=[];let activeTimerQuery=null;

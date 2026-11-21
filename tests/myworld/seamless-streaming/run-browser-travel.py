@@ -15,6 +15,31 @@ PROOF = "const w=document.querySelector('#runtime')?.contentWindow||window;const
 ROUTE_EVENTS = "p.events?.filter(e=>e.message.startsWith('outer-coverage:'))||[]"
 
 
+def summarize_walking(result):
+    """Measure fresh WebGL submissions over the real walk, including time between the legs."""
+    rows = (result.get('travel') or {}).get('rows', [])
+    walks = [event['milliseconds'] for event in result['events'] if event['message'].startswith('outer-coverage:walking:')]
+    arrivals = [event['milliseconds'] for event in result['events'] if event['message'].startswith('outer-coverage:arrived:')]
+    if not rows or not walks or not arrivals:
+        return None
+    origin = result['timeOrigin']
+    first = origin + walks[0]
+    last = origin + arrivals[-1]
+    walk_rows = [row for row in rows if first <= row['time'] <= last]
+    frames = [row for row in walk_rows if row['kind'] == 'frame']
+    intervals = sorted(
+        ({'ms': round(after['submittedAt'] - before['submittedAt'], 1),
+          'from': before['receipt'], 'to': after['receipt'], 'connection': after['connectionWork'],
+          'geometryMs': after['work'][2]}
+         for before, after in zip(frames, frames[1:])),
+        key=lambda gap: gap['ms'], reverse=True)
+    return {'frames': len(frames),
+            'holds': sum(row['kind'] == 'hold' for row in walk_rows),
+            'blocked': sum(row.get('inputAllowed') is False for row in walk_rows),
+            'transitions': sum(row['kind'] == 'transition' for row in walk_rows),
+            'slowestFrameGaps': intervals[:8]}
+
+
 def run_walk(run, driver_port):
     server = json.loads((run / 'server-command.json').read_text())
     stage = json.loads((run / 'stage.json').read_text())
@@ -75,7 +100,7 @@ def run_walk(run, driver_port):
                 time.sleep(.85)
 
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
-                region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples,
+                region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,
                 display:p.gpu?.display, visibility:w.document.visibilityState, timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
@@ -92,8 +117,13 @@ def run_walk(run, driver_port):
                 else:
                     completed = False
             result['serverStatus'] = server_status
+            result['walkingSummary'] = summarize_walking(result)
+            if completed and fixture.get('liveSurfaceHandoff'):
+                walking = result['walkingSummary']
+                completed = bool(walking and walking['frames'] and not any(
+                    walking[key] for key in ('holds', 'blocked', 'transitions')))
             (run / 'firefox-result.json').write_text(json.dumps(result, indent=2) + '\n')
-            print(result['serverStatus'], result.get('stream'), flush=True)
+            print(result['serverStatus'], result['walkingSummary'], flush=True)
             return 0 if completed else 1
         finally:
             if session:
