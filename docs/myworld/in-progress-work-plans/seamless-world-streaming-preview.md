@@ -526,6 +526,49 @@ must be admitted ahead of the origin change. Once that is proven, the
 walking path can use the current live presentation instead of triggering
 the whole-scene browser readiness gate.
 
+## Fixed draw cells in the running browser
+
+The private WebGL path draws terrain, structural walls, and roofs as
+48-tile world cells with fixed half-open boundaries. The existing Java
+terrain queries and picking still use the installed gameplay projection.
+Changing the origin changes draw offsets while the cell's immutable
+storage and GPU identity stay in place. The CPU reuses a cell when its
+signed source neighborhood and roof settings agree.
+
+The first Firefox run used the existing five-by-five source field and
+kept 10 of 20 overlapping buffers. The footprint of a cell at a source
+edge changed when a neighbor became available or left that field. The
+matched expanded-border build supplies a seven-by-seven source field
+for the same five-by-five draw area. It sends visual and structural
+records using the existing bounded terrain pages. The extra ring supplies
+neighbor data for meshes and leaves gameplay coverage and the draw radius
+at their existing sizes.
+
+The Firefox walk at `977f858f2` submitted all five entering terrain
+cells while the original gameplay scene was ready. Their draws were
+optional and contributed no work to its input readiness gate. The
+subsequent rebase kept all 20 overlapping buffer IDs and promoted all
+five entering buffers from the live draw list. The server confirmed the
+walk into the new interactive strip and back to `(252, 609)`. Both
+scenery fences matched and the client applied 567 movement receipts
+in one travel session without rejecting movement for missing coverage.
+
+The browser still held 12 frames at the scene change and went about
+1.3 seconds without a fresh world frame. The trace recorded 581 ms in
+the scenery mesh phase and 26 GPU uploads during the handoff. With the
+complete terrain field already drawable, the remaining graphics step is
+to maintain independent scenery draw cells and publish incoming scenery
+while the existing view is live. The browser should stop treating an
+ordinary surface rebase as a whole new scene after those two products
+can both confirm live coverage.
+
+```sh
+python3 tests/myworld/seamless-streaming/prepare-browser-outer-preview.py <fresh-name> \
+  --http-port <unused-port> --trace --travel-trace --persistent-movement \
+  --persistent-collision --surface-scenery-cells --rolling-surface-window \
+  --fixed-surface-draw --expanded-surface-draw-border
+```
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
