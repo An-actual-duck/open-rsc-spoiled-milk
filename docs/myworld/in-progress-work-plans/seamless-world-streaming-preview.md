@@ -326,6 +326,48 @@ checksums. That console capture verifies completion and does not contain frame
 timings. The private manual build keeps the control socket path while the
 candidate's startup reliability and frame pacing are under investigation.
 
+## Movement without a terrain load
+
+The matched, loopback-only `--persistent-movement` path gives authoritative
+movement its own session. The server announces a new session after sending
+its actor baseline. Fast movement then carries the stable session identity
+and an ordered sequence through terrain-center changes. Login, relocation,
+and world changes establish a new session. The client takes waypoints from
+the server and updates the existing actor instances on installed ground.
+That handler performs no terrain load or prediction request.
+
+The private Firefox proof starts at `(239, 609)`, walks to `(257, 609)`,
+crosses the current replacement boundary on the way to `(278, 609)`, and
+returns to `(252, 609)` using ordinary walk requests. It requires server
+confirmation of the final destination, one movement session across a change
+of terrain scene, and no ignored movement outside installed coverage. The
+receipt fixture also checks that ordinary movement cannot open a session and
+that stale, mis-scoped, and out-of-order receipts are ignored.
+
+The run at `ce8a03269` applied 441 movement receipts under one session while
+the terrain scene advanced from 1 to 2. The server confirmed `(252, 609)` and
+the client ignored zero receipts for missing installed coverage. The browser
+still held four frames at the scene change. This verifies movement session
+continuity and leaves the live-rendering requirement open.
+
+The terrain and scenery publication path still replaces the scene as a unit.
+The movement proof is an intermediate implementation check. A playtest
+preview requires live rendering and input through the same crossing as
+incoming cells publish, followed by sustained travel. The next code needs
+to keep overlapping terrain and draw resources on stable world cell keys and
+publish the incoming data independently of the legacy scene latch.
+[Movement application](../../../Client_Base/src/orsc/mudclient.java#L26070) · [Continuity gate](seamless-world-streaming-plan.md#1-establish-continuity-across-a-former-boundary)
+
+The current renderer assembles a merged center mesh and uses different edge
+crops for surrounding sectors based on their position relative to that center.
+The positive edge includes an extra face row to stitch the merged mesh. A
+persistent renderer needs fixed cell ownership for those rows, then one
+source of geometry across the overlap. The existing catalog baker is a
+candidate source of independently addressed terrain meshes. Validate its
+seams and material and lighting parity against the current signed map
+before using it for the live path.
+[Legacy cell crop](../../../Client_Base/src/orsc/graphics/three/World.java#L6905) · [Terrain catalog baker](../../../PC_Client/src/orsc/BrowserWholeZoneBaker.java#L140)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

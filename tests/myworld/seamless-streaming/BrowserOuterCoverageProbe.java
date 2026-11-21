@@ -152,6 +152,9 @@ public final class BrowserOuterCoverageProbe {
 		if (after[0] != before[0] || after[1] <= before[1] || after[2] != 0) {
 			throw new IllegalStateException("Unexpected travel receipts " + Arrays.toString(before) + " to " + Arrays.toString(after));
 		}
+		if (client.packetHandler.getLogicalPlayerX(0) != 252 || client.packetHandler.getLogicalPlayerY(0, 0) != 609) {
+			throw new IllegalStateException("Logical position did not follow the persistent movement receipts");
+		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");

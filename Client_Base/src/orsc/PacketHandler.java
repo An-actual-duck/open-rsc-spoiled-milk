@@ -201,11 +201,17 @@ public class PacketHandler {
 	}
 
 	public int getLogicalPlayerX(int compatibilityX) {
+		if (persistentMovement.generation() != 0) {
+			return mc.getMidRegionBaseX() + mc.getLocalPlayerX();
+		}
 		return layeredSceneContextState.hasContext()
 			? layeredSceneContextState.getLogicalX() : compatibilityX;
 	}
 
 	public int getLogicalPlayerY(int compatibilityX, int compatibilityY) {
+		if (persistentMovement.generation() != 0) {
+			return mc.getMidRegionBaseZ() + mc.getLocalPlayerZ();
+		}
 		return layeredSceneContextState.hasContext()
 			? layeredSceneContextState.getLogicalY()
 			: getLogicalWorldY(compatibilityX, compatibilityY);
