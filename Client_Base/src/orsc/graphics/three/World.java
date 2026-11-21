@@ -473,11 +473,10 @@ public final class World {
 				&& haloTerrain.getProtocolVersion()
 					!= NativeLayeredTerrainSnapshot
 						.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION)
-			|| haloTerrain.getChunkRadius()
-				!= NativeLayeredTerrainSnapshot
-					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			|| !NativeLayeredTerrainSnapshot.isSymmetricSourceRadius(
+				haloTerrain.getChunkRadius(), haloTerrain.getWorldSpace(), haloTerrain.getLevel())) {
 			throw new IllegalArgumentException(
-				"Native terrain halo requires a radius-two snapshot");
+				"Native terrain halo requires a symmetric snapshot");
 		}
 		final NativeLayeredTerrainSnapshot activeTerrain =
 			nativeLayeredTerrainSnapshot;
@@ -536,11 +535,10 @@ public final class World {
 			|| haloTerrain.getProtocolVersion()
 				!= NativeLayeredTerrainSnapshot
 					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
-			|| haloTerrain.getChunkRadius()
-				!= NativeLayeredTerrainSnapshot
-					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			|| !NativeLayeredTerrainSnapshot.isSymmetricSourceRadius(
+				haloTerrain.getChunkRadius(), haloTerrain.getWorldSpace(), haloTerrain.getLevel())) {
 			throw new IllegalArgumentException(
-				"Predicted native terrain requires a radius-two visual snapshot");
+				"Predicted native terrain requires a symmetric visual snapshot");
 		}
 		final NativeLayeredTerrainSnapshot activeTerrain =
 			nativeLayeredTerrainSnapshot;
@@ -812,7 +810,7 @@ public final class World {
 	/** Browser geometry is rooted in the same applied origin as the Java pick/query frame. */
 	public List<Renderer3DWorldChunkFrame.ChunkMesh> getFixedSurfaceDraw(int sectionX, int sectionZ) {
 		SurfaceTerrainDrawField field = fixedSurfaceDraw;
-		if (field == null || sectionX != nativeLayeredTerrainAppliedSectionX
+		if (field == null || hasWholeOverworldTerrainPatches() || sectionX != nativeLayeredTerrainAppliedSectionX
 			|| sectionZ != nativeLayeredTerrainAppliedSectionY
 			|| !field.matches(nativeLayeredTerrainSnapshot, sectionX, sectionZ, !Config.C_HIDE_ROOFS)) {
 			return Collections.emptyList();
@@ -822,7 +820,8 @@ public final class World {
 
 	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedFixedSurfaceDraw(NativeLayeredTerrainHaloPrebuildResult result) {
 		NativeLayeredTerrainSnapshot active = nativeLayeredTerrainSnapshot;
-		if (result == null || result.fixedDraw == null || active == null || result.sourceRevision != worldEditorTerrainRevision.get()
+		if (result == null || result.fixedDraw == null || active == null || hasWholeOverworldTerrainPatches()
+			|| result.sourceRevision != worldEditorTerrainRevision.get()
 			|| !result.activeScopeIdentity.equals(active.scopeIdentity())
 			|| result.worldOffsetX != syntheticDeepFixtureOffsetX || result.worldOffsetZ != syntheticDeepFixtureOffsetZ
 			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) return Collections.emptyList();
@@ -991,6 +990,7 @@ public final class World {
 		SurfaceTerrainDrawField fixedDraw = FIXED_SURFACE_DRAW && !terrainOnly && plane == 0
 			&& haloTerrain.getLevel() == 0 && "global".equals(haloTerrain.getWorldSpace())
 			&& haloTerrain.getPresentationChunkSize() == SECTION_SIZE && !WorldEditorBuildSettings.isEnabled()
+			&& !hasWholeOverworldTerrainPatches()
 			&& Math.floorMod(worldOffsetX, SECTION_SIZE) == 0 && Math.floorMod(worldOffsetZ, SECTION_SIZE) == 0
 			? new SurfaceTerrainDrawField(haloTerrain, activeSectionX, activeSectionY, includeRoofGeometry) : null;
 		TerrainPredictionSlice slice = predicted && PACE_BROWSER_TERRAIN_PREDICTION ? new TerrainPredictionSlice() : null;

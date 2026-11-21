@@ -49,6 +49,7 @@ def main():
     parser.add_argument('--surface-scenery-cells', action='store_true', help='Receive complete viewer-authorized incoming scenery cells')
     parser.add_argument('--rolling-surface-window', action='store_true', help='Preserve overlapping world instances when the playable window moves')
     parser.add_argument('--fixed-surface-draw', action='store_true', help='Draw signed terrain through persistent world cells')
+    parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Include the signed source neighbors of outer draw cells')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
@@ -71,6 +72,8 @@ def main():
         parser.error('Rolling surface windows require live scenery cells')
     if args.fixed_surface_draw and not (args.rolling_surface_window and args.travel_trace):
         parser.error('The fixed terrain draw proof requires rolling coverage and travel tracing')
+    if args.expanded_surface_draw_border and not args.fixed_surface_draw:
+        parser.error('Expanded draw sources require fixed terrain draw cells')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -112,6 +115,7 @@ def main():
            f'        System.setProperty("spoiledmilk.surfaceSceneryCells", "{str(args.surface_scenery_cells).lower()}");\n'
            f'        System.setProperty("spoiledmilk.rollingSurfaceWindow", "{str(args.rolling_surface_window).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixedSurfaceDraw", "{str(args.fixed_surface_draw).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.expandedSurfaceDrawBorder", "{str(args.expanded_surface_draw_border).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
@@ -157,6 +161,7 @@ def main():
         *(['--travel-trace'] if args.travel_trace else []),
         *(['--persistent-movement'] if args.persistent_movement else []),
         *(['--surface-scenery-cells'] if args.surface_scenery_cells else []),
+        *(['--expanded-surface-draw-border'] if args.expanded_surface_draw_border else []),
         *(['--surface-scenery-mutation'] if args.surface_scenery_cells and not args.manual else []),
     ], cwd=ROOT, check=True)
     staged_hashes = {
@@ -192,6 +197,7 @@ def main():
         'surfaceSceneryCells': args.surface_scenery_cells,
         'rollingSurfaceWindow': args.rolling_surface_window,
         'fixedSurfaceDraw': args.fixed_surface_draw,
+        'expandedSurfaceDrawBorder': args.expanded_surface_draw_border,
         'sustainedWalk': args.sustained_walk,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',

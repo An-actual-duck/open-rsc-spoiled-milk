@@ -251,19 +251,12 @@ public final class NativeLayeredTerrainPacketDecoder {
 					"Native terrain packet has an invalid chunk size");
 			}
 			int width = chunkRadius * 2 + 1;
-			int expectedChunkRadius =
-				protocolVersion
-						== NativeLayeredTerrainSnapshot
-							.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
-					|| protocolVersion
-						== NativeLayeredTerrainSnapshot
-							.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
-					? NativeLayeredTerrainSnapshot
-						.SYMMETRIC_RESIDENCY_CHUNK_RADIUS
-					: NativeLayeredTerrainSnapshot
-						.STREAMING_CHUNK_RADIUS;
-			if (chunkRadius != expectedChunkRadius
-				|| chunkCount != width * width) {
+			boolean symmetric = protocolVersion == NativeLayeredTerrainSnapshot.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+				|| protocolVersion == NativeLayeredTerrainSnapshot.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION;
+			boolean validRadius = symmetric
+				? NativeLayeredTerrainSnapshot.isSymmetricSourceRadius(chunkRadius, worldSpace, level)
+				: chunkRadius == NativeLayeredTerrainSnapshot.STREAMING_CHUNK_RADIUS;
+			if (!validRadius || chunkCount != width * width) {
 				throw new IllegalArgumentException(
 					"Native terrain packet has an invalid readiness window");
 			}
@@ -492,9 +485,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 			|| active.getLevel() != halo.getLevel()
 			|| active.getCurrentChunkX() != halo.getCurrentChunkX()
 			|| active.getCurrentChunkY() != halo.getCurrentChunkY()
-			|| halo.getChunkRadius()
-				!= NativeLayeredTerrainSnapshot
-					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			|| !NativeLayeredTerrainSnapshot.isSymmetricSourceRadius(halo.getChunkRadius(), halo.getWorldSpace(), halo.getLevel())) {
 			throw new IllegalArgumentException(
 				"Native terrain halo does not match the active center");
 		}
@@ -511,9 +502,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 			|| !active.packageIdentity().equals(halo.packageIdentity())
 			|| !active.getWorldSpace().equals(halo.getWorldSpace())
 			|| active.getLevel() != halo.getLevel()
-			|| halo.getChunkRadius()
-				!= NativeLayeredTerrainSnapshot
-					.SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			|| !NativeLayeredTerrainSnapshot.isSymmetricSourceRadius(halo.getChunkRadius(), halo.getWorldSpace(), halo.getLevel())) {
 			throw new IllegalArgumentException(
 				"Predicted terrain halo does not match the active generation");
 		}

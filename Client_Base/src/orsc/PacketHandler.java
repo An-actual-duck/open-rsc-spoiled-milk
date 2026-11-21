@@ -91,7 +91,12 @@ public class PacketHandler {
 		new LayeredSceneActivationState();
 	private final NativeLayeredTerrainResidentCache
 		nativeLayeredTerrainResidentCache =
-			new NativeLayeredTerrainResidentCache();
+			newTerrainResidentCache();
+
+	private static NativeLayeredTerrainResidentCache newTerrainResidentCache() {
+		return NativeLayeredTerrainSnapshot.EXPANDED_SURFACE_DRAW_BORDER
+			? new NativeLayeredTerrainResidentCache(128) : new NativeLayeredTerrainResidentCache();
+	}
 	private final NativeLayeredTerrainStageAssembler
 		layeredTerrainStageAssembler =
 			new NativeLayeredTerrainStageAssembler();
@@ -798,7 +803,7 @@ public class PacketHandler {
 		// Recovery contexts must be self-contained. In-flight references cannot
 		// re-establish the cache epoch the server just abandoned.
 		NativeLayeredTerrainResidentCache contextCache = nativeTerrainRecovery.isPending()
-			? new NativeLayeredTerrainResidentCache() : nativeLayeredTerrainResidentCache;
+			? newTerrainResidentCache() : nativeLayeredTerrainResidentCache;
 		try {
 		if (protocolVersion
 				== LayeredSceneContextState.UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION) {
@@ -1225,7 +1230,7 @@ public class PacketHandler {
 			BoundaryLoadingDiagnostics.now();
 		final NativeLayeredTerrainSnapshot stagedTerrain;
 		NativeLayeredTerrainResidentCache stageCache = nativeTerrainRecovery.isPending()
-			? new NativeLayeredTerrainResidentCache() : nativeLayeredTerrainResidentCache;
+			? newTerrainResidentCache() : nativeLayeredTerrainResidentCache;
 		try {
 		stagedTerrain =
 			protocolVersion == 1

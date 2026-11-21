@@ -109,11 +109,19 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         && Boolean.getBoolean("spoiledmilk.browserPreuploadPredictedTerrain");
     private static final boolean FIXED_SURFACE_DRAW = !WHOLE_ZONE && !ACTIVE_ONLY
         && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha") && Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
+    private static final boolean LIVE_OUTER_SURFACE_DRAW = FIXED_SURFACE_DRAW
+        && NativeLayeredTerrainSnapshot.EXPANDED_SURFACE_DRAW_BORDER;
     private volatile int[] surfaceDrawBuffers = new int[0];
+    private volatile int[] optionalSurfaceDrawBuffers = new int[0];
 
     public static int[] getSurfaceDrawBuffers() {
         BrowserWebGLBridge bridge = installedBridge;
         return bridge == null ? new int[0] : bridge.surfaceDrawBuffers.clone();
+    }
+
+    public static int[] getOptionalSurfaceDrawBuffers() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? new int[0] : bridge.optionalSurfaceDrawBuffers.clone();
     }
     private static final boolean PREUPLOAD_SCENE_MESHES = PREUPLOAD_PREDICTED
         && Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes");
@@ -375,10 +383,16 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             progress[6]=progress[7]=spriteGroups;worldProgress(progress);
             int[] presentedPose = TRAVEL_TRACE && client != null && client.getLocalPlayer() != null
                 ? travelPose(frame, client) : pose(frame);
+            OptionalSurfaceDraw optional = LIVE_OUTER_SURFACE_DRAW && authority && !surfaceDraw.isEmpty()
+                && count / 8 == requiredSources ? optionalSurfaceDraw(frame, surfaceDraw, draws) : null;
+            if (optional != null) draws = optional.draws;
             present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
             acknowledgeOverlay(preparedOverlay);
             loadState.presented(OVERLAY_COVERAGE&&authority,requiredSources,count/8+catalogCoveredSources,remainingRepacks);
-            if (FIXED_SURFACE_DRAW && TRAVEL_TRACE) recordSurfaceDrawBuffers(surfaceDraw);
+            if (FIXED_SURFACE_DRAW && TRAVEL_TRACE) {
+                recordSurfaceDrawBuffers(surfaceDraw);
+                optionalSurfaceDrawBuffers = optional == null ? EMPTY_SURFACE_RECEIPT : optional.receipt;
+            }
             long end=System.nanoTime();
             float[] frameStats = {(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()};
             if(TRAVEL_TRACE){
@@ -389,6 +403,67 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             frameWork(frameStats,presentedPose);
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=3;
         } finally { RendererFrameLighting.restore(previous); }
+    }
+
+    private static final int[] EMPTY_SURFACE_RECEIPT = new int[0];
+
+    /** Append resident cells beyond the live view. Their absence never changes coverage readiness. */
+    private OptionalSurfaceDraw optionalSurfaceDraw(Renderer3DFrame frame, List<Renderer3DWorldChunkFrame.ChunkMesh> active,
+                                                   int[] required) {
+        if (stagedSource.isEmpty()) return null;
+        Renderer3DWorldChunkFrame.ChunkMesh firstActive = active.get(0);
+        int baseX = firstActive.getLogicalWorldOffsetX(), baseZ = firstActive.getLogicalWorldOffsetZ();
+        int[] settings = packing.backendPackingSettings();
+        final int RECORD_WORDS = 8;
+        int[] optionalDraws = new int[Math.min(MAX_CHUNKS - required.length / RECORD_WORDS, stagedSource.size()) * RECORD_WORDS];
+        int[] receipt = TRAVEL_TRACE ? new int[optionalDraws.length / RECORD_WORDS * 3] : EMPTY_SURFACE_RECEIPT;
+        int used = 0, receiptWords = 0;
+        for (Renderer3DWorldChunkFrame.ChunkMesh cell : stagedSource) {
+            if (used == optionalDraws.length) break;
+            if (containsSurfacePosition(active, cell)) continue;
+            CachedChunk cached = chunks.get(chunkKey(cell));
+            if (cached == null || cached.materialRevision != materialRevision || !Arrays.equals(cached.settings, settings)) continue;
+            int visibility = 0;
+            for (Renderer3DModelKind kind : Renderer3DModelKind.values()) {
+                if (frame.isWorldChunkModelKindVisible(kind, cell.getPlane())) visibility |= 1 << kind.ordinal();
+            }
+            optionalDraws[used++] = cached.id;
+            optionalDraws[used++] = cell.getOriginWorldX() - baseX - cached.x;
+            optionalDraws[used++] = cell.getOriginWorldZ() - baseZ - cached.z;
+            optionalDraws[used++] = baseX;
+            optionalDraws[used++] = baseZ;
+            optionalDraws[used++] = visibility;
+            optionalDraws[used++] = cell.getPlane();
+            optionalDraws[used++] = cell.getChunkRole();
+            if (TRAVEL_TRACE) {
+                receipt[receiptWords++] = cell.getCenterSectionX();
+                receipt[receiptWords++] = cell.getCenterSectionY();
+                receipt[receiptWords++] = cached.id;
+            }
+        }
+        if (used == 0) return null;
+        int[] draws = Arrays.copyOf(required, required.length + used);
+        System.arraycopy(optionalDraws, 0, draws, required.length, used);
+        return new OptionalSurfaceDraw(draws, Arrays.copyOf(receipt, receiptWords));
+    }
+
+    private static boolean containsSurfacePosition(List<Renderer3DWorldChunkFrame.ChunkMesh> active,
+                                                   Renderer3DWorldChunkFrame.ChunkMesh cell) {
+        for (Renderer3DWorldChunkFrame.ChunkMesh other : active) {
+            if (other.getCenterSectionX() == cell.getCenterSectionX() && other.getCenterSectionY() == cell.getCenterSectionY()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final class OptionalSurfaceDraw {
+        private final int[] draws, receipt;
+
+        private OptionalSurfaceDraw(int[] draws, int[] receipt) {
+            this.draws = draws;
+            this.receipt = receipt;
+        }
     }
 
     private static List<Renderer3DWorldChunkFrame.ChunkMesh> fixedSurfaceDraw(mudclient client, Renderer3DWorldChunkFrame frame) {

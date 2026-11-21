@@ -116,6 +116,9 @@ public final class GameStateUpdater {
 	private static final int COVERED_WALKING_MARGIN_TILES = 24;
 	private static final int NATIVE_LAYERED_CHUNK_RADIUS = 1;
 	private static final int NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS = 2;
+	private static final int NATIVE_LAYERED_SURFACE_DRAW_SOURCE_RADIUS = 3;
+	private static final boolean EXPANDED_SURFACE_DRAW_BORDER =
+		Boolean.getBoolean("spoiledmilk.expandedSurfaceDrawBorder");
 	private static final int NATIVE_LAYERED_WIRE_CHUNK_SIZE =
 		NativeLayeredTerrainSector.SIZE;
 	private static final int NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES = 3;
@@ -996,12 +999,7 @@ public final class GameStateUpdater {
 			(int)(getServer().getCurrentTick() & 0x7FFFFFFF);
 		stage.worldSpace = location.getWorldSpace().getValue();
 		stage.logicalLevel = location.getCoordinate().getLevel();
-		if (structural) {
-			stagedTerrain.populateSymmetricStructure(stage);
-		} else {
-			stagedTerrain.populate(
-				stage, NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS);
-		}
+		stagedTerrain.populate(stage, surfaceDrawSourceRadius(player), structural);
 		if (!tryFinalizeAndSendPacketChecked(
 				OpcodeOut.SEND_LAYERED_TERRAIN_STAGE,
 				stage,
@@ -1136,13 +1134,7 @@ public final class GameStateUpdater {
 			(int)(getServer().getCurrentTick() & 0x7FFFFFFF);
 		halo.worldSpace = location.getWorldSpace().getValue();
 		halo.logicalLevel = location.getCoordinate().getLevel();
-		if (structural) {
-			haloTerrain.populateSymmetricStructure(halo);
-		} else {
-			haloTerrain.populate(
-				halo,
-				NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS);
-		}
+		haloTerrain.populate(halo, surfaceDrawSourceRadius(player), structural);
 		if (!tryFinalizeAndSendPacketChecked(
 				OpcodeOut.SEND_LAYERED_TERRAIN_STAGE,
 				halo,
@@ -1416,7 +1408,8 @@ public final class GameStateUpdater {
 			residency = player.getAttribute(
 				NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE, null);
 			if (residency == null) {
-				residency = new NativeLayeredTerrainClientResidency();
+				residency = EXPANDED_SURFACE_DRAW_BORDER && "127.0.0.1".equals(getServer().getConfig().SERVER_BIND_ADDRESS)
+					? new NativeLayeredTerrainClientResidency(128) : new NativeLayeredTerrainClientResidency();
 				player.setAttribute(
 					NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE,
 					residency);
@@ -2854,21 +2847,7 @@ public final class GameStateUpdater {
 		}
 
 		private void populate(final LayeredTerrainStageStruct stage) {
-			populate(stage, NATIVE_LAYERED_CHUNK_RADIUS);
-		}
-
-		private void populate(
-			final LayeredTerrainStageStruct stage,
-			final int chunkRadius) {
-			populate(stage, chunkRadius, false);
-		}
-
-		private void populateSymmetricStructure(
-			final LayeredTerrainStageStruct stage) {
-			populate(
-				stage,
-				NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS,
-				true);
+			populate(stage, NATIVE_LAYERED_CHUNK_RADIUS, false);
 		}
 
 		private void populate(
@@ -2876,8 +2855,7 @@ public final class GameStateUpdater {
 			final int chunkRadius,
 			final boolean structuralOnly) {
 			if (chunkRadius < NATIVE_LAYERED_CHUNK_RADIUS
-				|| chunkRadius
-					> NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS) {
+				|| chunkRadius > NATIVE_LAYERED_SURFACE_DRAW_SOURCE_RADIUS) {
 				throw new IllegalArgumentException(
 					"Unsupported native terrain stage radius");
 			}
@@ -2960,13 +2938,8 @@ public final class GameStateUpdater {
 						new LayeredSceneTerrainChunkStruct();
 					output.chunkX = chunkX;
 					output.chunkY = chunkY;
-					final boolean symmetricOuter =
-						chunkRadius
-								== NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS
-							&& Math.max(
-								Math.abs(deltaX),
-								Math.abs(deltaY))
-								== NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS;
+					final boolean symmetricOuter = Math.max(Math.abs(deltaX), Math.abs(deltaY))
+						>= NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS;
 					final WorldMapSectorId sectorId=new WorldMapSectorId(
 							location.getWorldSpace(),
 							location.getCoordinate().getLevel(),
@@ -3734,6 +3707,11 @@ public final class GameStateUpdater {
 			&& !viewer.getConfig().WORLD_BUILDER_MODE
 			&& viewer.getWorldLocation().getCoordinate().getLevel() == 0
 			&& "global".equals(viewer.getWorldLocation().getWorldSpace().getValue());
+	}
+
+	private static int surfaceDrawSourceRadius(Player player) {
+		return EXPANDED_SURFACE_DRAW_BORDER && usesCoveredWalkingPreview(player)
+			? NATIVE_LAYERED_SURFACE_DRAW_SOURCE_RADIUS : NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS;
 	}
 
 	static boolean canRetainCoveredWalkingCenter(

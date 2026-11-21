@@ -26,6 +26,15 @@ public final class NativeLayeredTerrainSnapshot {
 	public static final int STREAMING_CHUNK_SIZE = SECTOR_SIZE;
 	public static final int STREAMING_CHUNK_RADIUS = 1;
 	public static final int SYMMETRIC_RESIDENCY_CHUNK_RADIUS = 2;
+	static final boolean EXPANDED_SURFACE_DRAW_BORDER = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.expandedSurfaceDrawBorder");
+	private static final int SURFACE_DRAW_SOURCE_RADIUS = 3;
+
+	public static boolean isSymmetricSourceRadius(int radius, String worldSpace, int level) {
+		return radius == SYMMETRIC_RESIDENCY_CHUNK_RADIUS
+			|| EXPANDED_SURFACE_DRAW_BORDER && radius == SURFACE_DRAW_SOURCE_RADIUS
+				&& level == 0 && "global".equals(worldSpace);
+	}
 
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
@@ -203,13 +212,9 @@ public final class NativeLayeredTerrainSnapshot {
 			currentChunkY, presentationChunkSize, "current chunk Y");
 		this.currentChunkX = currentChunkX;
 		this.currentChunkY = currentChunkY;
-		int expectedChunkRadius =
-			protocolVersion == SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
-					|| protocolVersion
-						== SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
-				? SYMMETRIC_RESIDENCY_CHUNK_RADIUS
-				: STREAMING_CHUNK_RADIUS;
-		if (chunkRadius != expectedChunkRadius) {
+		boolean symmetric = protocolVersion == SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| protocolVersion == SYMMETRIC_STRUCTURE_PROTOCOL_VERSION;
+		if (symmetric ? !isSymmetricSourceRadius(chunkRadius, worldSpace, level) : chunkRadius != STREAMING_CHUNK_RADIUS) {
 			throw new IllegalArgumentException(
 				"Chunked native terrain has an invalid residency radius");
 		}
@@ -447,7 +452,7 @@ public final class NativeLayeredTerrainSnapshot {
 	}
 
 	/**
-	 * Extracts the authoritative radius-one window carried inside a radius-two
+	 * Extracts the authoritative radius-one window carried inside a symmetric
 	 * prediction. A complete predicted presentation is represented by merged
 	 * visual and structural protocol data, while the inner nine sectors remain
 	 * the same full authoritative source image in either form. The returned
@@ -458,9 +463,9 @@ public final class NativeLayeredTerrainSnapshot {
 	public NativeLayeredTerrainSnapshot toAtomicActivationInnerWindow() {
 		if ((protocolVersion != SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
 				&& protocolVersion != SYMMETRIC_STRUCTURE_PROTOCOL_VERSION)
-			|| chunkRadius != SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			|| !isSymmetricSourceRadius(chunkRadius, worldSpace, level)) {
 			throw new IllegalStateException(
-				"Only a radius-two presentation has an atomic inner window");
+				"Only a symmetric presentation has an atomic inner window");
 		}
 		int sourceWidth = chunkRadius * 2 + 1;
 		NativeLayeredTerrainChunk[] inner =
