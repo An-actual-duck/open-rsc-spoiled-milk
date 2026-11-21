@@ -307,6 +307,8 @@ public final class BrowserOuterCoverageProbe {
 		int rolling = client.getRollingSurfaceWindows();
 		int sequence = client.packetHandler.getPersistentMovementReceipt()[3];
 		walkLeg(client, walk, x, z);
+		long deadline = System.currentTimeMillis() + 6_000;
+		while (client.getRollingSurfaceWindows() == rolling && System.currentTimeMillis() < deadline) Thread.sleep(40);
 		int[] coverage = BrowserWebGLBridge.getSurfaceCoverageReceipt();
 		if (client.getRollingSurfaceWindows() != rolling + 1
 			|| client.packetHandler.getPersistentMovementReceipt()[3] != sequence + 1

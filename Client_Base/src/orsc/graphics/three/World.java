@@ -622,9 +622,6 @@ public final class World {
 			throw new IllegalStateException(
 				"Predicted structure does not match its visual field");
 		}
-		final NativeLayeredTerrainSnapshot presentationTerrain =
-			NativeLayeredTerrainSnapshot.mergePresentation(
-				visualTerrain, structuralTerrain);
 		final long sourceRevision = worldEditorTerrainRevision.get();
 		final String activeScopeIdentity = activeTerrain.scopeIdentity();
 		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
@@ -632,14 +629,16 @@ public final class World {
 			reusableNativeLayeredTerrainChunks(
 				activeTerrain, worldOffsetX, worldOffsetZ);
 		final SurfaceDrawPreparation drawPreparation = LIVE_SURFACE_DRAW_PREPARATION
-			&& "global".equals(presentationTerrain.getWorldSpace()) && presentationTerrain.getLevel() == 0
+			&& "global".equals(structuralTerrain.getWorldSpace()) && structuralTerrain.getLevel() == 0
 			? new SurfaceDrawPreparation(activeTerrain, sourceRevision, worldOffsetX, worldOffsetZ, includeRoofGeometry) : null;
 		preparedSurfaceDraw = drawPreparation;
 		return sectorPreloadExecutor.submit(
 			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
 				@Override
 				public NativeLayeredTerrainHaloPrebuildResult call() {
-					return buildNativeLayeredTerrainHalo(
+					NativeLayeredTerrainSnapshot presentationTerrain =
+						NativeLayeredTerrainSnapshot.mergePresentation(visualTerrain, structuralTerrain);
+					NativeLayeredTerrainHaloPrebuildResult result = buildNativeLayeredTerrainHalo(
 						activeTerrain,
 						presentationTerrain,
 						presentationTerrain.scopeIdentity(),
@@ -651,6 +650,9 @@ public final class World {
 						includeRoofGeometry,
 						reusableChunks,
 						drawPreparation);
+					result.predictedVisual = visualTerrain;
+					result.predictedStructural = structuralTerrain;
+					return result;
 				}
 			});
 	}
@@ -790,11 +792,7 @@ public final class World {
 			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) {
 			return false;
 		}
-		NativeLayeredTerrainSnapshot presentationTerrain =
-			NativeLayeredTerrainSnapshot.mergePresentation(
-				visualTerrain, structuralTerrain);
-		if (!result.haloScopeIdentity.equals(
-				presentationTerrain.scopeIdentity())
+		if (result.predictedVisual != visualTerrain || result.predictedStructural != structuralTerrain
 			|| result.haloProtocolVersion
 				!= NativeLayeredTerrainSnapshot
 					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
@@ -907,13 +905,9 @@ public final class World {
 				!= structuralTerrain.getCurrentChunkY()) {
 			return false;
 		}
-		NativeLayeredTerrainSnapshot presentationTerrain =
-			NativeLayeredTerrainSnapshot.mergePresentation(
-				visualTerrain, structuralTerrain);
-		return result.activeScopeIdentity.equals(
-				activeTerrain.scopeIdentity())
-			&& result.haloScopeIdentity.equals(
-				presentationTerrain.scopeIdentity())
+		return result.activeScopeIdentity.equals(activeTerrain.scopeIdentity())
+			&& result.predictedVisual == visualTerrain
+			&& result.predictedStructural == structuralTerrain
 			&& result.haloProtocolVersion
 				== NativeLayeredTerrainSnapshot
 					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
@@ -6772,6 +6766,8 @@ public final class World {
 		private final int builtCells;
 		private final String compactDiagnosticSummary;
 		private final String cellDiagnostics;
+		// Assigned on the preparation thread before handing off the completed immutable source pair.
+		private NativeLayeredTerrainSnapshot predictedVisual, predictedStructural;
 		private final long elapsedNanos;
 
 		private NativeLayeredTerrainHaloPrebuildResult(

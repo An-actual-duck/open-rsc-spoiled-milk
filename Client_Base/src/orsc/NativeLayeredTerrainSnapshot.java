@@ -53,6 +53,7 @@ public final class NativeLayeredTerrainSnapshot {
 	private final String packageVersion;
 	private final String manifestSha256;
 	private final String packageIdentity;
+	private final String scopeIdentity;
 	private final int presentationChunkSize;
 	private final String worldSpace;
 	private final int level;
@@ -135,6 +136,7 @@ public final class NativeLayeredTerrainSnapshot {
 		this.chunks = new NativeLayeredTerrainChunk[0];
 		this.queryIndexEligible = false;
 		this.queryMinimumX = this.queryMinimumY = this.queryDimension = 0;
+		this.scopeIdentity = buildScopeIdentity();
 	}
 
 	public NativeLayeredTerrainSnapshot(
@@ -263,6 +265,7 @@ public final class NativeLayeredTerrainSnapshot {
 		this.verticalWall = 0;
 		this.horizontalWall = 0;
 		this.diagonalWall = 0;
+		this.scopeIdentity = buildScopeIdentity();
 	}
 
 	public boolean covers(
@@ -334,7 +337,9 @@ public final class NativeLayeredTerrainSnapshot {
 			.groundOverlay(worldX, worldY);
 	}
 
-	public String scopeIdentity() {
+	public String scopeIdentity() { return scopeIdentity; }
+
+	private String buildScopeIdentity() {
 		String identity = packageIdentity()
 			+ ":" + worldSpace + ":" + level;
 		if (isChunkedProtocol()) {
