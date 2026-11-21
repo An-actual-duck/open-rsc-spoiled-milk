@@ -317,6 +317,7 @@ const natives = {
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },
   async Java_orsc_browser_BrowserBootstrap_wsConnected(lib, id) { return transport.connected(id); },
+  async Java_orsc_browser_BrowserBootstrap_wsReadable(lib, id) { return transport.readable(id); },
   async Java_orsc_browser_BrowserBootstrap_wsRead(lib, id, maximum) { return transport.read(id, maximum); },
   async Java_orsc_browser_BrowserBootstrap_wsWrite(lib, id, bytes) { transport.write(id, bytes); },
   async Java_orsc_browser_BrowserBootstrap_wsClose(lib, id) { transport.close(id); },

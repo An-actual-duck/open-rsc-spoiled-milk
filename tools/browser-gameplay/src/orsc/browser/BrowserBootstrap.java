@@ -36,6 +36,7 @@ public final class BrowserBootstrap {
     private static native byte[] wsRead(int socket, int maximum);
     private static native int wsAvailable(int socket);
     private static native boolean wsConnected(int socket);
+    private static native int wsReadable(int socket);
     private static native void wsWrite(int socket, byte[] bytes);
     private static native void wsClose(int socket);
     private static native int[] awaitMiddleMouseEvent();
@@ -403,7 +404,12 @@ public final class BrowserBootstrap {
         if(!host.isLoopbackAddress()||port!=expected)throw new IOException("Private prototype permits only the selected loopback fixture port");
     }
     private static final class BrowserSocket extends SocketImpl {
+        private static final int READ_AHEAD_LIMIT = 16 * 1024;
+        private final boolean readAhead = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+            && Boolean.getBoolean("spoiledmilk.browserSocketReadAhead");
         private int connection = -1;
+        private byte[] received;
+        private int receivedOffset;
         protected void create(boolean stream) throws IOException {
             if (!stream) throw new IOException("Only TCP-style game streams are supported");
         }
@@ -420,10 +426,17 @@ public final class BrowserBootstrap {
         protected InputStream getInputStream() { return new InputStream() {
             public int available() throws IOException { return BrowserSocket.this.available(); }
             public int read() throws IOException {
+                if (received != null && receivedOffset < received.length) return received[receivedOffset++] & 255;
                 byte[] value = wsRead(connection, 1); return value.length == 0 ? -1 : value[0] & 255;
             }
             public int read(byte[] target, int offset, int length) throws IOException {
                 if (length == 0) return 0;
+                if (received != null && receivedOffset < received.length) {
+                    int count = Math.min(length, received.length - receivedOffset);
+                    System.arraycopy(received, receivedOffset, target, offset, count);
+                    receivedOffset += count;
+                    return count;
+                }
                 byte[] value = wsRead(connection, length);
                 if (value.length == 0) return -1;
                 System.arraycopy(value, 0, target, offset, value.length); return value.length;
@@ -437,8 +450,34 @@ public final class BrowserBootstrap {
             }
             public void close() { BrowserSocket.this.close(); }
         }; }
-        protected int available() throws IOException { int buffered=wsAvailable(connection);if(buffered==0&&!wsConnected(connection))throw new IOException("Game connection closed");return buffered; }
-        protected void close() { if (connection >= 0) { wsClose(connection); connection = -1; } }
+        protected int available() throws IOException {
+            if (!readAhead) {
+                int buffered = wsAvailable(connection);
+                if (buffered == 0 && !wsConnected(connection)) throw new IOException("Game connection closed");
+                return buffered;
+            }
+            int buffered = received == null ? 0 : received.length - receivedOffset;
+            // The frame parser needs two bytes together for a split header.
+            if (buffered >= 2) return buffered;
+            int readable = wsReadable(connection);
+            if (readable < 0 && buffered == 0) throw new IOException("Game connection closed");
+            if (readable <= 0) return buffered;
+            byte[] next = wsRead(connection, Math.min(readable, READ_AHEAD_LIMIT));
+            if (buffered != 0) {
+                byte[] joined = new byte[buffered + next.length];
+                System.arraycopy(received, receivedOffset, joined, 0, buffered);
+                System.arraycopy(next, 0, joined, buffered, next.length);
+                next = joined;
+            }
+            received = next;
+            receivedOffset = 0;
+            return received.length;
+        }
+        protected void close() {
+            received = null;
+            receivedOffset = 0;
+            if (connection >= 0) { wsClose(connection); connection = -1; }
+        }
         protected void bind(InetAddress host, int port) throws IOException { throw new IOException("No listening sockets"); }
         protected void listen(int backlog) throws IOException { throw new IOException("No listening sockets"); }
         protected void accept(SocketImpl socket) throws IOException { throw new IOException("No listening sockets"); }

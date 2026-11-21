@@ -24,6 +24,11 @@ export function createTransport(WebSocketType, report, url = 'ws://127.0.0.1:435
     },
     available(id) { return connections.get(id)?.available || 0; },
     connected(id) { const entry=connections.get(id);return !!entry&&!entry.closed&&!disposed; },
+    readable(id) {
+      const entry = connections.get(id);
+      if (!entry) return -1;
+      return entry.available || (entry.closed || disposed ? -1 : 0);
+    },
     async read(id, maximum) {
       const entry = connections.get(id); if (!entry) return new Int8Array();
       while (!entry.available && !entry.closed) await new Promise(resolve => { entry.waiter = resolve; });

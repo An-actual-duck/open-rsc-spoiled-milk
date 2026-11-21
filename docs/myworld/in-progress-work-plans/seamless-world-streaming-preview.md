@@ -303,11 +303,21 @@ server's `travel-server.ndjson`. Captures include tile positions and timing
 data. An ordinary recheck can compare the last submitted player pose,
 authoritative position and gap between fresh frames at a scene transition.
 
-A next trace breaks down the connection update into terrain-stage polling,
-socket reads, and ordered packet handling with the slowest opcode per frame.
-The full connection duration can include runtime scheduling pauses. The
-dissection is needed before assigning individual stalls to a handler or
-changing the current packet cadence.
+The follow-up control breaks down the connection update into terrain-stage
+polling, socket reads, and ordered packet handling with the slowest opcode per
+frame. It captured a 519 ms gap at `(284, 609)`, about eight seconds after the
+first handoff. Of that interval, 307 ms elapsed in the socket-read path and
+15 ms elapsed in packet handlers. At `(291, 597)` one 418 ms gap included
+276 ms in reads, 1 ms in packet handling, and zero geometry uploads. The
+timers are elapsed time and can include runtime scheduling pauses.
+
+The browser socket can cross between Java and JavaScript twice for an empty
+poll, and five times for a complete frame under the legacy stream adapter.
+The private `--socket-read-ahead` experiment combines availability and close
+checks, and copies up to 16 KiB of buffered WebSocket bytes into Java for the
+existing frame parser. The parser still owns framing, the receive order, and
+packet drain limits. The private game server and movement state are unchanged
+by the socket experiment.
 
 ## Reproduce the private preview
 

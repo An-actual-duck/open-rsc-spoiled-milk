@@ -64,10 +64,10 @@ def analyze(result, ticks):
         if not 0 < index < len(frames):
             continue
         first_frame = frames[index]
-        after = [row for row in gap_rows[index:] if row['time'] <= first_frame['submittedAt'] + 5_000
+        after = [row for row in gap_rows[index:] if row['time'] <= first_frame['submittedAt'] + 10_000
                  and not row['transition'] and row['epoch'] == first_frame['epoch']]
         handoffs.append({'firstWorldFrameMs': round(first_frame['submittedAt'] - transition['time'], 1),
-                         'gap': gap_rows[index - 1], 'worstFollowingFiveSeconds': worst(after)})
+                         'gap': gap_rows[index - 1], 'worstFollowingTenSeconds': worst(after)})
 
     ordinary = [row for row in gap_rows if not row['transition']]
     ordinary_durations = sorted(row['milliseconds'] for row in ordinary)

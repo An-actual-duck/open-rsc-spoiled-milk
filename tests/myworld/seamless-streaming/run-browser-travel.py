@@ -73,7 +73,7 @@ def run_walk(run, driver_port):
                     break
                 time.sleep(.85)
 
-            result = evaluate('return {events:' + ROUTE_EVENTS + ''',runtime:p.state, reason:p.stopReason,
+            result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples,
                 display:p.gpu?.display, visibility:w.document.visibilityState, timeOrigin:w.performance.timeOrigin};''')
             result['serverStatus'] = json.loads((run / 'status.json').read_text())
