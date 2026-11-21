@@ -436,9 +436,19 @@ available before the playable window can expand.
 
 The focused fixture covers overlapping objects, side-by-side cell edges,
 terrain flags beneath a wall, and a changed origin and map scope. The private
-browser route checks whether the predicted strip arrived while its render
-product was still pending. The legacy whole-scene activation remains the
-comparison until interactive cells can enter the live view independently.
+Firefox run at `1d207dc9d` published all three incoming collision cells
+while their render product was still pending. It crossed the terrain center
+boundary, applied 432 movement receipts under the same travel session, and
+returned to the server-confirmed destination `(252, 609)`. Both scene fences
+matched the server's object and wall counts and hashes. The initial
+experimental placement of the collision copy delayed browser startup. The
+working candidate binds the existing active grid and prepares the new
+collision cells on the terrain worker.
+
+The browser still held four frames at the legacy scene swap. The incoming
+strip contains static terrain flags. The terrain and the server's revisioned
+live scenery still need to join the interactive window together before a
+walking transition can skip that swap.
 
 ## Reproduce the private preview
 
