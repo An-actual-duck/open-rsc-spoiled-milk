@@ -450,6 +450,52 @@ strip contains static terrain flags. The terrain and the server's revisioned
 live scenery still need to join the interactive window together before a
 walking transition can skip that swap.
 
+## Authoritative scenery in the incoming strip
+
+The private `--surface-scenery-cells` path subscribes to the three incoming
+48-tile cells of a cardinal surface transition. The server reads objects
+and walls from its live spatial index using the viewer's visibility rules.
+It emits a complete revision when a cell changes, including an empty
+revision when the last placement leaves. The client scopes pages to the
+travel session, installed context, and expected terrain prediction. A
+partial revision makes that cell unavailable until all its pages arrive.
+Relocation, recovery, or a new prediction clears the old subscription data.
+
+The client combines the published records with the staged terrain flags
+using the same footprint and reciprocal-edge rules as active collision.
+That combined cell is available to the next window. The existing gameplay
+lists and scene renderer still consume the old region until the ordinary
+region activation runs.
+
+The Firefox run at `941393ab9` received 90, 63, and 140 placements in the
+three incoming cells. At `x = 258` the test server added an anvil at
+`(305, 620)` through the normal object registration path. The incoming
+cell advanced from revision 1 to 2 and gained its collision bit. At
+`x = 259` the server removed it, and revision 3 cleared the collision bit.
+The currently installed scene stayed live throughout those changes. The
+server confirmed the return to `(252, 609)` under the same travel lifetime
+with zero movement receipts rejected for missing installed coverage. Both
+legacy scene fences matched.
+
+The later context change still held 18 frames, with about 1.9 seconds
+between the transition and the first fresh submitted frame. The collision
+and scenery cells were ready before the crossing. The remaining blocking
+call is the region-origin change, which dematerializes the local scenery,
+installs new terrain, and rematerializes the objects before the scene
+latch releases. The rolling path needs to retain the overlap and keep
+the actor and camera coordinate conversion outside that region rebuild.
+Use a separate acknowledgement for interactive coverage and verify that
+changing the origin preserves existing local object identity and picking.
+Login, relocation, and recovery retain their existing full baseline process.
+
+Run the fresh local scenario with the following arguments after building
+the matched client and server.
+
+```sh
+python3 tests/myworld/seamless-streaming/prepare-browser-outer-preview.py <fresh-name> \
+  --trace --travel-trace --persistent-movement --persistent-collision --surface-scenery-cells
+```
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
