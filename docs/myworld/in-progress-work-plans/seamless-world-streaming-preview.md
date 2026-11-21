@@ -569,6 +569,57 @@ python3 tests/myworld/seamless-streaming/prepare-browser-outer-preview.py <fresh
   --fixed-surface-draw --expanded-surface-draw-border
 ```
 
+## Scenery draw cells in the running browser
+
+The private surface subscription delivers complete revisions for the
+entering scenery ring and the sectors that change between interactive
+and presentation-only ownership. A newer revision retires its pending
+draw work. A worker builds canonical 24-tile static meshes from the
+latest complete records and signed elevations. The browser stages the
+meshes within its existing GPU budget and adds an entering draw only
+when its terrain is already drawable. The active scene's readiness
+declaration excludes those optional draws.
+
+At the crossing, the client compares each prepared mesh against the
+actual server scene using its sorted placements, orientations, and
+elevations. Live animated objects stay on the active model path.
+The matched handoff adopts exact prepared meshes and can fall back when
+a cell changed, was cancelled, or was late. The existing scene fence
+continues to verify interactive records.
+
+The first run prepared 41 meshes but stalled at optional draw admission.
+Compact packing freed GPU capacity. A second run still could not draw
+incoming scenery. The working run allows large meshes to pack in slices
+and resolves their materials using the same catalog and fallback rules
+as active meshes.
+
+The Firefox walk at `88e58f0ec` submitted 15 optional scenery buffers
+before the scene changed and used all 15 of those same buffers afterward.
+The Java client adopted 19 matching meshes. All 20 overlapping terrain
+buffers and five entering terrain buffers also survived. The player
+walked into the new strip and returned to `(252, 609)`. Both scene fences
+matched, with 643 movement receipts in one travel session and zero
+rejected for missing terrain.
+
+The whole-scene gate still held five frames and went 1.07 seconds
+without a fresh frame. On the first browser hold, 114 of the 120 draw
+sources were already ready. The client waited for the complete legacy
+scene baseline and two presentation samples, and the browser then
+waited for every declared source. The trace recorded 112 ms building
+scenery meshes during the handoff. The next architecture step is to
+advance a rolling surface from the exact installed collision and local
+scenery receipt, publish the distant ring by cell, and keep frame and
+input readiness tied to the still-live coverage. For a real walking
+preview, verify input and real actor poses through loading and under
+reversal, while keeping the full baseline path for login and relocation.
+
+```sh
+python3 tests/myworld/seamless-streaming/prepare-browser-outer-preview.py <fresh-name> \
+  --http-port <unused-port> --trace --travel-trace --persistent-movement \
+  --persistent-collision --surface-scenery-cells --rolling-surface-window \
+  --fixed-surface-draw --expanded-surface-draw-border --surface-scenery-draw --compact-scenery
+```
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
