@@ -1415,6 +1415,21 @@ public class PacketHandler {
 			stagedTerrain.getCurrentChunkX();
 		layeredTerrainStageCenterY =
 			stagedTerrain.getCurrentChunkY();
+		if (mudclient.LIVE_SURFACE_HANDOFF && protocolVersion == 4 && "global".equals(worldSpace) && logicalLevel == 0) {
+			// The visual stage supplies immutable cell data for the structural stage. Building a second
+			// region here has no consumer in the fixed draw field.
+			if (readyPredictedLayeredTerrainStage != null || readyPredictedLayeredTerrainHalo != null) {
+				throw new IllegalStateException("Predicted terrain inputs replaced before activation");
+			}
+			if (!receivedSceneryEarly) beginSurfaceSceneryPrediction(stageSequence, contextSequence,
+				stagedTerrain.getCurrentChunkX(), stagedTerrain.getCurrentChunkY(), activeTerrain);
+			mc.completeSurfaceSceneryTerrain(stagedTerrain);
+			readyPredictedLayeredTerrainStage = stagedTerrain;
+			readyPredictionDecodeNanos += decodeNanos;
+			sendLayeredTerrainStageReady(protocolVersion, stageSequence, contextSequence, worldSpace, logicalLevel, stagedTerrain);
+			logTerrainStreaming("layer terrain stage seq " + stageSequence + " visual inputs ready for surface cells");
+			return;
+		}
 		pendingLayeredTerrainStage = stagedTerrain;
 		pendingLayeredTerrainStageProtocol = protocolVersion;
 		pendingLayeredTerrainStageSequence = stageSequence;
