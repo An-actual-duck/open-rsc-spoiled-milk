@@ -337,6 +337,11 @@ public class PacketHandler {
 			includeCenter);
 	}
 
+	List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedFixedSurfaceDraw() {
+		return readyPredictedLayeredTerrainStructureStage == null ? java.util.Collections.emptyList()
+			: mc.getWorld().getPreparedFixedSurfaceDraw(readyPredictedLayeredTerrainHalo);
+	}
+
 	private void clearReadyPredictedLayeredTerrainHalo() {
 		clearReadyPredictedLayeredTerrainHalo(false);
 	}

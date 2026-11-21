@@ -151,6 +151,8 @@ public final class BrowserOuterCoverageProbe {
 		if (Boolean.getBoolean("spoiledmilk.surfaceSceneryCells")) {
 			verifyIncomingSceneryMutations(client, walk, before[3]);
 		}
+		boolean fixedDraw = Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
+		int[] previousDraws = fixedDraw ? awaitSurfaceDrawBuffers() : null;
 		boolean rolling = Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow");
 		Map<RSModel, Long> overlapModels = rolling ? snapshotOverlapModels(client, false) : null;
 		Map<RSModel, Long> overlapWalls = rolling ? snapshotOverlapModels(client, true) : null;
@@ -158,6 +160,7 @@ public final class BrowserOuterCoverageProbe {
 		walkLeg(client, walk, 278, 609);
 		int afterScene = client.packetHandler.getPersistentMovementReceipt()[3];
 		if (afterScene <= before[3]) throw new IllegalStateException("Route did not cross the terrain center boundary");
+		if (fixedDraw) compareSurfaceDrawBuffers(previousDraws, awaitSurfaceDrawBuffers());
 		if (rolling) {
 			int objects = retainedModels(overlapModels, snapshotOverlapModels(client, false));
 			int walls = retainedModels(overlapWalls, snapshotOverlapModels(client, true));
@@ -187,6 +190,31 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static int[] awaitSurfaceDrawBuffers() throws InterruptedException {
+		long deadline = System.currentTimeMillis() + 15_000;
+		do {
+			int[] draws = BrowserWebGLBridge.getSurfaceDrawBuffers();
+			if (draws.length == 25 * 3) return draws;
+			Thread.sleep(50);
+		} while (System.currentTimeMillis() < deadline);
+		throw new IllegalStateException("Fixed terrain cells did not reach the browser draw list");
+	}
+
+	private static void compareSurfaceDrawBuffers(int[] before, int[] after) {
+		int common = 0, retained = 0;
+		for (int i = 0; i < before.length; i += 3) {
+			for (int j = 0; j < after.length; j += 3) {
+				if (before[i] != after[j] || before[i + 1] != after[j + 1]) continue;
+				common++;
+				if (before[i + 2] == after[j + 2]) retained++;
+			}
+		}
+		if (common != 20 || retained < 10) {
+			throw new IllegalStateException("Expected a translated 5-by-5 GPU field with resident overlap, got " + retained + "/" + common);
+		}
+		BrowserBootstrap.report("outer-coverage:fixed-terrain:gpu-buffers-retained=" + retained + "/" + common);
 	}
 
 	private static Map<RSModel, Long> snapshotOverlapModels(mudclient client, boolean wall) {

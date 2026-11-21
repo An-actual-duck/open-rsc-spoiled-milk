@@ -50,6 +50,9 @@ public final class World {
 			|| Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow"));
 	private static final boolean PERSISTENT_SURFACE_COLLISION = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision");
+	private static final boolean FIXED_SURFACE_DRAW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
+	private volatile SurfaceTerrainDrawField fixedSurfaceDraw;
 	private final SurfaceCollisionCells surfaceCollision = PERSISTENT_SURFACE_COLLISION ? new SurfaceCollisionCells() : null;
 	private final AtomicReference<IncomingSurfaceCollision> incomingSurfaceCollision =
 		PERSISTENT_SURFACE_COLLISION ? new AtomicReference<>() : null;
@@ -712,6 +715,7 @@ public final class World {
 			Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
 		symmetricRetainableRenderer3DWorldChunkFrame =
 			Renderer3DWorldChunkFrame.fromChunks(result.retentionChunks);
+		fixedSurfaceDraw = result.fixedDraw;
 		symmetricRenderer3DWorldCenterSectionX =
 			worldTileToSection(Math.addExact(
 				Math.multiplyExact(
@@ -803,6 +807,26 @@ public final class World {
 			return Collections.emptyList();
 		}
 		return includeCenter ? result.preparedDrawChunks : result.outerChunks;
+	}
+
+	/** Browser geometry is rooted in the same applied origin as the Java pick/query frame. */
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getFixedSurfaceDraw(int sectionX, int sectionZ) {
+		SurfaceTerrainDrawField field = fixedSurfaceDraw;
+		if (field == null || sectionX != nativeLayeredTerrainAppliedSectionX
+			|| sectionZ != nativeLayeredTerrainAppliedSectionY
+			|| !field.matches(nativeLayeredTerrainSnapshot, sectionX, sectionZ, !Config.C_HIDE_ROOFS)) {
+			return Collections.emptyList();
+		}
+		return field.draws();
+	}
+
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedFixedSurfaceDraw(NativeLayeredTerrainHaloPrebuildResult result) {
+		NativeLayeredTerrainSnapshot active = nativeLayeredTerrainSnapshot;
+		if (result == null || result.fixedDraw == null || active == null || result.sourceRevision != worldEditorTerrainRevision.get()
+			|| !result.activeScopeIdentity.equals(active.scopeIdentity())
+			|| result.worldOffsetX != syntheticDeepFixtureOffsetX || result.worldOffsetZ != syntheticDeepFixtureOffsetZ
+			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) return Collections.emptyList();
+		return result.fixedDraw.draws();
 	}
 
 	public boolean canAcceptPredictedNativeLayeredTerrainStructure(
@@ -946,7 +970,7 @@ public final class World {
             int sx=haloTerrain.getCurrentChunkX(),sy=haloTerrain.getCurrentChunkY();
             WholeRamBasis basis=new WholeRamBasis(worldOffsetX,worldOffsetZ);
             Renderer3DWorldChunkFrame query=ram.queryFrame(this,sx,sy,worldOffsetX,worldOffsetZ);List<Renderer3DWorldChunkFrame.ChunkMesh> cells=query.getChunks();ram.avoidedBuild();
-            return new NativeLayeredTerrainHaloPrebuildResult(activeScopeIdentity,receivedHaloScopeIdentity,receivedProtocolVersion,sourceRevision,worldOffsetX,worldOffsetZ,0,basis.carrierX(sx),basis.carrierZ(sy),includeRoofGeometry,cells,cells,null,null,query.getTotalTriangleCount(),true,cells.size(),0,"whole-ram query-ready","whole-ram immutable query cells",System.nanoTime()-buildStart);
+            return new NativeLayeredTerrainHaloPrebuildResult(activeScopeIdentity,receivedHaloScopeIdentity,receivedProtocolVersion,sourceRevision,worldOffsetX,worldOffsetZ,0,basis.carrierX(sx),basis.carrierZ(sy),includeRoofGeometry,cells,cells,null,null,null,query.getTotalTriangleCount(),true,cells.size(),0,"whole-ram query-ready","whole-ram immutable query cells",System.nanoTime()-buildStart);
         }
 		int logicalCenterX = Math.multiplyExact(
 			haloTerrain.getCurrentChunkX(), SECTION_SIZE);
@@ -963,6 +987,12 @@ public final class World {
 					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION;
 		boolean predicted =
 			!matchesActiveHalo(activeTerrain, haloTerrain);
+		SurfaceTerrainDrawField previousFixed = fixedSurfaceDraw;
+		SurfaceTerrainDrawField fixedDraw = FIXED_SURFACE_DRAW && !terrainOnly && plane == 0
+			&& haloTerrain.getLevel() == 0 && "global".equals(haloTerrain.getWorldSpace())
+			&& haloTerrain.getPresentationChunkSize() == SECTION_SIZE && !WorldEditorBuildSettings.isEnabled()
+			&& Math.floorMod(worldOffsetX, SECTION_SIZE) == 0 && Math.floorMod(worldOffsetZ, SECTION_SIZE) == 0
+			? new SurfaceTerrainDrawField(haloTerrain, activeSectionX, activeSectionY, includeRoofGeometry) : null;
 		TerrainPredictionSlice slice = predicted && PACE_BROWSER_TERRAIN_PREDICTION ? new TerrainPredictionSlice() : null;
 		int predictedRebaseX = predicted
 			? Math.multiplyExact(
@@ -1032,11 +1062,15 @@ public final class World {
 			for (int deltaY = -2; deltaY <= 2; deltaY++) {
 					int radius = Math.max(
 						Math.abs(deltaX), Math.abs(deltaY));
-					if (radius == 0) {
+					if (radius == 0 && fixedDraw == null) {
 						continue;
 				}
 				int sectionX = Math.addExact(activeSectionX, deltaX);
 				int sectionY = Math.addExact(activeSectionY, deltaY);
+				String[] footprint = fixedDraw == null ? null : SurfaceTerrainDrawField.footprint(haloTerrain,
+					haloTerrain.getCurrentChunkX() + deltaX, haloTerrain.getCurrentChunkY() + deltaY);
+				SurfaceTerrainDrawField.Cell fixedCell = fixedDraw == null ? null
+					: fixedDraw.reuse(previousFixed, sectionX, sectionY, footprint);
 				Renderer3DWorldChunkFrame.ChunkMesh presentation =
 					findReusableNativePresentationChunk(
 						reusableChunks, plane, sectionX, sectionY);
@@ -1047,7 +1081,8 @@ public final class World {
 						presentation = presentation.rebasePresentation(
 							predictedRebaseX, predictedRebaseZ);
 					}
-				} else {
+				}
+				if (!reused || fixedDraw != null && fixedCell == null) {
 					CpuSectionWindow window =
 						buildNativeLayeredCpuSectionWindow(
 							plane,
@@ -1088,12 +1123,17 @@ public final class World {
 							includeRoofGeometry && !terrainOnly,
 							false,
 							slice);
-					presentation =
-						mesh.toRenderer3DWorldPresentationCell(
-							deltaX, deltaY);
-					builtCells++;
+					if (radius != 0 && !reused) {
+						presentation = mesh.toRenderer3DWorldPresentationCell(deltaX, deltaY);
+						builtCells++;
+					}
+					if (fixedDraw != null && fixedCell == null) {
+						fixedCell = new SurfaceTerrainDrawField.Cell(footprint, mesh.toRenderer3DFixedSurfaceCell());
+					}
 					if (slice != null) slice.checkpoint();
 				}
+				if (fixedDraw != null) fixedDraw.add(sectionX, sectionY, fixedCell);
+				if (radius == 0) continue;
 				if (presentation != null) {
 					retentionChunks.add(presentation);
 				}
@@ -1141,6 +1181,7 @@ public final class World {
 			retentionChunks,
 			activePrebuild == null ? null : activePrebuild.drawMesh,
 			activePrebuild == null ? null : activePrebuild.localTerrain,
+			fixedDraw,
 			triangles,
 			activePrebuild != null && activePrebuild.productCacheHit,
 			reusedCells,
@@ -6589,6 +6630,7 @@ public final class World {
 		private final List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks;
 		private final List<Renderer3DWorldChunkFrame.ChunkMesh> preparedDrawChunks;
 		private final PreparedLocalTerrain localTerrain;
+		private final SurfaceTerrainDrawField fixedDraw;
 		private final List<Renderer3DWorldChunkFrame.ChunkMesh>
 			retentionChunks;
 		private final int triangleCount;
@@ -6614,6 +6656,7 @@ public final class World {
 			List<Renderer3DWorldChunkFrame.ChunkMesh> retentionChunks,
 			Renderer3DWorldChunkFrame.ChunkMesh center,
 			PreparedLocalTerrain localTerrain,
+			SurfaceTerrainDrawField fixedDraw,
 			int triangleCount,
 			boolean activeProductCacheHit,
 			int reusedCells,
@@ -6632,6 +6675,7 @@ public final class World {
 			this.sectionY = sectionY;
 			this.includeRoofGeometry = includeRoofGeometry;
 			this.localTerrain = localTerrain;
+			this.fixedDraw = fixedDraw;
 			this.outerChunks = Collections.unmodifiableList(
 				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
 					outerChunks));
@@ -7087,10 +7131,17 @@ public final class World {
 			int radius = Math.max(
 				Math.abs(relativeSectionX),
 				Math.abs(relativeSectionY));
-			if (radius < 1 || radius > 2
-				|| indices.length != triangleTextures.length * 3) {
-				return null;
-			}
+			if (radius < 1 || radius > 2) return null;
+			return cropPresentationCell(relativeSectionX, relativeSectionY, false);
+		}
+
+		private Renderer3DWorldChunkFrame.ChunkMesh toRenderer3DFixedSurfaceCell() {
+			return cropPresentationCell(0, 0, true);
+		}
+
+		private Renderer3DWorldChunkFrame.ChunkMesh cropPresentationCell(
+			int relativeSectionX, int relativeSectionY, boolean fixed) {
+			if (indices.length != triangleTextures.length * 3) return null;
 			/*
 			 * The legacy active 3x3 mesh has 144 tile vertices but 143 face
 			 * rows. Its positive edges therefore end at face 142, while an
@@ -7222,6 +7273,7 @@ public final class World {
 				targetTriangle++;
 			}
 			long sectorSignature = signature;
+			if (fixed) sectorSignature = (sectorSignature ^ 0x719cbef09d4f83c5L) * 1099511628211L;
 			sectorSignature =
 				(sectorSignature ^ relativeSectionX)
 					* 1099511628211L;
