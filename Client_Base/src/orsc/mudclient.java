@@ -3723,7 +3723,9 @@ public final class mudclient implements Runnable {
 			applyExpandedGameObjectPickBounds(objectID, model);
 			this.scene.addModel(model);
 			model.setTranslate(x, -elevation, z);
-		this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
+		if (!this.world.updateSurfaceObjectCollision(objectID, xTile, zTile, this.getGameObjectInstanceDir(index), true)) {
+			this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
+		}
 		if (objectID == 74) {
 			model.translate2(0, -480, 0);
 		}
@@ -3750,8 +3752,11 @@ public final class mudclient implements Runnable {
 		if (!deferSceneRemoval) {
 			this.scene.removeModel(model);
 		}
-		this.world.removeGameObject_CollisonFlags(this.getGameObjectInstanceID(index),
-			this.getGameObjectInstanceX(index), this.getGameObjectInstanceZ(index));
+		int id = this.getGameObjectInstanceID(index);
+		int x = this.getGameObjectInstanceX(index), z = this.getGameObjectInstanceZ(index);
+		if (!this.world.updateSurfaceObjectCollision(id, x, z, this.getGameObjectInstanceDir(index), false)) {
+			this.world.removeGameObject_CollisonFlags(id, x, z);
+		}
 		this.setGameObjectInstanceMaterialized(index, false);
 		return model;
 	}

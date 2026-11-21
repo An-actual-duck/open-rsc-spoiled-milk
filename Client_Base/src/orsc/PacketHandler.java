@@ -281,6 +281,7 @@ public class PacketHandler {
 		if (mc != null) {
 			mc.resetLayeredSceneActivationPresentation();
 			mc.clearStaticScenePresentation();
+			if (mc.getWorld() != null) mc.getWorld().clearSurfaceCollision();
 		}
 		nativeLayeredTerrainResidentCache.clear();
 		layeredTerrainStageAssembler.reset();
@@ -1352,6 +1353,7 @@ public class PacketHandler {
 	}
 
 	public void pollLayeredTerrainStageReady() {
+		if (mc.getWorld() != null) mc.getWorld().publishPendingSurfaceCollision(pendingLayeredTerrainHaloPrebuild);
 		if (pendingLayeredTerrainHaloPrebuild != null) {
 			pollLayeredTerrainHaloReady();
 			return;

@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--slice-preupload', action='store_true', help='Pack large speculative vertex buffers across frames')
     parser.add_argument('--socket-read-ahead', action='store_true', help='Buffer available socket bytes before the Java packet drain')
     parser.add_argument('--persistent-movement', action='store_true', help='Use the private movement stream independent of the terrain center')
+    parser.add_argument('--persistent-collision', action='store_true', help='Publish world-addressed collision cells and live contributors')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
@@ -98,6 +99,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserSlicePreupload", "{str(args.slice_preupload).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSocketReadAhead", "{str(args.socket_read_ahead).lower()}");\n'
            f'        System.setProperty("spoiledmilk.persistentMovementPreview", "{str(args.persistent_movement).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.persistentSurfaceCollision", "{str(args.persistent_collision).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
@@ -172,6 +174,7 @@ def main():
         'slicePreupload': args.slice_preupload,
         'socketReadAhead': args.socket_read_ahead,
         'persistentMovement': args.persistent_movement,
+        'persistentCollision': args.persistent_collision,
         'sustainedWalk': args.sustained_walk,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',

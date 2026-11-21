@@ -35,6 +35,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -46,6 +47,12 @@ public final class World {
 		&& Boolean.getBoolean("spoiledmilk.browserPaceTerrainPrediction");
 	private static final boolean PREPARE_BROWSER_LOCAL_TERRAIN = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.browserPrepareLocalTerrain");
+	private static final boolean PERSISTENT_SURFACE_COLLISION = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision");
+	private final SurfaceCollisionCells surfaceCollision = PERSISTENT_SURFACE_COLLISION ? new SurfaceCollisionCells() : null;
+	private final AtomicReference<IncomingSurfaceCollision> incomingSurfaceCollision =
+		PERSISTENT_SURFACE_COLLISION ? new AtomicReference<>() : null;
+	private int earlySurfaceCollisionCells;
 	private static final int RENDERER_3D_WALL_SHADOW_MAX_FOOTPRINT = 512;
 
 	public static final int SECTION_SIZE = 48;
@@ -972,6 +979,9 @@ public final class World {
 			predicted
 				? haloTerrain.toAtomicActivationInnerWindow()
 				: activeTerrain;
+		IncomingSurfaceCollision incomingCollision = incomingSurfaceCollision != null && predicted && !terrainOnly
+			&& plane == 0 && "global".equals(haloTerrain.getWorldSpace())
+			? new IncomingSurfaceCollision(activeTerrain, sourceRevision, worldOffsetX, worldOffsetZ) : null;
 		NativeWorldModelPrebuild activePrebuild =
 			terrainOnly || predicted
 				? prebuildNativeWorldModelProduct(
@@ -984,7 +994,7 @@ public final class World {
 					includeRoofGeometry,
 					slice,
 					PREPARE_BROWSER_LOCAL_TERRAIN && predicted && !terrainOnly && plane == 0
-						&& haloTerrain.getLevel() == 0 && "global".equals(haloTerrain.getWorldSpace()))
+						&& haloTerrain.getLevel() == 0 && "global".equals(haloTerrain.getWorldSpace()), incomingCollision)
 				: null;
 		int sourceOuterSectors = 0;
 		StringBuilder cellDiagnostics = new StringBuilder();
@@ -1178,12 +1188,13 @@ public final class World {
 		int worldOffsetZ,
 		long terrainRevision,
 		boolean includeRoofGeometry) {
-		return prebuildNativeWorldModelProduct(terrain, worldOffsetX, worldOffsetZ, terrainRevision, includeRoofGeometry, null, false);
+		return prebuildNativeWorldModelProduct(terrain, worldOffsetX, worldOffsetZ, terrainRevision, includeRoofGeometry, null, false, null);
 	}
 
 	private NativeWorldModelPrebuild prebuildNativeWorldModelProduct(
 		NativeLayeredTerrainSnapshot terrain, int worldOffsetX, int worldOffsetZ,
-		long terrainRevision, boolean includeRoofGeometry, TerrainPredictionSlice slice, boolean prepareLocal) {
+		long terrainRevision, boolean includeRoofGeometry, TerrainPredictionSlice slice, boolean prepareLocal,
+		IncomingSurfaceCollision incomingCollision) {
 		long buildStart = System.nanoTime();
         WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forCaptured(terrain,worldOffsetX,worldOffsetZ,includeRoofGeometry);
         if(ram!=null){ram.avoidedBuild();return new NativeWorldModelPrebuild(true,System.nanoTime()-buildStart,null,null);}
@@ -1252,6 +1263,7 @@ public final class World {
 			if (slice != null) slice.checkpoint();
 			WallModelInput wallInput =
 				buildWallModelInput(window.sectors);
+			if (incomingCollision != null) offerIncomingCollision(incomingCollision, sectionX, sectionY, terrainInput, wallInput);
 			terrainInput =
 				applyWallEndpointShadows(terrainInput, wallInput);
 			RoofModelInput roofInput =
@@ -1281,6 +1293,8 @@ public final class World {
 					productCacheHit = true;
 				}
 			}
+		} else if (incomingCollision != null) {
+			offerIncomingCollision(incomingCollision, sectionX, sectionY, product.terrainInput, product.wallInput);
 		}
 		if (slice != null) slice.checkpoint();
 		Renderer3DWorldChunkFrame.ChunkMesh drawMesh = prepareRenderer3DWorldChunkMesh(product, true);
@@ -1291,6 +1305,48 @@ public final class World {
 			System.nanoTime() - buildStart,
 			drawMesh,
 			localTerrain);
+	}
+
+	private void offerIncomingCollision(IncomingSurfaceCollision incoming, int sectionX, int sectionZ,
+		TerrainModelInput terrainInput, WallModelInput wallInput) {
+		int[][] staticFlags = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
+		for (TerrainTileFaceInput face : terrainInput.tileFaces) applyTerrainFaceCollision(staticFlags, face);
+		for (WallSegmentInput segment : wallInput.segments) {
+			if (Objects.requireNonNull(EntityHandler.getDoorDef(segment.wallID)).getDoorType() != 0) {
+				applyWallSegmentCollision(staticFlags, segment);
+			}
+		}
+		incoming.cells = SurfaceCollisionCells.prepare(sectionToLocalBaseTile(sectionX) - incoming.offsetX,
+			sectionToLocalBaseTile(sectionZ) - incoming.offsetZ, staticFlags);
+		incomingSurfaceCollision.set(incoming);
+	}
+
+	public void publishPendingSurfaceCollision(Future<?> geometry) {
+		if (incomingSurfaceCollision == null) return;
+		IncomingSurfaceCollision incoming = incomingSurfaceCollision.getAndSet(null);
+		if (incoming == null || incoming.source != nativeLayeredTerrainSnapshot
+			|| incoming.revision != worldEditorTerrainRevision.get()
+			|| incoming.offsetX != syntheticDeepFixtureOffsetX || incoming.offsetZ != syntheticDeepFixtureOffsetZ) return;
+		String scope = surfaceCollisionScope();
+		if (scope != null) {
+			int before = surfaceCollision.incomingCells();
+			surfaceCollision.stage(scope, incoming.cells);
+			if (geometry != null && !geometry.isDone()) earlySurfaceCollisionCells += surfaceCollision.incomingCells() - before;
+		}
+	}
+
+	private static final class IncomingSurfaceCollision {
+		private final NativeLayeredTerrainSnapshot source;
+		private final long revision;
+		private final int offsetX, offsetZ;
+		private SurfaceCollisionCells.Prepared cells;
+
+		private IncomingSurfaceCollision(NativeLayeredTerrainSnapshot source, long revision, int offsetX, int offsetZ) {
+			this.source = source;
+			this.revision = revision;
+			this.offsetX = offsetX;
+			this.offsetZ = offsetZ;
+		}
 	}
 
 	private static PreparedLocalTerrain prepareLocalTerrain(String scope, long revision, int sectionX, int sectionY,
@@ -1342,6 +1398,34 @@ public final class World {
 
 	private static int minimapPaletteIndex(Map<Integer,Integer> colors, int resource) {
 		return colors.computeIfAbsent(resource, key -> PreparedLocalTerrain.PALETTE_START + colors.size() * 2);
+	}
+
+	private String surfaceCollisionScope() {
+		NativeLayeredTerrainSnapshot source = nativeLayeredTerrainSnapshot;
+		if (surfaceCollision == null || source == null || source.getLevel() != 0
+			|| !"global".equals(source.getWorldSpace()) || WorldEditorBuildSettings.isEnabled()
+			|| Math.floorMod(syntheticDeepFixtureOffsetX, SECTION_SIZE) != 0
+			|| Math.floorMod(syntheticDeepFixtureOffsetZ, SECTION_SIZE) != 0) return null;
+		return source.packageIdentity();
+	}
+
+	public int getStagedSurfaceCollisionCells() { return surfaceCollision == null ? 0 : surfaceCollision.incomingCells(); }
+	public int getEarlySurfaceCollisionCells() { return earlySurfaceCollisionCells; }
+
+	public void clearSurfaceCollision() {
+		if (surfaceCollision != null) {
+			surfaceCollision.clear();
+			incomingSurfaceCollision.set(null);
+			earlySurfaceCollisionCells = 0;
+		}
+	}
+
+	private void installSurfaceCollisionView(int sectionX, int sectionZ) {
+		if (surfaceCollision == null) return;
+		String scope = surfaceCollisionScope();
+		if (scope == null) clearSurfaceCollision();
+		else surfaceCollision.install(scope, sectionToLocalBaseTile(sectionX) - syntheticDeepFixtureOffsetX,
+			sectionToLocalBaseTile(sectionZ) - syntheticDeepFixtureOffsetZ, collisionFlags);
 	}
 
 	private boolean installPreparedLocalTerrain(int plane, int sectionX, int sectionY) {
@@ -2314,6 +2398,21 @@ public final class World {
 		}
 	}
 
+	public boolean updateSurfaceObjectCollision(int id, int x, int z, int direction, boolean add) {
+		if (surfaceCollision == null || !surfaceCollision.active()) return false;
+		if (!isLocalFaceTile(x, z)) return true;
+		com.openrsc.client.entityhandling.defs.GameObjectDef definition = EntityHandler.getObjectDef(id);
+		int type = definition.getType();
+		if (type == 1 || type == 2) {
+			boolean straight = direction == 0 || direction == 4;
+			int width = straight ? definition.getWidth() : definition.getHeight();
+			int height = straight ? definition.getHeight() : definition.getWidth();
+			surfaceCollision.object(id, x, z, direction, width, height, type, add);
+			setVertexLightArea(x, z, width, height);
+		}
+		return true;
+	}
+
 	public final void addLoginScreenModels(RSModel[] modelTable) {
 		try {
 
@@ -2363,6 +2462,7 @@ public final class World {
 
 	public final void applyWallToCollisionFlags(int wallID, int x, int z, int dir) {
 		try {
+			if (updateSurfaceWallCollision(wallID, x, z, dir, true)) return;
 
 			if (isLocalFaceTile(x, z))
 				if (Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getDoorType() == 1) {
@@ -2389,6 +2489,15 @@ public final class World {
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.W(" + z + ',' + wallID + ',' + dir + ',' + x + ',' + 11715 + ')');
 		}
+	}
+
+	private boolean updateSurfaceWallCollision(int id, int x, int z, int direction, boolean add) {
+		if (surfaceCollision == null || !surfaceCollision.active()) return false;
+		if (isLocalFaceTile(x, z) && EntityHandler.getDoorDef(id).getDoorType() == 1) {
+			surfaceCollision.wall(id, x, z, direction, add);
+			setVertexLightArea(x, z, 1, 1);
+		}
+		return true;
 	}
 
 	private void applyWallToElevationCache(RoofElevationWorkspace elevations, int wallID, int x1, int z1, int x2, int z2) {
@@ -5004,8 +5113,12 @@ public final class World {
 
 	public final void loadSections(int worldX, int worldZ, int plane) {
 		try {
+			if (surfaceCollision != null) surfaceCollision.detachView();
             WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forWorld(this,nativeLayeredTerrainSnapshot);
-            if(ram!=null&&ram.activate(this,plane,activeSectionXForWorldTile(worldX),activeSectionYForWorldTile(worldZ)))return;
+            if(ram!=null&&ram.activate(this,plane,activeSectionXForWorldTile(worldX),activeSectionYForWorldTile(worldZ))){
+                installSurfaceCollisionView(activeSectionXForWorldTile(worldX),activeSectionYForWorldTile(worldZ));
+                return;
+            }
 			long loadStart = WorldStreamManager.now();
 			long transitionStart = System.nanoTime();
 			long phaseStart = System.nanoTime();
@@ -5085,6 +5198,7 @@ public final class World {
 				symmetricComposeNanos,
 				preloadNanos);
 			logNativeLayeredTerrainActivation(worldX, worldZ, plane, x, z);
+			installSurfaceCollisionView(x, z);
 
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');
@@ -5857,6 +5971,7 @@ public final class World {
 
 	public final void removeWallObject_CollisionFlags(boolean var1, int dir, int z, int x, int id) {
 		try {
+			if (updateSurfaceWallCollision(id, x, z, dir, false)) return;
 
 			if (isLocalFaceTile(x, z))
 				if (Objects.requireNonNull(EntityHandler.getDoorDef(id)).getDoorType() == 1) {

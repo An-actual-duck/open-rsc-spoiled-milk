@@ -155,6 +155,12 @@ public final class BrowserOuterCoverageProbe {
 		if (client.packetHandler.getLogicalPlayerX(0) != 252 || client.packetHandler.getLogicalPlayerY(0, 0) != 609) {
 			throw new IllegalStateException("Logical position did not follow the persistent movement receipts");
 		}
+		if (Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision")) {
+			int staged = client.getWorld().getStagedSurfaceCollisionCells();
+			if (staged <= 0) throw new IllegalStateException("No incoming collision cells were published");
+			BrowserBootstrap.report("outer-coverage:incoming-collision-cells:" + staged
+				+ ":before-geometry=" + client.getWorld().getEarlySurfaceCollisionCells());
+		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
