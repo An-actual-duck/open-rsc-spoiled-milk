@@ -27,6 +27,13 @@ final class SurfaceTerrainDrawField {
 		this.withRoofs = withRoofs;
 	}
 
+	SurfaceTerrainDrawField snapshot(NativeLayeredTerrainSnapshot source) {
+		SurfaceTerrainDrawField snapshot = new SurfaceTerrainDrawField(source, centerX, centerZ, withRoofs);
+		snapshot.cells.putAll(cells);
+		snapshot.draws.addAll(draws);
+		return snapshot;
+	}
+
 	Cell reuse(SurfaceTerrainDrawField previous, int x, int z, String[] footprint) {
 		if (previous == null || withRoofs != previous.withRoofs || !packageIdentity.equals(previous.packageIdentity)) return null;
 		Cell old = previous.cells.get(key(x, z));

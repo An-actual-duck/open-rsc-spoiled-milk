@@ -21,6 +21,7 @@ public final class BrowserOuterCoverageProbe {
 	private static native int loginReady();
 	private static native int worldReady();
 	private static native int worldInputReady();
+	private static native void holdOptionalTerrain(boolean hold);
 
 	public static void run() {
 		try {
@@ -270,18 +271,40 @@ public final class BrowserOuterCoverageProbe {
 		}
 		if (targetX < 0) throw new IllegalStateException("The native surface route cannot reach the north strip");
 		BrowserBootstrap.report("outer-coverage:prediction-ready:5,12");
-		walkLeg(client, walk, targetX, targetZ);
 		int x = Math.floorDiv(targetX, World.SECTION_SIZE);
-		awaitPreparedCenter(client, movement[3], ready, x, 11);
-		int[] after = client.packetHandler.getPersistentMovementReceipt();
-		if (after[0] != movement[0] || after[2] != 0 || after[3] != movement[3] || worldInputReady() != 1) {
-			throw new IllegalStateException("Changing the prepared direction interrupted the installed world");
-		}
-		BrowserBootstrap.report("outer-coverage:prediction-retargeted:5,12->" + x + ",11");
 		int[] before = awaitSurfaceDrawBuffers();
-		int[] coverage = BrowserWebGLBridge.getSurfaceCoverageReceipt();
-		Object actor = client.getLocalPlayer();
-		verifySurfaceWalkLeg(client, walk, targetX, 550, coverage[1], actor);
+		boolean holdFringe = Boolean.getBoolean("spoiledmilk.fixtureHoldOptionalTerrain");
+		if (holdFringe) {
+			awaitLiveOuterDrawBuffers(client, movement[3]);
+			holdOptionalTerrain(true);
+		}
+		try {
+			walkLeg(client, walk, targetX, targetZ);
+			awaitPreparedCenter(client, movement[3], ready, x, 11);
+			int[] after = client.packetHandler.getPersistentMovementReceipt();
+			if (after[0] != movement[0] || after[2] != 0 || after[3] != movement[3] || worldInputReady() != 1) {
+				throw new IllegalStateException("Changing the prepared direction interrupted the installed world");
+			}
+			BrowserBootstrap.report("outer-coverage:prediction-retargeted:5,12->" + x + ",11");
+			int[] coverage = BrowserWebGLBridge.getSurfaceCoverageReceipt();
+			verifySurfaceWalkLeg(client, walk, targetX, 550, coverage[1], client.getLocalPlayer());
+			if (holdFringe) {
+				long deadline = System.currentTimeMillis() + 6_000;
+				int[] draws = BrowserWebGLBridge.getSurfaceDrawBuffers();
+				while (draws.length != 16 * 3 && System.currentTimeMillis() < deadline) {
+					Thread.sleep(40);
+					draws = BrowserWebGLBridge.getSurfaceDrawBuffers();
+				}
+				int overlap = countMatchingSurfaceDrawBuffers(before, draws, true);
+				if (draws.length != 16 * 3 || overlap != 16) {
+					throw new IllegalStateException("The diagonal failed to present its overlap while the fringe was held"
+						+ " buffers=" + draws.length / 3 + " retained=" + overlap);
+				}
+				BrowserBootstrap.report("outer-coverage:diagonal:crossed-before-optional-terrain");
+			}
+		} finally {
+			if (holdFringe) holdOptionalTerrain(false);
+		}
 		int retained = countMatchingSurfaceDrawBuffers(before, awaitSurfaceDrawBuffers(), true);
 		if (retained != 16 || BrowserWebGLBridge.getSurfaceCoverageReceipt()[2] != 9) {
 			throw new IllegalStateException("The corner did not preserve its 16 overlapping draws and nine gameplay sources");
@@ -308,8 +331,12 @@ public final class BrowserOuterCoverageProbe {
 		int sequence = client.packetHandler.getPersistentMovementReceipt()[3];
 		walkLeg(client, walk, x, z);
 		long deadline = System.currentTimeMillis() + 6_000;
-		while (client.getRollingSurfaceWindows() == rolling && System.currentTimeMillis() < deadline) Thread.sleep(40);
 		int[] coverage = BrowserWebGLBridge.getSurfaceCoverageReceipt();
+		while ((client.getRollingSurfaceWindows() == rolling || coverage.length != 5 || coverage[0] != 1)
+			&& System.currentTimeMillis() < deadline) {
+			Thread.sleep(40);
+			coverage = BrowserWebGLBridge.getSurfaceCoverageReceipt();
+		}
 		if (client.getRollingSurfaceWindows() != rolling + 1
 			|| client.packetHandler.getPersistentMovementReceipt()[3] != sequence + 1
 			|| client.getLocalPlayer() != actor || coverage.length != 5 || coverage[0] != 1

@@ -207,6 +207,16 @@ packet behavior. [Actor rebase](../../../Client_Base/src/orsc/ORSCharacter.java)
    image is part of an ordinary cell update.
    [Client scene context](../../../Client_Base/src/orsc/PacketHandler.java#L724) · [Browser replacement gate](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L328)
 
+The private rolling path now passes the held-fringe test. The diagonal
+crossing retained 16 terrain buffers and drew all nine gameplay cells while
+the worker withheld the incoming visual terrain. A completed route can still
+fail the fresh-frame target. The next browser work should separate animated
+scenery's changing pose from its immutable geometry and retire the assumption
+that a fresh pose needs a full buffer update. Measure frame submission and
+browser animation-frame sampling with and without active terrain preparation.
+Use the same server movement and camera on both routes.
+[Current crossing evidence](seamless-world-streaming-preview.md#repeated-crossings-with-live-coverage)
+
 The browser's bounded catalog and render worker are candidates for reuse after
 the independent movement and publication path exists. Today the renderer
 still derives catalog scope from the authoritative terrain snapshot, and a

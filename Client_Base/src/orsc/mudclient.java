@@ -27488,7 +27488,8 @@ public final class mudclient implements Runnable {
 		int legacyPlane,
 		boolean scopeChanged,
 		boolean syntheticDeepFixture,
-		NativeLayeredTerrainSnapshot nativeTerrainSnapshot) {
+		NativeLayeredTerrainSnapshot nativeTerrainSnapshot,
+		World.NativeLayeredTerrainHaloPrebuildResult preparedWalkingTerrain) {
 		if (legacyPlane < 0 || legacyPlane > 3) {
 			throw new IllegalArgumentException(
 				"Unsupported layered scene compatibility plane: " + legacyPlane);
@@ -27507,7 +27508,8 @@ public final class mudclient implements Runnable {
 				false,
 				nativeTerrainSnapshot,
 				this.worldOffsetX,
-				this.worldOffsetZ);
+				this.worldOffsetZ,
+				preparedWalkingTerrain);
 		}
 		this.requestedPlane = legacyPlane;
 	}

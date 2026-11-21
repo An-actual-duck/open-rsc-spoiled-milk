@@ -698,6 +698,24 @@ prediction with `(5,11)` while the current gameplay context and movement
 generation stayed installed. Firefox recorded 695 fresh frames with zero
 holds, input blocks, or new epochs. [Direction-change capture](../../../output/tests/browser-gameplay-spike/live-surface-retarget-walk/firefox-result.json)
 
+The diagonal fixture retargeted from `(5,12)` to `(5,11)` and walked through
+`(250,550)`. It withheld all nine new visual terrain meshes until after the
+server and browser confirmed the crossing. The browser drew all 16 overlapping
+terrain buffers under the same IDs, with nine of nine gameplay cells ready.
+It recorded 1,166 fresh frames, zero holds, zero input blocks, and zero new
+load epochs. After the fixture released the worker, the draw field grew back
+to 25 cells. [Diagonal capture with held optional terrain](../../../output/tests/browser-gameplay-spike/live-surface-fringe-gate-proof/firefox-result.json)
+
+The next sustained run walked through three crossings and a reversal. It
+recorded 3,393 fresh Firefox frames with zero holds, input blocks, or new
+load epochs. The first handoff still reused all nine authoritative terrain
+references, and arrival at `(252,609)` stayed in one movement generation.
+The longest gaps were 352 ms during the approach and 348 ms near the first
+handoff. Animated scenery alone sent 30.3 MB of geometry between `(259,609)`
+and `(278,609)`. The approach trace also captured repeated three-buffer
+geometry updates totaling approximately 364 KiB each while terrain uploads
+were idle. [Sustained capture with independent terrain](../../../output/tests/browser-gameplay-spike/live-surface-direct-install/firefox-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

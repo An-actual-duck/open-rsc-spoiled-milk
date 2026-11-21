@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -60,6 +61,7 @@ public final class World {
 		&& Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
 	private volatile SurfaceTerrainDrawField fixedSurfaceDraw;
 	private volatile SurfaceDrawPreparation preparedSurfaceDraw;
+	private SurfaceDrawPreparation activeSurfaceDrawPreparation;
 	private static final boolean LIVE_SURFACE_DRAW_PREPARATION = FIXED_SURFACE_DRAW
 		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
 	private final SurfaceCollisionCells surfaceCollision = PERSISTENT_SURFACE_COLLISION ? new SurfaceCollisionCells() : null;
@@ -399,14 +401,15 @@ public final class World {
 		final boolean enabled,
 		final int worldOffsetX,
 		final int worldOffsetZ) {
-		setLayeredTerrainScope(enabled, null, worldOffsetX, worldOffsetZ);
+		setLayeredTerrainScope(enabled, null, worldOffsetX, worldOffsetZ, null);
 	}
 
 	public void setLayeredTerrainScope(
 		final boolean syntheticDeepFixture,
 		final NativeLayeredTerrainSnapshot nativeTerrainSnapshot,
 		final int worldOffsetX,
-		final int worldOffsetZ) {
+		final int worldOffsetZ,
+		final NativeLayeredTerrainHaloPrebuildResult preparedWalkingTerrain) {
 		final boolean layeredTerrain =
 			syntheticDeepFixture || nativeTerrainSnapshot != null;
 		if (syntheticDeepFixtureTerrain != layeredTerrain
@@ -416,16 +419,18 @@ public final class World {
 				&& (syntheticDeepFixtureOffsetX != worldOffsetX
 					|| syntheticDeepFixtureOffsetZ != worldOffsetZ)) {
 			pendingLocalTerrain = null;
+			boolean installPrepared = canInstallPreparedWalkingTerrain(
+				preparedWalkingTerrain, nativeTerrainSnapshot, worldOffsetX, worldOffsetZ);
 			if (nativeTerrainSnapshot == null
 				|| predictiveRenderer3DWorldScopeIdentity == null
 				|| !predictiveRenderer3DWorldScopeIdentity.equals(
 					nativeTerrainSnapshot.scopeIdentity())) {
 				clearPredictiveRenderer3DWorldChunkFrame();
 			}
-				if (nativeTerrainSnapshot == null
+				if (!installPrepared && (nativeTerrainSnapshot == null
 					|| symmetricRenderer3DWorldScopeIdentity == null
 					|| !symmetricRenderer3DWorldScopeIdentity.equals(
-						nativeTerrainSnapshot.scopeIdentity())) {
+						nativeTerrainSnapshot.scopeIdentity()))) {
 					transitionSymmetricRenderer3DWorldChunkFrame(
 						nativeLayeredTerrainSnapshot,
 						nativeTerrainSnapshot,
@@ -439,7 +444,7 @@ public final class World {
 			syntheticDeepFixtureOffsetZ = worldOffsetZ;
 			nativeLayeredTerrainActivationSummary = "";
 			final long scopeRevision = worldEditorTerrainRevision.incrementAndGet();
-			if (nativeTerrainSnapshot != null) {
+			if (nativeTerrainSnapshot != null && !installPrepared) {
 				NativeWorldModelPrebuild prebuild =
 					prebuildNativeWorldModelProduct(
 						nativeTerrainSnapshot,
@@ -463,6 +468,16 @@ public final class World {
 						+ formatMillis(prebuild.elapsedNanos));
 			}
 		}
+	}
+
+	private boolean canInstallPreparedWalkingTerrain(NativeLayeredTerrainHaloPrebuildResult prepared,
+		NativeLayeredTerrainSnapshot next, int worldOffsetX, int worldOffsetZ) {
+		return prepared != null && prepared.localTerrain != null && next != null && nativeLayeredTerrainSnapshot != null
+			&& prepared.activeScopeIdentity.equals(nativeLayeredTerrainSnapshot.scopeIdentity())
+			&& prepared.localTerrain.scope.equals(next.scopeIdentity())
+			&& prepared.sourceRevision == worldEditorTerrainRevision.get()
+			&& prepared.worldOffsetX == worldOffsetX && prepared.worldOffsetZ == worldOffsetZ
+			&& prepared.includeRoofGeometry == !Config.C_HIDE_ROOFS;
 	}
 
 	/**
@@ -630,31 +645,37 @@ public final class World {
 				activeTerrain, worldOffsetX, worldOffsetZ);
 		final SurfaceDrawPreparation drawPreparation = LIVE_SURFACE_DRAW_PREPARATION
 			&& "global".equals(structuralTerrain.getWorldSpace()) && structuralTerrain.getLevel() == 0
-			? new SurfaceDrawPreparation(activeTerrain, sourceRevision, worldOffsetX, worldOffsetZ, includeRoofGeometry) : null;
+			? new SurfaceDrawPreparation(activeTerrain, visualTerrain, structuralTerrain, sourceRevision,
+				worldOffsetX, worldOffsetZ, includeRoofGeometry) : null;
 		preparedSurfaceDraw = drawPreparation;
-		return sectorPreloadExecutor.submit(
-			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
-				@Override
-				public NativeLayeredTerrainHaloPrebuildResult call() {
-					NativeLayeredTerrainSnapshot presentationTerrain =
-						NativeLayeredTerrainSnapshot.mergePresentation(visualTerrain, structuralTerrain);
-					NativeLayeredTerrainHaloPrebuildResult result = buildNativeLayeredTerrainHalo(
-						activeTerrain,
-						presentationTerrain,
-						presentationTerrain.scopeIdentity(),
-						presentationTerrain.getProtocolVersion(),
-						activeScopeIdentity,
-						worldOffsetX,
-						worldOffsetZ,
-						sourceRevision,
-						includeRoofGeometry,
-						reusableChunks,
-						drawPreparation);
-					result.predictedVisual = visualTerrain;
-					result.predictedStructural = structuralTerrain;
-					return result;
+		Callable<NativeLayeredTerrainHaloPrebuildResult> build = () -> {
+			NativeLayeredTerrainSnapshot presentationTerrain =
+				NativeLayeredTerrainSnapshot.mergePresentation(visualTerrain, structuralTerrain);
+			NativeLayeredTerrainHaloPrebuildResult result = buildNativeLayeredTerrainHalo(
+				activeTerrain, presentationTerrain, presentationTerrain.scopeIdentity(),
+				presentationTerrain.getProtocolVersion(), activeScopeIdentity,
+				worldOffsetX, worldOffsetZ, sourceRevision, includeRoofGeometry, reusableChunks, drawPreparation);
+			result.predictedVisual = visualTerrain;
+			result.predictedStructural = structuralTerrain;
+			return result;
+		};
+		if (drawPreparation == null) return sectorPreloadExecutor.submit(build);
+		sectorPreloadExecutor.execute(() -> {
+			try {
+				if (drawPreparation.gameplay.isCancelled()) return;
+				drawPreparation.finished = build.call();
+				drawPreparation.gameplay.complete(drawPreparation.finished);
+			} catch (CancellationException canceled) {
+				drawPreparation.gameplay.cancel(false);
+				drawPreparation.done = true;
+			} catch (Exception failed) {
+				if (!drawPreparation.gameplay.completeExceptionally(failed)) {
+					System.err.println("Optional surface terrain preparation failed: " + failed);
 				}
-			});
+				drawPreparation.done = true;
+			}
+		});
+		return drawPreparation.gameplay;
 	}
 
 	private Renderer3DWorldChunkFrame reusableNativeLayeredTerrainChunks(
@@ -798,14 +819,42 @@ public final class World {
 					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
 			return false;
 		}
+		if (result.deferredDraw != null) {
+			NativeLayeredTerrainHaloPrebuildResult finished = result.deferredDraw.finished;
+			if (finished != null) result = finished;
+		}
 		boolean published = publishNativeLayeredTerrainCompleteHalo(
 			result,
 			visualTerrain,
 			activeTerrain,
 			worldOffsetX,
 			worldOffsetZ);
-		if (published && ordinaryWalking) pendingLocalTerrain = result.localTerrain;
+		if (published) {
+			if (ordinaryWalking) pendingLocalTerrain = result.localTerrain;
+			activeSurfaceDrawPreparation = result.deferredDraw;
+		}
 		return published;
+	}
+
+	public void publishPendingSurfaceDraw() {
+		SurfaceDrawPreparation preparation = activeSurfaceDrawPreparation;
+		if (preparation == null) return;
+		NativeLayeredTerrainSnapshot terrain = nativeLayeredTerrainSnapshot;
+		if (preparation.done || preparation.revision + 1L != worldEditorTerrainRevision.get()
+			|| preparation.offsetX != syntheticDeepFixtureOffsetX || preparation.offsetZ != syntheticDeepFixtureOffsetZ
+			|| preparation.withRoofs != !Config.C_HIDE_ROOFS || !matchesActiveHalo(terrain, preparation.visual)) {
+			activeSurfaceDrawPreparation = null;
+			return;
+		}
+		NativeLayeredTerrainHaloPrebuildResult finished = preparation.finished;
+		if (finished != null) {
+			activeSurfaceDrawPreparation = null;
+			publishNativeLayeredTerrainCompleteHalo(finished, preparation.visual, terrain, preparation.offsetX, preparation.offsetZ);
+			System.out.println("NATIVE_TERRAIN_SURFACE_FRINGE_READY center="
+				+ terrain.getCurrentChunkX() + "," + terrain.getCurrentChunkY());
+		} else if (preparation.visible != null) {
+			fixedSurfaceDraw = preparation.visible;
+		}
 	}
 
 	/** Immutable terrain buffers for a renderer's speculative cache. */
@@ -841,6 +890,10 @@ public final class World {
 			|| !result.activeScopeIdentity.equals(active.scopeIdentity())
 			|| result.worldOffsetX != syntheticDeepFixtureOffsetX || result.worldOffsetZ != syntheticDeepFixtureOffsetZ
 			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) return Collections.emptyList();
+		if (result.deferredDraw != null) {
+			NativeLayeredTerrainHaloPrebuildResult finished = result.deferredDraw.finished;
+			return finished == null ? result.deferredDraw.ready : finished.fixedDraw.draws();
+		}
 		return result.fixedDraw.draws();
 	}
 
@@ -860,13 +913,21 @@ public final class World {
 
 	private static final class SurfaceDrawPreparation {
 		private final NativeLayeredTerrainSnapshot active;
+		private final NativeLayeredTerrainSnapshot visual, structural;
 		private final long revision;
 		private final int offsetX, offsetZ;
 		private final boolean withRoofs;
 		private volatile List<Renderer3DWorldChunkFrame.ChunkMesh> ready = Collections.emptyList();
+		private final CompletableFuture<NativeLayeredTerrainHaloPrebuildResult> gameplay = new CompletableFuture<>();
+		private volatile NativeLayeredTerrainHaloPrebuildResult finished;
+		private volatile SurfaceTerrainDrawField visible;
+		private volatile boolean done;
 
-		private SurfaceDrawPreparation(NativeLayeredTerrainSnapshot active, long revision, int offsetX, int offsetZ, boolean withRoofs) {
+		private SurfaceDrawPreparation(NativeLayeredTerrainSnapshot active, NativeLayeredTerrainSnapshot visual,
+			NativeLayeredTerrainSnapshot structural, long revision, int offsetX, int offsetZ, boolean withRoofs) {
 			this.active = active;
+			this.visual = visual;
+			this.structural = structural;
 			this.revision = revision;
 			this.offsetX = offsetX;
 			this.offsetZ = offsetZ;
@@ -877,6 +938,13 @@ public final class World {
 			List<Renderer3DWorldChunkFrame.ChunkMesh> next = new ArrayList<>(ready);
 			next.add(mesh);
 			ready = Collections.unmodifiableList(next);
+		}
+
+		private void publishGameplay(NativeLayeredTerrainHaloPrebuildResult result) {
+			result.predictedVisual = visual;
+			result.predictedStructural = structural;
+			result.deferredDraw = this;
+			gameplay.complete(result);
 		}
 	}
 
@@ -1202,95 +1270,112 @@ public final class World {
 		int reusedCells = 0;
 		int builtCells = 0;
 		StringBuilder meshDiagnostics = new StringBuilder();
-		for (int deltaX = -2; deltaX <= 2; deltaX++) {
-			for (int deltaY = -2; deltaY <= 2; deltaY++) {
-					int radius = Math.max(
-						Math.abs(deltaX), Math.abs(deltaY));
+		boolean splitDraw = drawPreparation != null && browserSurfaceMeshWorker != null && fixedDraw != null
+			&& previousFixed != null && activePrebuild != null && activePrebuild.localTerrain != null;
+		int oldCenterX = activeTerrain.getCurrentChunkX(), oldCenterZ = activeTerrain.getCurrentChunkY();
+		for (int pass = 0; pass < (splitDraw ? 2 : 1); pass++) {
+			for (int deltaX = -2; deltaX <= 2; deltaX++) {
+				for (int deltaY = -2; deltaY <= 2; deltaY++) {
+					int radius = Math.max(Math.abs(deltaX), Math.abs(deltaY));
 					if (radius == 0 && fixedDraw == null) {
 						continue;
-				}
-				int sectionX = Math.addExact(activeSectionX, deltaX);
-				int sectionY = Math.addExact(activeSectionY, deltaY);
-				String[] footprint = fixedDraw == null ? null : SurfaceTerrainDrawField.footprint(haloTerrain,
-					haloTerrain.getCurrentChunkX() + deltaX, haloTerrain.getCurrentChunkY() + deltaY);
-				SurfaceTerrainDrawField.Cell fixedCell = fixedDraw == null ? null
-					: fixedDraw.reuse(previousFixed, sectionX, sectionY, footprint);
-				Renderer3DWorldChunkFrame.ChunkMesh presentation =
-					findReusableNativePresentationChunk(
-						reusableChunks, plane, sectionX, sectionY);
-				boolean reused = presentation != null;
-				if (reused) {
-					reusedCells++;
-					if (predicted) {
-						presentation = presentation.rebasePresentation(
-							predictedRebaseX, predictedRebaseZ);
 					}
-				}
-				if (!reused || fixedDraw != null && fixedCell == null) {
-					Renderer3DWorldChunkFrame.ChunkMesh[] detached = null;
-					SurfaceMeshWorker worker = browserSurfaceMeshWorker;
-					if (worker != null && predicted && fixedDraw != null && fixedCell == null) {
-						try {
-							byte[] source = haloTerrain.surfaceWorkerSource(haloTerrain.getCurrentChunkX() + deltaX,
-								haloTerrain.getCurrentChunkY() + deltaY);
-							byte[] result = worker.build(source, worldOffsetX, worldOffsetZ, deltaX, deltaY, includeRoofGeometry,
-								Config.S_WANT_CUSTOM_SPRITES);
-							if (result != null) detached = readSurfaceMeshPacket(result, sectionX, sectionY);
-						} catch (IOException invalid) {
-							throw new IllegalStateException("Invalid detached surface mesh", invalid);
+					int sectionX = Math.addExact(activeSectionX, deltaX);
+					int sectionY = Math.addExact(activeSectionY, deltaY);
+					boolean enteringDraw = Math.max(Math.abs(haloTerrain.getCurrentChunkX() + deltaX - oldCenterX),
+						Math.abs(haloTerrain.getCurrentChunkY() + deltaY - oldCenterZ)) > 2;
+					if (splitDraw && enteringDraw != (pass == 1)) continue;
+					if (drawPreparation != null && drawPreparation.gameplay.isCancelled()) throw new CancellationException();
+					String[] footprint = fixedDraw == null ? null : SurfaceTerrainDrawField.footprint(haloTerrain,
+						haloTerrain.getCurrentChunkX() + deltaX, haloTerrain.getCurrentChunkY() + deltaY);
+					SurfaceTerrainDrawField.Cell fixedCell = fixedDraw == null ? null
+						: fixedDraw.reuse(previousFixed, sectionX, sectionY, footprint);
+					Renderer3DWorldChunkFrame.ChunkMesh presentation =
+						findReusableNativePresentationChunk(
+							reusableChunks, plane, sectionX, sectionY);
+					boolean reused = presentation != null;
+					if (reused) {
+						reusedCells++;
+						if (predicted) {
+							presentation = presentation.rebasePresentation(
+								predictedRebaseX, predictedRebaseZ);
 						}
 					}
-					WorldGpuChunkMesh mesh = detached == null
-						? buildPresentationGeometry(plane, sectionX, sectionY, haloTerrain,
-							worldOffsetX, worldOffsetZ, includeRoofGeometry, terrainOnly, slice) : null;
-					if (radius != 0 && !reused) {
-						presentation = detached == null ? mesh.toRenderer3DWorldPresentationCell(deltaX, deltaY) : detached[1];
-						builtCells++;
+					if (!reused || fixedDraw != null && fixedCell == null) {
+						Renderer3DWorldChunkFrame.ChunkMesh[] detached = null;
+						SurfaceMeshWorker worker = browserSurfaceMeshWorker;
+						if (worker != null && predicted && fixedDraw != null && fixedCell == null) {
+							try {
+								byte[] source = haloTerrain.surfaceWorkerSource(haloTerrain.getCurrentChunkX() + deltaX,
+									haloTerrain.getCurrentChunkY() + deltaY);
+								byte[] result = worker.build(source, worldOffsetX, worldOffsetZ, deltaX, deltaY, includeRoofGeometry,
+									Config.S_WANT_CUSTOM_SPRITES);
+								if (result != null) detached = readSurfaceMeshPacket(result, sectionX, sectionY);
+							} catch (IOException invalid) {
+								throw new IllegalStateException("Invalid detached surface mesh", invalid);
+							}
+						}
+						WorldGpuChunkMesh mesh = detached == null
+							? buildPresentationGeometry(plane, sectionX, sectionY, haloTerrain,
+								worldOffsetX, worldOffsetZ, includeRoofGeometry, terrainOnly, slice) : null;
+						if (radius != 0 && !reused) {
+							presentation = detached == null ? mesh.toRenderer3DWorldPresentationCell(deltaX, deltaY) : detached[1];
+							builtCells++;
+						}
+						if (fixedDraw != null && fixedCell == null) {
+							fixedCell = new SurfaceTerrainDrawField.Cell(footprint, detached == null ? mesh.toRenderer3DFixedSurfaceCell() : detached[0]);
+						}
+						if (slice != null) slice.checkpoint();
 					}
-					if (fixedDraw != null && fixedCell == null) {
-						fixedCell = new SurfaceTerrainDrawField.Cell(footprint, detached == null ? mesh.toRenderer3DFixedSurfaceCell() : detached[0]);
+					if (fixedDraw != null) {
+						Renderer3DWorldChunkFrame.ChunkMesh draw = fixedDraw.add(sectionX, sectionY, fixedCell);
+						if (drawPreparation != null && draw != null && enteringDraw) {
+							drawPreparation.add(draw);
+							if (splitDraw) drawPreparation.visible = fixedDraw.snapshot(haloTerrain);
+						}
 					}
-					if (slice != null) slice.checkpoint();
-				}
-				if (fixedDraw != null) {
-					Renderer3DWorldChunkFrame.ChunkMesh draw = fixedDraw.add(sectionX, sectionY, fixedCell);
-					if (drawPreparation != null && draw != null
-						&& Math.max(Math.abs(haloTerrain.getCurrentChunkX() + deltaX - activeTerrain.getCurrentChunkX()),
-							Math.abs(haloTerrain.getCurrentChunkY() + deltaY - activeTerrain.getCurrentChunkY())) > 2) {
-						drawPreparation.add(draw);
+					if (radius == 0) continue;
+					if (presentation != null) {
+						retentionChunks.add(presentation);
 					}
-				}
-				if (radius == 0) continue;
-				if (presentation != null) {
-					retentionChunks.add(presentation);
-				}
-				if (radius != 2) {
-					continue;
-				}
-				meshDiagnostics.append(
-					meshDiagnostics.length() == 0 ? "" : ";")
-					.append(deltaX).append(',').append(deltaY)
-					.append(reused ? ":reuse=1" : ":build=1");
-				if (presentation != null) {
-					outerChunks.add(presentation);
-					triangles += presentation.getTriangleCount();
-					terrainTriangles +=
-						presentation.getTerrainTriangles();
-					wallTriangles += presentation.getWallTriangles();
-					roofTriangles += presentation.getRoofTriangles();
-					if (presentation.getTerrainTriangles() == 0) {
+					if (radius != 2) {
+						continue;
+					}
+					meshDiagnostics.append(
+						meshDiagnostics.length() == 0 ? "" : ";")
+						.append(deltaX).append(',').append(deltaY)
+						.append(reused ? ":reuse=1" : ":build=1");
+					if (presentation != null) {
+						outerChunks.add(presentation);
+						triangles += presentation.getTriangleCount();
+						terrainTriangles +=
+							presentation.getTerrainTriangles();
+						wallTriangles += presentation.getWallTriangles();
+						roofTriangles += presentation.getRoofTriangles();
+						if (presentation.getTerrainTriangles() == 0) {
+							zeroTerrainCells++;
+						}
+						meshDiagnostics.append(":mesh=1:t=")
+							.append(presentation.getTerrainTriangles())
+							.append(":w=")
+							.append(presentation.getWallTriangles())
+							.append(":r=")
+							.append(presentation.getRoofTriangles());
+					} else {
 						zeroTerrainCells++;
+						meshDiagnostics.append(":mesh=0:t=0:w=0:r=0");
 					}
-					meshDiagnostics.append(":mesh=1:t=")
-						.append(presentation.getTerrainTriangles())
-						.append(":w=")
-						.append(presentation.getWallTriangles())
-						.append(":r=")
-						.append(presentation.getRoofTriangles());
-				} else {
-					zeroTerrainCells++;
-					meshDiagnostics.append(":mesh=0:t=0:w=0:r=0");
 				}
+			}
+			if (splitDraw && pass == 0) {
+				// Adjacent centers share all nine new gameplay cells with the old 5x5 draw field.
+				// The cells outside that overlap have no effect on activation or input.
+				drawPreparation.publishGameplay(new NativeLayeredTerrainHaloPrebuildResult(
+					activeScopeIdentity, receivedHaloScopeIdentity, receivedProtocolVersion, sourceRevision,
+					worldOffsetX, worldOffsetZ, plane, activeSectionX, activeSectionY, includeRoofGeometry,
+					outerChunks, retentionChunks, activePrebuild.drawMesh, activePrebuild.localTerrain,
+					fixedDraw.snapshot(haloTerrain), triangles, activePrebuild.productCacheHit, reusedCells, builtCells,
+					"halo gameplay-ready; optional terrain pending", "", System.nanoTime() - buildStart));
 			}
 		}
 		return new NativeLayeredTerrainHaloPrebuildResult(
@@ -6768,6 +6853,7 @@ public final class World {
 		private final String cellDiagnostics;
 		// Assigned on the preparation thread before handing off the completed immutable source pair.
 		private NativeLayeredTerrainSnapshot predictedVisual, predictedStructural;
+		private SurfaceDrawPreparation deferredDraw;
 		private final long elapsedNanos;
 
 		private NativeLayeredTerrainHaloPrebuildResult(

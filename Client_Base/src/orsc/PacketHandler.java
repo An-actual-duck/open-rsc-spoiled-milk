@@ -1070,11 +1070,16 @@ public class PacketHandler {
 				mc.clearStaticScenePresentation();
 			}
 		}
+		boolean ordinaryWalking = atomicActivation && hadLayeredSceneContext && !result.isScopeChanged()
+			&& previousLogicalLevel == logicalLevel
+			&& Math.abs((long) previousLogicalX - logicalX) <= 8L
+			&& Math.abs((long) previousLogicalY - logicalY) <= 8L;
 		mc.applyLayeredSceneScope(
 			result.getLegacyPlane(),
 			result.isScopeChanged(),
 			result.isSyntheticDeepFixture(),
-			result.getNativeTerrainSnapshot());
+			result.getNativeTerrainSnapshot(),
+			mudclient.LIVE_SURFACE_HANDOFF && ordinaryWalking ? readyPredictedLayeredTerrainHalo : null);
 		BoundaryLoadingDiagnostics.recordPhase(
 			"context",
 			"scope-apply",
@@ -1085,10 +1090,6 @@ public class PacketHandler {
 		boolean predictedPublished = false;
 		boolean keepSurfaceScenery = false;
 		if (atomicActivation) {
-			boolean ordinaryWalking = hadLayeredSceneContext && !result.isScopeChanged()
-				&& previousLogicalLevel == logicalLevel
-				&& Math.abs((long) previousLogicalX - logicalX) <= 8L
-				&& Math.abs((long) previousLogicalY - logicalY) <= 8L;
 			cancelPendingLayeredTerrainPrebuild();
 			predictedPublished =
 				publishReadyPredictedLayeredTerrainHalo(nativeTerrain, ordinaryWalking);
@@ -1613,7 +1614,10 @@ public class PacketHandler {
 	public void pollLayeredTerrainStageReady() {
 		pollPredictedTerrainDecode();
 		if (mudclient.SURFACE_SCENERY_DRAW) mc.pollSurfaceSceneryDraw();
-		if (mc.getWorld() != null) mc.getWorld().publishPendingSurfaceCollision(pendingLayeredTerrainHaloPrebuild);
+		if (mc.getWorld() != null) {
+			mc.getWorld().publishPendingSurfaceCollision(pendingLayeredTerrainHaloPrebuild);
+			mc.getWorld().publishPendingSurfaceDraw();
+		}
 		if (pendingLayeredTerrainHaloPrebuild != null) {
 			pollLayeredTerrainHaloReady();
 			return;

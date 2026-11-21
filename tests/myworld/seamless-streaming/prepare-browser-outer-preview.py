@@ -55,12 +55,15 @@ def main():
     parser.add_argument('--retarget-walk', action='store_true', help='Change course before the original predicted window activates')
     parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
+    parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
     args = parser.parse_args()
     if args.sustained_walk and (args.manual or not args.travel_trace):
         parser.error('The automated sustained walk requires travel tracing')
+    if args.hold_optional_terrain and not (args.retarget_walk and args.surface_mesh_worker and not args.manual):
+        parser.error('The fringe hold requires the automated retarget walk and the terrain worker')
     if args.slice_preupload and not args.preupload_scene:
         parser.error('Sliced packing requires scene uploads')
     if args.preupload_scene and not (args.preupload and args.predicted_scenery):
@@ -133,6 +136,7 @@ def main():
            f'        System.setProperty("spoiledmilk.liveSurfaceHandoff", "{str(args.live_surface_handoff).lower()}");\n'
            f'        System.setProperty("spoiledmilk.retargetSurfaceWalk", "{str(args.retarget_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceMeshWorker", "{str(args.surface_mesh_worker).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
@@ -167,6 +171,14 @@ def main():
                "  Java_orsc_browser_BrowserOuterCoverageProbe_worldInputReady:()=>window.browserWorldInputAllowed()?1:0,\n"
                "  Java_orsc_browser_BrowserOuterCoverageProbe_worldReady:()=>gpu?.stats.worldReadiness?.phase==='ready'?1:0,")
         java_sources.append(str(Path(__file__).with_name('BrowserOuterCoverageProbe.java')))
+    if args.hold_optional_terrain:
+        insert(web / 'browser.js', '  Java_orsc_BrowserWebGLBridge_loadingWork:',
+               '  Java_orsc_browser_BrowserOuterCoverageProbe_holdOptionalTerrain:(_library,hold)=> {\n'
+               '    if (hold) window.fixtureFringeGate = Promise.withResolvers();\n'
+               '    else { window.fixtureFringeGate?.resolve(); delete window.fixtureFringeGate; }\n'
+               '  },')
+        insert(web / 'browser.js', '    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites]);',
+               '    if (window.fixtureFringeGate) await window.fixtureFringeGate.promise;')
     subprocess.run([
         'javac', '-source', '8', '-target', '8', '-cp', f'{web / "client.jar"}:{classes}',
         '-d', str(classes), *java_sources,
