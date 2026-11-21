@@ -41,6 +41,7 @@ def main():
     parser.add_argument('--prepare-local-terrain', action='store_true', help='Prepare collision, minimap layout and structure models before a walking handoff')
     parser.add_argument('--prepare-incoming-scenery', action='store_true', help='Clone incoming interactive object models before their authoritative update')
     parser.add_argument('--travel-trace', action='store_true', help='Record real submitted frames and server positions through extended travel')
+    parser.add_argument('--presentation-only', action='store_true', help='Check sustained travel without detailed Java or server tracing')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
     parser.add_argument('--slice-preupload', action='store_true', help='Pack large speculative vertex buffers across frames')
     parser.add_argument('--socket-read-ahead', action='store_true', help='Buffer available socket bytes before the Java packet drain')
@@ -61,8 +62,10 @@ def main():
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
     args = parser.parse_args()
-    if args.sustained_walk and (args.manual or not args.travel_trace):
-        parser.error('The automated sustained walk requires travel tracing')
+    if args.sustained_walk and (args.manual or not (args.travel_trace or args.presentation_only)):
+        parser.error('The automated sustained walk requires travel or presentation sampling')
+    if args.presentation_only and (not (args.sustained_walk and args.live_surface_handoff) or args.trace or args.travel_trace):
+        parser.error('Presentation-only sampling requires untraced sustained live-surface travel')
     if args.hold_optional_terrain and not (args.retarget_walk and args.surface_mesh_worker and not args.manual):
         parser.error('The fringe hold requires the automated retarget walk and the terrain worker')
     if args.steady_walk and (args.manual or args.sustained_walk or args.retarget_walk or not args.live_surface_handoff):
@@ -81,8 +84,8 @@ def main():
         parser.error('Surface scenery cells require persistent collision and movement')
     if args.rolling_surface_window and not args.surface_scenery_cells:
         parser.error('Rolling surface windows require live scenery cells')
-    if args.fixed_surface_draw and not (args.rolling_surface_window and args.travel_trace):
-        parser.error('The fixed terrain draw proof requires rolling coverage and travel tracing')
+    if args.fixed_surface_draw and not (args.rolling_surface_window and (args.manual or args.travel_trace or args.presentation_only)):
+        parser.error('Fixed terrain draw requires rolling coverage and sampling for automated proofs')
     if args.expanded_surface_draw_border and not args.fixed_surface_draw:
         parser.error('Expanded draw sources require fixed terrain draw cells')
     if args.surface_scenery_draw and not args.expanded_surface_draw_border:
@@ -127,6 +130,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserPrepareLocalTerrain", "{str(args.prepare_local_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPrepareIncomingScenery", "{str(args.prepare_incoming_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserTravelTrace", "{str(args.travel_trace).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserPresentationOnly", "{str(args.presentation_only).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSlicePreupload", "{str(args.slice_preupload).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSocketReadAhead", "{str(args.socket_read_ahead).lower()}");\n'
            f'        System.setProperty("spoiledmilk.persistentMovementPreview", "{str(args.persistent_movement).lower()}");\n'
@@ -228,6 +232,7 @@ def main():
         'prepareLocalTerrain': args.prepare_local_terrain,
         'prepareIncomingScenery': args.prepare_incoming_scenery,
         'travelTrace': args.travel_trace,
+        'presentationOnly': args.presentation_only,
         'slicePreupload': args.slice_preupload,
         'socketReadAhead': args.socket_read_ahead,
         'persistentMovement': args.persistent_movement,

@@ -57,7 +57,8 @@ public final class BrowserOuterCoverageProbe {
 		Field clicked = field(Panel.class, "controlClicked");
 		panel.setText(field(mudclient.class, "controlLoginUser").getInt(client), "browserdemo");
 		panel.setText(field(mudclient.class, "controlLoginPass").getInt(client), password);
-		field(mudclient.class, "enterPressed").setBoolean(client, true);
+		boolean[] loginButtons = (boolean[]) clicked.get(panel);
+		loginButtons[field(mudclient.class, "m_be").getInt(client)] = true;
 
 		Field appearanceVisible = field(mudclient.class, "showAppearanceChange");
 		Field appearancePanel = field(mudclient.class, "panelAppearance");
@@ -170,6 +171,10 @@ public final class BrowserOuterCoverageProbe {
 		if (Boolean.getBoolean("spoiledmilk.surfaceSceneryCells")) {
 			verifyIncomingSceneryMutations(client, walk, before[3]);
 		}
+		if (Boolean.getBoolean("spoiledmilk.browserPresentationOnly")) {
+			verifyUntracedTravel(client, walk, before);
+			return;
+		}
 		boolean fixedDraw = Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
 		int[] previousDraws = fixedDraw ? awaitSurfaceDrawBuffers() : null;
 		int[] liveOuterDraws = Boolean.getBoolean("spoiledmilk.expandedSurfaceDrawBorder")
@@ -266,6 +271,26 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
 	}
 
+	private static void verifyUntracedTravel(mudclient client, Method walk, int[] before) throws Exception {
+		Object actor = client.getLocalPlayer();
+		int[][] destinations = {{278,609}, {284,609}, {291,597}, {322,597}, {291,597}, {284,609}, {252,609}};
+		for (int[] destination : destinations) {
+			walkLeg(client, walk, destination[0], destination[1]);
+			if (client.getLocalPlayer() != actor || worldInputReady() != 1) {
+				throw new IllegalStateException("Untraced walking lost the player or world input");
+			}
+		}
+		int[] after = client.packetHandler.getPersistentMovementReceipt();
+		if (client.getRollingSurfaceWindows() != 3 || after[0] != before[0] || after[1] <= before[1]
+			|| after[2] != 0 || after[3] != before[3] + 3) {
+			throw new IllegalStateException("Unexpected untraced travel receipts "
+				+ Arrays.toString(before) + " to " + Arrays.toString(after));
+		}
+		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":rolled=3");
+		verifyDetachedGameplayInstalls(client, 3);
+		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
 	private static void verifyDetachedGameplayInstalls(mudclient client, int expected) {
 		if (!Boolean.getBoolean("spoiledmilk.browserSurfaceMeshWorker")) return;
 		int installed = client.getWorld().getDetachedSurfaceGameplayInstalls();
@@ -279,6 +304,7 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
+		if (!Boolean.getBoolean("spoiledmilk.browserTravelTrace")) return;
 		int reused = client.getResidentPlacementPublicationsReused();
 		if (reused <= 0) throw new IllegalStateException("Resident scenery was never reused between placement events");
 		BrowserBootstrap.report("outer-coverage:resident-placement-publications-reused:" + reused);

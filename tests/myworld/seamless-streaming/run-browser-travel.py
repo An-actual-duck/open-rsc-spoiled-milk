@@ -33,6 +33,44 @@ if (p.state?.mode === 'GAME' && !w.travelBrowserFrames) {
 }
 """
 
+WATCH_PRESENTATION = """
+if (p.state?.mode === 'GAME' && !w.travelPresentation) {
+    const samples = w.travelPresentation = {gaps: [], frames: 0, holds: 0, blocked: 0, epochs: []};
+    let first, last, startingFrame, startingHolds, lastUploadBytes;
+    const sample = () => {
+        const events = p.events || [];
+        if (first === undefined) {
+            const walking = events.find(event => event.message.startsWith('outer-coverage:walking:'));
+            if (walking) first = p.started + walking.milliseconds;
+        }
+        if (events.some(event => event.message.startsWith('outer-coverage:complete:'))) return;
+        const gpu = p.gpu;
+        if (first !== undefined && gpu?.lastFrame > first) {
+            if (startingFrame === undefined) {
+                startingFrame = gpu.javaWorldFrames;
+                startingHolds = gpu.heldWorldFrames;
+            }
+            const epoch = gpu.worldReadiness.epoch;
+            if (!samples.epochs.includes(epoch)) samples.epochs.push(epoch);
+            if (w.browserWorldInputAllowed() === false) samples.blocked++;
+            samples.frames = gpu.javaWorldFrames - startingFrame + 1;
+            samples.holds = gpu.heldWorldFrames - startingHolds;
+            if (gpu.lastFrame !== last) {
+                if (last !== undefined && gpu.lastFrame - last >= 50) {
+                    samples.gaps.push({from: last, to: gpu.lastFrame, geometryUploadBytes: gpu.uploadedBytes - lastUploadBytes,
+                        bridgeWork: gpu.javaBridgeWorkSamples.at(-1)});
+                    if (samples.gaps.length > 256) samples.gaps.shift();
+                }
+                last = gpu.lastFrame;
+                lastUploadBytes = gpu.uploadedBytes;
+            }
+        }
+        w.requestAnimationFrame(sample);
+    };
+    w.requestAnimationFrame(sample);
+}
+"""
+
 
 def summarize_walking(result):
     """Measure fresh WebGL submissions over the real walk, including time between the legs."""
@@ -112,8 +150,9 @@ def run_walk(run, driver_port):
             deadline = time.monotonic() + 228
             previous_state = None
             reported_events = 0
+            watch = WATCH_PRESENTATION if fixture.get('presentationOnly') else WATCH_BROWSER_FRAMES
             while time.monotonic() < deadline:
-                snap = evaluate(WATCH_BROWSER_FRAMES + 'return {state:p.state?.mode,reason:p.stopReason,events:' + ROUTE_EVENTS + '};')
+                snap = evaluate(watch + 'return {state:p.state?.mode,reason:p.stopReason,events:' + ROUTE_EVENTS + '};')
                 state = (snap.get('state'), snap.get('reason'))
                 if state != previous_state:
                     print(state, flush=True)
@@ -128,8 +167,9 @@ def run_walk(run, driver_port):
 
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
+                graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
-                timeOrigin:w.performance.timeOrigin};''')
+                presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
             server_status = json.loads((run / 'status.json').read_text())
@@ -147,15 +187,25 @@ def run_walk(run, driver_port):
             result['serverStatus'] = server_status
             result['walkingSummary'] = summarize_walking(result)
             if completed and fixture.get('liveSurfaceHandoff'):
-                walking = result['walkingSummary']
-                completed = bool(walking and walking['frames'] and not any(
-                    walking[key] for key in ('holds', 'blocked', 'transitions')))
+                if fixture.get('presentationOnly'):
+                    observed = result.get('presentation') or {}
+                    completed = bool(observed.get('frames') and len(observed['epochs']) == 1
+                                     and not observed['blocked'] and not observed['holds'] and not result.get('stream'))
+                else:
+                    walking = result['walkingSummary']
+                    completed = bool(walking and walking['frames'] and not any(
+                        walking[key] for key in ('holds', 'blocked', 'transitions')))
             if completed and fixture.get('surfaceMeshWorker'):
                 detached = result.get('surfaceMeshWorker') or {}
                 completed = detached.get('completed', 0) > 0 and detached.get('error') is None
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
             (run / 'firefox-result.json').write_text(json.dumps(result, indent=2) + '\n')
+            presentation = result.get('presentation')
+            if presentation is not None:
+                print({key: value for key, value in presentation.items() if key != 'gaps'},
+                      'largest sampled frame gap:',
+                      round(max((g['to'] - g['from'] for g in presentation['gaps']), default=0), 1), flush=True)
             print(result['serverStatus'], result['walkingSummary'], flush=True)
             return 0 if completed else 1
         finally:

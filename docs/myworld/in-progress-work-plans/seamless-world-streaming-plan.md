@@ -207,17 +207,22 @@ packet behavior. [Actor rebase](../../../Client_Base/src/orsc/ORSCharacter.java)
    image is part of an ordinary cell update.
    [Client scene context](../../../Client_Base/src/orsc/PacketHandler.java#L724) · [Browser replacement gate](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L328)
 
-The private rolling path now passes the held-fringe test. The diagonal
-crossing retained 16 terrain buffers and drew all nine gameplay cells while
-the worker withheld the incoming visual terrain. A completed route can still
-fail the fresh-frame target. The warmed control walked the same tiles four
-times with the terrain already installed and recorded a maximum of 36 ms
-between fresh frames. Its animated scenery continued uploading throughout.
-The detached worker now prepares collision, minimap and picking for the
-verified terrain window. The next browser work should keep Java scenery
-preparation and per-cell publication out of the frame that activates the
-authoritative walk boundary. Compare the same travel route against the warmed
-control using the same server movement and camera.
+The private rolling path passes the held-fringe test. The diagonal crossing
+retained 16 terrain buffers and drew all nine gameplay cells while the worker
+withheld the incoming visual terrain. The detached workers prepare collision,
+minimap, picking, and shared-area scenery before the crossing. Resident
+terrain cells supply the lighting fields. The warmed control walked the same
+tiles four times with terrain already installed and recorded a maximum of
+36 ms between fresh frames. Its animated scenery continued uploading.
+
+The current browser build still misses the frame-pacing acceptance criterion.
+The sustained route also passes without the detailed traces. In the rerun
+with more host memory headroom, its largest sampled gap was 199 ms between
+crossings. There were zero world geometry uploads in that sample. The nearby
+bridge sample spent 105 ms in the actor sprite stage. Separate source-pixel
+composition, sprite atlas submission, and overlay export before changing
+this pipeline. Use the same route in both directions and a warmed pass over
+the affected tiles to check that any improvement survives routine walking.
 [Current crossing evidence](seamless-world-streaming-preview.md#repeated-crossings-with-live-coverage)
 
 The browser's bounded catalog and render worker are candidates for reuse after

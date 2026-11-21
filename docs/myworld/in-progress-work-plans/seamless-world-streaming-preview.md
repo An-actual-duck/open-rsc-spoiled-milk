@@ -783,6 +783,32 @@ origins. The focused placement fixture checks object and wall changes and
 array compaction. Its animation counterpart checks the original ripple
 phases and their rebase against a freshly built mesh.
 
+The next diagonal regression used the same client and server with shared
+scenery preparation. It reached `(250,550)` with the nine incoming visual
+meshes still held. It drew nine gameplay terrain cells, retained the sixteen
+overlapping buffers, and reported no synchronous late scenery meshes.
+Firefox recorded 1,221 fresh frames without holds, input blocks, or new
+load epochs. Its largest gap was 245 ms on the approach and the largest
+displayed step was half a tile. The browser reported an AMD WebGL renderer.
+[Current diagonal capture](../../../output/tests/browser-gameplay-spike/live-surface-confirmed-diagonal/firefox-result.json)
+
+A retained UI transport trial reported a frame gap above 14 seconds. A
+frame-local sprite raster cache trial stalled during preparation and missed
+the fixture's scenery revision. Both experiments were removed from the
+preview. These runs do not establish the cause of the delays.
+
+Two sustained controls ran with the Java and server travel traces disabled.
+Both reached the server-confirmed endpoint after three window changes and
+kept one movement generation, one browser load epoch, and zero frame holds
+or sampled input blocks. The first had a 3,050 ms gap between crossings.
+After pausing eight idle older private test servers, the repeat sampled
+3,586 fresh frames and peaked at 199 ms. That gap occurred along
+`(284,609)` to `(291,597)` with no geometry uploads in the sample. The
+nearby Java bridge sample spent 105 ms in the sprite path. A return leg
+sample spent 124 ms in the sprite path with no geometry upload. Those
+samples point to browser frame production as the next performance target.
+[First presentation control](../../../output/tests/browser-gameplay-spike/live-surface-presentation-control/firefox-result.json) · [Repeat with more host headroom](../../../output/tests/browser-gameplay-spike/live-surface-headroom-control/firefox-result.json) · [Host counters](../../../output/tests/browser-gameplay-spike/live-surface-headroom-control/vmstat.log)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
@@ -843,6 +869,11 @@ handoff and the buffers adopted by the renderer.
 For sustained travel, stage a fresh run with `--trace --travel-trace
 --sustained-walk` and use unused private TCP, WebSocket and HTTP ports. Start a
 loopback geckodriver, run `run-browser-travel.py <run>` with its port, then
-pass the run to `analyze-travel-trace.py`. For a manual trace, stage with
+pass the run to `analyze-travel-trace.py`. For a low-overhead control, keep
+the sustained route and streaming features, remove `--trace` and
+`--travel-trace`, and add `--presentation-only`. This records fresh WebGL
+submission gaps from the page and checks the same actor and server-confirmed
+endpoint. For a manual trace, stage with
 `--manual --travel-trace` and serve it with `--travel-log
-<run>/manual-travel.ndjson`. The normal private server startup is the same.
+<run>/manual-travel.ndjson`. Omit `--travel-trace` for an ordinary manual
+play build. The normal private server startup is the same.
