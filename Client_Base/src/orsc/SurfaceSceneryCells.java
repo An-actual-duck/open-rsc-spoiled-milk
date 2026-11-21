@@ -33,6 +33,7 @@ final class SurfaceSceneryCells {
 			for (int oz = -RADIUS; oz <= RADIUS; oz++) {
 				int cx = x + ox, cz = z + oz;
 				if (distance(cx, cz, oldX, oldZ) > RADIUS) cells.put(key(cx, cz), new Cell(Band.ENTERING_PLAY));
+				else if (prepareDrawCells) cells.put(key(cx, cz), new Cell(Band.RETAINED_PLAY));
 			}
 		}
 		if (!prepareDrawCells) return;
@@ -63,7 +64,7 @@ final class SurfaceSceneryCells {
 
 	static long key(int x, int z) { return ((long)x << 32) | (z & 0xffffffffL); }
 
-	enum Band { ENTERING_PLAY, ENTERING_DRAW, LEAVING_PLAY }
+	enum Band { ENTERING_PLAY, RETAINED_PLAY, LEAVING_PLAY, ENTERING_DRAW }
 
 	static final class Cell {
 		final Band band;

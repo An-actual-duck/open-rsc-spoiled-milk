@@ -279,6 +279,16 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
+		int reused = client.getResidentPlacementPublicationsReused();
+		if (reused <= 0) throw new IllegalStateException("Resident scenery was never reused between placement events");
+		BrowserBootstrap.report("outer-coverage:resident-placement-publications-reused:" + reused);
+		int rebased = client.getResidentFishingPoseRebases();
+		if (rebased <= 0 && Boolean.getBoolean("spoiledmilk.sustainedBrowserWalk")) {
+			throw new IllegalStateException("No resident ripple pose survived a rolling origin");
+		}
+		BrowserBootstrap.report("outer-coverage:resident-fishing-poses-rebased:" + rebased);
+		BrowserBootstrap.report("outer-coverage:scenery-meshes-after-activation:" + client.getLateSurfaceSceneryMeshes());
+		BrowserBootstrap.report("outer-coverage:shared-scenery-meshes-prepared:" + client.getRetainedSurfaceSceneryMeshes());
 	}
 
 	private static void verifyPreparedDirectionChange(mudclient client, Method walk, int[] movement) throws Exception {

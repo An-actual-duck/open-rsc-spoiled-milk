@@ -199,7 +199,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     static WorldChunkBufferKey chunkKey(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
         if (chunk.isResidentFishingPose()) {
             // Finite animation keeps the exact current pose as immutable storage for this cell.
-            return new WorldChunkBufferKey(chunk.getPlane(), chunk.getCenterSectionX(), chunk.getCenterSectionY(),
+            return new WorldChunkBufferKey(chunk.getPlane(), 0, 0,
                 chunk.getOriginWorldX(), chunk.getOriginWorldZ(), true, chunk.getChunkRole(), true,
                 chunk.getStorageSignature(), 0L);
         }

@@ -4,6 +4,7 @@
 import argparse
 import contextlib
 import json
+import math
 from pathlib import Path
 import subprocess
 import time
@@ -45,6 +46,8 @@ def summarize_walking(result):
     last = origin + arrivals[-1]
     walk_rows = [row for row in rows if first <= row['time'] <= last]
     frames = [row for row in walk_rows if row['kind'] == 'frame']
+    largest_visible_step = max((math.dist(before['shown'], after['shown']) / 128
+                                for before, after in zip(frames, frames[1:])), default=0)
     intervals = sorted(
         ({'ms': round(after['submittedAt'] - before['submittedAt'], 1),
           'from': before['receipt'], 'to': after['receipt'], 'connection': after['connectionWork'],
@@ -52,6 +55,7 @@ def summarize_walking(result):
          for before, after in zip(frames, frames[1:])),
         key=lambda gap: gap['ms'], reverse=True)
     return {'frames': len(frames),
+            'largestVisibleStepTiles': round(largest_visible_step, 3),
             'holds': sum(row['kind'] == 'hold' for row in walk_rows),
             'blocked': sum(row.get('inputAllowed') is False for row in walk_rows),
             'transitions': sum(row['kind'] == 'transition' for row in walk_rows),

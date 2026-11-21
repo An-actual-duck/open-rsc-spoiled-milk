@@ -401,6 +401,7 @@ public final class World {
     /** Immutable source metadata for the explicit private full-source GPU prototype. */
     public NativeLayeredTerrainSnapshot getWholeOverworldSourceSnapshot(){return nativeLayeredTerrainSnapshot;}
     public long getWholeOverworldSourceRevision(){return worldEditorTerrainRevision.get();}
+    public NativeLayeredTerrainSnapshot getSurfacePresentationTerrainBasis() { return symmetricNativeLayeredTerrainVisualSnapshot; }
     public boolean hasWholeOverworldTerrainPatches(){synchronized(worldEditorTerrainPatchLock){return !worldEditorTerrainPatches.isEmpty();}}
 
 	public void setSyntheticDeepFixtureTerrain(

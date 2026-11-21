@@ -3,6 +3,7 @@ package orsc;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
+import orsc.graphics.three.World;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,6 +32,19 @@ public final class ResidentFishingPoseFixture {
 			}
 		}
 		if (distinct.size() <= 1) throw new IllegalStateException("Ripple did not animate");
+		Renderer3DWorldChunkFrame.ChunkMesh carried = mesh(model);
+		carried.markResidentFishingPose();
+		int section = World.SECTION_SIZE * 128;
+		model.rebaseWorldOrigin(-section, section);
+		if (model.getFishingPoseBasisVersion() != basis) throw new IllegalStateException("World rebase changed the pose basis");
+		Renderer3DWorldChunkFrame.ChunkMesh rebase = carried.rebaseStaticObjectPresentation(5, 11, -section, section);
+		Renderer3DWorldChunkFrame.ChunkMesh direct = mesh(model);
+		if (rebase.getStorageSignature() != carried.getStorageSignature() || !rebase.isResidentFishingPose()) {
+			throw new IllegalStateException("World rebase replaced immutable pose storage");
+		}
+		for (int i = 0; i < direct.getVertexCount() * 3; i++) {
+			if (direct.getVertexCoord(i) != rebase.getVertexCoord(i)) throw new IllegalStateException("Rebased pose moved in world space");
+		}
 		long before = mesh(model).getStorageSignature();
 		model.addRotation(0, 32, 0);
 		if (model.getFishingPoseBasisVersion() == basis || mesh(model).getStorageSignature() == before) {

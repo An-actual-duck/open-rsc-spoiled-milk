@@ -110,6 +110,7 @@ public final class RSModel {
 	private int vertexCount2;
 	private int renderer3DTransformVersion;
 	private int fishingPoseUpdates;
+	private int worldOriginUpdates;
 	private int fishingSpotClarityAnimationState = -1;
 	private int[] fishingSpotClarityBaseX;
 	private int[] fishingSpotClarityBaseY;
@@ -573,7 +574,13 @@ public final class RSModel {
 	}
 
 	public int getFishingPoseBasisVersion() {
-		return renderer3DTransformVersion - fishingPoseUpdates;
+		return renderer3DTransformVersion - fishingPoseUpdates - worldOriginUpdates;
+	}
+
+	/** Changes the local carrier for a retained model within the same signed surface. */
+	public void rebaseWorldOrigin(int x, int z) {
+		translate2(x, 0, z);
+		worldOriginUpdates++;
 	}
 
 	private static RSModel createFishingSpotClarityOverlay() {

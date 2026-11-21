@@ -35,17 +35,23 @@ public final class SurfaceSceneryCellsFixture {
 		require(state.cell(10, 2, 4, 4, 10).band == SurfaceSceneryCells.Band.ENTERING_PLAY, "south play edge missing");
 		require(state.cell(10, 2, 4, 3, 13).band == SurfaceSceneryCells.Band.LEAVING_PLAY, "north play edge missing");
 		require(state.cell(10, 2, 4, 2, 13) == null, "unchanged presentation crossed ownership");
-		require(state.cell(10, 2, 4, 4, 11) == null, "overlapping gameplay was subscribed");
+		require(state.cell(10, 2, 4, 4, 11).band == SurfaceSceneryCells.Band.RETAINED_PLAY,
+			"shared gameplay scenery must have its own draw preparation");
 		state.begin(11, 2, 4, 5, 12, 1, 1, true);
-		int[] bands = new int[3];
+		int[] bands = new int[SurfaceSceneryCells.Band.values().length];
 		for (int x = 3; x <= 7; x++) {
 			for (int z = 10; z <= 14; z++) {
 				SurfaceSceneryCells.Cell diagonal = state.cell(11, 2, 4, x, z);
 				if (diagonal != null) bands[diagonal.band.ordinal()]++;
 			}
 		}
-		require(bands[0] == 5 && bands[1] == 9 && bands[2] == 5, "diagonal publishes both axes and their intersection exactly once");
-		require(state.cell(11, 2, 4, 5, 12) == null, "diagonal shares the overlapping gameplay cells");
+		require(bands[SurfaceSceneryCells.Band.ENTERING_PLAY.ordinal()] == 5
+			&& bands[SurfaceSceneryCells.Band.RETAINED_PLAY.ordinal()] == 4
+			&& bands[SurfaceSceneryCells.Band.LEAVING_PLAY.ordinal()] == 5
+			&& bands[SurfaceSceneryCells.Band.ENTERING_DRAW.ordinal()] == 9,
+			"diagonal publishes both axes and each shared cell exactly once");
+		require(state.cell(11, 2, 4, 5, 12).band == SurfaceSceneryCells.Band.RETAINED_PLAY,
+			"diagonal shares the overlapping gameplay cells");
 
 		state.reset();
 		require(state.cell(11, 2, 4, 7, 14) == null, "scope reset retained a draw cell");

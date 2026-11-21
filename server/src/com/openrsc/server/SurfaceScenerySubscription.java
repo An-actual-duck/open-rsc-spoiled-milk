@@ -15,7 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Keeps the incoming edge of the next surface window current for one viewer. */
+/** Keeps one viewer's prepared surface scenery current, including changed placements in shared gameplay cells. */
 final class SurfaceScenerySubscription {
 	private static final int CELL_SIZE = WorldRegionKey.REGION_SIZE;
 	private static final int RADIUS = 1;
@@ -43,8 +43,11 @@ final class SurfaceScenerySubscription {
 		this.terrainStage = terrainStage;
 		this.targetX = targetX;
 		this.targetY = targetY;
-		addChangedCells(RADIUS, stepX, stepY);
-		if (prepareDrawCells) addChangedCells(DRAW_RADIUS, stepX, stepY);
+		addChangedCells(RADIUS, stepX, stepY, false);
+		if (prepareDrawCells) {
+			addChangedCells(RADIUS, stepX, stepY, true);
+			addChangedCells(DRAW_RADIUS, stepX, stepY, false);
+		}
 		int west = Integer.MAX_VALUE, south = Integer.MAX_VALUE;
 		int east = Integer.MIN_VALUE, north = Integer.MIN_VALUE;
 		for (Cell cell : cells.values()) {
@@ -59,11 +62,11 @@ final class SurfaceScenerySubscription {
 		maxCellY = north;
 	}
 
-	private void addChangedCells(int radius, int stepX, int stepY) {
+	private void addChangedCells(int radius, int stepX, int stepY, boolean retainedGameplay) {
 		for (int dx = -radius; dx <= radius; dx++) {
 			for (int dy = -radius; dy <= radius; dy++) {
 				int previousDistance = Math.max(Math.abs(dx + stepX), Math.abs(dy + stepY));
-				boolean changes = radius == RADIUS ? previousDistance > RADIUS
+				boolean changes = radius == RADIUS ? (previousDistance <= RADIUS) == retainedGameplay
 					: Math.max(Math.abs(dx), Math.abs(dy)) == DRAW_RADIUS
 						&& (previousDistance > DRAW_RADIUS || previousDistance <= RADIUS);
 				if (!changes) continue;

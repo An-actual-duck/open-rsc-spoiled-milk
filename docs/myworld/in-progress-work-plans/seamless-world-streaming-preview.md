@@ -751,7 +751,7 @@ crossing still spent 134 ms on lighting in this run, with a 357 ms gap
 between fresh frames. [Detached scenery capture](../../../output/tests/browser-gameplay-spike/live-surface-detached-scenery/firefox-result.json)
 
 The fixed terrain cells now carry their occlusion fields, including a
-four-tile source margin around each cell. The room-scale renderer copies
+four-tile source margin around each cell. The browser renderer copies
 those fields into world coordinates. A signed-map fixture matched the
 occlusion bytes from the complete source footprint. Firefox installed four
 resident lighting fields and produced 3,344 fresh frames with zero holds,
@@ -764,6 +764,24 @@ The native regression crossed at maximum frame intervals of 29, 27 and
 retained 9, 2 and 9 continuously visible NPC instances through those
 crossings with zero replacements. The test account retained the fixture's
 combat protection. [Native regression](../../../output/tests/seamless-world-streaming/live-surface-native-regression/native-travel.log)
+
+The detailed first-crossing trace recorded five static meshes inside the
+shared gameplay area, totaling 120 ms of mesh construction. The server now
+stages viewer-authorized scenery for those shared cells. The client keeps
+unchanged placement data and compiles only the differing cells before the
+handoff. The next sustained run prepared all five in advance. Its first
+handoff rebuilt two animated groups in under 1 ms of measured mesh work.
+The test completed with 3,594 fresh frames and zero loading holds, input
+blocks, or new load epochs. Its largest displayed movement between fresh
+frames was 0.83 tile. The longest frame gap was 167 ms and occurred before
+the first handoff. Sprite and overlay work are still visible in the trace.
+[Shared-cell scenery capture](../../../output/tests/browser-gameplay-spike/live-surface-shared-scenery/firefox-result.json)
+
+The browser also reused scenery publications on 3,657 frames between
+placement changes and reused 652 resident ripple poses across coordinate
+origins. The focused placement fixture checks object and wall changes and
+array compaction. Its animation counterpart checks the original ripple
+phases and their rebase against a freshly built mesh.
 
 ## Reproduce the private preview
 

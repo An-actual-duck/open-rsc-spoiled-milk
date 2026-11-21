@@ -1069,6 +1069,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.worldEditorTerrainGridSignature =
 				source.worldEditorTerrainGridSignature;
 			this.surfaceOcclusion = source.surfaceOcclusion;
+			this.residentFishingPose = source.residentFishingPose;
 		}
 
 		private static ShadowCaster[] translateShadowCasters(
@@ -1151,9 +1152,9 @@ public final class Renderer3DWorldChunkFrame {
 			int additionalOffsetX,
 			int additionalOffsetZ) {
 			if (!objectChunk
-				|| chunkRole != CHUNK_ROLE_STATIC_OBJECTS) {
+				|| (chunkRole != CHUNK_ROLE_STATIC_OBJECTS && !residentFishingPose)) {
 				throw new IllegalStateException(
-					"Only static object chunks may cross presentation origins");
+					"Object presentation rebase requires immutable geometry");
 			}
 			if (additionalOffsetX == 0
 				&& additionalOffsetZ == 0
