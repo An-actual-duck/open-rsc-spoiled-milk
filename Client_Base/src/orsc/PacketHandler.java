@@ -60,6 +60,9 @@ public class PacketHandler {
 		&& Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision")
 		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryCells");
 	private final SurfaceSceneryCells surfaceScenery = SURFACE_SCENERY_CELLS ? new SurfaceSceneryCells() : null;
+	private int pendingLiveSurfaceContext, pendingSurfaceRolls, verifiedLiveSurfaceContext;
+
+	int getVerifiedLiveSurfaceContext() { return verifiedLiveSurfaceContext; }
 
 	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 	private Network_Socket clientStream;
@@ -277,6 +280,7 @@ public class PacketHandler {
 	}
 
 	public void resetLayeredSceneProtocolState() {
+		pendingLiveSurfaceContext = verifiedLiveSurfaceContext = 0;
 		if (pendingLayeredTerrainPrebuild != null) {
 			pendingLayeredTerrainPrebuild.cancel(true);
 		}
@@ -939,6 +943,7 @@ public class PacketHandler {
 		}
 		layeredTerrainStageAssembler.reset();
 		if (surfaceScenery != null) surfaceScenery.reset();
+		pendingLiveSurfaceContext = verifiedLiveSurfaceContext = 0;
 		BoundaryLoadingDiagnostics.recordPhase(
 			"context",
 			"state-accept",
@@ -994,9 +999,14 @@ public class PacketHandler {
 			keepSurfaceScenery = surfaceScenery != null && ordinaryWalking && predictedPublished
 				&& mudclient.ROLLING_SURFACE_WINDOW;
 			layeredSceneActivationState.begin(sequence);
-			mc.beginLayeredSceneActivation(
-				hadLayeredSceneContext && !result.isScopeChanged(),
-				ordinaryWalking);
+			if (keepSurfaceScenery && persistentMovement.generation() > 0 && mc.canBeginLiveSurfaceHandoff(legacyX, legacyY)) {
+				pendingLiveSurfaceContext = sequence;
+				pendingSurfaceRolls = mc.getRollingSurfaceWindows();
+				// Await the exact interactive receipt without declaring a new browser load epoch.
+				mc.beginLayeredSceneActivation(true);
+			} else {
+				mc.beginLayeredSceneActivation(hadLayeredSceneContext && !result.isScopeChanged(), ordinaryWalking);
+			}
 			refreshLayeredSceneActivationCover();
 		} else {
 			clearReadyPredictedLayeredTerrainHalo();
@@ -3547,6 +3557,19 @@ public class PacketHandler {
 					+ fenceResult.summary();
 			System.out.println(fenceSummary);
 			ClientRuntimeLogger.log(fenceSummary);
+			if (pendingLiveSurfaceContext == locationContextSequence && layeredSceneActivationState.isPending()) {
+				pendingLiveSurfaceContext = 0;
+				NativeLayeredTerrainSnapshot terrain = layeredSceneContextState.getNativeTerrainSnapshot();
+				if (fenceResult.matches() && layeredSceneActivationState.hasPlayerReceipt()
+					&& mc.getRollingSurfaceWindows() == pendingSurfaceRolls + 1 && terrain != null) {
+					mc.publishVerifiedSurfaceWindow(terrain.getCurrentChunkX(), terrain.getCurrentChunkY());
+					verifiedLiveSurfaceContext = locationContextSequence;
+					recordLayeredSceneActivationProgress(layeredSceneActivationState.acceptStaticBaseline(locationContextSequence),
+						"live-surface-fence", true);
+				} else {
+					mc.beginLayeredSceneActivation(true, true);
+				}
+			}
 			/*
 			 * The fence proves that the gameplay-owned inner scene agrees
 			 * with the server. It is not the complete protocol-v8 visual

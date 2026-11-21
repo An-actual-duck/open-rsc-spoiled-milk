@@ -141,6 +141,8 @@ public final class mudclient implements Runnable {
 	static final boolean SURFACE_SCENERY_DRAW = ROLLING_SURFACE_WINDOW
 		&& NativeLayeredTerrainSnapshot.EXPANDED_SURFACE_DRAW_BORDER
 		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
+	static final boolean LIVE_SURFACE_HANDOFF = SURFACE_SCENERY_DRAW
+		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
 	private int rollingSurfaceWindows;
 	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
 		&& Boolean.getBoolean("spoiledmilk.browserPrepareIncomingScenery");
@@ -3970,7 +3972,7 @@ public final class mudclient implements Runnable {
 	void finishSurfaceSceneryDraw(boolean usePrepared) {
 		surfaceSceneryTerrain = null;
 		adoptSurfaceScenery = usePrepared && !surfacePreparedScenery.isEmpty();
-		if (!adoptSurfaceScenery) clearSurfaceSceneryDraw();
+		if (!usePrepared || !adoptSurfaceScenery && !LIVE_SURFACE_HANDOFF) clearSurfaceSceneryDraw();
 	}
 
 	void clearSurfaceSceneryDraw() {
@@ -3983,6 +3985,44 @@ public final class mudclient implements Runnable {
 	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedSurfaceSceneryDraws() { return surfacePreparedScenery; }
 
 	public int getAdoptedSurfaceSceneryDraws() { return adoptedSurfaceScenery; }
+
+	boolean canBeginLiveSurfaceHandoff(int x, int z) {
+		return LIVE_SURFACE_HANDOFF && isRenderer3DWorldReady() && !shouldRetainLastPresentedFrame()
+			&& this.requestedPlane == this.lastHeightOffset
+			&& this.world.canRollSurfaceWindow(this.requestedPlane,
+				this.world.activeSectionXForWorldTile(x + this.worldOffsetX),
+				this.world.activeSectionYForWorldTile(z + this.worldOffsetZ));
+	}
+
+	void publishVerifiedSurfaceWindow(int centerX, int centerZ) {
+		List<SceneBaselineState.Record> scenery = new ArrayList<>(), walls = new ArrayList<>();
+		retainSurfacePresentation(staticPresentationSceneryRecords, scenery, centerX, centerZ);
+		retainSurfacePresentation(staticPresentationWallRecords, walls, centerX, centerZ);
+		for (SurfaceSceneryWork work : surfaceSceneryWork.values()) {
+			if (work.band == SurfaceSceneryCells.Band.ENTERING_PLAY || !inSurfacePresentationRing(work.x, work.z, centerX, centerZ)) continue;
+			for (World.SurfaceSceneryPlacement record : work.records) {
+				(record.type == 0 ? scenery : walls).add(new SceneBaselineState.Record(record.id, record.x, record.z,
+					record.direction, record.type));
+			}
+		}
+		replaceStaticScenePresentation(scenery, walls);
+		layeredScenePresentationLatch.reset();
+		if (!adoptSurfaceScenery) clearSurfaceSceneryDraw();
+	}
+
+	private void retainSurfacePresentation(List<SceneBaselineState.Record> previous, List<SceneBaselineState.Record> retained,
+		int centerX, int centerZ) {
+		for (SceneBaselineState.Record record : previous) {
+			int x = Math.floorDiv(record.x, World.SECTION_SIZE), z = Math.floorDiv(record.y, World.SECTION_SIZE);
+			if (inSurfacePresentationRing(x, z, centerX, centerZ) && !surfaceSceneryWork.containsKey(SurfaceSceneryCells.key(x, z))) {
+				retained.add(record);
+			}
+		}
+	}
+
+	private static boolean inSurfacePresentationRing(int x, int z, int centerX, int centerZ) {
+		return Math.max(Math.abs((long)x - centerX), Math.abs((long)z - centerZ)) == 2;
+	}
 
 	void pollSurfaceSceneryDraw() {
 		if (!SURFACE_SCENERY_DRAW) return;

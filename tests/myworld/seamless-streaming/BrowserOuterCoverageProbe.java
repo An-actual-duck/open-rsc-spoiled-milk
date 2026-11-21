@@ -18,6 +18,7 @@ import orsc.mudclient;
 public final class BrowserOuterCoverageProbe {
 	private static native int loginReady();
 	private static native int worldReady();
+	private static native int worldInputReady();
 
 	public static void run() {
 		try {
@@ -156,15 +157,30 @@ public final class BrowserOuterCoverageProbe {
 		int[] liveOuterDraws = Boolean.getBoolean("spoiledmilk.expandedSurfaceDrawBorder")
 			? awaitLiveOuterDrawBuffers(client, before[3]) : new int[0];
 		boolean sceneryDraw = Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
+		boolean liveHandoff = Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
 		int[] liveScenery = sceneryDraw ? awaitOptionalSceneryDraws(client, before[3]) : new int[0];
 		if (sceneryDraw) BrowserBootstrap.report("outer-coverage:scenery-draw:before-uploads:" + BrowserWebGLBridge.getSceneUploadReceipt());
 		boolean rolling = Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow");
 		Map<RSModel, Long> overlapModels = rolling ? snapshotOverlapModels(client, false) : null;
 		Map<RSModel, Long> overlapWalls = rolling ? snapshotOverlapModels(client, true) : null;
 		Object actor = client.getLocalPlayer();
+		int[] coverageBefore = liveHandoff ? BrowserWebGLBridge.getSurfaceCoverageReceipt() : null;
+		if (liveHandoff && (coverageBefore.length == 0 || worldInputReady() != 1)) {
+			throw new IllegalStateException("Installed area never became interactive");
+		}
 		walkLeg(client, walk, 278, 609);
 		int afterScene = client.packetHandler.getPersistentMovementReceipt()[3];
 		if (afterScene <= before[3]) throw new IllegalStateException("Route did not cross the terrain center boundary");
+		if (liveHandoff) {
+			int[] coverage = BrowserWebGLBridge.getSurfaceCoverageReceipt();
+			if (coverage.length != 5 || coverage[0] != 1 || coverage[1] != coverageBefore[1]
+				|| coverage[2] != coverage[3] || worldInputReady() != 1) {
+				throw new IllegalStateException("Verified walking opened a load epoch or lacked coverage: "
+					+ Arrays.toString(coverageBefore) + " -> " + Arrays.toString(coverage));
+			}
+			BrowserBootstrap.report("outer-coverage:live-handoff:gpu-coverage=" + Arrays.toString(coverage)
+				+ ":input=ready");
+		}
 		if (sceneryDraw) {
 			int adopted = client.getAdoptedSurfaceSceneryDraws();
 			int promoted = countMatchingSurfaceDrawBuffers(liveScenery, BrowserWebGLBridge.getSceneryDrawBuffers(false), true);

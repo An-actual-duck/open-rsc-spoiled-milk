@@ -51,6 +51,7 @@ def main():
     parser.add_argument('--fixed-surface-draw', action='store_true', help='Draw signed terrain through persistent world cells')
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Include the signed source neighbors of outer draw cells')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Publish revisioned scenery meshes ahead of the crossing')
+    parser.add_argument('--live-surface-handoff', action='store_true', help='Keep verified playable coverage live through a rolling rebase')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
@@ -77,6 +78,8 @@ def main():
         parser.error('Expanded draw sources require fixed terrain draw cells')
     if args.surface_scenery_draw and not args.expanded_surface_draw_border:
         parser.error('Scenery draw cells require the expanded terrain sources')
+    if args.live_surface_handoff and not args.surface_scenery_draw:
+        parser.error('Live surface handoff requires independent scenery draws')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -120,6 +123,7 @@ def main():
            f'        System.setProperty("spoiledmilk.fixedSurfaceDraw", "{str(args.fixed_surface_draw).lower()}");\n'
            f'        System.setProperty("spoiledmilk.expandedSurfaceDrawBorder", "{str(args.expanded_surface_draw_border).lower()}");\n'
            f'        System.setProperty("spoiledmilk.surfaceSceneryDraw", "{str(args.surface_scenery_draw).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.liveSurfaceHandoff", "{str(args.live_surface_handoff).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
@@ -150,6 +154,7 @@ def main():
         insert(web / 'browser.js', '  Java_orsc_BrowserWebGLBridge_loadingWork:',
                "  Java_orsc_browser_BrowserOuterCoverageProbe_loginReady:()=>window.browserProof.state?.mode==='LOGIN'\n"
                "    && window.browserProof.events.some(event=>event.message==='WebSocket closed')?1:0,\n"
+               "  Java_orsc_browser_BrowserOuterCoverageProbe_worldInputReady:()=>window.browserWorldInputAllowed()?1:0,\n"
                "  Java_orsc_browser_BrowserOuterCoverageProbe_worldReady:()=>gpu?.stats.worldReadiness?.phase==='ready'?1:0,")
         java_sources.append(str(Path(__file__).with_name('BrowserOuterCoverageProbe.java')))
     subprocess.run([
@@ -204,6 +209,7 @@ def main():
         'fixedSurfaceDraw': args.fixed_surface_draw,
         'expandedSurfaceDrawBorder': args.expanded_surface_draw_border,
         'surfaceSceneryDraw': args.surface_scenery_draw,
+        'liveSurfaceHandoff': args.live_surface_handoff,
         'sustainedWalk': args.sustained_walk,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
