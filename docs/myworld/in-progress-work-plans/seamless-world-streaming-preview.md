@@ -319,6 +319,13 @@ existing frame parser. The parser still owns framing, the receive order, and
 packet drain limits. The private game server and movement state are unchanged
 by the socket experiment.
 
+Two buffered-read attempts ended before the first walking leg. One stayed at
+login and one reached the game before the Java browser program stopped. A
+third run completed all six legs and matched the control's position and terrain
+checksums. That console capture verifies completion and does not contain frame
+timings. The private manual build keeps the control socket path while the
+candidate's startup reliability and frame pacing are under investigation.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
