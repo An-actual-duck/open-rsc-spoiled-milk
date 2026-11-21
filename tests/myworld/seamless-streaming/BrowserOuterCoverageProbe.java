@@ -278,6 +278,16 @@ public final class BrowserOuterCoverageProbe {
 			throw new IllegalStateException("Changing the prepared direction interrupted the installed world");
 		}
 		BrowserBootstrap.report("outer-coverage:prediction-retargeted:5,12->" + x + ",11");
+		int[] before = awaitSurfaceDrawBuffers();
+		int[] coverage = BrowserWebGLBridge.getSurfaceCoverageReceipt();
+		Object actor = client.getLocalPlayer();
+		verifySurfaceWalkLeg(client, walk, targetX, 550, coverage[1], actor);
+		int retained = countMatchingSurfaceDrawBuffers(before, awaitSurfaceDrawBuffers(), true);
+		if (retained != 16 || BrowserWebGLBridge.getSurfaceCoverageReceipt()[2] != 9) {
+			throw new IllegalStateException("The corner did not preserve its 16 overlapping draws and nine gameplay sources");
+		}
+		BrowserBootstrap.report("outer-coverage:diagonal:overlap=16:gameplay-terrain=9");
+
 	}
 
 	private static void awaitPreparedCenter(mudclient client, int sequence, Field field, int x, int z) throws Exception {

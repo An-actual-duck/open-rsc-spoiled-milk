@@ -685,6 +685,19 @@ path whenever their cache requires it. Firefox produced 3,274 fresh frames
 over the three crossings, with zero holds, input blocks or new load epochs.
 The longest frame gap remained 379 ms. [Prepared-reference capture](../../../output/tests/browser-gameplay-spike/live-surface-reference-handoff/firefox-result.json)
 
+The separate WebGL worker at `05d53c785` acknowledged 5,203 frames, including
+3,747 during the walk. The walking input gate stayed open. Its longest gap
+was 403 ms at the first handoff, and the draw worker recorded 5 ms on its
+last completed frame. This run leaves game-thread publication in the
+latency path. The manual preview uses the established renderer.
+[WebGL worker capture](../../../output/tests/browser-gameplay-spike/live-surface-render-worker/firefox-result.json)
+
+The direction-change run at `2de74ceec` prepared `(5,12)`, then turned north
+toward `(250,574)` through normal walk requests. The server replaced the
+prediction with `(5,11)` while the current gameplay context and movement
+generation stayed installed. Firefox recorded 695 fresh frames with zero
+holds, input blocks, or new epochs. [Direction-change capture](../../../output/tests/browser-gameplay-spike/live-surface-retarget-walk/firefox-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
