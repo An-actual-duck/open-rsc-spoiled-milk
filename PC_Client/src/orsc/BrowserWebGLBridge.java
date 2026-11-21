@@ -341,7 +341,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         int travelGeneration = LIVE_SURFACE_HANDOFF && client != null ? client.packetHandler.getPersistentMovementGeneration() : 0;
         boolean verifiedRolling = travelGeneration > 0 && travelGeneration == lastPresentedTravelGeneration
             && !surfaceDraw.isEmpty() && client.packetHandler.getVerifiedLiveSurfaceContext() > 0;
-        Set<WorldChunkBufferKey> required = verifiedRolling ? interactiveDrawKeys(presentationWorld, surfaceDraw.get(0)) : null;
+        Set<WorldChunkBufferKey> required = verifiedRolling ? interactiveDrawKeys(presentationWorld) : null;
         final int requiredSources = required != null ? required.size() : surfaceDraw.isEmpty()
             ? world.getChunkCount() : presentationWorld.getChunkCount();
         Renderer3DFrame previous=RendererFrameLighting.bind(frame);
@@ -439,15 +439,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         } finally { RendererFrameLighting.restore(previous); }
     }
 
-    private static Set<WorldChunkBufferKey> interactiveDrawKeys(Renderer3DWorldChunkFrame world,
-                                                               Renderer3DWorldChunkFrame.ChunkMesh terrain) {
-        int x = terrain.getLogicalWorldOffsetX(), z = terrain.getLogicalWorldOffsetZ();
-        int span = World.LOCAL_TILE_COUNT * 128;
+    private static Set<WorldChunkBufferKey> interactiveDrawKeys(Renderer3DWorldChunkFrame world) {
         Set<WorldChunkBufferKey> keys = new HashSet<>();
         for (Renderer3DWorldChunkFrame.ChunkMesh cell : world.getChunks()) {
-            int cx = cell.getOriginWorldX(), cz = cell.getOriginWorldZ();
-            if (cell.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS
-                || cx >= x && cz >= z && cx < x + span && cz < z + span) keys.add(chunkKey(cell));
+            if (cell.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD) keys.add(chunkKey(cell));
         }
         return keys;
     }

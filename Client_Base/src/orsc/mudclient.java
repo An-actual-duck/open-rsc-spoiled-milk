@@ -969,6 +969,10 @@ public final class mudclient implements Runnable {
 	private NativeLayeredTerrainSnapshot surfaceSceneryTerrain;
 	private SurfaceSceneryWork activeSurfaceSceneryWork;
 	private Future<List<PreparedSceneryDraw>> activeSurfaceSceneryBuild;
+	private ResidentObjectChunkInput pendingDistantSceneryInput;
+	private Future<ResidentObjectChunkBuildResult> pendingDistantScenery;
+	private final Map<Long, Long> emptyDistantScenery = new HashMap<>();
+
 	private volatile List<Renderer3DWorldChunkFrame.ChunkMesh> surfacePreparedScenery = Collections.emptyList();
 	private boolean adoptSurfaceScenery;
 	private int adoptedSurfaceScenery;
@@ -3954,9 +3958,8 @@ public final class mudclient implements Runnable {
 		this.builtStaticPresentationRevision = -1L;
 	}
 
-	void beginSurfaceSceneryDraw(NativeLayeredTerrainSnapshot terrain) {
-		clearSurfaceSceneryDraw();
-		surfaceSceneryTerrain = terrain;
+	void completeSurfaceSceneryTerrain(NativeLayeredTerrainSnapshot terrain) {
+		if (SURFACE_SCENERY_DRAW) surfaceSceneryTerrain = terrain;
 	}
 
 	void invalidateSurfaceSceneryDraw(int x, int z) {
@@ -3965,7 +3968,6 @@ public final class mudclient implements Runnable {
 	}
 
 	void stageSurfaceSceneryDraw(int x, int z, SurfaceSceneryCells.Band band, List<World.SurfaceSceneryPlacement> records) {
-		if (surfaceSceneryTerrain == null) return;
 		surfaceSceneryWork.put(SurfaceSceneryCells.key(x, z), new SurfaceSceneryWork(x, z, band, records));
 	}
 
@@ -4427,6 +4429,15 @@ public final class mudclient implements Runnable {
 				|| this.builtStaticPresentationBaseZ
 					!= this.midRegionBaseZ;
 		long inputStartNanos = System.nanoTime();
+		boolean liveSurface = LIVE_SURFACE_HANDOFF && packetHandler.getVerifiedLiveSurfaceContext() > 0;
+		ResidentObjectChunkInput distantInput = null;
+		ResidentObjectChunkBuildResult distantBuild = null;
+		if (pendingDistantScenery != null && pendingDistantScenery.isDone()) {
+			distantInput = pendingDistantSceneryInput;
+			distantBuild = completedPredictedSceneryBuild(pendingDistantScenery);
+			pendingDistantSceneryInput = null;
+			pendingDistantScenery = null;
+		}
 		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
         if(orsc.graphics.three.WholeOverworldZoneRegistry.isEnabled())captureWholeOverworldObjectCells(objectInputs);
 		long inputNanos = System.nanoTime() - inputStartNanos;
@@ -4596,6 +4607,23 @@ public final class mudclient implements Runnable {
 						continue;
 					}
 				}
+				if (liveSurface && input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS
+					&& input.liveModelCount == 0) {
+					if (distantInput != null && distantInput.cellKey == input.cellKey && matchingStaticScenery(input, distantInput)) {
+						if (distantBuild != null && distantBuild.chunk != null) {
+							Renderer3DWorldChunkFrame.ChunkMesh mesh = distantBuild.chunk.rebaseStaticObjectPresentation(
+								input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(),
+								(distantInput.baseX - input.baseX) * input.tileSize, (distantInput.baseZ - input.baseZ) * input.tileSize);
+							objectChunks.set(inputIndex, acceptResidentObjectChunkBuild(input, mesh));
+						} else if (distantBuild != null) {
+							emptyDistantScenery.put(input.cellKey, input.cacheKey);
+						}
+					} else if (pendingDistantScenery == null && !Long.valueOf(input.cacheKey).equals(emptyDistantScenery.get(input.cellKey))) {
+						pendingDistantSceneryInput = input;
+						pendingDistantScenery = residentObjectBuildExecutor.submit(() -> buildResidentObjectChunkMeshMeasured(input));
+					}
+					continue;
+				}
 				cacheMisses++;
 				if (parallelBuild) {
 					if (pendingBuilds.isEmpty()) {
@@ -4751,6 +4779,7 @@ public final class mudclient implements Runnable {
 		retainedCells.addAll(
 			this.cachedResidentObjectChunkPreviousViewCells);
 		this.cachedResidentObjectChunks.keySet().retainAll(retainedCells);
+		emptyDistantScenery.keySet().retainAll(retainedCells);
 		if (staticPresentationRebuildPending) {
 			BoundaryLoadingDiagnostics.recordStaticPresentationBuild(
 				objectInputs.size(),
@@ -5558,6 +5587,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void clearResidentObjectChunkCache() {
+		if (pendingDistantScenery != null) pendingDistantScenery.cancel(false);
+		pendingDistantSceneryInput = null;
+		pendingDistantScenery = null;
+		emptyDistantScenery.clear();
 		clearResidentStaticInputCache();
 		this.cachedResidentObjectChunks.clear();
 		this.cachedResidentObjectChunkCurrentViewCells.clear();

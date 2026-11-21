@@ -61,6 +61,7 @@ public class PacketHandler {
 		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryCells");
 	private final SurfaceSceneryCells surfaceScenery = SURFACE_SCENERY_CELLS ? new SurfaceSceneryCells() : null;
 	private int pendingLiveSurfaceContext, pendingSurfaceRolls, verifiedLiveSurfaceContext;
+	private PredictedTerrainDecode pendingPredictedTerrainDecode;
 
 	int getVerifiedLiveSurfaceContext() { return verifiedLiveSurfaceContext; }
 
@@ -280,6 +281,7 @@ public class PacketHandler {
 	}
 
 	public void resetLayeredSceneProtocolState() {
+		pendingPredictedTerrainDecode = null;
 		pendingLiveSurfaceContext = verifiedLiveSurfaceContext = 0;
 		if (pendingLayeredTerrainPrebuild != null) {
 			pendingLayeredTerrainPrebuild.cancel(true);
@@ -332,6 +334,7 @@ public class PacketHandler {
 	}
 
 	private void cancelPendingLayeredTerrainPrebuild() {
+		pendingPredictedTerrainDecode = null;
 		if (pendingLayeredTerrainPrebuild != null) {
 			pendingLayeredTerrainPrebuild.cancel(true);
 		}
@@ -1238,6 +1241,20 @@ public class PacketHandler {
 				? 0L : System.nanoTime() - bodyCopyStartedNanos;
 		final NativeLayeredTerrainSnapshot activeTerrain =
 			layeredSceneContextState.getNativeTerrainSnapshot();
+		if (mudclient.LIVE_SURFACE_HANDOFF && !nativeTerrainRecovery.isPending()
+			&& (protocolVersion == 4 || protocolVersion == 5) && "global".equals(worldSpace) && logicalLevel == 0) {
+			if (pendingPredictedTerrainDecode != null || pendingLayeredTerrainPrebuild != null
+				|| pendingLayeredTerrainHaloPrebuild != null) {
+				throw new IllegalStateException("Native terrain stage arrived before its predecessor was prepared");
+			}
+			NativeLayeredTerrainPacketDecoder.ChunkedDecode decoder = NativeLayeredTerrainPacketDecoder.beginPredictedStage(
+				body, worldSpace, logicalLevel, nativeLayeredTerrainResidentCache, activeTerrain, protocolVersion == 5);
+			pendingPredictedTerrainDecode = new PredictedTerrainDecode(decoder, protocolVersion, stageSequence,
+				contextSequence, serverTick, worldSpace, logicalLevel, bodyCopyNanos);
+			if (protocolVersion == 4) beginSurfaceSceneryPrediction(stageSequence, contextSequence,
+				decoder.centerX(), decoder.centerY(), activeTerrain);
+			return;
+		}
 		final long decodeStartedNanos =
 			BoundaryLoadingDiagnostics.now();
 		final NativeLayeredTerrainSnapshot stagedTerrain;
@@ -1294,6 +1311,13 @@ public class PacketHandler {
 			input.packetEnd = length;
 			return; // validated stage is not a replacement context or readiness receipt
 		}
+		queueLayeredTerrainStage(stagedTerrain, activeTerrain, protocolVersion, stageSequence, contextSequence,
+			serverTick, worldSpace, logicalLevel, bodyCopyNanos + decodeNanos, stageStartedNanos, false);
+	}
+
+	private void queueLayeredTerrainStage(NativeLayeredTerrainSnapshot stagedTerrain, NativeLayeredTerrainSnapshot activeTerrain,
+		int protocolVersion, int stageSequence, int contextSequence, int serverTick, String worldSpace, int logicalLevel,
+		long decodeNanos, long stageStartedNanos, boolean receivedSceneryEarly) {
 		if (pendingLayeredTerrainPrebuild != null
 			|| pendingLayeredTerrainHaloPrebuild != null) {
 			throw new IllegalStateException(
@@ -1311,8 +1335,7 @@ public class PacketHandler {
 		pendingLayeredTerrainContextSequence = contextSequence;
 		pendingLayeredTerrainWorldSpace = worldSpace;
 		pendingLayeredTerrainLogicalLevel = logicalLevel;
-		pendingLayeredTerrainDecodeNanos =
-			bodyCopyNanos + decodeNanos;
+		pendingLayeredTerrainDecodeNanos = decodeNanos;
 		pendingLayeredTerrainQueuedNanos =
 			BoundaryLoadingDiagnostics.now();
 		if (protocolVersion == 1) {
@@ -1337,13 +1360,10 @@ public class PacketHandler {
 				pollLayeredTerrainHaloReady();
 			}
 		} else if (protocolVersion == 4) {
-			if (surfaceScenery != null && activeTerrain != null && logicalLevel == 0 && "global".equals(worldSpace)) {
-				clearSurfaceSceneryPrediction();
-				int x = stagedTerrain.getCurrentChunkX(), z = stagedTerrain.getCurrentChunkY();
-				int dx = x - activeTerrain.getCurrentChunkX(), dz = z - activeTerrain.getCurrentChunkY();
-				surfaceScenery.begin(stageSequence, contextSequence, persistentMovement.generation(), x, z,
-					dx, dz, mudclient.SURFACE_SCENERY_DRAW);
-				if (mudclient.SURFACE_SCENERY_DRAW && Math.abs(dx) + Math.abs(dz) == 1) mc.beginSurfaceSceneryDraw(stagedTerrain);
+			if (activeTerrain != null && logicalLevel == 0 && "global".equals(worldSpace)) {
+				if (!receivedSceneryEarly) beginSurfaceSceneryPrediction(stageSequence, contextSequence,
+					stagedTerrain.getCurrentChunkX(), stagedTerrain.getCurrentChunkY(), activeTerrain);
+				mc.completeSurfaceSceneryTerrain(stagedTerrain);
 			}
 			if (mudclient.PREDICTED_SCENERY_PREVIEW) {
 				mc.clearPredictedScenery();
@@ -1393,10 +1413,61 @@ public class PacketHandler {
 					: " prebuild queued");
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
-		input.packetEnd = length;
+	}
+
+	private void beginSurfaceSceneryPrediction(int stage, int context, int x, int z,
+		NativeLayeredTerrainSnapshot activeTerrain) {
+		if (surfaceScenery == null) return;
+		clearSurfaceSceneryPrediction();
+		int dx = x - activeTerrain.getCurrentChunkX(), dz = z - activeTerrain.getCurrentChunkY();
+		surfaceScenery.begin(stage, context, persistentMovement.generation(), x, z, dx, dz, mudclient.SURFACE_SCENERY_DRAW);
+	}
+
+	private void pollPredictedTerrainDecode() {
+		PredictedTerrainDecode pending = pendingPredictedTerrainDecode;
+		if (pending == null) return;
+		if (!layeredSceneContextState.matchesSequence(pending.contextSequence)) {
+			pendingPredictedTerrainDecode = null;
+			return;
+		}
+		long started = System.nanoTime();
+		NativeLayeredTerrainSnapshot terrain;
+		try {
+			// Bound ingress work by a sector. The gameplay loop can keep reading movement between slices.
+			terrain = pending.decoder.advance(2_000_000L);
+		} catch (NativeLayeredTerrainResidentCache.MissingReferenceException missing) {
+			requestNativeTerrainResynchronization(pending.worldSpace, pending.level, "stage", missing);
+			return;
+		}
+		pending.decodeNanos += System.nanoTime() - started;
+		if (terrain == null) return;
+		pendingPredictedTerrainDecode = null;
+		queueLayeredTerrainStage(terrain, layeredSceneContextState.getNativeTerrainSnapshot(), pending.protocolVersion,
+			pending.stageSequence, pending.contextSequence, pending.serverTick, pending.worldSpace, pending.level,
+			pending.decodeNanos, BoundaryLoadingDiagnostics.now(), true);
+	}
+
+	private static final class PredictedTerrainDecode {
+		private final NativeLayeredTerrainPacketDecoder.ChunkedDecode decoder;
+		private final int protocolVersion, stageSequence, contextSequence, serverTick, level;
+		private final String worldSpace;
+		private long decodeNanos;
+
+		private PredictedTerrainDecode(NativeLayeredTerrainPacketDecoder.ChunkedDecode decoder, int protocolVersion,
+			int stageSequence, int contextSequence, int serverTick, String worldSpace, int level, long decodeNanos) {
+			this.decoder = decoder;
+			this.protocolVersion = protocolVersion;
+			this.stageSequence = stageSequence;
+			this.contextSequence = contextSequence;
+			this.serverTick = serverTick;
+			this.worldSpace = worldSpace;
+			this.level = level;
+			this.decodeNanos = decodeNanos;
+		}
 	}
 
 	public void pollLayeredTerrainStageReady() {
+		pollPredictedTerrainDecode();
 		if (mudclient.SURFACE_SCENERY_DRAW) mc.pollSurfaceSceneryDraw();
 		if (mc.getWorld() != null) mc.getWorld().publishPendingSurfaceCollision(pendingLayeredTerrainHaloPrebuild);
 		if (pendingLayeredTerrainHaloPrebuild != null) {
