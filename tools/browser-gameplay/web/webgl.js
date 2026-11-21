@@ -290,8 +290,24 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       finally{if(!ownedFrame?.active){gl.bindTexture(gl.TEXTURE_2D,previousTexture);gl.activeTexture(previousActive);}if(!committed&&!reuse&&texture)gl.deleteTexture(texture);}
 
     },
-    async Java_orsc_BrowserWebGLBridge_present(lib,width,height,world,matrixInput,uniformInput,drawInput,pixelInput){
+    async Java_orsc_BrowserWebGLBridge_present(lib,width,height,world,matrixInput,uniformInput,drawInput,pixelInput,
+      frameProgress=null,overlayGeneration=0,overlaySequence=0,transmittance=null){
       alive();stats.presentedOwnedState=!!ownedFrame?.active;if(spriteAtlas)spriteAtlas.assertCommitted();const submitStart=performance.now();
+      if(frameProgress!==null){
+        if(!world||frameProgress[1]!==2||frameProgress[3]<=0||frameProgress[3]!==frameProgress[4]||frameProgress[8]!==1)
+          throw new Error('Inline readiness requires complete live world coverage');
+      }
+      if(transmittance!==null){
+        if(frameProgress===null||!overlay)throw new Error('Inline coverage requires a prepared live world compositor');
+        try{
+          overlay.prepare(width,height,1,overlayGeneration,overlaySequence,0,false,typed(transmittance,Float32Array));
+        }catch(error){stats.backendFailed=true;throw error;}
+        stats.inlineOverlayFrames=(stats.inlineOverlayFrames||0)+1;
+      }
+      if(frameProgress!==null){
+        worldReady.declare(frameProgress);
+        stats.inlineWorldProgressFrames=(stats.inlineWorldProgressFrames||0)+1;
+      }
       // Validate BEFORE timer allocation or ANY shadow/retained/sky/world draw.
       uploadValidation.beforeDraw();
       if(gpuTimer){while(pendingQueries.length&&gl.getQueryParameter(pendingQueries[0],gl.QUERY_RESULT_AVAILABLE)){const q=pendingQueries.shift();if(!gl.getParameter(gpuTimer.GPU_DISJOINT_EXT)){stats.gpuWorkSamples.push(gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6);if(stats.gpuWorkSamples.length>(stats.measurement?4096:600))stats.gpuWorkSamples.shift();}gl.deleteQuery(q);}}

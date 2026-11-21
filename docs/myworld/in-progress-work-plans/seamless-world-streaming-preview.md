@@ -819,6 +819,21 @@ three crossings with zero loading holds or sampled input blocks. These
 browser timings describe one matched pair of runs.
 [Baseline walk](../../../output/tests/browser-gameplay-spike/live-surface-sprite-opt-baseline/firefox-result.json) · [Optimized walk](../../../output/tests/browser-gameplay-spike/live-surface-sprite-opt-candidate/firefox-result.json) · [Isolated raster timings](../../../output/tests/seamless-world-streaming/browser-sprite-raster-matching/benchmark.log)
 
+The finer stage trace separated sprite raster work, native atlas planning
+and submission, overlay preparation, world progress, draw selection, and
+presentation. A trial skipped the separate atlas plan when the last frame
+already owned every current sprite. It applied to 123 of 3,721 atlas
+submissions and was removed after the route showed slightly more long gaps.
+The next change combines readiness and the full overlay plane with the live
+frame submission, using the existing source and overlay validation. Loading,
+retained images, and overlay resets still use their separate declarations.
+The combined run batched both calls on 3,257 frames and completed all three
+crossings and the reversal on one epoch with zero holds or sampled input
+blocks. Compared with the stage baseline, the longest gap went from 231 to
+182 ms and gaps of at least 100 ms went from 14 to 16. The matched pair shows
+a smaller worst gap and limited evidence about overall pacing.
+[Stage baseline](../../../output/tests/browser-gameplay-spike/live-surface-frame-stage-baseline/firefox-result.json) · [Atlas trial](../../../output/tests/browser-gameplay-spike/live-surface-resident-atlas-candidate/firefox-result.json) · [Combined frame capture](../../../output/tests/browser-gameplay-spike/live-surface-inline-overlay-retry/firefox-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
@@ -883,7 +898,8 @@ pass the run to `analyze-travel-trace.py`. For a low-overhead control, keep
 the sustained route and streaming features, remove `--trace` and
 `--travel-trace`, and add `--presentation-only`. This records fresh WebGL
 submission gaps from the page and checks the same actor and server-confirmed
-endpoint. For a manual trace, stage with
+endpoint. Add `--frame-stages` for the narrower bridge-stage timings. For a
+manual trace, stage with
 `--manual --travel-trace` and serve it with `--travel-log
 <run>/manual-travel.ndjson`. Omit `--travel-trace` for an ordinary manual
 play build. The normal private server startup is the same.

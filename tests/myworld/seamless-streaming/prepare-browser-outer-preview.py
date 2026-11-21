@@ -42,6 +42,7 @@ def main():
     parser.add_argument('--prepare-incoming-scenery', action='store_true', help='Clone incoming interactive object models before their authoritative update')
     parser.add_argument('--travel-trace', action='store_true', help='Record real submitted frames and server positions through extended travel')
     parser.add_argument('--presentation-only', action='store_true', help='Check sustained travel without detailed Java or server tracing')
+    parser.add_argument('--frame-stages', action='store_true', help='Sample individual renderer stages during the presentation control')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
     parser.add_argument('--slice-preupload', action='store_true', help='Pack large speculative vertex buffers across frames')
     parser.add_argument('--socket-read-ahead', action='store_true', help='Buffer available socket bytes before the Java packet drain')
@@ -66,6 +67,8 @@ def main():
         parser.error('The automated sustained walk requires travel or presentation sampling')
     if args.presentation_only and (not (args.sustained_walk and args.live_surface_handoff) or args.trace or args.travel_trace):
         parser.error('Presentation-only sampling requires untraced sustained live-surface travel')
+    if args.frame_stages and not args.presentation_only:
+        parser.error('Frame stage timing requires the presentation control')
     if args.hold_optional_terrain and not (args.retarget_walk and args.surface_mesh_worker and not args.manual):
         parser.error('The fringe hold requires the automated retarget walk and the terrain worker')
     if args.steady_walk and (args.manual or args.sustained_walk or args.retarget_walk or not args.live_surface_handoff):
@@ -131,6 +134,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserPrepareIncomingScenery", "{str(args.prepare_incoming_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserTravelTrace", "{str(args.travel_trace).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPresentationOnly", "{str(args.presentation_only).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserFrameStageTrace", "{str(args.frame_stages).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSlicePreupload", "{str(args.slice_preupload).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSocketReadAhead", "{str(args.socket_read_ahead).lower()}");\n'
            f'        System.setProperty("spoiledmilk.persistentMovementPreview", "{str(args.persistent_movement).lower()}");\n'
@@ -174,8 +178,12 @@ def main():
     java_sources = [str(bootstrap)]
     if not args.manual:
         insert(web / 'browser.js', '  Java_orsc_BrowserWebGLBridge_loadingWork:',
-               "  Java_orsc_browser_BrowserOuterCoverageProbe_loginReady:()=>window.browserProof.state?.mode==='LOGIN'\n"
-               "    && window.browserProof.events.some(event=>event.message==='WebSocket closed')?1:0,\n"
+               "  Java_orsc_browser_BrowserOuterCoverageProbe_loginReady:()=>{\n"
+               "    const proof=window.browserProof;\n"
+               "    const closed=proof.events.findIndex(event=>event.message==='WebSocket closed');\n"
+               "    return proof.state?.mode==='LOGIN'&&closed>=0\n"
+               "      &&!proof.events.slice(closed+1).some(event=>event.message==='Private WebSocket connected')?1:0;\n"
+               "  },\n"
                "  Java_orsc_browser_BrowserOuterCoverageProbe_worldInputReady:()=>window.browserWorldInputAllowed()?1:0,\n"
                "  Java_orsc_browser_BrowserOuterCoverageProbe_worldReady:()=>gpu?.stats.worldReadiness?.phase==='ready'?1:0,")
         java_sources.append(str(Path(__file__).with_name('BrowserOuterCoverageProbe.java')))
@@ -233,6 +241,7 @@ def main():
         'prepareIncomingScenery': args.prepare_incoming_scenery,
         'travelTrace': args.travel_trace,
         'presentationOnly': args.presentation_only,
+        'frameStages': args.frame_stages,
         'slicePreupload': args.slice_preupload,
         'socketReadAhead': args.socket_read_ahead,
         'persistentMovement': args.persistent_movement,

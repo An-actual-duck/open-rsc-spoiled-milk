@@ -162,6 +162,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final long PREDICTED_PACK_SLICE_NANOS = 4_000_000L;
     private static final boolean TRAVEL_TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
         && Boolean.getBoolean("spoiledmilk.browserTravelTrace");
+    private static final boolean FRAME_STAGE_TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+        && Boolean.getBoolean("spoiledmilk.browserFrameStageTrace");
+    // Sprite gather/plan/submit, overlay, world progress, draw list, present.
+    private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[7] : null;
     private static final long PREDICTED_BUFFER_BUDGET = (COMPACT_SCENERY ? 64L : 48L) * 1024 * 1024;
     private static final long PREDICTED_UPLOAD_INTERVAL_NANOS = 75_000_000L;
     private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
@@ -237,7 +241,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void uploadTexture(int id,int width,int height,int[] rgba,boolean transparency);
     private static native void replaceChunk(int id,float[] vertices,int[] indices,int[] batches);
     private static native void deleteTextures(int[] ids);
-    private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
+    private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay,
+        int[] progress,double overlayGeneration,double overlaySequence,float[] transmittance);
     private static native void frameWork(float[] milliseconds,int[] pose);
     private static native void worldProgress(int[] metadata);
     private static native void regionTransition(boolean ordinaryWalking);
@@ -261,7 +266,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         PreparedOverlay(WorldOverlayCoverage.Frame frame,WorldOverlayCoverage.Delta delta){this.frame=frame;this.delta=delta;}
     }
     private void acknowledgeOverlay(PreparedOverlay prepared){
-        if(prepared!=null){prepared.frame.acknowledgeDeltaTransport(prepared.delta);overlayDeltaReset=false;}
+        if(prepared!=null&&prepared.delta!=null){prepared.frame.acknowledgeDeltaTransport(prepared.delta);overlayDeltaReset=false;}
     }
 
     private static native void deleteChunks(int[] ids);
@@ -322,10 +327,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.SKY);
             exportSky(null);
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.OVERLAY);
-            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface);
+            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface,false);
             if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}
             worldProgress(progress);
-            present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image));
+            present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image),null,0,0,null);
             acknowledgeOverlay(preparedOverlay);
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=4;
             return;
@@ -425,15 +430,33 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             exportSky(frame);
             long skyEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.OVERLAY);
-            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface);
+            // Verified live frames can send their readiness and fresh overlay
+            // with the draw. Loading, retention and resets declare separately.
+            boolean inlineProgress=verifiedRolling && progress[1]==BrowserWorldLoadState.WORLD
+                && readySources==requiredSources;
+            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface,inlineProgress);
+            long overlayDeclared=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
             if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}
-            progress[6]=progress[7]=spriteGroups;worldProgress(progress);
+            progress[6]=progress[7]=spriteGroups;
+            if(!inlineProgress)worldProgress(progress);
+            long progressSubmitted=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
             int[] presentedPose = TRAVEL_TRACE && client != null && client.getLocalPlayer() != null
                 ? travelPose(frame, client) : pose(frame);
             OptionalSurfaceDraw optional = LIVE_OUTER_SURFACE_DRAW && authority && !surfaceDraw.isEmpty()
                 && readySources == requiredSources ? optionalSurfaceDraw(frame, surfaceDraw, draws) : null;
             if (optional != null) draws = optional.draws;
-            present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
+            long submitStart=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+            WorldOverlayCoverage.Frame inlineOverlay=preparedOverlay!=null&&preparedOverlay.delta==null
+                ? preparedOverlay.frame : null;
+            present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image),inlineProgress?progress:null,
+                inlineOverlay==null?0:inlineOverlay.generation,inlineOverlay==null?0:inlineOverlay.frameSequence,
+                inlineOverlay==null?null:inlineOverlay.transmittance);
+            if(FRAME_STAGE_TRACE){
+                frameStageWork[3]=(overlayDeclared-skyEnd)/1000000f;
+                frameStageWork[4]=(progressSubmitted-overlayDeclared)/1000000f;
+                frameStageWork[5]=(submitStart-progressSubmitted)/1000000f;
+                frameStageWork[6]=(System.nanoTime()-submitStart)/1000000f;
+            }
             acknowledgeOverlay(preparedOverlay);
             loadState.presented(OVERLAY_COVERAGE&&authority,requiredSources,readySources,remainingRepacks);
             if (authority && progress[1] == BrowserWorldLoadState.WORLD) lastPresentedTravelGeneration = travelGeneration;
@@ -451,6 +474,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 frameStats=Arrays.copyOf(frameStats,15+mudclient.TRAVEL_TIMING_VALUES);
                 frameStats[14]=(stagingEnd-geometryEnd)/1000000f;
                 if(client!=null)client.drainTravelTimings(frameStats,15);
+            }
+            if(FRAME_STAGE_TRACE){
+                int offset=15+mudclient.TRAVEL_TIMING_VALUES;
+                frameStats=Arrays.copyOf(frameStats,offset+frameStageWork.length);
+                System.arraycopy(frameStageWork,0,frameStats,offset,frameStageWork.length);
             }
             frameWork(frameStats,presentedPose);
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=3;
@@ -900,7 +928,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             return (mudclient)mainClientField.get(null);
         } catch(ReflectiveOperationException e){throw new IllegalStateException("Browser cannot inspect its current surface",e);}
     }
-    private PreparedOverlay prepareOverlay(BufferedImage image,GraphicsController surface) {
+    private PreparedOverlay prepareOverlay(BufferedImage image,GraphicsController surface,boolean inline) {
         if(!OVERLAY_COVERAGE)return null;
         PreparedOverlay prepared=null;
         if(GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE&&surface!=null)surface.observeOverlayJournalBarrier(OverlayJournalObserver.AWT);
@@ -928,6 +956,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                     delta.baseGeneration,delta.baseFrameSequence,delta.bands(),delta.work(),pixels,coverage.transmittance);
                 }
                 prepared=new PreparedOverlay(coverage,delta);
+            }else if(inline&&!reset&&!OVERLAY_DELTA&&coverage.mode==WorldOverlayCoverage.MODE_WORLD){
+                prepared=new PreparedOverlay(coverage,null);
             }else{
                 if(OVERLAY_DELTA)overlayDeltaReset=true;
                 overlayFrame(width,height,coverage.mode,coverage.generation,coverage.frameSequence,coverage.retainedFadeCount,reset,coverage.transmittance);
@@ -962,6 +992,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         lightingFrame(light.values);
     }
     private int uploadSprites(Renderer3DFrame frame) {
+        long start=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
         if(frame.getWorldSpriteSnapshotCount()>1024)throw new IllegalStateException("Browser world sprite count exceeds capacity");
         BrowserWorldSpriteBatch batch=new BrowserWorldSpriteBatch();
         // Strong references protect the entire gathered frame from CPU LRU evictions.
@@ -981,8 +1012,15 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         }
         if(spriteSequence>=9007199254740991L)throw new IllegalStateException("Sprite sequence exhausted");
         long sequence=++spriteSequence;int epoch=spriteCache.getEpoch();
+        long gathered=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
         int[] missing=planWorldSprites(epoch,sequence,batch.descriptors());
+        long planned=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
         commitWorldSprites(epoch,sequence,batch.pixels(missing),batch.vertices());
+        if(FRAME_STAGE_TRACE){
+            frameStageWork[0]=(gathered-start)/1000000f;
+            frameStageWork[1]=(planned-gathered)/1000000f;
+            frameStageWork[2]=(System.nanoTime()-planned)/1000000f;
+        }
         return batch.size();
     }
     static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {

@@ -58,7 +58,8 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
             if (gpu.lastFrame !== last) {
                 if (last !== undefined && gpu.lastFrame - last >= 50) {
                     samples.gaps.push({from: last, to: gpu.lastFrame, geometryUploadBytes: gpu.uploadedBytes - lastUploadBytes,
-                        bridgeWork: gpu.javaBridgeWorkSamples.at(-1)});
+                        bridgeWork: gpu.javaBridgeWorkSamples.at(-1), javascriptSubmissionMs: gpu.jsSubmissionSamples.at(-1),
+                        bridgeSampleCurrent: gpu.javaWorldFrames === gpu.javaBridgeReportedWorldFrames});
                     if (samples.gaps.length > 256) samples.gaps.shift();
                 }
                 last = gpu.lastFrame;
@@ -168,6 +169,8 @@ def run_walk(run, driver_port):
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
+                atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
+                inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
                 presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'

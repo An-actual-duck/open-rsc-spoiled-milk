@@ -26,7 +26,12 @@ class FakeWorker {
       natives[endpoint('worldProgress')]=async()=>{};
       natives[endpoint('lightingFrame')]=async(lib,v)=>{self.bufferWords.push(Array.from(new Uint32Array(v.buffer,v.byteOffset,v.length)));};
       natives[endpoint('overlayFrame')]=async()=>{};
-      natives[endpoint('present')]=async(lib,w,h,world)=>{self.stats.javaFrames++;if(world)self.stats.javaWorldFrames++;self.output=sizer.size(w,h);};
+      natives[endpoint('present')]=async(lib,w,h,world,matrices,uniforms,draws,pixels,progress,generation,sequence,coverage)=>{
+        if(progress)self.inlineProgress={progress:Array.from(progress),generation,sequence,firstCoverage:coverage?.[0]};
+        self.stats.javaFrames++;
+        if(world)self.stats.javaWorldFrames++;
+        self.output=sizer.size(w,h);
+      };
       natives[endpoint('frameWork')]=async()=>{self.stats.javaBridgeReportedWorldFrames=self.stats.javaWorldFrames;};
       this.replay=createRenderWorkerReplay({backend:{stats:this.stats,natives,dispose(){self.stats.disposed=true;self.stats.gpuBytes=0;self.stats.spriteResourceBytes=0;}},outputSizer:sizer});
       queueMicrotask(()=>this.emit({type:'ready',version:1}));return;
@@ -48,14 +53,20 @@ check(await gpu.natives[endpoint('initialize')](null,'#version 120\nx','#version
 gpu.stats.measurement=true;
 const raw=new Uint32Array([0x7fc00001,0x80000000,0x3f800000]),plane=new Float32Array(raw.buffer);
 await gpu.natives[endpoint('lightingFrame')](null,plane);raw[0]=0;raw[1]=0;
-await gpu.natives[endpoint('worldProgress')](null,new Int32Array(12));
 await gpu.natives[endpoint('overlayFrame')](null,960,540,0,1,1,0,false,null);
-await gpu.natives[endpoint('present')](null,960,540,true,new Float32Array(48),new Float32Array(30),new Int32Array(0),new Int32Array(960*540));
+const progress=Int32Array.of(1,2,1,9,9,0,0,0,1,960,540,0);
+const generation=4294967328,sequence=generation+7,coverage=new Float32Array(960*540);
+coverage[0]=.75;
+const declared={progress:Array.from(progress),generation,sequence,firstCoverage:.75};
+await gpu.natives[endpoint('present')](null,960,540,true,new Float32Array(48),new Float32Array(30),new Int32Array(0),
+  new Int32Array(960*540),progress,generation,sequence,coverage);
+progress.fill(0);coverage.fill(0);
 check(gpu.stats.renderWorker.submittedFrames===0,'World frame remains staged before receipt');
 await gpu.natives[endpoint('frameWork')](null,new Float32Array(14),new Int32Array(14));
 await gpu.drain();
 check(gpu.stats.javaFrames===1&&gpu.stats.javaBridgeReportedWorldFrames===1);
 check(gpu.stats.renderWorker.completedFrames===1);
+assert.deepEqual(worker.inlineProgress,declared);checks++;
 check(worker.bufferWords[0][0]===0x7fc00001&&worker.bufferWords[0][1]===0x80000000,'Owned raw float bits survive source mutation');
 check(worker.output.width===1843&&worker.output.height===1037,'Actual main CSS metrics preserved');
 check(plane.buffer.byteLength===12,'Java/source storage never detached');

@@ -51,20 +51,20 @@ public final class BrowserOuterCoverageProbe {
 		}
 		String password = System.getProperty("spoiledmilk.outerCoverageFixturePassword");
 		if (password == null) throw new IllegalStateException("No disposable account configured");
-		field(mudclient.class, "loginScreenNumber").setInt(client, 2);
-		Thread.sleep(250);
-		Panel panel = (Panel) loginPanel.get(client);
 		Field clicked = field(Panel.class, "controlClicked");
-		panel.setText(field(mudclient.class, "controlLoginUser").getInt(client), "browserdemo");
-		panel.setText(field(mudclient.class, "controlLoginPass").getInt(client), password);
-		boolean[] loginButtons = (boolean[]) clicked.get(panel);
-		loginButtons[field(mudclient.class, "m_be").getInt(client)] = true;
+		submitLogin(client, loginPanel, clicked, password);
+		long retryLoginAt = System.currentTimeMillis() + 5_000;
 
 		Field appearanceVisible = field(mudclient.class, "showAppearanceChange");
 		Field appearancePanel = field(mudclient.class, "panelAppearance");
 		Field appearanceButton = field(mudclient.class, "controlButtonAppearanceAccept");
 		deadline = System.currentTimeMillis() + 90_000;
 		while (System.currentTimeMillis() < deadline) {
+			if (System.currentTimeMillis() >= retryLoginAt && loginReady() == 1) {
+				BrowserBootstrap.report("outer-coverage:retrying-unsubmitted-login");
+				submitLogin(client, loginPanel, clicked, password);
+				retryLoginAt = Long.MAX_VALUE;
+			}
 			if (appearanceVisible.getBoolean(client)) {
 				boolean[] buttons = (boolean[]) clicked.get(appearancePanel.get(client));
 				buttons[appearanceButton.getInt(client)] = true;
@@ -146,6 +146,16 @@ public final class BrowserOuterCoverageProbe {
 			Thread.sleep(12);
 		}
 		throw new IllegalStateException("Route stopped at " + worldX(client) + "," + worldZ(client));
+	}
+
+	private static void submitLogin(mudclient client, Field loginPanel, Field clicked, String password) throws Exception {
+		field(mudclient.class, "loginScreenNumber").setInt(client, 2);
+		Thread.sleep(250);
+		Panel panel = (Panel) loginPanel.get(client);
+		panel.setText(field(mudclient.class, "controlLoginUser").getInt(client), "browserdemo");
+		panel.setText(field(mudclient.class, "controlLoginPass").getInt(client), password);
+		boolean[] loginButtons = (boolean[]) clicked.get(panel);
+		loginButtons[field(mudclient.class, "m_be").getInt(client)] = true;
 	}
 
 	private static int worldX(mudclient client) { return client.getMidRegionBaseX() + client.getLocalPlayerX(); }
