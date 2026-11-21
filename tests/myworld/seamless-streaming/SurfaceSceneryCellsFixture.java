@@ -29,8 +29,15 @@ public final class SurfaceSceneryCellsFixture {
 		require(state.cell(8, 2, 4, 6, 12) == null, "reversal retained an old prediction");
 		require(state.cell(9, 2, 4, 3, 10) != null, "south edge start missing");
 		require(state.cell(9, 2, 4, 5, 10) != null, "south edge end missing");
+		require(state.cell(9, 2, 4, 4, 9) == null, "play-only subscription includes a draw cell");
+		state.begin(10, 2, 4, 4, 11, 0, -1, true);
+		require(state.cell(10, 2, 4, 2, 9).band == SurfaceSceneryCells.Band.ENTERING_DRAW, "south draw edge missing");
+		require(state.cell(10, 2, 4, 4, 10).band == SurfaceSceneryCells.Band.ENTERING_PLAY, "south play edge missing");
+		require(state.cell(10, 2, 4, 3, 13).band == SurfaceSceneryCells.Band.LEAVING_PLAY, "north play edge missing");
+		require(state.cell(10, 2, 4, 2, 13) == null, "unchanged presentation crossed ownership");
+		require(state.cell(10, 2, 4, 4, 11) == null, "overlapping gameplay was subscribed");
 		state.reset();
-		require(state.cell(9, 2, 4, 3, 10) == null, "scope reset retained a cell");
+		require(state.cell(10, 2, 4, 2, 9) == null, "scope reset retained a draw cell");
 		System.out.println("PASS authoritative surface scenery revisions and scope");
 	}
 

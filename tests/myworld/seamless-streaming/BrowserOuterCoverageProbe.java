@@ -231,7 +231,8 @@ public final class BrowserOuterCoverageProbe {
 		} while (System.currentTimeMillis() < deadline);
 		throw new IllegalStateException("No ready scenery cells joined the live view. Meshes prepared="
 			+ client.getPreparedSurfaceSceneryDraws().size() + " " + BrowserWebGLBridge.getPredictedTerrainReceipt()
-			+ " " + BrowserWebGLBridge.getSceneUploadReceipt());
+			+ " " + BrowserWebGLBridge.getSceneUploadReceipt()
+			+ " publication counts=" + Arrays.toString(BrowserWebGLBridge.getSceneryPublicationCounts()));
 	}
 
 	private static int[] awaitLiveOuterDrawBuffers(mudclient client, int scene) throws InterruptedException {
