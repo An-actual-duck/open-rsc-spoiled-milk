@@ -661,6 +661,21 @@ The worker removes a source of contention during lookahead. Exact window
 installation and the Java render/packing path still have work on the frame
 owner. [Isolated mesher capture](../../../output/tests/browser-gameplay-spike/live-surface-isolated-mesher/firefox-result.json)
 
+The follow-up at `fea024cbb` exposed the five entering terrain cells before
+the first authoritative context changed. Firefox completed the three crossings
+with 3,330 fresh frames and zero loading or input blocks. The longest
+submission gap was 353 ms. The signed-map fixture produced byte-identical
+terrain, walls, and roofs when using the worker footprint instead of the full
+source field. [Progressive publication capture](../../../output/tests/browser-gameplay-spike/live-surface-incremental-publication/firefox-result.json)
+
+The native run used the same route in a separate virtual display. All three
+crossings completed with one movement generation and the same player instance.
+It retained 18, 2, and 10 nearby NPC instances at the respective crossings,
+with zero replacements of shared NPCs. The three crossing legs had maximum
+Java frame gaps of 28, 27, and 27 ms. The initial approach recorded a 123 ms
+gap. The disposable native account was protected from incidental combat after
+an earlier run died on the route. [Native travel log](../../../output/tests/seamless-world-streaming/live-surface-native-travel/native-travel.log)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

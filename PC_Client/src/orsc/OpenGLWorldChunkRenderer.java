@@ -3177,10 +3177,21 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return clampLegacyLight(legacyLight + Math.round(shadow * 230.0f));
 	}
 
-	private int[] buildChunkSmoothDiffuseLights(Renderer3DWorldChunkFrame.ChunkMesh chunk, int vertexCount) {
+	private static int[] buildChunkSmoothDiffuseLights(Renderer3DWorldChunkFrame.ChunkMesh chunk, int vertexCount) {
+		boolean flat = RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.FACETED
+			|| RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.WIRE;
+		int[] prepared = chunk.borrowPreparedDiffuseLighting(flat);
+		return prepared == null ? buildChunkDiffuseLighting(chunk, vertexCount, flat) : prepared;
+	}
+
+	static void prepareSurfaceDiffuseLighting(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		int count = chunk.getVertexCount();
+		chunk.setPreparedDiffuseLighting(buildChunkDiffuseLighting(chunk, count, false), buildChunkDiffuseLighting(chunk, count, true));
+	}
+
+	private static int[] buildChunkDiffuseLighting(Renderer3DWorldChunkFrame.ChunkMesh chunk, int vertexCount, boolean flat) {
 		int[] diffuseLights = new int[vertexCount];
-		if (RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.FACETED
-			|| RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.WIRE) {
+		if (flat) {
 			int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
 			for (int triangle = 0; triangle < triangleCount; triangle++) {
 				int faceDiffuse = chunkFaceDiffuseLight(chunk, triangle);
@@ -3239,7 +3250,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return diffuseLights;
 	}
 
-	private boolean isChunkVertexIndexValid(
+	private static boolean isChunkVertexIndexValid(
 		Renderer3DWorldChunkFrame.ChunkMesh chunk,
 		int vertex,
 		int expectedVertexCount) {
@@ -3414,7 +3425,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return clampLegacyLight(legacyLight);
 	}
 
-	private int chunkFaceDiffuseLight(Renderer3DWorldChunkFrame.ChunkMesh chunk, int triangle) {
+	private static int chunkFaceDiffuseLight(Renderer3DWorldChunkFrame.ChunkMesh chunk, int triangle) {
 		int sourceIndex = triangle * 3;
 		if (triangle < 0 || sourceIndex + 2 >= chunk.getIndexCount()) {
 			return 0;

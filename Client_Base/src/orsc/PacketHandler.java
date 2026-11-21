@@ -1134,8 +1134,7 @@ public class PacketHandler {
 			phaseStartedNanos == 0L
 				? 0L : System.nanoTime() - phaseStartedNanos);
 		String summary = getLayeredSceneContextDebugSummary();
-		System.out.println(summary);
-		ClientRuntimeLogger.log(summary);
+		logTerrainStreaming(summary);
 		packetsIncoming.packetEnd = length;
 	}
 
@@ -3759,8 +3758,7 @@ public class PacketHandler {
 				"ATOMIC_SCENE_FENCE seq "
 					+ locationContextSequence + " "
 					+ fenceResult.summary();
-			System.out.println(fenceSummary);
-			ClientRuntimeLogger.log(fenceSummary);
+			logTerrainStreaming(fenceSummary);
 			if (pendingLiveSurfaceContext == locationContextSequence && layeredSceneActivationState.isPending()) {
 				pendingLiveSurfaceContext = 0;
 				NativeLayeredTerrainSnapshot terrain = layeredSceneContextState.getNativeTerrainSnapshot();
@@ -4082,8 +4080,7 @@ public class PacketHandler {
 		final String summary =
 			"ATOMIC_SCENE_ACTIVATION "
 				+ layeredSceneActivationState.summary();
-		System.out.println(summary);
-		ClientRuntimeLogger.log(summary);
+		logTerrainStreaming(summary);
 	}
 
 	private void addBaselineGameObject(SceneBaselineState.Record record, boolean reuse) {

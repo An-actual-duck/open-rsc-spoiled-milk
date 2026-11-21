@@ -1,6 +1,7 @@
 package orsc.browser;
 
 import com.openrsc.client.entityhandling.EntityHandler;
+import orsc.BrowserWebGLBridge;
 import orsc.Config;
 import orsc.WorldBuilderTerrainBootstrap;
 import orsc.graphics.three.World;
@@ -23,6 +24,6 @@ public final class BrowserSurfaceMeshWorker {
             custom = customSprites;
         }
         if (custom != customSprites) throw new IllegalStateException("Surface worker definitions changed");
-        return world.buildSurfaceMeshPacket(source, offsetX, offsetZ, dx, dz, withRoofs);
+        return world.buildSurfaceMeshPacket(source, offsetX, offsetZ, dx, dz, withRoofs, BrowserWebGLBridge::prepareWorkerSurfaceLighting);
     }
 }

@@ -291,6 +291,23 @@ public final class Renderer3DWorldChunkFrame {
 		private final int chunkRole;
 		private final long storageSignature;
 		private final long signature;
+		private int[] preparedSmoothDiffuse, preparedFlatDiffuse;
+
+		/** Prepared by the detached renderer before it publishes this mesh. */
+		public void setPreparedDiffuseLighting(int[] smooth, int[] flat) {
+			if (smooth.length != getVertexCount() || flat.length != getVertexCount()
+				|| preparedSmoothDiffuse != null || preparedFlatDiffuse != null) {
+				throw new IllegalArgumentException("Prepared diffuse lighting does not match mesh vertices");
+			}
+			preparedSmoothDiffuse = smooth;
+			preparedFlatDiffuse = flat;
+		}
+
+		/** Read-only prepared inputs, or null for a mesh built by the regular renderer. */
+		public int[] borrowPreparedDiffuseLighting(boolean flat) {
+			return flat ? preparedFlatDiffuse : preparedSmoothDiffuse;
+		}
+
 		private int worldEditorTerrainGridAxis;
 		private int[] worldEditorTerrainGridHeights = new int[0];
 		private int worldEditorTerrainGridSignature;
@@ -985,6 +1002,8 @@ public final class Renderer3DWorldChunkFrame {
 			this.vertexTextureU = source.vertexTextureU;
 			this.vertexTextureV = source.vertexTextureV;
 			this.vertexLights = source.vertexLights;
+			this.preparedSmoothDiffuse = source.preparedSmoothDiffuse;
+			this.preparedFlatDiffuse = source.preparedFlatDiffuse;
 			this.vertexNormalX = source.vertexNormalX;
 			this.vertexNormalY = source.vertexNormalY;
 			this.vertexNormalZ = source.vertexNormalZ;

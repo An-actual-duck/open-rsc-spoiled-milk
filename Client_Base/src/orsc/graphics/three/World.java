@@ -1019,13 +1019,20 @@ public final class World {
 	/** Entry point for the separate renderer VM. It has the same archive definitions and no game session. */
 	public byte[] buildSurfaceMeshPacket(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs)
 		throws IOException {
+		return buildSurfaceMeshPacket(source, offsetX, offsetZ, dx, dz, includeRoofs, null);
+	}
+
+	public byte[] buildSurfaceMeshPacket(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs,
+		java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
 		NativeLayeredTerrainSnapshot terrain = NativeLayeredTerrainSnapshot.readSurfaceWorkerSource(source);
 		int x = worldTileToSection(Math.addExact(Math.multiplyExact(terrain.getCurrentChunkX(), SECTION_SIZE), offsetX));
 		int z = worldTileToSection(Math.addExact(Math.multiplyExact(terrain.getCurrentChunkY(), SECTION_SIZE), offsetZ));
 		WorldGpuChunkMesh geometry = buildPresentationGeometry(0, x, z, terrain, offsetX, offsetZ, includeRoofs, false, null);
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
-			output.writeObject(geometry.toRenderer3DFixedSurfaceCell());
+			Renderer3DWorldChunkFrame.ChunkMesh fixed = geometry.toRenderer3DFixedSurfaceCell();
+			if (fixed != null && prepareDrawInputs != null) prepareDrawInputs.accept(fixed);
+			output.writeObject(fixed);
 			output.writeObject(geometry.toRenderer3DWorldPresentationCell(dx, dz));
 		}
 		return bytes.toByteArray();

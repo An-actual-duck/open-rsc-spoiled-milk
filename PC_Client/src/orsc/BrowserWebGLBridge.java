@@ -19,6 +19,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     public static String getOverlayRectMode(){return isOverlayDeltaTransportEnabled()
         ? System.getProperty("spoiledmilk.browserOverlayRectMode","off") : "off";}
     private static final boolean WHOLE_ZONE=WholeOverworldZoneRegistry.isEnabled();
+    public static void prepareWorkerSurfaceLighting(Renderer3DWorldChunkFrame.ChunkMesh mesh) {
+        OpenGLWorldChunkRenderer.prepareSurfaceDiffuseLighting(mesh);
+    }
+
     private BrowserWholeOverworldZone wholeZone;
     private BrowserWholeOverworldRam wholeRam;
     private static final int[] WHOLE_RAM_FAILED_WORK=new int[]{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
