@@ -834,6 +834,11 @@ blocks. Compared with the stage baseline, the longest gap went from 231 to
 a smaller worst gap and limited evidence about overall pacing.
 [Stage baseline](../../../output/tests/browser-gameplay-spike/live-surface-frame-stage-baseline/firefox-result.json) · [Atlas trial](../../../output/tests/browser-gameplay-spike/live-surface-resident-atlas-candidate/firefox-result.json) · [Combined frame capture](../../../output/tests/browser-gameplay-spike/live-surface-inline-overlay-retry/firefox-result.json)
 
+The same build passed the delayed diagonal route with the WebGL render
+worker. It crossed while the nine optional terrain meshes were held and
+reported 206 frames carrying both declarations. The walk had zero holds,
+input blocks, or new load epochs. [Render worker capture](../../../output/tests/browser-gameplay-spike/live-surface-inline-overlay-worker-proof/firefox-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
