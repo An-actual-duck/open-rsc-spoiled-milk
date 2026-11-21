@@ -130,7 +130,10 @@ public final class mudclient implements Runnable {
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
 	private static final boolean TRACE_BROWSER_TRAVEL = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.browserTravelTrace");
-	private final long[] travelWorkNanos = TRACE_BROWSER_TRAVEL ? new long[4] : null;
+	public static final int TRAVEL_TIMING_VALUES = 9;
+	private final long[] travelWorkNanos = TRACE_BROWSER_TRAVEL ? new long[7] : null;
+	private long slowestTravelPacketNanos;
+	private int slowestTravelPacketOpcode = -1;
 	static final boolean PREDICTED_SCENERY_PREVIEW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
 	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
@@ -2562,7 +2565,9 @@ public final class mudclient implements Runnable {
 	private void checkConnection() {
 		try {
 
+			long pollStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 			this.packetHandler.pollLayeredTerrainStageReady();
+			if (TRACE_BROWSER_TRAVEL) travelWorkNanos[4] += System.nanoTime() - pollStart;
 			long var2 = GenUtil.currentTimeMillis();
 			if (this.packetHandler.getClientStream().hasFinishedPackets()) {
 				this.lastWrite = var2;
@@ -2598,18 +2603,27 @@ public final class mudclient implements Runnable {
 					this.packetHandler
 						.isLayeredTerrainActivationHaloPrebuildPending(),
 					this.packetHandler.hasLayeredSceneContext())) {
+				long readStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 				int len = this.packetHandler.getClientStream()
 					.readIncomingPacket(
 						this.packetHandler.getPacketsIncoming());
+				if (TRACE_BROWSER_TRAVEL) travelWorkNanos[5] += System.nanoTime() - readStart;
 				if (len <= 0) {
 					break;
 				}
 				boolean wasActivationPending =
 					this.layeredSceneActivationPending;
-				this.packetHandler.handlePacket(
-					this.packetHandler.getPacketsIncoming()
-						.getUnsignedByte(),
-					len);
+				int opcode = this.packetHandler.getPacketsIncoming().getUnsignedByte();
+				long handleStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
+				this.packetHandler.handlePacket(opcode, len);
+				if (TRACE_BROWSER_TRAVEL) {
+					long duration = System.nanoTime() - handleStart;
+					travelWorkNanos[6] += duration;
+					if (duration > slowestTravelPacketNanos) {
+						slowestTravelPacketNanos = duration;
+						slowestTravelPacketOpcode = opcode;
+					}
+				}
 				processedPackets++;
 				activationBurst |= wasActivationPending
 					|| this.layeredSceneActivationPending;
@@ -26975,13 +26989,17 @@ public final class mudclient implements Runnable {
 		return preparedSceneryMeshes;
 	}
 
-	/** Network, pre-scene work, scene construction, then resident object assembly. */
+	/** Client frame phases followed by terrain polling, socket reads and packet handling. */
 	public void drainTravelTimings(float[] target, int offset) {
 		if (!TRACE_BROWSER_TRAVEL) return;
 		for (int i = 0; i < travelWorkNanos.length; i++) {
 			target[offset + i] = travelWorkNanos[i] / 1_000_000f;
 			travelWorkNanos[i] = 0L;
 		}
+		target[offset + 7] = slowestTravelPacketNanos / 1_000_000f;
+		target[offset + 8] = slowestTravelPacketOpcode;
+		slowestTravelPacketNanos = 0L;
+		slowestTravelPacketOpcode = -1;
 	}
 
 	public boolean shouldRetainLastPresentedFrame() {

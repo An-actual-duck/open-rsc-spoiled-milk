@@ -361,7 +361,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             long end=System.nanoTime();
             float[] frameStats = {(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()};
             if(TRAVEL_TRACE){
-                frameStats=Arrays.copyOf(frameStats,19);
+                frameStats=Arrays.copyOf(frameStats,15+mudclient.TRAVEL_TIMING_VALUES);
                 frameStats[14]=(stagingEnd-geometryEnd)/1000000f;
                 if(client!=null)client.drainTravelTimings(frameStats,15);
             }

@@ -14,8 +14,11 @@ def position_distance(a, b):
 
 def analyze(result, ticks):
     travel = result['travel']
-    first_walk = next((e['milliseconds'] for e in result['events'] if e['message'].startswith('outer-coverage:walking:')), 0)
-    started = result.get('timeOrigin', 0) + first_walk
+    first_walk = next((e['milliseconds'] for e in result['events']
+                       if e['message'].startswith('outer-coverage:walking:')), None)
+    if first_walk is None or 'timeOrigin' not in result:
+        raise ValueError('Expected a sustained walk start and browser clock origin')
+    started = result['timeOrigin'] + first_walk
     frames = [row for row in travel['rows'] if row['kind'] == 'frame' and row['submittedAt'] >= started]
     transitions = [row for row in travel['rows'] if row['kind'] == 'transition' and row['time'] >= started]
     transition_times = [row['time'] for row in transitions]
@@ -47,6 +50,7 @@ def analyze(result, ticks):
             'bridgeMs': round(frame['work'][0], 1),
             'javascriptMs': round(frame['js'], 1),
             'clientWorkMs': frame.get('clientWorkMs'),
+            'connectionWork': frame.get('connectionWork'),
         })
 
     def worst(rows):

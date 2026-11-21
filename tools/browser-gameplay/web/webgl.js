@@ -397,9 +397,11 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       alive();const p=typed(poseInput,Int32Array);
       if(p.length!==14&&!(travel&&p.length===18))throw new Error("Invalid frame pose schema");
       if(travel&&p.length===18&&stats.javaBridgeReportedWorldFrames<stats.javaWorldFrames&&lastWorld>0){
+        const work=Array.from(values);
         recordTravel({kind:'frame',submittedAt:performance.timeOrigin+lastWorld,receipt:[p[14],p[15]],
-          shown:[p[16],p[17]],work:Array.from(values).slice(0,10),stagingMs:values[14],
-          clientWorkMs:Array.from(values).slice(15,19),
+          shown:[p[16],p[17]],work:work.slice(0,10),stagingMs:values[14],
+          clientWorkMs:work.slice(15,19),connectionWork:{terrainPollMs:work[19],socketReadMs:work[20],
+            packetMs:work[21],slowPacketMs:work[22],slowPacketOpcode:work[23]},
           js:stats.jsSubmissionSamples[stats.jsSubmissionSamples.length-1]});
       }
       stats.pose={cameraOffset:Array.from(p.subarray(0,3)),rotation:Array.from(p.subarray(3,6)),center:Array.from(p.subarray(6,8)),viewport:Array.from(p.subarray(8,10)),perspectiveShift:p[10],fogStart:p[11],fogEnd:p[12],signedLevel:p[13]};stats.spriteCompositeCache={enabled:values[10]===1,hits:values[11],misses:values[12],bytes:values[13]};stats.javaSkyExportMs=values[9];stats.cpuDepthFramePresent=values[7]===1;stats.javaLightingExportMs=values[8];stats.javaCacheEntries=values[5];stats.javaCacheResidentBytes=values[6];stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>(stats.measurement?4096:600))stats.javaBridgeWorkSamples.shift();uploadValidation.frameComplete();commitOwnedState();stats.javaBridgeReportedWorldFrames=stats.javaWorldFrames;

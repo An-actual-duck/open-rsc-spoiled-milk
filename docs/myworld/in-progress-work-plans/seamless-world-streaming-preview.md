@@ -262,6 +262,53 @@ keep the handoff visible. The server-confirmed endpoint, render counts,
 and terrain checksums matched again. The private manual build at port 8250
 includes the prepared terrain, incoming model reuse, and finer pacing.
 
+## Sustained travel and delayed stutter
+
+The 793 ms result above came from a single scripted crossing. The manual
+playtest reported long loads, FPS drops, and delayed stutters during sustained
+travel. The prior manual preview kept the server's last saved position
+`(291, 597)` and had no record of frames from that session.
+
+The new private Firefox route goes from `(239, 609)` through `(284, 609)` and
+`(291, 597)` to `(322, 597)`, then returns to `(255, 609)`. Each walk uses the
+normal client path and waits for server confirmation. The trace correlates
+the timestamp and player pose of every fresh WebGL world submission with
+server tick receipts. It records input release, speculative uploads and
+elapsed client phases. Login is excluded from walking results.
+
+| Measurement on the same six-leg route | Slicing off | Slicing on |
+| --- | ---: | ---: |
+| First handoff input pause | 780 ms | 1,212 ms |
+| Second handoff input pause | 302 ms | 306 ms |
+| Return handoff input pause | 384 ms | 418 ms |
+| Longest gap outside a handoff | 593 ms | 580 ms |
+| Longest speculative preupload step | 226 ms | 30 ms |
+
+Both runs reached the same server position and produced identical collision,
+elevation and minimap checksums. The first crossing with slicing on had
+14.4 MB left to upload, compared with 6.3 MB with slicing off. Slicing stays
+experimental. The private manual build at port 8253 uses the control path.
+
+The control recorded a 515 ms gap on the return leg with zero geometry
+uploads. It recorded another 514 ms gap about eight seconds after the first
+handoff, with 338 ms inside the client connection update. The sliced run had
+a 560 ms gap in the same area with 367 ms in that phase. The server advanced
+at most two tiles during the captured long gaps. The reported ten-tile event
+remains unexplained. Headless timings characterize these two runs and do not
+predict the duration of a desktop freeze.
+
+The manual preview submits long frame gaps and transition timings to its
+own loopback HTTP server. Its `manual-travel.ndjson` stays beside the private
+server's `travel-server.ndjson`. Captures include tile positions and timing
+data. An ordinary recheck can compare the last submitted player pose,
+authoritative position and gap between fresh frames at a scene transition.
+
+A next trace breaks down the connection update into terrain-stage polling,
+socket reads, and ordered packet handling with the slowest opcode per frame.
+The full connection duration can include runtime scheduling pauses. The
+dissection is needed before assigning individual stalls to a handler or
+changing the current packet cadence.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
@@ -318,3 +365,10 @@ option off for the control. Run the stages in sequence because their private
 game ports are shared. The `outer-coverage:preupload-before` and
 `outer-coverage:preupload-final` events show work submitted before the
 handoff and the buffers adopted by the renderer.
+
+For sustained travel, stage a fresh run with `--trace --travel-trace
+--sustained-walk` and use unused private TCP, WebSocket and HTTP ports. Start a
+loopback geckodriver, run `run-browser-travel.py <run>` with its port, then
+pass the run to `analyze-travel-trace.py`. For a manual trace, stage with
+`--manual --travel-trace` and serve it with `--travel-log
+<run>/manual-travel.ndjson`. The normal private server startup is the same.

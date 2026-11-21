@@ -102,6 +102,10 @@ def main():
                '        new Thread(BrowserOuterCoverageProbe::run, "outer-coverage-fixture").start();')
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/'}};")
+    if args.manual and args.travel_trace:
+        (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
+        insert(web / 'runtime.html', "    await import('./browser.js');",
+               "    await import('./travel-report.js');")
     if (tcp_port, ws_port) != (TCP_PORT, WS_PORT):
         replace(bootstrap, '&&!"43659".equals(stagedPort)',
                 f'&&!"43659".equals(stagedPort)&&!"{tcp_port}".equals(stagedPort)')
@@ -138,11 +142,15 @@ def main():
         name: hashlib.sha256((web / name).read_bytes()).hexdigest()
         for name in ('browser.js', 'runtime.html', 'browser-repeatable-policy.js', 'browser-spike.jar', 'Cache/port.txt')
     }
+    if args.manual and args.travel_trace:
+        staged_hashes['travel-report.js'] = hashlib.sha256((web / 'travel-report.js').read_bytes()).hexdigest()
     stage_path = run / 'stage.json'
     stage = json.loads(stage_path.read_text())
     stage['tcp'] = f'127.0.0.1:{tcp_port}'
     stage['websocket'] = f'127.0.0.1:{ws_port}'
-    for name in ('browser.js', 'runtime.html', 'browser-repeatable-policy.js'):
+    for name in ('browser.js', 'runtime.html', 'browser-repeatable-policy.js', 'travel-report.js'):
+        if name not in staged_hashes:
+            continue
         stage['frontendSha256'][name] = staged_hashes[name]
     stage_path.write_text(json.dumps(stage, indent=2) + '\n')
     receipt = {
