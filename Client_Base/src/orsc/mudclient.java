@@ -41,6 +41,7 @@ import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.Scene;
+import orsc.graphics.three.SurfaceSceneryMeshPreparation;
 import orsc.graphics.three.World;
 import orsc.graphics.three.WorldEditorTerrainGrid;
 import orsc.graphics.two.CombatEffectAnimationCatalog;
@@ -968,6 +969,7 @@ public final class mudclient implements Runnable {
 	private final Map<Long, SurfaceSceneryWork> surfaceSceneryWork = new LinkedHashMap<>();
 	private NativeLayeredTerrainSnapshot surfaceSceneryTerrain;
 	private SurfaceSceneryWork activeSurfaceSceneryWork;
+	private volatile int detachedSurfaceSceneryMeshes;
 	private Future<PreparedSurfaceScenery> activeSurfaceSceneryBuild;
 	private int adoptedSurfaceInteractiveModels;
 	private ResidentObjectChunkInput pendingDistantSceneryInput;
@@ -3996,6 +3998,7 @@ public final class mudclient implements Runnable {
 	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedSurfaceSceneryDraws() { return surfacePreparedScenery; }
 
 	public int getAdoptedSurfaceSceneryDraws() { return adoptedSurfaceScenery; }
+	public int getDetachedSurfaceSceneryMeshes() { return detachedSurfaceSceneryMeshes; }
 
 	boolean canBeginLiveSurfaceHandoff(int x, int z) {
 		return LIVE_SURFACE_HANDOFF && isRenderer3DWorldReady() && !shouldRetainLastPresentedFrame()
@@ -4093,7 +4096,7 @@ public final class mudclient implements Runnable {
 		List<PreparedSceneryDraw> ready = new ArrayList<>(cells.size());
 		for (ResidentObjectChunkInputBuilder builder : cells.values()) {
 			ResidentObjectChunkInput input = builder.build();
-			Renderer3DWorldChunkFrame.ChunkMesh mesh = buildResidentObjectChunkMesh(input);
+			Renderer3DWorldChunkFrame.ChunkMesh mesh = buildResidentObjectChunkMesh(input, true);
 			if (mesh != null && mesh.getTriangleCount() != 0) ready.add(new PreparedSceneryDraw(input, mesh));
 		}
 		return new PreparedSurfaceScenery(ready, prepareIncomingSceneryModels(interactive));
@@ -4487,7 +4490,8 @@ public final class mudclient implements Runnable {
 		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
         if(orsc.graphics.three.WholeOverworldZoneRegistry.isEnabled())captureWholeOverworldObjectCells(objectInputs);
 		long inputNanos = System.nanoTime() - inputStartNanos;
-		boolean traceHandoffScenery = BrowserRegionHandoffTrace.ENABLED && this.shouldRetainLastPresentedFrame();
+		boolean traceHandoffScenery = BrowserRegionHandoffTrace.ENABLED
+			&& (this.shouldRetainLastPresentedFrame() || liveSurface && staticPresentationRebuildPending);
 		if (traceHandoffScenery) {
 			BrowserRegionHandoffTrace.phase("scenery", "input", inputStartNanos, inputNanos);
 		}
@@ -5460,20 +5464,32 @@ public final class mudclient implements Runnable {
 	}
 
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
+		return buildResidentObjectChunkMesh(input, false);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input, boolean detach) {
 		RSModel[] models = input.models;
 		if (input.chunkRole
 				== Renderer3DWorldChunkFrame
 					.CHUNK_ROLE_STATIC_OBJECTS) {
 			models = buildCanonicalResidentObjectModels(input);
 		}
+		int originX = input.anchor.getOriginWorldX() + input.localOriginTileX * input.tileSize;
+		int originZ = input.anchor.getOriginWorldZ() + input.localOriginTileZ * input.tileSize;
+		if (detach && input.anchor.getPlane() == 0 && SurfaceSceneryMeshPreparation.isAvailable()) {
+			Renderer3DWorldChunkFrame.ChunkMesh prepared = SurfaceSceneryMeshPreparation.prepare(
+				input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(), originX, originZ, models);
+			if (prepared != null) {
+				detachedSurfaceSceneryMeshes++;
+				return prepared;
+			}
+		}
 		return RSModel.buildRenderer3DObjectChunkMesh(
 			input.anchor.getPlane(),
 			input.anchor.getCenterSectionX(),
 			input.anchor.getCenterSectionY(),
-			input.anchor.getOriginWorldX()
-				+ input.localOriginTileX * input.tileSize,
-			input.anchor.getOriginWorldZ()
-				+ input.localOriginTileZ * input.tileSize,
+			originX,
+			originZ,
 			models,
 			input.modelCount,
 			input.chunkRole);

@@ -273,6 +273,12 @@ public final class BrowserOuterCoverageProbe {
 			throw new IllegalStateException("Expected " + expected + " gameplay products from the detached worker, installed " + installed);
 		}
 		BrowserBootstrap.report("outer-coverage:detached-gameplay-installs:" + installed);
+		int scenery = client.getDetachedSurfaceSceneryMeshes();
+		if (scenery <= 0) throw new IllegalStateException("No scenery mesh came back from the detached worker");
+		BrowserBootstrap.report("outer-coverage:detached-scenery-meshes:" + scenery);
+		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
+		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
+		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
 	}
 
 	private static void verifyPreparedDirectionChange(mudclient client, Method walk, int[] movement) throws Exception {

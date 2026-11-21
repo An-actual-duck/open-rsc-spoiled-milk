@@ -123,7 +123,7 @@ def run_walk(run, driver_port):
                 time.sleep(.85)
 
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
-                region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,renderWorker:p.gpu?.renderWorker,
+                region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
                 timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'

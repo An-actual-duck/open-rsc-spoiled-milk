@@ -5,6 +5,7 @@ import orsc.BrowserWebGLBridge;
 import orsc.Config;
 import orsc.WorldBuilderTerrainBootstrap;
 import orsc.graphics.three.World;
+import orsc.graphics.three.SurfaceSceneryMeshPreparation;
 
 import java.io.IOException;
 
@@ -12,6 +13,10 @@ import java.io.IOException;
 public final class BrowserSurfaceMeshWorker {
     private static World world;
     private static boolean custom;
+
+    public static byte[] buildScenery(byte[] source) throws IOException {
+        return SurfaceSceneryMeshPreparation.buildPacket(source);
+    }
 
     public static byte[] build(String cacheDir, byte[] source, int offsetX, int offsetZ,
                                int dx, int dz, boolean withRoofs, boolean customSprites, boolean gameplay) throws IOException {

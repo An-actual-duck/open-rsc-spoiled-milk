@@ -1161,14 +1161,14 @@ public final class World {
 		}
 	}
 
-	private static ObjectInputStream openSurfaceProduct(byte[] bytes, int limit) throws IOException {
+	static ObjectInputStream openSurfaceProduct(byte[] bytes, int limit) throws IOException {
 		if (bytes.length > limit) throw new IOException("Surface product size " + bytes.length);
 		return new ObjectInputStream(new ByteArrayInputStream(bytes)) {
 			@Override protected Class<?> resolveClass(ObjectStreamClass descriptor)
 				throws IOException, ClassNotFoundException {
 				String type = descriptor.getName();
 				if (type.equals(Renderer3DWorldChunkFrame.ChunkMesh.class.getName())
-					|| type.equals("java.lang.Enum") || type.equals("[I") || type.equals("[J") || type.equals("[F")
+					|| type.equals("java.lang.Enum") || type.equals("[I") || type.equals("[J") || type.equals("[F") || type.equals("[B")
 					|| type.equals("[L" + Renderer3DModelKind.class.getName() + ";") || type.equals(Renderer3DModelKind.class.getName())
 					|| type.equals("[L" + Renderer3DMaterialFamily.class.getName() + ";") || type.equals(Renderer3DMaterialFamily.class.getName())
 					|| type.equals(Renderer3DWorldChunkFrame.ShadowCaster.class.getName())
@@ -1180,7 +1180,7 @@ public final class World {
 		};
 	}
 
-	private static Renderer3DWorldChunkFrame.ChunkMesh readSurfaceMesh(ObjectInputStream input, int x, int z)
+	static Renderer3DWorldChunkFrame.ChunkMesh readSurfaceMesh(ObjectInputStream input, int x, int z)
 		throws IOException, ClassNotFoundException {
 		Renderer3DWorldChunkFrame.ChunkMesh mesh = (Renderer3DWorldChunkFrame.ChunkMesh) input.readObject();
 		if (mesh != null && (mesh.getPlane() != 0 || mesh.getCenterSectionX() != x || mesh.getCenterSectionY() != z)) {
@@ -7646,7 +7646,7 @@ public final class World {
 			sectorSignature =
 				(sectorSignature ^ includedTriangles)
 					* 1099511628211L;
-			return new Renderer3DWorldChunkFrame.ChunkMesh(
+			Renderer3DWorldChunkFrame.ChunkMesh mesh = new Renderer3DWorldChunkFrame.ChunkMesh(
 				plane,
 				centerSectionX,
 				centerSectionY,
@@ -7675,6 +7675,34 @@ public final class World {
 				false,
 				Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD,
 				sectorSignature);
+			if (fixed) mesh.setSurfaceOcclusion(buildSurfaceOcclusion());
+			return mesh;
+		}
+
+		private byte[] buildSurfaceOcclusion() {
+			// Store the fixed cell. Sample a four-tile margin before taking the interior.
+			int margin = 4, axis = SECTION_SIZE + 2 * margin, paddingOrigin = SECTION_SIZE - margin;
+			int[] heights = new int[axis * axis];
+			Arrays.fill(heights, TerrainOcclusion.UNKNOWN);
+			for (int triangle = 0; triangle < triangleModelKinds.length; triangle++) {
+				if (triangleModelKinds[triangle] != Renderer3DModelKind.TERRAIN) continue;
+				for (int corner = 0; corner < 3; corner++) {
+					int coord = indices[triangle * 3 + corner] * 3;
+					int x = vertexCoords[coord], z = vertexCoords[coord + 2];
+					if (x % 128 != 0 || z % 128 != 0) continue;
+					x = x / 128 - paddingOrigin;
+					z = z / 128 - paddingOrigin;
+					if (x < 0 || x >= axis || z < 0 || z >= axis) continue;
+					int at = z * axis + x, y = vertexCoords[coord + 1];
+					heights[at] = heights[at] == TerrainOcclusion.UNKNOWN ? y : Math.min(heights[at], y);
+				}
+			}
+			byte[] padded = TerrainOcclusion.build(heights, axis, axis);
+			byte[] cell = new byte[SECTION_SIZE * SECTION_SIZE * 4];
+			for (int row = 0; row < SECTION_SIZE; row++) {
+				System.arraycopy(padded, ((row + margin) * axis + margin) * 4, cell, row * SECTION_SIZE * 4, SECTION_SIZE * 4);
+			}
+			return cell;
 		}
 	}
 

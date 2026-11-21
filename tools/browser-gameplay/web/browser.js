@@ -106,7 +106,7 @@ function publish(finalReceipt=false) {
 function dispose() {
   if (stopped) return;
   bulkStaging?.dispose();startupProgress.close();stagedLogin.dispose();
-  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); terrainWorker?.dispose(); surfaceMeshWorker?.dispose(); gpu?.dispose();
+  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); terrainWorker?.dispose(); surfaceMeshWorker?.dispose(); surfaceSceneryMeshWorker?.dispose(); gpu?.dispose();
   publish(true);
 }
 function finish(reason) {
@@ -142,7 +142,7 @@ const fixturePolicy=deployment.publicAlpha?{properties:[],requested:null,tcpPort
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
 const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
-let terrainWorker, surfaceMeshWorker;
+let terrainWorker, surfaceMeshWorker, surfaceSceneryMeshWorker;
 const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseInput(window,document,{logicalExtent:()=>({width:gpu?.stats.physicalOutput?.logicalWidth||gpu?.stats.display?.internalWidth||960,height:gpu?.stats.physicalOutput?.logicalHeight||gpu?.stats.display?.internalHeight||540})}) : undefined;
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
@@ -335,12 +335,18 @@ const natives = {
     const {createBrowserSurfaceMeshWorker} = await import('./browser-surface-mesh-worker-client.js');
     if (stopped) return false;
     surfaceMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion);
+    surfaceSceneryMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion, true);
     window.browserProof.surfaceMeshWorker = surfaceMeshWorker.stats;
+    window.browserProof.surfaceSceneryMeshWorker = surfaceSceneryMeshWorker.stats;
     return true;
   },
   async Java_orsc_browser_BrowserBootstrap_buildSurfaceMesh(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay) {
     if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
     return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay]);
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceSceneryMesh(lib, source) {
+    if (deployment.publicAlpha || stopped || !surfaceSceneryMeshWorker) return null;
+    return surfaceSceneryMeshWorker.build(source, []);
   },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },

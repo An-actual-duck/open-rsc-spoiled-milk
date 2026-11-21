@@ -744,6 +744,27 @@ input blocks, or new load epochs. The biggest gap on approach was 226 ms.
 The first crossing still had a 359 ms interval between submitted frames.
 [Detached gameplay capture](../../../output/tests/browser-gameplay-spike/live-surface-detached-gameplay/firefox-result.json)
 
+A separate scenery VM built 128 staged static meshes. The client accepted
+126 before the end of a three-crossing route. The local and detached builders
+returned the same hash for a rotated and lit fixture model. The first
+crossing still spent 134 ms on lighting in this run, with a 357 ms gap
+between fresh frames. [Detached scenery capture](../../../output/tests/browser-gameplay-spike/live-surface-detached-scenery/firefox-result.json)
+
+The fixed terrain cells now carry their occlusion fields, including a
+four-tile source margin around each cell. The room-scale renderer copies
+those fields into world coordinates. A signed-map fixture matched the
+occlusion bytes from the complete source footprint. Firefox installed four
+resident lighting fields and produced 3,344 fresh frames with zero holds,
+input blocks, or new load epochs. The first handoff spent 18 ms on lighting
+and 133 ms preparing resident objects. The longest gap was 259 ms at that
+handoff. [Resident lighting capture](../../../output/tests/browser-gameplay-spike/live-surface-resident-lighting/firefox-result.json)
+
+The native regression crossed at maximum frame intervals of 29, 27 and
+27 ms while preserving one movement generation and the same player. It
+retained 9, 2 and 9 continuously visible NPC instances through those
+crossings with zero replacements. The test account retained the fixture's
+combat protection. [Native regression](../../../output/tests/seamless-world-streaming/live-surface-native-regression/native-travel.log)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

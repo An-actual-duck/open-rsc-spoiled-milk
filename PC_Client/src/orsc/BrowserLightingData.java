@@ -3,6 +3,7 @@ package orsc;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DTextureData;
@@ -21,6 +22,9 @@ public final class BrowserLightingData {
     private RendererShadowSettings.Quality quality;
     private long nearContext, farContext, farSignature, farRoofSignature;
     private int nearPlane, farPlane, farAge, blendAge;
+    private int residentTerrainFields;
+
+    public int getResidentTerrainFields() { return residentTerrainFields; }
 
     public static final class Mask {
         public final int unit, width, height;
@@ -49,6 +53,9 @@ public final class BrowserLightingData {
         near=far=previousFar=null;quality=null;farAge=blendAge=0;
     }
     public Frame prepare(Renderer3DFrame frame,int maxTextureSize) {
+        return prepare(frame, maxTextureSize, Collections.emptyList());
+    }
+    public Frame prepare(Renderer3DFrame frame, int maxTextureSize, List<Renderer3DWorldChunkFrame.ChunkMesh> surfaceDraw) {
         List<Mask> changes=new ArrayList<Mask>(3);
         Renderer3DWorldChunkFrame world=frame==null?null:frame.getWorldChunkFrame();
         boolean populated=world!=null&&world.getChunkCount()>0;
@@ -63,9 +70,15 @@ public final class BrowserLightingData {
         int offX=GeometryShadowCoordinates.worldOffsetX(world),offZ=GeometryShadowCoordinates.worldOffsetZ(world);
         values[9]=offX;values[10]=offZ;
         boolean directional=RendererLightingSettings.getMode()==RendererLightingSettings.Mode.DIRECTIONAL;
-        if(directional&&RendererTerrainDefinitionSettings.getMode().shaderId>=2&&terrain.update(frame)) {
+        boolean terrainDefinition = directional && RendererTerrainDefinitionSettings.getMode().shaderId >= 2;
+        boolean residentTerrain = terrainDefinition && terrain.updateResident(surfaceDraw, frame.getActivePlane());
+        if (terrainDefinition && (residentTerrain || terrain.update(frame))) {
             values[13]=1;putBounds(values,24,terrain.minX,terrain.minZ,1f/terrain.width,1f/terrain.height);
-            if(terrainRevision!=terrain.revision){changes.add(new Mask(7,terrain.width,terrain.height,terrain.pixels(),bounds(values,24)));terrainRevision=terrain.revision;}
+            if (terrainRevision != terrain.revision) {
+                changes.add(new Mask(7, terrain.width, terrain.height, terrain.pixels(), bounds(values, 24)));
+                terrainRevision = terrain.revision;
+                if (residentTerrain) residentTerrainFields++;
+            }
         }
         RemasterGlowMaskBuild built=directional?glow.build(world):null;
         if(built!=null&&built.mask!=null) {

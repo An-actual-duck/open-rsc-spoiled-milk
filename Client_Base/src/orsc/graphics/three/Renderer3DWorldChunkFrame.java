@@ -254,6 +254,7 @@ public final class Renderer3DWorldChunkFrame {
 		private final int originWorldX;
 		private final int originWorldZ;
 		private boolean residentFishingPose;
+		private byte[] surfaceOcclusion;
 		private final int[] vertexCoords;
 		private final int vertexOffsetX;
 		private final int vertexOffsetZ;
@@ -1067,6 +1068,7 @@ public final class Renderer3DWorldChunkFrame {
 				source.worldEditorTerrainGridHeights;
 			this.worldEditorTerrainGridSignature =
 				source.worldEditorTerrainGridSignature;
+			this.surfaceOcclusion = source.surfaceOcclusion;
 		}
 
 		private static ShadowCaster[] translateShadowCasters(
@@ -1706,6 +1708,20 @@ public final class Renderer3DWorldChunkFrame {
 
 		public boolean isResidentFishingPose() {
 			return residentFishingPose;
+		}
+
+		void setSurfaceOcclusion(byte[] rgba) {
+			if (rgba.length != World.SECTION_SIZE * World.SECTION_SIZE * 4) {
+				throw new IllegalArgumentException("Surface occlusion cell shape");
+			}
+			surfaceOcclusion = rgba;
+		}
+
+		public boolean hasSurfaceOcclusion() { return surfaceOcclusion != null; }
+
+		public void copySurfaceOcclusionRow(int row, byte[] target, int offset) {
+			int width = World.SECTION_SIZE * 4;
+			System.arraycopy(surfaceOcclusion, row * width, target, offset, width);
 		}
 
 		public int getVertexOffsetX() {

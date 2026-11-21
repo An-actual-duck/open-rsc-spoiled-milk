@@ -3,9 +3,12 @@ package orsc;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.Renderer3DModelKind;
+import orsc.graphics.three.TerrainOcclusion;
+import orsc.graphics.three.World;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Render-only bounded height-field probes. No camera/sun dependence or world authority. */
@@ -59,39 +62,45 @@ final class TerrainDefinitionField {
         rgba = build(heights, width, height); sourceSignature = signature; revision++; rebuilds++;
         return true;
     }
-    static byte[] build(int[] heights, int width, int height) {
-        byte[] result = new byte[width * height * 4];
-        int[][] directions = {{1,0},{-1,0},{0,1},{0,-1},{1,1},{1,-1},{-1,1},{-1,-1}};
-        for (int z = 0; z < height; z++) for (int x = 0; x < width; x++) {
-            int at = z * width + x, y = heights[at];
-            double occlusion = 0, bend = 0; int count = 0;
-            if (y != UNKNOWN) for (int[] d : directions) {
-                // Symmetric pairs cancel a planar slope: only terrain above its local tangent
-                // or signed local bending contributes, rather than painting every slope dark.
-                int nx = x+d[0], nz=z+d[1], px=x-d[0], pz=z-d[1];
-                if (nx < 0 || nx >= width || nz < 0 || nz >= height || px < 0 || px >= width || pz < 0 || pz >= height) continue;
-                int n=heights[nz*width+nx], p=heights[pz*width+px];
-                if (n == UNKNOWN || p == UNKNOWN) continue;
-                double length = Math.hypot(d[0],d[1]) * TILE;
-                double curve = ((double)y - (n+(double)p)*.5) / length; // positive = concave in Y-down
-                double tangent = (p - (double)n) / (2 * length);
-                double horizon = 0;
-                for (int radius=1;radius<=4;radius++) {
-                    int sx=x+d[0]*radius, sz=z+d[1]*radius;
-                    if (sx<0 || sx>=width || sz<0 || sz>=height) break;
-                    int sample=heights[sz*width+sx]; if(sample==UNKNOWN) break;
-                    double aboveTangent=(y-(double)sample)/(length*radius)-tangent;
-                    horizon=Math.max(horizon,aboveTangent);
-                }
-                occlusion += horizon; bend += curve; count++;
-            }
-            float ao=count==0?0:(float)Math.min(1,occlusion/8*1.6);
-            float curve=count==0?0:(float)Math.max(-1,Math.min(1,bend/8*3));
-            result[at*4]=(byte)Math.round(ao*255);
-            result[at*4+1]=(byte)Math.round((curve*.5f+.5f)*255);
-            result[at*4+2]=0; result[at*4+3]=(byte)(y==UNKNOWN?0:255);
+
+    /** Assemble checked lighting cells in their stable world positions, including the currently resident overlap. */
+    boolean updateResident(List<Renderer3DWorldChunkFrame.ChunkMesh> cells, int activePlane) {
+        int size = World.SECTION_SIZE;
+        int loX = Integer.MAX_VALUE, loZ = Integer.MAX_VALUE, hiX = Integer.MIN_VALUE, hiZ = Integer.MIN_VALUE;
+        long signature = 0x4ce51d7c249f150aL ^ activePlane;
+        for (Renderer3DWorldChunkFrame.ChunkMesh cell : cells) {
+            if (!cell.hasSurfaceOcclusion() || cell.getPlane() != activePlane) return false;
+            int x = originTile(cell.getOriginWorldX()), z = originTile(cell.getOriginWorldZ());
+            loX = Math.min(loX, x);
+            loZ = Math.min(loZ, z);
+            hiX = Math.max(hiX, x + size);
+            hiZ = Math.max(hiZ, z + size);
+            signature = mix(mix(mix(signature, cell.getStorageSignature()), x), z);
         }
-        return result;
+        if (cells.isEmpty() || hiX - loX > MAX_AXIS || hiZ - loZ > MAX_AXIS) return false;
+        if (signature == sourceSignature) return true;
+        minX = loX;
+        minZ = loZ;
+        width = hiX - loX;
+        height = hiZ - loZ;
+        plane = activePlane;
+        rgba = new byte[width * height * 4];
+        for (Renderer3DWorldChunkFrame.ChunkMesh cell : cells) {
+            int x = originTile(cell.getOriginWorldX()) - minX, z = originTile(cell.getOriginWorldZ()) - minZ;
+            for (int row = 0; row < size; row++) cell.copySurfaceOcclusionRow(row, rgba, ((z + row) * width + x) * 4);
+        }
+        sourceSignature = signature;
+        revision++;
+        rebuilds++;
+        return true;
+    }
+
+    private static int originTile(int sourceOrigin) {
+        // The fixed cell is the center sector of the exact three-sector footprint.
+        return Math.floorDiv(sourceOrigin, TILE) + World.SECTION_SIZE;
+    }
+    static byte[] build(int[] heights, int width, int height) {
+        return TerrainOcclusion.build(heights, width, height);
     }
     private long terrainHeightSignature(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
         Long key=chunk.getStorageSignature(), cached=terrainStorageHeights.get(key);

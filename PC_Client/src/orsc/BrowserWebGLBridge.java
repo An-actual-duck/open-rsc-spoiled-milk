@@ -124,6 +124,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         BrowserWebGLBridge bridge = installedBridge;
         return bridge == null ? new int[0] : bridge.surfaceCoverageReceipt.clone();
     }
+    public static int getResidentTerrainLightingFields() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? 0 : bridge.lightingData.getResidentTerrainFields();
+    }
     private volatile int[] surfaceDrawBuffers = new int[0];
     private volatile int[] optionalSurfaceDrawBuffers = new int[0];
     private volatile int[] optionalSceneryDrawBuffers = new int[0];
@@ -314,7 +318,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 overlayDeltaReset=true;if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}worldProgress(progress);holdWorld();if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=1;return;
             }
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.LIGHTING);
-            exportLighting(null);
+            exportLighting(null, Collections.emptyList());
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.SKY);
             exportSky(null);
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.OVERLAY);
@@ -415,7 +419,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             int spriteGroups=uploadSprites(frame);
             long spriteEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.LIGHTING);
-            exportLighting(frame);
+            exportLighting(frame, surfaceDraw);
             long lightingEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.SKY);
             exportSky(frame);
@@ -952,8 +956,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(sky.geometry!=null)uploadSkyGeometry(sky.geometry,sky.ranges,(int)sky.values[3]);
         skyFrame(sky.values,sky.palette);
     }
-    private void exportLighting(Renderer3DFrame frame) {
-        BrowserLightingData.Frame light=lightingData.prepare(frame,maxTextureSize);
+    private void exportLighting(Renderer3DFrame frame, List<Renderer3DWorldChunkFrame.ChunkMesh> surfaceDraw) {
+        BrowserLightingData.Frame light=lightingData.prepare(frame,maxTextureSize,surfaceDraw);
         for(BrowserLightingData.Mask mask:light.changes)uploadLightingMask(mask.unit,mask.width,mask.height,mask.rgba,mask.bounds);
         lightingFrame(light.values);
     }
