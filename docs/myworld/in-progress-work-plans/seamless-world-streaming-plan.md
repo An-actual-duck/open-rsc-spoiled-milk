@@ -417,16 +417,20 @@ both browsers. Pursue GPU-ready transport again only if its payload can
 replace the corresponding CPU draw data. Exact retained scenery can avoid
 repeat builds, with modest pacing benefit in the matched route.
 
-After terrain decode, measure where the remaining long gaps occur. The
-current client and direct browser renderer share a browser thread. The
-synchronous sprite atlas trial exercised the same plans, pixels and
-draw order in both browsers and produced mixed pacing results. The next
-architectural question is whether the Java client can run in a browser
-worker with a ClientPort that owns no AWT window. Test the unchanged
-login framebuffer and private transport first. Then test the client and
-WebGL command transfer, including the cost and ownership of the existing
-UI pixels and the authoritative input fence. An isolated CPU worker
-still has to produce distinct current frames within the frame budget.
+Use the normal applet client with the verified WebGL worker as the
+current rendering baseline. That path improved frame pacing in both
+browsers after the terrain changes. The synchronous and acknowledged
+atlas trials produced mixed results. The full Java client worker
+completed the Firefox route and had longer presentation gaps than the
+applet client. A future client port needs another concrete change to
+frame production or resource ownership before a new pacing comparison.
+
+Profile the current worker baseline during the first load, steady travel
+and the return roll. Separate Java ticks and scene preparation from
+browser work before submission, worker queue time and WebGL execution.
+Only advance a candidate that improves the continuous frame sequence in
+both browsers. Keep the original UI layout, visual quality and server
+movement authority in every candidate.
 [Scenery and terrain captures](seamless-world-streaming-preview.md#flat-scenery-replies-and-worker-packed-draws)
 
 ## Stop conditions and follow-up decisions

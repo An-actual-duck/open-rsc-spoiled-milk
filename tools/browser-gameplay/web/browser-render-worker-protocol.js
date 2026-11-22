@@ -11,7 +11,7 @@ export const RENDER_WORKER_SCHEMA=Object.freeze({
   overlayFrame:['i','i','i','n','n','i','b','N'],uploadCompactSceneChunk:['i','I','I','I'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],
   present:['i','i','b','F','F','I','I','P','n','n','N'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
-  planWorldSprites:['i','n','I'],commitWorldSprites:['i','n','B','F'],
+  planWorldSprites:['i','n','I'],verifyWorldSpritePlan:['i','n','I','I'],commitWorldSprites:['i','n','B','F'],
   '$owned':['b'],'$validation':['b'],'$physical':['b'],'$measurement':['b']
 });
 const TA=Object.getPrototypeOf(Uint8Array.prototype),get=(name)=>Object.getOwnPropertyDescriptor(TA,name).get;

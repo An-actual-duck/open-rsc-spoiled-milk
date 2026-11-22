@@ -1329,12 +1329,42 @@ and the reversal with zero holds or sampled input closures.
 
 The Firefox worker completed 4,204 atlas plans and 5,543 frames across
 startup and travel. It moved 20.75 GB through its transferable-buffer
-pool and recorded 841 backpressure waits. The next comparison uses
-the worker's confirmed sprite atlas inventory to batch resident-only
-plans with their commits. The worker still validates every plan and
-receives fresh quads in the original order. Missing pixels and epoch
-changes use the existing round trip.
+pool and recorded 841 backpressure waits. A comparison used the
+worker's confirmed atlas inventory to batch resident-only plans with
+their commits. The worker still validated every plan and received
+fresh quads in the original order. It skipped 971 round trips in
+Firefox and 1,491 in Chrome. The lowest seconds rose from 34 to 39
+and 41 to 43 FPS respectively. The 99th percentiles rose from 32
+to 33 ms and 27.6 to 28.5 ms. Firefox spent two additional seconds
+below 50 FPS, and Chrome spent one fewer. The candidate was removed
+after the pacing results remained mixed.
 [Firefox render worker](../../../output/tests/browser-gameplay-spike/awt-client-render-worker-firefox/firefox-result.json) · [Chrome render worker](../../../output/tests/browser-gameplay-spike/awt-client-render-worker-chrome/chrome-result.json)
+[Firefox atlas inventory trial](../../../output/tests/browser-gameplay-spike/sprite-lease-firefox/firefox-result.json) · [Chrome atlas inventory trial](../../../output/tests/browser-gameplay-spike/sprite-lease-chrome/chrome-result.json)
+
+The canvas alignment trial used observed layout changes to bypass
+96–98 percent of the coordinate measurements. Both browsers matched
+the AWT canvas geometry before and after resizing. Firefox's 99th
+percentile went from 32 to 33 ms and its lowest second from 34 to
+31 FPS. Chrome's 99th percentile went from 27.6 to 27.1 ms and its
+lowest second from 41 to 39 FPS. The trial was removed because the
+reduction in layout reads did not carry through to pacing.
+[Firefox alignment trial](../../../output/tests/browser-gameplay-spike/observed-alignment-firefox/firefox-result.json) · [Chrome alignment trial](../../../output/tests/browser-gameplay-spike/observed-alignment-chrome/chrome-result.json)
+
+The traced Firefox run forwarded the normal render worker's exact frame
+stages. Two of the largest walking gaps contained 111 and 122 ms from
+the Java atlas plan call, with under 1 ms spent inside the worker's
+planner. Other gaps spent most of their time in game updates and scene
+capture. The atlas result includes worker queue and Java scheduling
+time. Moving the deterministic allocation plan next to the client lets
+Java receive the missing IDs immediately. The WebGL worker still
+calculates and checks the same ordered IDs before uploading any sprite
+pixels for that plan.
+[Render worker stage trace](../../../output/tests/browser-gameplay-spike/current-render-worker-profile-firefox/profile-phase-summary.json)
+
+The player preview uses the original applet input and the separate
+WebGL worker on loopback port 8460. It stages the same primitive
+terrain and scenery replies as the measured route.
+[Full HD preview](http://127.0.0.1:8460/?mode=webgl&physical=on)
 
 #### Java client worker feasibility
 
@@ -1351,10 +1381,26 @@ pacing, interactive input and the audio path are separate checks.
 
 The welcome packet asked the desktop window to revalidate its size.
 Moving that callback onto ClientPort lets the applet keep its existing
-viewport behavior. A worker can supply its own viewport. The next
-private run uses the same client JAR, browser terrain workers and
-WebGL drawing code, with direct OffscreenCanvas rendering from the
-client worker.
+viewport behavior. A worker can supply its own viewport. The single
+worker ran Java and WebGL together and completed the client's three
+scene rolls. It reached a 16 FPS worst second in Firefox, with the
+server observed one tile before the final destination at the first
+read. This exploratory setup also used scoped GL state and validation.
+
+The separate client and WebGL worker run used the same owned GL state
+and upload validation as the applet control. The server confirmed
+arrival at `(252,609)` after three rolls and a reversal. The
+1920×1080 output used the original 960×540 logical framebuffer, with
+one load epoch and zero reported holds or input closures. Firefox
+recorded a 62 ms 99th-percentile interval and a 23 FPS lowest second,
+compared with 32 ms and 34 FPS for the applet and WebGL worker. Keep the
+applet preview for player testing. The private probe exercises scripted
+gameplay and leaves physical input and audio parity for a future port.
+[Single worker capture](../../../output/tests/browser-gameplay-spike/worker-client-compact-firefox/firefox-worker-result.json) · [Two worker capture](../../../output/tests/browser-gameplay-spike/worker-client-render-worker-firefox/firefox-worker-result.json)
+
+The Java 17 configuration exited before its first fixture receipt.
+The current preview uses the verified Java 8 configuration.
+[Java 17 startup capture](../../../output/tests/browser-gameplay-spike/java17-render-worker-firefox/firefox-result.json)
 
 ## Reproduce the private preview
 

@@ -192,7 +192,7 @@ try {
         ['node', '--input-type=module', '-e', script, socket, method, json.dumps(params)], timeout=25, text=True))
 
 
-def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_profile=False):
+def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_profile=False, java_version=8):
     server = json.loads((run / 'server-command.json').read_text())
     stage = json.loads((run / 'stage.json').read_text())
     fixture = json.loads((run / 'outer-coverage-fixture.json').read_text())
@@ -205,6 +205,8 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
     url = 'http://' + stage['http'] + '/?mode=webgl'
     if wasmgc:
         url += '&wasmgc=1'
+    if java_version != 8:
+        url += f'&java={java_version}'
     if output != 'default':
         if not fixture.get('presentationOnly'):
             raise ValueError('Use a presentation control for a resolution comparison')
@@ -353,8 +355,13 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 completed = (result.get('sceneryWorker') or {}).get('wordReplies', 0) > 0
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
-            if completed and fixture.get('spriteResidencyProof'):
-                completed = (result.get('renderWorker') or {}).get('acknowledgedSpritePlans', 0) > 0
+            if completed and fixture.get('localSpritePlan'):
+                plans = (result.get('renderWorker') or {}).get('localSpritePlans', 0)
+                replayed = (result.get('atlas') or {}).get('plans', 0)
+                completed = replayed > 0 and 0 <= plans - replayed <= 3
+            if completed and java_version != 8:
+                completed = any(event['message'] == f'outer-coverage:java-runtime:{java_version}'
+                                for event in result['events'])
             if completed and output != 'default':
                 width, height = (1920, 1080) if output == 'full-hd' else (960, 540)
                 completed = (result.get('presentation') or {}).get('outputSizes') == [
@@ -409,6 +416,7 @@ def main():
     parser.add_argument('--browser', choices=('firefox', 'chrome'), default='firefox')
     parser.add_argument('--driver-port', type=int, help='Port of the local WebDriver')
     parser.add_argument('--wasmgc', action='store_true', help='Test the experimental CheerpJ 5.0 engine')
+    parser.add_argument('--java', choices=(8, 11, 17), type=int, default=8, help='Compare supported Java runtimes')
     parser.add_argument('--firefox-profile', action='store_true', help='Save a separate Firefox browser profiler capture in the test run')
     parser.add_argument('--output', choices=('default', 'logical', 'full-hd'), default='default',
                         help='Compare 960x540 and 1920x1080 WebGL output with the same 960x540 UI')
@@ -416,7 +424,7 @@ def main():
     if args.firefox_profile and args.browser != 'firefox':
         parser.error('The Firefox profiler requires Firefox')
     driver_port = args.driver_port if args.driver_port is not None else {'firefox': 44495, 'chrome': 9515}[args.browser]
-    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc, args.output, args.firefox_profile)
+    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc, args.output, args.firefox_profile, args.java)
 
 
 if __name__ == '__main__':

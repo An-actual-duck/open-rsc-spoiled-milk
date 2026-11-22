@@ -1,5 +1,6 @@
 import {createRenderWorkerTransport} from './browser-render-worker-transport.js';
 import {RENDER_WORKER_SCHEMA,renderNativeName} from './browser-render-worker-protocol.js';
+import {createSpriteAtlasPlanner} from './browser-sprite-atlas.js';
 /** Experimental main-thread adapter. Offscreen transfer is irreversible: errors stop. */
 export async function createBrowserRenderWorker(canvas,report=()=>{},options={}){
   if(options.overlayDeltaTransport===true||options.nativeCallDispatch==='sync')throw new Error('Unsupported worker transport policy');
@@ -8,55 +9,31 @@ export async function createBrowserRenderWorker(canvas,report=()=>{},options={})
   let disposed=false,readyResolve,readyReject,readyTimer,epoch=0,lastLayout=null,dirty=true,rect=null,dpr=0,readId=1;
   const readers=new Map(),controls=new Map();let measurement=false,disposeWaiter=null;const stats={backend:'WebGL2 resident production geometry / private Worker',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,frameSamples:[],worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],worldFramePolicies:[],worldFrameSpriteGroups:[],physicalOutputWorldFramePolicies:[]};
   const travel=options.travelTrace===true?{rows:[],dropped:0}:null;
-  const spriteResidencyProof=options.spriteResidencyProof===true;
-  let spriteResidents=null,lastSpritePlan=0,lastUnconfirmedSpritePlan=0,acknowledgedPlans=0;
   if(travel)Object.defineProperty(stats,'travelTrace',{value:travel});
+  if(options.measureFrameStages===true) {
+    stats.frameStageSamples=[];
+    stats.slowFrameStages=[];
+  }
   const invalidate=()=>{dirty=true;},win=globalThis.window;
   const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(invalidate):null;observer?.observe(canvas);
   for(const e of ['resize','browser-display-change'])win?.addEventListener(e,invalidate);
   function layout(){const next=win?.devicePixelRatio||1;if(next!==dpr){dpr=next;dirty=true;}if(dirty||!(rect?.width>0&&rect?.height>0)){rect=canvas.getBoundingClientRect?.()||{width:0,height:0};dirty=false;}const l={width:rect.width,height:rect.height,dpr};if(!lastLayout||l.width!==lastLayout.width||l.height!==lastLayout.height||l.dpr!==lastLayout.dpr){lastLayout=l;epoch++;}return {epoch,...l};}
   function invalidateZone(phase){if(stats.wholeZone){stats.wholeZone.ready=false;stats.wholeZone.startupGpuCompleted=false;stats.wholeZone.phase=phase;stats.wholeZone.pinnedChunks=0;stats.wholeZone.pinnedBytes=0;}}
   function fatal(error){invalidateZone('error');stats.lastError=String(error);stats.backendFailed=true;readyReject?.(error);if(disposeWaiter){clearTimeout(disposeWaiter.timer);disposeWaiter.reject(error);disposeWaiter=null;}for(const p of readers.values())p.reject(error);readers.clear();report('Private render worker stopped: '+error);options.onFatal?.(error);}
-  function receiveSpriteResidency(receipt) {
-    if(!spriteResidencyProof||!Number.isSafeInteger(receipt.epoch)||receipt.epoch<1
-      ||!Number.isSafeInteger(receipt.sequence)||receipt.sequence<1||receipt.sequence>lastSpritePlan
-      ||!Number.isSafeInteger(receipt.revision)||receipt.revision<1
-      ||(spriteResidents&&(receipt.epoch<spriteResidents.epoch||receipt.sequence<spriteResidents.sequence
-        ||receipt.revision<spriteResidents.revision)))throw new Error('Invalid sprite residency receipt');
-    let images=spriteResidents?.images;
-    if(receipt.rows!==null) {
-      const rows=receipt.rows;
-      if(!(rows instanceof Int32Array)||rows.length%3||rows.length>4096*3
-        ||receipt.revision===spriteResidents?.revision)throw new Error('Invalid sprite residency rows');
-      images=new Map();
-      for(let at=0;at<rows.length;at+=3) {
-        const id=rows[at],width=rows[at+1],height=rows[at+2];
-        if(id<1||images.has(id)||width<1||width>2048||height<1||height>2048)throw new Error('Invalid resident sprite image');
-        images.set(id,width*2049+height);
-      }
-    } else if(!spriteResidents||receipt.revision!==spriteResidents.revision
-      ||receipt.epoch!==spriteResidents.epoch)throw new Error('Missing sprite residency rows');
-    spriteResidents={epoch:receipt.epoch,sequence:receipt.sequence,revision:receipt.revision,images};
-  }
-  function residentSpritePlan(epoch,sequence,rows) {
-    // Outstanding resident-only plans preserve membership. A plan that could
-    // add or evict pixels needs a new worker commit receipt first.
-    if(!spriteResidents||spriteResidents.epoch!==epoch||spriteResidents.sequence<lastUnconfirmedSpritePlan
-      ||!Number.isSafeInteger(sequence)||sequence<=lastSpritePlan
-      ||!(rows instanceof Int32Array)||rows.length%3||rows.length>1024*3)return false;
-    for(let at=0;at<rows.length;at+=3) {
-      const width=rows[at+1],height=rows[at+2];
-      if(width<1||width>2048||height<1||height>2048
-        ||spriteResidents.images.get(rows[at])!==width*2049+height)return false;
-    }
-    return true;
-  }
   const transport=createRenderWorkerTransport({postMessage:(packet,buffers)=>worker.postMessage(packet,buffers),layout,onReturnedBuffers:options.oracle===true&&options.mutateReturned===true?buffers=>{for(const b of buffers){new Uint8Array(b).fill(165);stats.renderWorker.oracleMutatedReturnedBytes=(stats.renderWorker.oracleMutatedReturnedBytes||0)+b.byteLength;}}:null,onFatal:fatal,onStats(snapshot,ack){
     if(!snapshot||!snapshot.value||!snapshot.samples)throw new Error('Missing worker completion stats');
     if(Number.isFinite(snapshot.value.lastFrame)&&Number.isFinite(snapshot.timeOrigin))snapshot.value.lastFrame+=snapshot.timeOrigin-performance.timeOrigin;
     const display=stats.display;Object.assign(stats,snapshot.value);if(display)stats.display=display;
-    if(ack.spriteResidency)receiveSpriteResidency(ack.spriteResidency);
-    for(const [key,values]of Object.entries(snapshot.samples)){if(!Array.isArray(stats[key])||!Array.isArray(values)||values.length>4096)throw new Error('Unknown worker sample field');for(const value of values){stats[key].push(value);if(stats[key].length>4096)stats[key].shift();}}
+    for(const [key,values]of Object.entries(snapshot.samples)){
+      if(!Array.isArray(stats[key])||!Array.isArray(values)||values.length>4096)throw new Error('Unknown worker sample field');
+      const stages=key==='frameStageSamples'||key==='slowFrameStages';
+      for(const value of values){
+        if(stages)value.submittedAt+=snapshot.timeOrigin-performance.timeOrigin;
+        stats[key].push(value);
+        const limit=key==='frameStageSamples'?600:key==='slowFrameStages'?256:4096;
+        if(stats[key].length>limit)stats[key].shift();
+      }
+    }
   stats.renderWorker=transport.stats;stats.renderWorker.lastCompletedPacket=ack.id;if(ack.frameId)stats.renderWorker.lastCompletedFrame=ack.frameId;stats.renderWorker.layoutEpoch=ack.layoutEpoch;stats.renderWorker.executionMilliseconds=ack.executionMilliseconds;stats.renderWorker.measurementActive=snapshot.measurementActive===true;
     options.onComplete?.(ack);
     if(travel&&Array.isArray(snapshot.travelRows)){
@@ -72,23 +49,31 @@ export async function createBrowserRenderWorker(canvas,report=()=>{},options={})
   const ready=new Promise((a,b)=>{readyResolve=a;readyReject=b;readyTimer=setTimeout(()=>{transport.fail(new Error('Render worker startup timed out'));},30000);});
   const onMessage=event=>{const m=event.data;if(m?.type==='ready'){clearTimeout(readyTimer);readyResolve();return;}if(m?.type==='report'){report(m.text);return;}if(m?.type==='pixels'){const p=readers.get(m.id);if(!p){transport.fail(new Error('Unknown worker readback'));return;}readers.delete(m.id);p.resolve(m);return;}if(m?.type==='disposed'){if(disposeWaiter){clearTimeout(disposeWaiter.timer);disposeWaiter.resolve(m.stats);disposeWaiter=null;}return;}transport.receive(m);};
   worker.addEventListener('message',onMessage);worker.addEventListener('error',event=>transport.fail(new Error(event.message||'Render worker error')));worker.addEventListener('messageerror',()=>transport.fail(new Error('Render worker message decode failed')));
-  try{const offscreen=canvas.transferControlToOffscreen();worker.postMessage({type:'init',version:1,canvas:offscreen,oracle:options.oracle===true,options:{travelTrace:options.travelTrace===true,compactScene:options.compactScene===true,wholeZone:options.wholeZone===true,geometryFormat:options.geometryFormat||'legacy',gpuResidency:options.gpuResidency,gpuBudgetMiB:options.gpuBudgetMiB,wholeZoneCatalog:options.wholeZoneCatalog||null,nativeCallDispatch:'async',ownedState:options.ownedState===true,opaqueProof:options.opaqueProof===true,streamUploadValidation:options.streamUploadValidation===true,overlayDeltaTransport:false,overlayRectMode:'off',overlayJournalObserve:false,physicalOutput:options.physicalOutput===true,physicalOutputControl:options.physicalOutputControl===true,benchmarkControl:options.benchmarkControl===true,spriteResidencyProof}},[offscreen]);await ready;}
+  try{const offscreen=canvas.transferControlToOffscreen();worker.postMessage({type:'init',version:1,canvas:offscreen,oracle:options.oracle===true,options:{travelTrace:options.travelTrace===true,compactScene:options.compactScene===true,wholeZone:options.wholeZone===true,geometryFormat:options.geometryFormat||'legacy',gpuResidency:options.gpuResidency,gpuBudgetMiB:options.gpuBudgetMiB,wholeZoneCatalog:options.wholeZoneCatalog||null,nativeCallDispatch:'async',ownedState:options.ownedState===true,opaqueProof:options.opaqueProof===true,streamUploadValidation:options.streamUploadValidation===true,overlayDeltaTransport:false,overlayRectMode:'off',overlayJournalObserve:false,physicalOutput:options.physicalOutput===true,physicalOutputControl:options.physicalOutputControl===true,benchmarkControl:options.benchmarkControl===true,measureFrameStages:options.measureFrameStages===true}},[offscreen]);await ready;}
   catch(error){clearTimeout(readyTimer);transport.fail(error);dispose();throw error;}
-  const natives={};for(const name of Object.keys(RENDER_WORKER_SCHEMA))if(name[0]!=='$')natives[renderNativeName(name)]=(lib,...args)=>{for(const [key,v]of controls)transport.enqueue(key,[v]);controls.clear();return transport.enqueue(name,args);};
-  if(spriteResidencyProof) {
-    const key=renderNativeName('planWorldSprites');
-    const normalPlan=natives[key];
-    natives[key]=(lib,epoch,sequence,rows)=>{
-      const resident=residentSpritePlan(epoch,sequence,rows);
-      lastSpritePlan=sequence;
-      if(!resident) {
-        lastUnconfirmedSpritePlan=sequence;
-        return normalPlan(lib,epoch,sequence,rows);
-      }
-      for(const [control,value] of controls)transport.enqueue(control,[value]);
-      controls.clear();
-      stats.renderWorker.acknowledgedSpritePlans=++acknowledgedPlans;
-      return transport.enqueue('planWorldSprites',[epoch,sequence,rows],true);
+  const natives={};for(const name of Object.keys(RENDER_WORKER_SCHEMA))if(name[0]!=='$'&&name!=='verifyWorldSpritePlan')natives[renderNativeName(name)]=(lib,...args)=>{for(const [key,v]of controls)transport.enqueue(key,[v]);controls.clear();return transport.enqueue(name,args);};
+  if(options.localSpritePlan===true) {
+    const planner=createSpriteAtlasPlanner();
+    const planName=renderNativeName('planWorldSprites'),commitName=renderNativeName('commitWorldSprites');
+    const submitCommit=natives[commitName];
+    stats.renderWorker.localSpritePlans=0;
+    natives[planName]=(_lib,epoch,sequence,images)=>{
+      try {
+        const missing=Int32Array.from(planner.plan(epoch,sequence,images).missing);
+        for(const [key,value] of controls)transport.enqueue(key,[value]);
+        controls.clear();
+        transport.enqueue('verifyWorldSpritePlan',[epoch,sequence,images,missing]);
+        stats.renderWorker.localSpritePlans++;
+        return missing;
+      } catch(error) { transport.fail(error);throw error; }
+    };
+    natives[commitName]=(lib,epoch,sequence,pixels,quads)=>{
+      try {
+        const prepared=planner.prepared(epoch,sequence);
+        const queued=submitCommit(lib,epoch,sequence,pixels,quads);
+        planner.commit(prepared);
+        return queued;
+      } catch(error) { transport.fail(error);throw error; }
     };
   }
   function dispose(){if(disposed)return;disposed=true;invalidateZone('disposed');clearTimeout(readyTimer);observer?.disconnect();for(const e of ['resize','browser-display-change'])win?.removeEventListener(e,invalidate);for(const p of readers.values())p.reject(new Error('Render worker disposed'));readers.clear();if(disposeWaiter){clearTimeout(disposeWaiter.timer);disposeWaiter.reject(new Error('Render worker disposed'));disposeWaiter=null;}transport.dispose();try{worker.postMessage({type:'dispose'});}finally{worker.terminate();}stats.disposed=true;}

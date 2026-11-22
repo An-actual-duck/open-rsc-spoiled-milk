@@ -3,7 +3,6 @@ import {createBrowserWebGL} from './webgl.js';
 import {createWorkerOutputSizer,createRenderWorkerReplay} from './browser-render-worker-replay.js';
 let backend=null,replay=null,poisoned=false,chain=Promise.resolve(),oracle=false,oraclePixels=null;
 let snapshot=null;
-let spriteResidencyRevision=0;
 function fatal(error){if(poisoned)return;poisoned=true;self.postMessage({type:'fatal',error:String(error),stack:error?.stack||null});try{replay?.dispose();}catch(_){};}
 self.addEventListener('unhandledrejection',event=>{event.preventDefault();fatal(event.reason);});
 self.addEventListener('error',event=>fatal(event.error||event.message));
@@ -34,14 +33,6 @@ self.onmessage=event=>{
       if(gl.getError()!==gl.NO_ERROR)throw new Error('Worker oracle readback failed');
       oraclePixels={width:canvas.width,height:canvas.height,pixels};
     }
-    ack.stats=snapshot();
-    const residency=backend.spriteResidencyAfter?.(spriteResidencyRevision);
-    if(residency) {
-      ack.spriteResidency=residency;
-      spriteResidencyRevision=residency.revision;
-    }
-    ack.buffers=[];for(const c of message.commands)for(const a of c.args)if(ArrayBuffer.isView(a))ack.buffers.push(a.buffer);
-    const transfers=residency?.rows?[...ack.buffers,residency.rows.buffer]:ack.buffers;
-    self.postMessage(ack,transfers);
+    ack.stats=snapshot();ack.buffers=[];for(const c of message.commands)for(const a of c.args)if(ArrayBuffer.isView(a))ack.buffers.push(a.buffer);self.postMessage(ack,ack.buffers);
   }).catch(fatal);
 };
