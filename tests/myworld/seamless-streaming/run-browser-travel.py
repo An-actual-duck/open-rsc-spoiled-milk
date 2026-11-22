@@ -194,7 +194,7 @@ try {
 
 
 def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_profile=False,
-             java_version=8, chrome_profile=False, runtime='5.0'):
+             java_version=8, chrome_profile=None, runtime='5.0'):
     server = json.loads((run / 'server-command.json').read_text())
     stage = json.loads((run / 'stage.json').read_text())
     fixture = json.loads((run / 'outer-coverage-fixture.json').read_text())
@@ -277,7 +277,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 after = chrome_timestamp()
                 return {'pageMs': relative, 'beforeMs': before, 'afterMs': after}
 
-            if chrome_profile:
+            if chrome_profile == 'cpu':
                 chrome_command('Performance.enable')
                 chrome_command('Profiler.enable')
                 chrome_command('Profiler.setSamplingInterval', {'interval': 2000})
@@ -305,8 +305,13 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                     profiler_active = True
                 if chrome_profile and not profiler_active and any(
                         event['message'].startswith('outer-coverage:walking:') for event in snap['events']):
-                    chrome_anchors.append(chrome_clock_anchor())
-                    chrome_command('Profiler.start')
+                    if chrome_profile == 'cpu':
+                        chrome_anchors.append(chrome_clock_anchor())
+                        chrome_command('Profiler.start')
+                    else:
+                        chrome_command('HeapProfiler.startSampling', {
+                            'samplingInterval': 65536, 'stackDepth': 48,
+                            'includeObjectsCollectedByMajorGC': True, 'includeObjectsCollectedByMinorGC': True})
                     profiler_active = True
                 if snap.get('reason') or any(event['message'].startswith(('outer-coverage:failed', 'outer-coverage:complete'))
                                              for event in snap['events']):
@@ -316,6 +321,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
+                modelBatchWork:p.batchedModelKernelWork,
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
@@ -338,13 +344,19 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 if profile.parent != run or not profile.is_file():
                     raise RuntimeError('Firefox profile was not saved in the private test run')
                 result['firefoxProfile'] = profile.name
-            if profiler_active and chrome_profile:
+            if profiler_active and chrome_profile == 'cpu':
                 chrome_anchors.append(chrome_clock_anchor())
                 profile = chrome_command('Profiler.stop')['profile']
                 path = run / 'chrome-walk.cpuprofile'
                 path.write_text(json.dumps(profile) + '\n')
                 result['chromeProfile'] = {'path': path.name, 'clockAnchors': chrome_anchors,
                                            'scope': 'Chrome renderer main thread JavaScript CPU samples'}
+            if profiler_active and chrome_profile == 'allocations':
+                profile = chrome_command('HeapProfiler.stopSampling')['profile']
+                path = run / 'chrome-walk-allocations.json'
+                path.write_text(json.dumps(profile) + '\n')
+                result['chromeProfile'] = {'path': path.name,
+                                           'scope': 'Sampled Chrome main-thread JavaScript heap allocations, including collected objects'}
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
             server_status = json.loads((run / 'status.json').read_text())
@@ -394,6 +406,11 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 plans = (result.get('renderWorker') or {}).get('localSpritePlans', 0)
                 replayed = (result.get('atlas') or {}).get('plans', 0)
                 completed = replayed > 0 and 0 <= plans - replayed <= 3
+            if completed and fixture.get('modelBatchScratch'):
+                model_work = result.get('modelBatchWork') or {}
+                completed = (model_work.get('scratchPackets', 0) > 0
+                             and model_work['scratchPackets'] == model_work.get('packets')
+                             and 0 < model_work.get('scratchRangeRecords', 0) < model_work.get('models', 0) * 8)
             if completed and java_version != 8:
                 completed = any(event['message'] == f'outer-coverage:java-runtime:{java_version}'
                                 for event in result['events'])
@@ -460,7 +477,8 @@ def main():
     parser.add_argument('--java', choices=(8, 11, 17), type=int, default=8, help='Compare supported Java runtimes')
     parser.add_argument('--runtime', choices=('5.0', '4.3'), default='5.0', help='Compare CheerpJ releases')
     parser.add_argument('--firefox-profile', action='store_true', help='Save a separate Firefox browser profiler capture in the test run')
-    parser.add_argument('--chrome-profile', action='store_true', help='Save a separate Chrome CPU profiler capture in the test run')
+    parser.add_argument('--chrome-profile', choices=('cpu', 'allocations'), nargs='?', const='cpu',
+                        help='Save a separate Chrome CPU or allocation profiler capture in the test run')
     parser.add_argument('--output', choices=('default', 'logical', 'full-hd'), default='default',
                         help='Compare 960x540 and 1920x1080 WebGL output with the same 960x540 UI')
     args = parser.parse_args()

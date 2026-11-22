@@ -136,7 +136,8 @@ function report(message) {
 const geometryTransfer=browserGeometryTransferPolicy(window.browserProof.mode,options);
 const candidatePreparation=privatePreparationCandidates(window.browserProof.mode,options);
 const optimizedDefaults=optimizedRenderDefaults(window.browserProof.mode,options);
-const modelBatchKernel=createBatchedModelKernel();
+const modelBatchKernel=createBatchedModelKernel({reuseScratch:!deployment.publicAlpha
+  && window.browserPrivateTestRoute?.modelBatchScratch===true});
 window.browserProof.batchedModelKernelWork=modelBatchKernel.stats;
 const fixturePolicy=deployment.publicAlpha?{properties:[],requested:null,tcpPort:43605,websocket:deployment.websocket}:repeatableFixturePolicy(window.browserProof.mode,options,window.browserPrivateTestRoute,location.origin);
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};

@@ -1476,11 +1476,29 @@ shorter gaps had garbage collector samples. The profile startup
 interrupted the first leg, so its frame-rate summary is diagnostic.
 [Chrome profile analysis](../../../output/tests/browser-gameplay-spike/chrome-resident-cpu-profile/profile-summary.json) · [Profiler API](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/)
 
+An untraced comparison used the player preview's exact client JAR with
+CheerpJ 4.3 and Java 8. Firefox reached a 36 FPS worst second and a
+30 ms 99th percentile. Chrome reached 40 FPS and 31 ms. Both completed
+the same route at Full HD with zero holds and input blocks. The
+player preview continues to use CheerpJ 5.0, which reached 40 and 43 FPS
+in the prior matched Firefox and Chrome repeats.
+[Firefox 4.3 walk](../../../output/tests/browser-gameplay-spike/runtime-43-firefox/firefox-result.json) · [Chrome 4.3 walk](../../../output/tests/browser-gameplay-spike/runtime-43-chrome/chrome-result.json)
+
 The private catch-up trial presents the actual game state when the
 accumulated update work reaches one quarter of a frame. It carries
 the original five-update limit across successive draws. A single
 indivisible game update still runs to completion. The runtime continues
 to apply the original server receipts and interpolation rules.
+
+The Chrome allocation sample attributed about 1 GB of transient
+allocation to the browser model projection module across the walk. Its
+largest application site was the whole-packet validation function, which
+created arrays and buffer-range records on each call. The private
+projection trial keeps one scratch workspace per kernel. Weak buffer
+keys retain only the validation ranges and the Java array views expire
+when the native call completes. The same packet-wide alias checks run
+before any projection writes.
+[Allocation analysis](../../../output/tests/browser-gameplay-spike/chrome-resident-allocations/allocation-summary.json) · [Allocation profiler API](https://chromedevtools.github.io/devtools-protocol/tot/HeapProfiler/)
 
 #### Java client worker feasibility
 
