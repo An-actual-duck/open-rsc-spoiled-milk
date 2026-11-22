@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 final class RemasterGlowMaskBuilder {
+	private static final int MAX_PREPARED_EMITTERS = 512;
 	private static final String TEXTURE_SIZE_PROPERTY = "spoiledmilk.remasterGlowMaskTextureSize";
 	private static final String TEXTURE_SIZE_ENV = "SPOILED_MILK_REMASTER_GLOW_MASK_TEXTURE_SIZE";
 	private static final String CACHE_ENTRIES_PROPERTY = "spoiledmilk.remasterGlowMaskCacheEntries";
@@ -35,6 +36,10 @@ final class RemasterGlowMaskBuilder {
 	private final float[] scratchBlue = new float[TEXTURE_SIZE * TEXTURE_SIZE];
 
 	RemasterGlowMaskBuild build(Renderer3DWorldChunkFrame chunkFrame) {
+		return build(chunkFrame, null);
+	}
+
+	RemasterGlowMaskBuild build(Renderer3DWorldChunkFrame chunkFrame, BrowserGlowPreparation prepared) {
 		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
 			return null;
 		}
@@ -55,7 +60,9 @@ final class RemasterGlowMaskBuilder {
 		long revision = nextUploadRevision;
 		// Exhaustion must fail rather than reuse zero/sentinel/old upload identities.
 		nextUploadRevision = Math.addExact(nextUploadRevision, 1L);
-		RemasterGlowMask mask = buildMask(revision, bounds, emitters);
+		RemasterGlowMask mask = prepared == null ? null : prepared.take(chunkFrame, inputs.values, revision,
+			bounds.minX, bounds.minZ, bounds.invSpanX(), bounds.invSpanZ());
+		if (mask == null) mask = buildMask(revision, bounds, emitters);
 		if (mask == null || mask.visiblePixels <= 0) {
 			return null;
 		}
@@ -66,6 +73,32 @@ final class RemasterGlowMaskBuilder {
 
 	void clear() {
 		cacheByInputs.clear();
+	}
+
+	static int[] prepareRecipe(List<BrowserGlowPreparation.Source> chunks) {
+		float minX = Float.MAX_VALUE, maxX = -Float.MAX_VALUE;
+		float minZ = Float.MAX_VALUE, maxZ = -Float.MAX_VALUE;
+		List<Renderer3DWorldChunkFrame.GlowEmitter> emitters = new ArrayList<>();
+		for (BrowserGlowPreparation.Source source : chunks) {
+			Renderer3DWorldChunkFrame.ChunkMesh chunk = source.chunk;
+			if (chunk.hasVertexBounds()) {
+				minX = Math.min(minX, Math.addExact(chunk.getMinVertexX(), source.offsetX));
+				maxX = Math.max(maxX, Math.addExact(chunk.getMaxVertexX(), source.offsetX));
+				minZ = Math.min(minZ, Math.addExact(chunk.getMinVertexZ(), source.offsetZ));
+				maxZ = Math.max(maxZ, Math.addExact(chunk.getMaxVertexZ(), source.offsetZ));
+			}
+			for (int index = 0; index < chunk.getGlowEmitterCount(); index++) {
+				Renderer3DWorldChunkFrame.GlowEmitter emitter = chunk.getGlowEmitter(index);
+				if (emitter == null || emitter.getIntensity() <= 0 || emitter.getRadius() <= 0) continue;
+				if (emitters.size() == MAX_PREPARED_EMITTERS) return null;
+				emitters.add(source.offsetX == 0 && source.offsetZ == 0 ? emitter : new Renderer3DWorldChunkFrame.GlowEmitter(
+					emitter.getModelKind(), Math.addExact(emitter.getCenterX(), source.offsetX), emitter.getCenterY(),
+					Math.addExact(emitter.getCenterZ(), source.offsetZ), emitter.getRadius(), emitter.getColor(), emitter.getIntensity()));
+			}
+		}
+		if (emitters.isEmpty()) return null;
+		RemasterGlowMaskBounds bounds = RemasterGlowMaskBounds.fromExtents(minX, maxX, minZ, maxZ, emitters);
+		return bounds == null ? null : new MaskInputs(bounds, emitters).values;
 	}
 
 	private List<Renderer3DWorldChunkFrame.GlowEmitter> collectEmitters(
@@ -276,6 +309,11 @@ final class RemasterGlowMaskBuilder {
 				minZ = chunkFrame.getMinVertexZ();
 				maxZ = chunkFrame.getMaxVertexZ();
 			}
+			return fromExtents(minX, maxX, minZ, maxZ, emitters);
+		}
+
+		private static RemasterGlowMaskBounds fromExtents(float minX, float maxX, float minZ, float maxZ,
+				List<Renderer3DWorldChunkFrame.GlowEmitter> emitters) {
 			for (Renderer3DWorldChunkFrame.GlowEmitter emitter : emitters) {
 				float radius = emitter.getRadius() + TEXTURE_PADDING;
 				minX = Math.min(minX, emitter.getCenterX() - radius);

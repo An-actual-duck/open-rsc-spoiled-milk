@@ -396,6 +396,10 @@ public final class BrowserOuterCoverageProbe {
 		for (String row : orsc.graphics.three.SurfaceSceneryMeshPreparation.traceSnapshot()) {
 			BrowserBootstrap.report("scenery-meshing:" + row);
 		}
+		if (Boolean.getBoolean("spoiledmilk.browserPrepareNextGlow")) {
+			int[] glow = (int[]) BrowserWebGLBridge.class.getMethod("getPreparedGlowWork").invoke(null);
+			BrowserBootstrap.report("outer-coverage:prepared-glow:" + Arrays.toString(glow));
+		}
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
 	}
 
