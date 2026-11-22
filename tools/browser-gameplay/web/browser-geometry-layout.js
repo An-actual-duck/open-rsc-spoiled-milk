@@ -58,6 +58,39 @@ const floatWord=n=>{wordFloat[0]=n;return wordInt[0];};
 const UNORM8=new Map(Array.from({length:256},(_,n)=>[floatWord(n/255),n]));
 const FLOAT_COMPONENTS=Object.freeze([0,1,2,7,8,18,19,20]);
 const UINT8=new Map(Array.from({length:256},(_,n)=>[floatWord(n),n]));
+const BYTE_ATTRIBUTES=GEOMETRY_ATTRIBUTES.filter(attribute=>attribute[4]==='UNSIGNED_BYTE');
+
+/** Convert one borrowed Java block into unpublished compact storage. */
+export function packCompactVertexBlock(input,count,output,outputAt){
+  if(!(input instanceof Float32Array)||!(output instanceof Int32Array)
+      ||!Number.isInteger(count)||count<1||count>128||input.length<count*28
+      ||!Number.isInteger(outputAt)||outputAt<0||outputAt%12||outputAt+count*12>output.length)return false;
+  const outputOffset=output.byteOffset+outputAt*4;
+  if(input.buffer===output.buffer&&input.byteOffset<outputOffset+count*48
+      &&outputOffset<input.byteOffset+count*112)return false;
+  const words=new Uint32Array(input.buffer,input.byteOffset,count*28);
+  for(let n=0;n<count;n++){
+    const from=n*28,to=outputAt+n*12;
+    for(let c=0;c<FLOAT_COMPONENTS.length;c++){
+      const word=words[from+FLOAT_COMPONENTS[c]];
+      // Java Float.floatToIntBits canonicalizes NaNs, preserving signed zero.
+      output[to+c]=(word&0x7fffffff)>0x7f800000?0x7fc00000:word;
+    }
+    output.fill(0,to+8,to+12);
+    for(const attribute of BYTE_ATTRIBUTES){
+      const size=attribute[1],offset=attribute[2],target=attribute[3];
+      const codes=attribute[5]?UNORM8:UINT8;
+      for(let c=0;c<size;c++){
+        const byte=codes.get(words[from+offset+c]);
+        if(byte===undefined)return false;
+        const at=target+c;
+        output[to+(at>>>2)]|=byte<<((at&3)*8);
+      }
+    }
+  }
+  return true;
+}
+
 export function packCompactVertices(input){
   if(!(input instanceof Float32Array)||input.length%28)throw new Error('Compact conversion requires legacy float32 vertices');
   const count=input.length/28;if(count>524288)throw new Error('Compact vertex limit');

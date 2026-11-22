@@ -6,13 +6,15 @@ import {geometryBytes} from './browser-geometry-layout.js';
 export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*1024,maxChunks=512,
   maxPendingBytes=64*1024*1024,maxQueue=512,maxQueueBytes=320*1024*1024,sliceBytes=4*1024*1024,optionalReserveBytes=32*1024*1024,tickMilliseconds=2,maxTickSteps=32,clock=()=>performance.now(),
   resident,totalBytes,totalCount=()=>resident.size,evict,prepare,createUpload,
+  retainRelevantJobs=false,
   schedule=fn=>globalThis.requestAnimationFrame?requestAnimationFrame(fn):setTimeout(fn,16),
   cancelSchedule=id=>globalThis.cancelAnimationFrame?cancelAnimationFrame(id):clearTimeout(id),onError=()=>{}}){
   for(const [name,value]of Object.entries({capacityBytes,maxChunks,maxPendingBytes,maxQueue,maxQueueBytes,sliceBytes,maxTickSteps}))if(!Number.isSafeInteger(value)||value<1)throw new Error('Invalid bounded scheduler '+name);
   if(!Number.isFinite(tickMilliseconds)||tickMilliseconds<=0)throw new Error('Invalid bounded scheduler tick budget');
   if(sliceBytes<112||sliceBytes%4||!Number.isSafeInteger(optionalReserveBytes)||optionalReserveBytes<0)throw new Error('Invalid bounded scheduler slice/reserve');
   const byId=new Map(catalog.chunks.map(c=>[c.id,c])),lru=new Map();
-  let required=new Set(),queue=[],generation=0,key=null,loading=null,prepared=null,job=null,timer=null,disposed=false,suspended=true,failed=null,tick=0,activeTick=null,optionalKey=null,optionalDesired=new Set();
+  const deferredOptional=new Set();
+  let required=new Set(),queue=[],generation=0,key=null,lifetimeKey=null,loading=null,prepared=null,job=null,timer=null,disposed=false,suspended=true,failed=null,tick=0,activeTick=null,optionalKey=null,optionalDesired=new Set();
   const bytes=geometryBytes;
   Object.assign(stats,{policy:'bounded',capacityBytes,maxChunks,maxPendingBytes,maxQueue,maxQueueBytes,sliceBytes,tickMilliseconds,maxTickSteps,
     generation:0,requiredChunks:0,requiredBytes:0,missingChunks:0,ready:false,queuedChunks:0,queuedBytes:0,
@@ -51,19 +53,27 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
       evict(victim);lru.delete(victim);stats.evictions++;
     }
   }
+  function catalogAllocation(){
+    // Replanning can happen between slices of an already allocated upload.
+    // Count it as catalog storage so a promotion to required cannot count it twice.
+    const inFlightBytes=retainRelevantJobs?(job?.value.allocatedBytes||0):0;
+    let allocatedBytes=inFlightBytes,allocatedCount=inFlightBytes>0?1:0;
+    for(const id of resident.keys())if(byId.has(id)){allocatedBytes+=bytes(byId.get(id));allocatedCount++;}
+    return {allocatedBytes,allocatedCount};
+  }
   function refreshOptional(optionalIds,force=false){
     const signature=optionalIds.join(',');if(!force&&signature===optionalKey)return;optionalKey=signature;
     const inflight=id=>job?.id===id||prepared?.chunk.id===id||loading?.id===id&&loading.generation===generation&&!loading.controller.signal.aborted;
     const missing=[...required].filter(id=>!resident.has(id)&&!inflight(id)).map(id=>byId.get(id)).sort((a,b)=>a.role-b.role);
     let queuedBytes=missing.reduce((n,c)=>n+c.bytes,0);
     if(queuedBytes>maxQueueBytes){const error=new Error('Required bounded queue byte cap exceeded');stop(error);throw error;}
-    let catalogBytes=0,catalogCount=0;for(const id of resident.keys())if(byId.has(id)){catalogBytes+=bytes(byId.get(id));catalogCount++;}
+    const {allocatedBytes,allocatedCount}=catalogAllocation();
     // Admit one stable optional working set. A later optional upload must not
     // evict an earlier member just to churn through a larger descriptor queue.
-    let room=capacityBytes-optionalReserveBytes-(totalBytes()-catalogBytes)-stats.requiredBytes;
-    let countRoom=maxChunks-(totalCount()-catalogCount)-required.size;
+    let room=capacityBytes-optionalReserveBytes-(totalBytes()-allocatedBytes)-stats.requiredBytes;
+    let countRoom=maxChunks-(totalCount()-allocatedCount)-required.size;
     optionalDesired=new Set();let optionalBytes=0;
-    for(const id of optionalIds){const c=byId.get(id);if(!c||required.has(id)||optionalDesired.has(id))continue;
+    for(const id of optionalIds){const c=byId.get(id);if(!c||required.has(id)||optionalDesired.has(id)||deferredOptional.has(id))continue;
       if(bytes(c)>room||countRoom<1||c.bytes+c.batchIntCount*4>maxPendingBytes)continue;
       if(!resident.has(id)&&!inflight(id)&&(missing.length>=maxQueue||queuedBytes+c.bytes>maxQueueBytes))continue;
       optionalDesired.add(id);room-=bytes(c);countRoom--;optionalBytes+=bytes(c);
@@ -71,21 +81,28 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
     }
     queue=missing;stats.optionalPlanChunks=optionalDesired.size;stats.optionalPlanBytes=optionalBytes;
   }
+  function keepRelevantWork(){
+    if(!retainRelevantJobs)return;
+    const id=job?.id??prepared?.chunk.id??loading?.id;
+    if(id!==undefined&&!required.has(id)&&!optionalDesired.has(id)&&!loading?.controller.signal.aborted)cancelJob();
+  }
   function select(requiredIds,optionalIds=[],generationKey=''){
     if(disposed||failed)throw failed||new Error('Bounded residency disposed');
     const next=new Set(requiredIds);if(next.size>maxQueue)throw new Error('Required bounded queue count exceeded');
     for(const id of next)if(!byId.has(id))throw new Error('Unknown required catalogue resource');
     const nextKey=generationKey+'|'+[...next].sort((a,b)=>a-b).join(',');
-    if(nextKey===key){refreshOptional(optionalIds);account();wake();return stats.ready;}
-    key=nextKey;suspended=false;generation++;stats.generation=generation;activeTick=null;cancelJob();required=next;
-    let requiredBytes=0,residentCatalogBytes=0,residentCatalogCount=0;
+    if(nextKey===key){refreshOptional(optionalIds);keepRelevantWork();account();wake();return stats.ready;}
+    const preserve=retainRelevantJobs&&!suspended&&generationKey===lifetimeKey;
+    key=nextKey;lifetimeKey=generationKey;suspended=false;required=next;
+    if(!preserve){generation++;stats.generation=generation;activeTick=null;cancelJob();deferredOptional.clear();}
+    let requiredBytes=0;
     for(const id of required){requiredBytes+=bytes(byId.get(id));lru.set(id,++tick);}
-    for(const id of resident.keys())if(byId.has(id)){residentCatalogBytes+=bytes(byId.get(id));residentCatalogCount++;}
-    if(requiredBytes+totalBytes()-residentCatalogBytes>capacityBytes||required.size+totalCount()-residentCatalogCount>maxChunks){
+    const {allocatedBytes,allocatedCount}=catalogAllocation();
+    if(requiredBytes+totalBytes()-allocatedBytes>capacityBytes||required.size+totalCount()-allocatedCount>maxChunks){
       const error=new Error('Required active GPU set exceeds explicit bounded'+capacityBytes/(1024*1024)+'MiB/count capacity; full residency reference remains available');stop(error);throw error;
     }
     stats.requiredChunks=required.size;stats.requiredBytes=requiredBytes;
-    refreshOptional(optionalIds,true);account();wake();return stats.ready;
+    refreshOptional(optionalIds,true);keepRelevantWork();account();wake();return stats.ready;
   }
   function tickAvailable(t){return t&&t===activeTick&&clock()<t.deadline&&t.bytes+112<=sliceBytes&&t.steps<maxTickSteps;}
   function reportTick(t){
@@ -127,7 +144,17 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
         Promise.resolve(prepare(c,controller.signal)).then(payload=>{
           if(disposed||failed||generation!==token.generation||controller.signal.aborted)return;
           prepared={chunk:c,payload,generation};
-        }).catch(error=>{if(!disposed&&!controller.signal.aborted&&generation===token.generation)stop(error);}).finally(()=>{
+        }).catch(error=>{
+          if(disposed||controller.signal.aborted||generation!==token.generation)return;
+          if(retainRelevantJobs&&!required.has(c.id)){
+            // Keep ready coverage live. A demanded cell can retry through the
+            // required path, while speculative lookahead avoids a retry loop.
+            deferredOptional.add(c.id);
+            stats.optionalPrepareFailures=(stats.optionalPrepareFailures||0)+1;
+            return;
+          }
+          stop(error);
+        }).finally(()=>{
           if(loading===token)loading=null;stats.pendingBytes=job||prepared?pendingBytes:0;account();
           // Immediate fetch/hash completion may spend the same tick's remaining
           // budget. A later completion gets a new RAF, never a fresh hidden budget.

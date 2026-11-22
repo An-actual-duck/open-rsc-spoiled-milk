@@ -1,5 +1,7 @@
 /** Closed bounded diagnostics: never clone renderer caches, typed planes or inputs. */
 export const WORKER_SAMPLE_FIELDS=Object.freeze(['frameSamples','worldFrameSamples','gpuWorkSamples','jsSubmissionSamples','javaBridgeWorkSamples','worldFramePolicies','worldFrameSpriteGroups','physicalOutputWorldFramePolicies']);
+export const FRAME_STAGE_SAMPLE_LENGTHS=Object.freeze([47,48,54]);
+const FRAME_STAGE_FIELDS=['frameStageSamples','slowFrameStages'];
 const OBJECTS=new Set(['contextAttributes','worldReadiness','physicalOutput','overlayDeclaration','pose','spriteCompositeCache','opaqueAlphaProof','wholeZone','boundedResidency']);
 const HISTORIES=new Set(['ownedStateTransitions','physicalOutputTransitions','worldStreamSamples','limitations']);
 function bounded(value,depth=0,budget={left:512,chars:16384}){
@@ -13,8 +15,10 @@ function bounded(value,depth=0,budget={left:512,chars:16384}){
   throw new Error('Unsupported worker statistic metadata');
 }
 export function createWorkerStatsSnapshot(stats){
-  const counts={},submitted={};
-  for(const key of WORKER_SAMPLE_FIELDS){
+  const counts={},submitted={};let submittedTravel=0;
+  const stages=FRAME_STAGE_FIELDS.filter(key=>Array.isArray(stats[key]));
+  const fields=[...WORKER_SAMPLE_FIELDS,...stages];
+  for(const key of fields){
     const array=stats[key];if(!Array.isArray(array))throw new Error('Missing worker statistics history');counts[key]=0;submitted[key]=0;
     // Track actual pushes, including equal intervals and rings at full capacity.
     Object.defineProperty(array,'push',{value:function(...items){counts[key]+=items.length;return Array.prototype.push.apply(this,items);}});
@@ -22,19 +26,33 @@ export function createWorkerStatsSnapshot(stats){
   return function snapshot(){
     const value={},samples={},budget={left:4096,chars:16384},entries=Object.entries(stats);if(entries.length>192)throw new Error('Worker statistics field cap');
     for(const [key,v]of entries){
-      if(key==='measurement'||WORKER_SAMPLE_FIELDS.includes(key))continue;
+      if(key==='measurement'||fields.includes(key))continue;
       if(v===null||['number','boolean','string'].includes(typeof v))value[key]=bounded(v,0,budget);
       else if(OBJECTS.has(key))value[key]=bounded(v,0,budget);
       else if(HISTORIES.has(key))value[key]=bounded(v.slice(-16),0,budget);
       // Unknown objects are intentionally absent, never a broad cache escape.
     }
-    for(const key of WORKER_SAMPLE_FIELDS){const n=counts[key]-submitted[key];if(n){const a=stats[key];const selected=a.slice(-Math.min(n,a.length,4096));
+    for(const key of fields){const n=counts[key]-submitted[key];if(n){const a=stats[key];const selected=a.slice(-Math.min(n,a.length,4096));
       samples[key]=selected.map(sample=>{
-        if(key==='javaBridgeWorkSamples'){if(!Array.isArray(sample)||sample.length!==14||sample.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw new Error('Invalid worker bridge sample');return sample.slice();}
+        if(stages.includes(key))return bounded(sample,0,{left:64,chars:0});
+        if(key==='javaBridgeWorkSamples'){
+          const allowed=stages.length?FRAME_STAGE_SAMPLE_LENGTHS:[stats.travelTrace?24:14];
+          if(!Array.isArray(sample)||!allowed.includes(sample.length)||sample.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw new Error('Invalid worker bridge sample');
+          return sample.slice();
+        }
         if(key==='worldFramePolicies'){if(typeof sample!=='boolean')throw new Error('Invalid worker policy sample');}
         else if(typeof sample!=='number'||!Number.isFinite(sample)||sample<0)throw new Error('Invalid worker interval sample');
         return sample;
       });submitted[key]=counts[key];}}
-    return {value,samples,measurementActive:stats.measurement===true,timeOrigin:performance.timeOrigin};
+    const travel=stats.travelTrace;
+    let travelRows;
+    if(travel){
+      const received=travel.dropped+travel.rows.length;
+      const next=received-submittedTravel;
+      if(next<0||next>32)throw new Error('Unexpected render worker travel events');
+      travelRows=next?travel.rows.slice(-next).map(row=>bounded(row,0,budget)):[];
+      submittedTravel=received;
+    }
+    return {value,samples,travelRows,measurementActive:stats.measurement===true,timeOrigin:performance.timeOrigin};
   };
 }

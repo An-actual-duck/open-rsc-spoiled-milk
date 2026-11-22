@@ -188,6 +188,16 @@ class FakeWorker{
  const make=extra=>Object.assign(Object.fromEntries(WORKER_SAMPLE_FIELDS.map(k=>[k,[]])),extra);
  const source=make({measurement:true}),snap=createWorkerStatsSnapshot(source),row=Array.from({length:14},(_,n)=>n);source.javaBridgeWorkSamples.push(row);source.worldFramePolicies.push(true);const output=snap();row.fill(999);eq(output.samples.javaBridgeWorkSamples[0],Array.from({length:14},(_,n)=>n));eq(output.samples.worldFramePolicies,[true]);eq(output.measurementActive,true);
  for(const [key,bad]of [['frameSamples',new Float32Array(10)],['frameSamples',NaN],['frameSamples',-1],['worldFramePolicies',1],['javaBridgeWorkSamples',Array(13).fill(0)],['javaBridgeWorkSamples',new Float32Array(14)],['javaBridgeWorkSamples',Array(14).fill(Infinity)]]){const s=make({}),f=createWorkerStatsSnapshot(s);s[key].push(bad);assert.throws(()=>f());checks++;}
+ const stages = make({frameStageSamples: [], slowFrameStages: []});
+ const stageSnapshot = createWorkerStatsSnapshot(stages);
+ for (const length of [47, 48, 54]) {
+   const sample = Array.from({length}, (_, index) => index);
+   stages.javaBridgeWorkSamples.push(sample);
+   eq(stageSnapshot().samples.javaBridgeWorkSamples, [sample]);
+ }
+ stages.javaBridgeWorkSamples.push(Array(53).fill(0));
+ assert.throws(() => stageSnapshot(), /Invalid worker bridge sample/);
+ checks++;
  const big=make(Object.fromEntries(Array.from({length:193},(_,n)=>['f'+n,n])));assert.throws(()=>createWorkerStatsSnapshot(big)());checks++;
  const strings=make(Object.fromEntries(Array.from({length:5},(_,n)=>['s'+n,'x'.repeat(4096)])));assert.throws(()=>createWorkerStatsSnapshot(strings)());checks++;
 }

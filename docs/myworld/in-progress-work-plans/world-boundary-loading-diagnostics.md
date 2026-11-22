@@ -1,5 +1,9 @@
 # World-Boundary Loading Diagnostics and Decision Plan
 
+The November 20, 2026 [seamless world streaming plan](seamless-world-streaming-plan.md)
+governs new work on ordinary walking across chunk boundaries. This file records
+the diagnostics and decisions for the earlier desktop transition work.
+
 Status: integration checkpoint accepted; transport, atomic activation,
 diagnostics, warm-residency, static-shadow ownership, batched scene deltas, and
 diagonal prediction are validated. Further dense-area frame-pacing work remains

@@ -23,10 +23,16 @@ class FakeWorker {
       const natives={};
       natives[endpoint('initialize')]=async()=>8192;
       natives[endpoint('planWorldSprites')]=async()=>Int32Array.of(7);
+      natives[endpoint('commitWorldSprites')]=async()=>{};
       natives[endpoint('worldProgress')]=async()=>{};
       natives[endpoint('lightingFrame')]=async(lib,v)=>{self.bufferWords.push(Array.from(new Uint32Array(v.buffer,v.byteOffset,v.length)));};
       natives[endpoint('overlayFrame')]=async()=>{};
-      natives[endpoint('present')]=async(lib,w,h,world)=>{self.stats.javaFrames++;if(world)self.stats.javaWorldFrames++;self.output=sizer.size(w,h);};
+      natives[endpoint('present')]=async(lib,w,h,world,matrices,uniforms,draws,pixels,progress,generation,sequence,coverage)=>{
+        if(progress)self.inlineProgress={progress:Array.from(progress),generation,sequence,firstCoverage:coverage?.[0]};
+        self.stats.javaFrames++;
+        if(world)self.stats.javaWorldFrames++;
+        self.output=sizer.size(w,h);
+      };
       natives[endpoint('frameWork')]=async()=>{self.stats.javaBridgeReportedWorldFrames=self.stats.javaWorldFrames;};
       this.replay=createRenderWorkerReplay({backend:{stats:this.stats,natives,dispose(){self.stats.disposed=true;self.stats.gpuBytes=0;self.stats.spriteResourceBytes=0;}},outputSizer:sizer});
       queueMicrotask(()=>this.emit({type:'ready',version:1}));return;
@@ -48,14 +54,20 @@ check(await gpu.natives[endpoint('initialize')](null,'#version 120\nx','#version
 gpu.stats.measurement=true;
 const raw=new Uint32Array([0x7fc00001,0x80000000,0x3f800000]),plane=new Float32Array(raw.buffer);
 await gpu.natives[endpoint('lightingFrame')](null,plane);raw[0]=0;raw[1]=0;
-await gpu.natives[endpoint('worldProgress')](null,new Int32Array(12));
 await gpu.natives[endpoint('overlayFrame')](null,960,540,0,1,1,0,false,null);
-await gpu.natives[endpoint('present')](null,960,540,true,new Float32Array(48),new Float32Array(30),new Int32Array(0),new Int32Array(960*540));
+const progress=Int32Array.of(1,2,1,9,9,0,0,0,1,960,540,0);
+const generation=4294967328,sequence=generation+7,coverage=new Float32Array(960*540);
+coverage[0]=.75;
+const declared={progress:Array.from(progress),generation,sequence,firstCoverage:.75};
+await gpu.natives[endpoint('present')](null,960,540,true,new Float32Array(48),new Float32Array(30),new Int32Array(0),
+  new Int32Array(960*540),progress,generation,sequence,coverage);
+progress.fill(0);coverage.fill(0);
 check(gpu.stats.renderWorker.submittedFrames===0,'World frame remains staged before receipt');
 await gpu.natives[endpoint('frameWork')](null,new Float32Array(14),new Int32Array(14));
 await gpu.drain();
 check(gpu.stats.javaFrames===1&&gpu.stats.javaBridgeReportedWorldFrames===1);
 check(gpu.stats.renderWorker.completedFrames===1);
+assert.deepEqual(worker.inlineProgress,declared);checks++;
 check(worker.bufferWords[0][0]===0x7fc00001&&worker.bufferWords[0][1]===0x80000000,'Owned raw float bits survive source mutation');
 check(worker.output.width===1843&&worker.output.height===1037,'Actual main CSS metrics preserved');
 check(plane.buffer.byteLength===12,'Java/source storage never detached');
@@ -85,5 +97,31 @@ await loadingFrame();check(rectReads===2&&earlyWorker.output.width===1843&&early
 await loadingFrame();check(rectReads===2,'Positive steady canvas metrics remain cached');
 metrics={width:1440,height:810};early.invalidateLayout();await loadingFrame();check(rectReads===3&&earlyWorker.output.width===1440&&earlyWorker.output.height===810);
 await early.disposeAndConfirm();
+
+const localWorker=new FakeWorker();
+const local=await createBrowserRenderWorker(canvas,()=>{},
+  {workerFactory:()=>localWorker,oracle:true,localSpritePlan:true});
+const missing=local.natives[endpoint('planWorldSprites')](null,1,1,Int32Array.of(7,2,3));
+assert.deepEqual(missing,Int32Array.of(7));checks++;
+check(local.stats.renderWorker.submittedPackets===0,'Local atlas planning can return before posting a worker packet');
+await local.natives[endpoint('commitWorldSprites')](null,1,1,new Uint8Array(24),new Float32Array(20));
+await local.drain();
+assert.deepEqual(localWorker.sent[0].commands.map(c=>c.name),['verifyWorldSpritePlan','commitWorldSprites']);checks++;
+await local.disposeAndConfirm();
+
+let committedSprites=false;
+const rejectedPlan=createRenderWorkerReplay({
+  backend:{natives:{[endpoint('planWorldSprites')]:()=>Int32Array.of(7),
+    [endpoint('commitWorldSprites')]:()=>{committedSprites=true;}}},
+  outputSizer:createWorkerOutputSizer(),
+});
+const wrongCommands=[
+  ownRenderCommand('verifyWorldSpritePlan',[1,1,Int32Array.of(7,2,3),Int32Array.of(8)]),
+  ownRenderCommand('commitWorldSprites',[1,1,new Uint8Array(24),new Float32Array(20)]),
+];
+await assert.rejects(rejectedPlan.execute({type:'batch',version:1,id:1,frameId:0,
+  layout:{epoch:1,width:960,height:540,dpr:1},commands:wrongCommands.map(c=>c.command),
+  bytes:wrongCommands.reduce((n,c)=>n+c.bytes,0)}),/sprite plans diverged/);checks++;
+check(!committedSprites,'A mismatching ID order stops before any sprite commit');
 globalThis.window=oldWindow;
 console.log(JSON.stringify({passed:true,checks,scope:'CPU facade/transfer/replay only; no browser or GPU'}));

@@ -12,7 +12,7 @@ public final class NativeLayeredTerrainResidentCache {
 	public static final int DEFAULT_CAPACITY = 64;
 
 	private final int capacity;
-	private final LinkedHashMap<String, NativeLayeredTerrainChunk> resident;
+	private LinkedHashMap<String, NativeLayeredTerrainChunk> resident;
 	private long version;
 	private int lastPayloads;
 	private int lastReferences;
@@ -89,21 +89,29 @@ public final class NativeLayeredTerrainResidentCache {
 		}
 	}
 
-	private synchronized void commit(final Transaction transaction) {
+	private synchronized boolean commit(final Transaction transaction, boolean prepared) {
 		if (transaction.owner != this || transaction.committed) {
 			throw new IllegalStateException(
 				"Native terrain resident transaction is invalid");
 		}
 		if (transaction.baseVersion != version) {
+			if (prepared) return false;
 			throw new IllegalStateException(
 				"Native terrain resident cache changed before receipt commit");
 		}
-		resident.clear();
-		resident.putAll(transaction.staged);
+		long nextVersion = Math.addExact(version, 1L);
+		if (prepared) {
+			// The precomputed transaction owns its map and no caller can mutate it after commit.
+			resident = transaction.staged;
+		} else {
+			resident.clear();
+			resident.putAll(transaction.staged);
+		}
 		lastPayloads = transaction.payloads;
 		lastReferences = transaction.references;
-		version = Math.addExact(version, 1L);
+		version = nextVersion;
 		transaction.committed = true;
+		return true;
 	}
 
 	private static LinkedHashMap<String, NativeLayeredTerrainChunk>
@@ -173,6 +181,24 @@ public final class NativeLayeredTerrainResidentCache {
 			return checkedChunk;
 		}
 
+		void acceptPreparedReference(String contentIdentity, NativeLayeredTerrainChunk chunk) {
+			acceptPayload(contentIdentity, chunk);
+			payloads--;
+			references = Math.addExact(references, 1);
+		}
+
+		NativeLayeredTerrainChunk resolvePreparedReference(String contentIdentity, NativeLayeredTerrainChunk prepared) {
+			requireOpen();
+			NativeLayeredTerrainChunk cached = staged.get(requireIdentity(contentIdentity));
+			if (cached == null) {
+				acceptPreparedReference(contentIdentity, prepared);
+				return prepared;
+			} else {
+				references = Math.addExact(references, 1);
+				return cached;
+			}
+		}
+
 		public NativeLayeredTerrainChunk resolveReference(
 			final String contentIdentity) {
 			requireOpen();
@@ -188,7 +214,11 @@ public final class NativeLayeredTerrainResidentCache {
 
 		public void commit() {
 			requireOpen();
-			owner.commit(this);
+			owner.commit(this, false);
+		}
+
+		boolean tryCommitTo(NativeLayeredTerrainResidentCache cache) {
+			return cache == owner && !committed && owner.commit(this, true);
 		}
 
 		private void requireOpen() {

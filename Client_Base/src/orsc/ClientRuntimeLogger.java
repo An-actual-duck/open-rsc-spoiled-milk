@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ArrayBlockingQueue;
 
 final class ClientRuntimeLogger {
 	private static final Object LOCK = new Object();
@@ -28,6 +29,31 @@ final class ClientRuntimeLogger {
 		}
 		Thread.setDefaultUncaughtExceptionHandler((thread, throwable) ->
 			logThrowable("Uncaught exception in " + thread.getName(), throwable));
+	}
+
+	/** Streaming notifications do not need to finish writing before the next game frame. */
+	static void logStreaming(String message) {
+		StreamingLog.queued.offer(message);
+	}
+
+	private static final class StreamingLog {
+		private static final ArrayBlockingQueue<String> queued = new ArrayBlockingQueue<>(128);
+
+		static {
+			Thread writer = new Thread(() -> {
+				try {
+					for (;;) {
+						String message = queued.take();
+						System.out.println(message);
+						log(message);
+					}
+				} catch (InterruptedException interrupted) {
+					Thread.currentThread().interrupt();
+				}
+			}, "client-streaming-log");
+			writer.setDaemon(true);
+			writer.start();
+		}
 	}
 
 	static void log(String message) {

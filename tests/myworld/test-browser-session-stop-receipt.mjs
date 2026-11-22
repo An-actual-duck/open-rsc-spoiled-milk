@@ -6,13 +6,13 @@ import vm from 'node:vm';
 const source=fs.readFileSync(process.argv[2]||new URL('../../tools/browser-gameplay/web/session.js',import.meta.url),'utf8');
 let checks=0;
 function equal(a,b,message){assert.deepEqual(a,b,message);checks++;}
-async function harness(){
+async function harness(choices=false){
  const listeners={},tasks=[],frames=[];let removed=0,disposed=0,exited=0,focused=0;const displayRequests=[];
- const controls=Object.fromEntries(['start','stop','status','session','player','welcome','display-confirm','display-enter','display-cancel','display-message','release-label','runtime-credit','download-client','startup-progress','startup-detail'].map(k=>[k,{setAttribute(name,value){this[name]=value;},removeAttribute(name){delete this[name];},addEventListener(type,fn){this[type]=fn;},focus(){focused++;}}]));
+ const controls=Object.fromEntries(['start','stop','status','session','player','welcome','display-confirm','display-enter','display-cancel','display-message','release-label','runtime-credit','download-client','startup-progress','startup-detail','loading-choices','play-chunks','play-streaming'].map(k=>[k,{setAttribute(name,value){this[name]=value;},removeAttribute(name){delete this[name];},addEventListener(type,fn){this[type]=fn;},focus(){focused++;}}]));
  controls.session.append=f=>frames.push(f);
  const window={addEventListener:(name,fn)=>listeners[name]=fn};
  const document={querySelector:s=>controls[s.slice(1)],hasFocus:()=>true,addEventListener(){},createElement(){const f={setAttribute(){},focus(){},remove(){removed++;},contentWindow:{dispatchEvent(){}}};return f;}};
- const context=vm.createContext({window,document,URL,URLSearchParams,location:{search:'?wholeram=on',origin:'http://private'},performance:{now:()=>Date.now()},Event:class{constructor(type){this.type=type;}}});
+ const context=vm.createContext({window,document,URL,URLSearchParams,location:choices?{search:'?loadingchoices=on',origin:'http://127.0.0.1:8079'}:{search:'?wholeram=on',origin:'http://private'},performance:{now:()=>Date.now()},Event:class{constructor(type){this.type=type;}}});
  const display=new vm.SyntheticModule(['createDisplayModes'],function(){this.setExport('createDisplayModes',()=>({stats:{mode:'fit'},dismiss(){},request(action){displayRequests.push(action);},exit(){exited++;}}));},{context});
  const policy=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-public-alpha.js',import.meta.url),'utf8'),{context});
  const startupModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-startup-progress.js',import.meta.url),'utf8'),{context});
@@ -20,9 +20,22 @@ async function harness(){
  const module=new vm.SourceTextModule(source,{context,initializeImportMeta(meta){meta.url='http://private/assets/test/session.js';}});await module.link(spec=>{if(spec==='./browser-startup-progress.js')return startupModule;if(spec==='./browser-public-alpha.js')return policy;if(spec==='./browser-deployment-config.js')return config;assert.equal(spec,'./browser-display-modes.js');return display;});await module.evaluate();
  function send(f,data,origin='http://private'){const copied=structuredClone(data);tasks.push(()=>listeners.message({source:f.contentWindow,origin,data:copied}));}
  function drain(){while(tasks.length)tasks.shift()();}
- function start(){controls.start.click();const f=frames.at(-1);f.contentWindow.browserSessionDispose=()=>{disposed++;send(f,{type:'browser-session-proof',proof:{wholeRamJava:{sourceReady:false,preparedReady:false,disposed:true}}});};return f;}
+ function start(button='start'){controls[button].click();const f=frames.at(-1);f.contentWindow.browserSessionDispose=()=>{disposed++;send(f,{type:'browser-session-proof',proof:{wholeRamJava:{sourceReady:false,preparedReady:false,disposed:true}}});};return f;}
  return {window,controls,listeners,send,drain,start,displayRequests,counts:()=>[removed,disposed,exited,focused]};
 }
+const optIn=await harness(true);
+equal(optIn.controls.start.hidden,true);
+equal(optIn.controls['loading-choices'].hidden,false);
+const streamed=optIn.start('play-streaming');
+equal(optIn.controls['loading-choices'].hidden,true);
+equal(optIn.window.browserSessionLoadingMode(streamed.contentWindow),'streaming');
+equal(optIn.window.browserSessionLoadingMode({}),null);
+optIn.controls.stop.click();
+equal(optIn.controls['loading-choices'].hidden,false);
+const chunks=optIn.start('play-chunks');
+equal(optIn.window.browserSessionLoadingMode(chunks.contentWindow),'chunks');
+equal(optIn.window.browserSessionLoadingMode(streamed.contentWindow),null);
+optIn.controls.stop.click();
 const ready=()=>({wholeRamRequested:true,wholeRamJava:{sourceReady:true,preparedReady:true,rawFiles:1797,rawBytes:46111318,recipes:445,queryCells:1330,activations:8,retainedPrimitiveBytes:275999734},wholeRamResidency:{requested:true,sourceReady:true,preparedReady:true,gpuReady:true,ready:true,disposed:false,sameGpuCatalog:true},gpu:{wholeZone:{ready:true,pinnedChunks:1474,rawSourceCPUReady:true,preparedCPUReady:true}}});
 function stopped(h){const p=h.window.browserProof;equal(p.lifecycle,'stopped');equal(p.stopped,true);equal(p.wholeRamJava.sourceReady,false);equal(p.wholeRamJava.preparedReady,false);equal(p.wholeRamJava.disposed,true);equal(p.wholeRamJava.activations,8);equal(p.wholeRamJava.retainedPrimitiveBytes,275999734);equal(p.wholeRamResidency.ready,false);equal(p.wholeRamResidency.gpuReady,false);equal(p.wholeRamResidency.disposed,true);equal(p.gpu.wholeZone.rawSourceCPUReady,false);equal(p.gpu.wholeZone.preparedCPUReady,false);equal(p.gpu.wholeZone.pinnedChunks,1474,'Historical resource count is preserved, not interpreted as live ownership');}
 const h=await harness(),first=h.start(),child=ready();h.send(first,{type:'browser-session-proof',proof:child,status:'ready'});h.drain();equal(h.window.browserProof.wholeRamResidency.ready,true);child.wholeRamJava.activations=99;equal(h.window.browserProof.wholeRamJava.activations,8,'Parent proof is a structured clone');

@@ -13,6 +13,21 @@ for(const search of ['?endpoint=wss://evil','?username=owner&password=secret','?
 for(const origin of ['http://play.rscspoiledmilk.com','https://play.rscspoiledmilk.com.evil','https://rscspoiledmilk.com','https://play.rscspoiledmilk.com:444','null','http://127.0.0.1:8238']){assert.throws(()=>resolveBrowserDeployment(config,at(origin)));checks++;}
 for(const change of [{websocket:'ws://play.rscspoiledmilk.com:43505/'},{websocket:'wss://play.rscspoiledmilk.com:43505/?token=x'},{websocket:'wss://user:pass@play.rscspoiledmilk.com:43505/'},{websocket:'wss://evil/game'},{assetPrefix:'/assets/../'},{clientJarBytes:0},{bootstrapJarSha256:'bad'},{buildId:'../secret'},{extra:'unknown'},{preset:'alpha-v2'}]){assert.throws(()=>resolveBrowserDeployment({...config,...change},at()));checks++;}
 assert.equal(resolveBrowserDeployment(config,at(PUBLIC_ORIGIN,'?view=embedded')).options.get('geometryformat'),'compact');checks++;
+const optIn={...config,worldStreaming:true};
+const chunks=resolveBrowserDeployment(optIn,at());
+const streaming=resolveBrowserDeployment(optIn,at(),'streaming');
+assert.equal(chunks.loadingChoices,true);
+assert.equal(chunks.streaming,false);
+assert.equal(chunks.options.toString(),result.options.toString());
+assert.equal(streaming.streaming,true);
+assert.equal(streaming.websocket,PUBLIC_WEBSOCKET);
+assert.equal(streaming.options.get('stagedlogin'),'on');
+assert.equal(streaming.options.has('wholeram'),false);
+assert.ok(streaming.properties.includes('spoiledmilk.browserSurfaceCompatibilityWorker=true'));
+assert.throws(()=>resolveBrowserDeployment(config,at(),'streaming'));
+assert.throws(()=>resolveBrowserDeployment(optIn,at(PUBLIC_ORIGIN,'?loadingchoices=on')));
+assert.throws(()=>resolveBrowserDeployment(optIn,at(),'arbitrary'));
+checks+=11;
 const o=result.options;assert.equal(o.has('fixture'),false);assert.equal(o.get('gpuresidency'),'bounded');assert.equal(o.get('gpubudget'),'512');assert.equal(o.get('loadprofile'),'off');assert.equal(o.get('baselinereuse'),'off');assert.equal(o.get('clonetemplates'),'off');assert.equal(renderWorkerPolicy('webgl',o).enabled,true);assert.equal(wholeZonePolicy('webgl',o).enabled,true);assert.equal(wholeRamPolicy('webgl',o).enabled,true);checks+=9;
 for(const origin of ['http://127.0.0.1:8238','http://private']){const privateMode=resolveBrowserDeployment(null,at(origin,'?benchmark=1&fixture=repeatable-v1'));assert.equal(privateMode.publicAlpha,false);assert.equal(privateMode.options.get('fixture'),'repeatable-v1');assert.equal(privateMode.assetRoot,'/app/');checks+=3;}
 assert.throws(()=>resolveBrowserDeployment(null,at()));checks++;

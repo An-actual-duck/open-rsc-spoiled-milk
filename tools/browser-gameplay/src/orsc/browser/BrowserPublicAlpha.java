@@ -21,7 +21,13 @@ final class BrowserPublicAlpha {
         if(!enabled(p))return;
         if(!webgl||!ORIGIN.equals(p.getProperty("spoiledmilk.browserPublicOrigin"))||!PRESET.equals(p.getProperty("spoiledmilk.browserPublicPreset")))throw new IllegalArgumentException("Public alpha origin/preset mismatch");
         assetRoot(p);
-        String[][] required={{"browserBenchmark","true"},{"browserWholeZone","true"},{"browserWholeRam","true"},{"browserStaticSceneReuse","true"},{"browserBatchedModelKernel","true"},{"browserTerrainQueryIndex","true"},{"browserRegionBuild","true"},{"browserCachePolicy","lru"},{"browserUnderlay","initial"},{"browserDepthSource","gpu"},{"browserLoop","modern"},{"browserEarlyFaceCull","true"},{"browserOwnsWallsAndRoofs","true"},{"browserSpriteCache","cached"},{"browserOverlayCoverage","true"}};
+        boolean streaming=Boolean.parseBoolean(p.getProperty("spoiledmilk.browserWorldStreaming","false"));
+        String[][] required=streaming
+            ?new String[][]{{"browserStagedLogin","true"},{"browserWholeZone","false"},{"browserWholeRam","false"},
+                {"liveSurfaceHandoff","true"},{"persistentMovementPreview","true"},{"persistentSurfaceCollision","true"},
+                {"fixedSurfaceDraw","true"},{"rollingSurfaceWindow","true"},{"expandedSurfaceDrawBorder","true"},
+                {"surfaceSceneryCells","true"},{"surfaceSceneryDraw","true"},{"browserSurfaceMeshWorker","true"}}
+            :new String[][]{{"browserBenchmark","true"},{"browserWholeZone","true"},{"browserWholeRam","true"},{"browserStaticSceneReuse","true"},{"browserBatchedModelKernel","true"},{"browserTerrainQueryIndex","true"},{"browserRegionBuild","true"},{"browserCachePolicy","lru"},{"browserUnderlay","initial"},{"browserDepthSource","gpu"},{"browserLoop","modern"},{"browserEarlyFaceCull","true"},{"browserOwnsWallsAndRoofs","true"},{"browserSpriteCache","cached"},{"browserOverlayCoverage","true"}};
         for(String[] pair:required)if(!pair[1].equals(p.getProperty("spoiledmilk."+pair[0])))throw new IllegalArgumentException("Public alpha setting mismatch: "+pair[0]);
         String[] forbidden={"browserRepeatableFixture","browserPrivateLoopbackPort","browserProfile","browserInputDiagnostics","browserLoadProfile","browserBaselineReuse","browserCloneTemplates","browserGeometryTransferReuse","browserRegionPreparation","browserResidentDescriptorWriting","browserHaloHeightLookup","browserSceneryProjectionWork","browserPrimitiveChunkCoverage","browserOverlayDeltaTransport","browserOverlayJournalObserve"};
         for(String name:forbidden){String value=p.getProperty("spoiledmilk."+name);if(value!=null&&!"false".equals(value))throw new IllegalArgumentException("Public alpha forbids test option: "+name);}

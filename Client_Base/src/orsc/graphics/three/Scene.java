@@ -19,6 +19,7 @@ public final class Scene {
 	private static final int MIN_EXPANDED_PICK_PADDING_PIXELS = 14;
 	private final boolean browserOverlayCoverage = Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
 	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
+	private final boolean skipEmptyModelRemovals = Boolean.getBoolean("spoiledmilk.browserSkipEmptyModelRemovals");
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
 	private final boolean browserModelPickBounds = Boolean.parseBoolean(System.getProperty("spoiledmilk.browserModelPickBounds", "true"));
 	public boolean isBrowserModelPickBoundsEnabled() { return browserModelPickBounds && isBrowserFullResidentOwnershipEnabled(); }
@@ -124,6 +125,21 @@ public final class Scene {
     }
     public int[] getBrowserBatchedModelKernelWork() {
         return browserBatchedModelKernel == null ? new int[14] : browserBatchedModelKernel.work();
+    }
+    private final int[] browserProjectionDemand =
+        Boolean.getBoolean("spoiledmilk.browserProjectionDemand") ? new int[8] : null;
+    private final ProjectedModelPickBounds.CameraBounds browserPickCameraBounds =
+        browserProjectionDemand == null && !RSModel.BROWSER_RESIDENT_CAMERA_CULL
+            ? null : new ProjectedModelPickBounds.CameraBounds();
+    private int browserProjectionDemandSequence;
+    private boolean[] browserOmittedProjection;
+    private long browserOmittedModels, browserOmittedVertices;
+
+    public int[] getBrowserProjectionDemand() {
+        return browserProjectionDemand == null ? new int[8] : browserProjectionDemand.clone();
+    }
+    public long[] getBrowserOmittedProjection() {
+        return new long[]{browserOmittedModels, browserOmittedVertices};
     }
 	private int modelCount;
 	private RSModel[] models;
@@ -3005,11 +3021,35 @@ public final class Scene {
 			long modelRotateStart = RenderTelemetry.now();
 			int var3;
             boolean batchModels = isBrowserBatchedModelKernelEnabled();
+            boolean omitResidentProjection = RSModel.BROWSER_RESIDENT_CAMERA_CULL && earlyResidentFaceCull
+                && useModelPickBounds && skipProjectedWorldCapture && !forceLegacyWorldRaster;
+            int omittedModels = 0, omittedVertices = 0;
+            if (omitResidentProjection) {
+                setBrowserPickCamera();
+                omitResidentProjection = browserPickCameraBounds.isUsable();
+                if (omitResidentProjection && (browserOmittedProjection == null
+                        || browserOmittedProjection.length < this.modelCount))
+                    browserOmittedProjection = new boolean[this.modelCount];
+            }
             if (batchModels) browserBatchedModelKernel.begin(this.rot1024_off_y, this.rot1024_vp_src,
                 this.rot1024_off_x, this.rot1024_off_z, this.cameraProjY, this.cameraProjZ,
                 this.cameraProjX, this.rot1024_zTop);
             try {
 			for (var3 = 0; this.modelCount > var3; ++var3) {
+                if (omitResidentProjection) {
+                    RSModel model = this.models[var3];
+                    boolean omit = model != null && residentPickKind(model.getRenderer3DModelKind(), residentObjectChunks)
+                        && model.canUseResidentCameraCull() && (!this.m_K || browserPickCameraBounds.missesMouse(model));
+                    browserOmittedProjection[var3] = omit;
+                    if (omit) {
+                        // Preserve frustum visibility. The CPU face loop has
+                        // no consumer for this model at the current pointer.
+                        model.m_dc = true;
+                        omittedModels++;
+                        omittedVertices += model.vertHead;
+                        continue;
+                    }
+                }
                 if (batchModels && browserBatchedModelKernel.enqueue(this.models[var3])) continue;
                 if (batchModels) { browserBatchedModelKernel.flush(); browserBatchedModelKernel.literalModel(); }
 				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
@@ -3028,6 +3068,10 @@ public final class Scene {
 
                 if (batchModels) browserBatchedModelKernel.flush();
             } finally { if (batchModels) browserBatchedModelKernel.discard(); }
+            if (omitResidentProjection) {
+                browserOmittedModels += omittedModels;
+                browserOmittedVertices += omittedVertices;
+            }
 
 			this.models[this.modelCount].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x,
 				(byte) -114, this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
@@ -3046,18 +3090,29 @@ public final class Scene {
 			int var13;
 			int var14;
 			long worldCullStart = RenderTelemetry.now();
+            boolean sampleProjectionDemand = browserProjectionDemand != null && earlyResidentFaceCull
+                && useModelPickBounds && skipProjectedWorldCapture && !forceLegacyWorldRaster
+                && (++browserProjectionDemandSequence & 7) == 0;
+            if (sampleProjectionDemand) {
+                browserProjectionDemand[0]++;
+                setBrowserPickCamera();
+            }
 			for (var9 = 0; var9 < this.modelCount; ++var9) {
+                if (omitResidentProjection && browserOmittedProjection[var9]) continue;
 				var2 = this.models[var9];
 				if (var2.m_dc) {
                     Renderer3DModelKind pickModelKind = useModelPickBounds ? var2.getRenderer3DModelKind() : null;
-                    boolean residentPickModel = useModelPickBounds && (pickModelKind == Renderer3DModelKind.TERRAIN
-                        || pickModelKind == Renderer3DModelKind.WALL || pickModelKind == Renderer3DModelKind.ROOF
-                        || residentObjectChunks && (pickModelKind == Renderer3DModelKind.GAME_OBJECT
-                            || pickModelKind == Renderer3DModelKind.WALL_OBJECT));
+                    boolean residentPickModel = useModelPickBounds && residentPickKind(pickModelKind, residentObjectChunks);
                     boolean modelMouseOutside = residentPickModel && skipProjectedWorldCapture
                         && !forceLegacyWorldRaster && this.m_K
                         && (this.interactionOnlyPickActive || !var2.m_db && var2.m_zb != null && var2.facePickIndex != null)
                         && !ProjectedModelPickBounds.couldContainMouse(var2, this.m_Nb, this.m_j, this.m_Wb);
+                    boolean countResident = sampleProjectionDemand && residentPickModel && !var2.isInteractionOnly();
+                    boolean allFacesRejected = countResident;
+                    boolean rejectByCamera = countResident && browserPickCameraBounds.isUsable()
+                        && (!this.m_K || browserPickCameraBounds.missesMouse(var2));
+                    if (sampleProjectionDemand) browserProjectionDemand[1] += var2.vertHead;
+                    if (countResident) browserProjectionDemand[2] += var2.vertHead;
 					for (var3 = 0; var3 < var2.faceHead; ++var3) {
 						var10 = var2.faceIndexCount[var3];
 						var11 = var2.faceIndices[var3];
@@ -3067,6 +3122,7 @@ public final class Scene {
                                 : shouldSkipResidentOwnedProjectedFace(
                                     var2.getRenderer3DModelKind(),var2,var3,var11,var10,
                                     skipProjectedWorldCapture,forceLegacyWorldRaster,browserFullResidentOwnership))) continue;
+                        allFacesRejected = false;
 						boolean var5 = false;
 
 						int var4;
@@ -3171,6 +3227,18 @@ public final class Scene {
 							}
 						}
 					}
+                    if (allFacesRejected) {
+                        browserProjectionDemand[3] += var2.vertHead;
+                        if (pickModelKind == Renderer3DModelKind.TERRAIN) browserProjectionDemand[4] += var2.vertHead;
+                        else if (pickModelKind == Renderer3DModelKind.WALL || pickModelKind == Renderer3DModelKind.ROOF)
+                            browserProjectionDemand[5] += var2.vertHead;
+                        else browserProjectionDemand[6] += var2.vertHead;
+                    }
+                    if (rejectByCamera) {
+                        if (!allFacesRejected)
+                            throw new IllegalStateException("Pre-projection bounds hid a face retained by the exact CPU cull");
+                        browserProjectionDemand[7] += var2.vertHead;
+                    }
 				}
 			}
 			worldCullNanos = RenderTelemetry.elapsedSince(worldCullStart);
@@ -3543,6 +3611,17 @@ public final class Scene {
 		}
 	}
 
+    private void setBrowserPickCamera() {
+        browserPickCameraBounds.set(this.rot1024_off_x, this.rot1024_off_y, this.rot1024_off_z,
+            this.cameraProjZ, this.cameraProjY, this.cameraProjX, this.rot1024_vp_src, this.rot1024_zTop,
+            this.m_Nb, this.m_j, this.m_Wb, FastMath.trigTable1024);
+    }
+
+    private static boolean residentPickKind(Renderer3DModelKind kind, boolean objects) {
+        return kind == Renderer3DModelKind.TERRAIN || kind == Renderer3DModelKind.WALL || kind == Renderer3DModelKind.ROOF
+            || objects && (kind == Renderer3DModelKind.GAME_OBJECT || kind == Renderer3DModelKind.WALL_OBJECT);
+    }
+
     private boolean shouldSkipBoundedResidentProjectedFace(
         RSModel model, int faceId, int[] faceIndices, int vertexCount,
         boolean skipProjectedWorldCapture, boolean forceLegacyWorldRaster,
@@ -3851,7 +3930,7 @@ public final class Scene {
 		try {
             // Legal active entries are nonnull; render stores m_T outside modelCount.
             // Keep the literal nonnull/duplicate removal and metadata order unchanged.
-            if (var1 == null && WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()) return;
+            if (var1 == null && (skipEmptyModelRemovals || WholeOverworldZoneRegistry.isStaticSceneReuseEnabled())) return;
 			for (int i = 0; i < this.modelCount; ++i) {
 				if (this.models[i] == var1) {
 					--this.modelCount;

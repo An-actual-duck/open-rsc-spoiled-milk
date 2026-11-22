@@ -1,6 +1,10 @@
 Browser bounded GPU streaming and CPU reuse — implementation status, November 12, 2026
 ====================================================================================
 
+For new ordinary walking and chunk-loading work, follow the November 20, 2026
+plan in seamless-world-streaming-plan.md. The sections below record the earlier
+private experiment and its original recommendation.
+
 Status: IMPLEMENTED AS AN EXPLICIT PRIVATE EXPERIMENT. The owner subsequently
 authorized both tracks. Bounded GPU residency with retained prepared RAM and
 static CPU reuse are implemented, integrated, published to main and privately

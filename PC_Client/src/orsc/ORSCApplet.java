@@ -884,6 +884,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	@Override
+	public void validateViewportOnLogin() {
+		ScaledWindow.getInstance().validateAppletSize();
+	}
+
+	@Override
 	public void resized() {
 		int newWidth = mudclient.getSurface().width2;
 		int newHeight = mudclient.getSurface().height2;

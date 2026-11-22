@@ -18,8 +18,28 @@ for version,enabled in [('baseline',False),('baseline',True),('current',False),(
  name=version+('-default'if enabled is None else'-on'if enabled else'-off');cp=(str(old)+':'if version=='baseline'else'')+str(current)+':'+str(jar)
  with(run/(name+'.log')).open('w')as log:subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-cp',cp,'orsc.graphics.three.BrowserModelPickBoundsFixture',version,'default'if enabled is None else str(enabled).lower()],check=True,stdout=log,stderr=subprocess.STDOUT)
  results[name]=(run/(name+'.log')).read_text().strip().splitlines()[-1]
+with (run/'current-camera-cull.log').open('w') as log:
+ subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-Dspoiledmilk.browserResidentCameraCull=true',
+  '-cp',str(current)+':'+str(jar),'orsc.graphics.three.BrowserModelPickBoundsFixture','current','true'],
+  check=True,stdout=log,stderr=subprocess.STDOUT)
+results['current-camera-cull']=(run/'current-camera-cull.log').read_text().strip().splitlines()[-1]
+rebase_java=['java','-Xmx768m','-Djava.awt.headless=true','-Dspoiledmilk.browserResidentCameraCull=true',
+ '-Dspoiledmilk.browserKeepRebasedModels=true','-cp',str(current)+':'+str(jar),
+ 'orsc.graphics.three.BrowserModelPickBoundsFixture']
+with (run/'current-camera-rebase.log').open('w') as log:
+ subprocess.run([*rebase_java,'current','true'],check=True,stdout=log,stderr=subprocess.STDOUT)
+results['current-camera-rebase']=(run/'current-camera-rebase.log').read_text().strip().splitlines()[-1]
+integer_java=[*rebase_java[:4],'-Dspoiledmilk.browserIntegerCameraBounds=true',*rebase_java[4:]]
+with (run/'current-camera-integer.log').open('w') as log:
+ subprocess.run([*integer_java,'current','true'],check=True,stdout=log,stderr=subprocess.STDOUT)
+results['current-camera-integer']=(run/'current-camera-integer.log').read_text().strip().splitlines()[-1]
+with (run/'rebase-math.log').open('w') as log:
+ subprocess.run([*rebase_java,'cached-rebase'],check=True,stdout=log,stderr=subprocess.STDOUT)
 assert len(set(results.values()))==1,results
 with(run/'math.log').open('w')as log:subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-cp',str(current)+':'+str(jar),'orsc.graphics.three.BrowserModelPickBoundsFixture','math'],check=True,stdout=log,stderr=subprocess.STDOUT)
+with (run/'integer-math.log').open('w') as log:
+ subprocess.run([*integer_java,'math'],check=True,stdout=log,stderr=subprocess.STDOUT)
+assert (run/'integer-math.log').read_text() == (run/'math.log').read_text(), 'Integer camera decisions changed'
 for fixture in ['SceneOwnershipCullFixture','BrowserWallRoofOwnershipFixture']:
  with(run/(fixture+'.log')).open('w')as log:subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-Dspoiledmilk.browserModelPickBounds=true','-cp',str(current)+':'+str(jar),'orsc.graphics.three.'+fixture],check=True,stdout=log,stderr=subprocess.STDOUT)
 # Isolated source copies count actual helper calls without shipping production counters/timers.
@@ -43,4 +63,4 @@ assert probe_results['current']['TEST_MODEL_REJECTIONS']>0 and probe_results['cu
 bootstrap=run/'bootstrap';bootstrap.mkdir()
 with(run/'bootstrap-compile.log').open('w')as log:subprocess.run(['javac','-source','8','-target','8','-cp',str(current)+':'+str(jar),'-d',str(bootstrap),*[str(p)for p in sorted((ROOT/'tools/browser-gameplay/src/orsc/browser').rglob('*.java'))]],check=True,stdout=log,stderr=subprocess.STDOUT)
 meta={'passed':True,'baseline':BASE,'sourceCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'sourceSha256':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()for p in sources},'jarSha256':hashlib.sha256(jar.read_bytes()).hexdigest(),'outputs':results,'testOnlyWorkCounters':probe_results,'scope':'576 real Scene frames each baseline/current, OFF/ON; frozen pick/order/resident/pixel digest;200000 conservative integer/scale cases;no browser/GPU/FPS claim'}
-(run/'result.json').write_text(json.dumps(meta,indent=2)+'\n');print(json.dumps({'passed':True,'run':str(run),'outputs':results,'math':(run/'math.log').read_text().strip(),'testOnlyWorkCounters':probe_results},indent=2))
+(run/'result.json').write_text(json.dumps(meta,indent=2)+'\n');print(json.dumps({'passed':True,'run':str(run),'outputs':results,'math':(run/'math.log').read_text().strip(),'rebase':(run/'rebase-math.log').read_text().strip(),'testOnlyWorkCounters':probe_results},indent=2))

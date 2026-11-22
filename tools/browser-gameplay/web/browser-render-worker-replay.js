@@ -16,12 +16,19 @@ export function createRenderWorkerReplay({backend,outputSizer,now=()=>performanc
       if(packet.id!==nextId||packet.layout.epoch<lastLayout||(packet.frameId&&packet.frameId!==lastFrame+1))throw new Error('Render packet ordering violation');
       if(packet.layout.epoch===lastLayout&&lastGeometry&&(packet.layout.width!==lastGeometry.width||packet.layout.height!==lastGeometry.height||packet.layout.dpr!==lastGeometry.dpr))throw new Error('Changed layout requires fresh epoch');
       // Verify all entrypoints before any prefix may change backend state.
-      for(const c of packet.commands)if(c.name==='$measurement'?false:c.name[0]==='$'?typeof backend[{ '$owned':'queueOwnedState','$validation':'queueStreamUploadValidation','$physical':'queuePhysicalOutput'}[c.name]]!=='function':typeof backend.natives[renderNativeName(c.name)]!=='function')throw new Error('Missing render worker entrypoint');
+      for(const c of packet.commands)if(c.name==='$measurement'?false:c.name[0]==='$'?typeof backend[{ '$owned':'queueOwnedState','$validation':'queueStreamUploadValidation','$physical':'queuePhysicalOutput'}[c.name]]!=='function':typeof backend.natives[renderNativeName(c.name==='verifyWorldSpritePlan'?'planWorldSprites':c.name)]!=='function')throw new Error('Missing render worker entrypoint');
       outputSizer.setLayout(packet.layout);lastGeometry={...packet.layout};lastLayout=packet.layout.epoch;
       let result;const start=now();
       for(const c of packet.commands){
         if(c.name==='$measurement'){backend.stats.measurement=c.args[0];result=undefined;}
         else if(c.name[0]==='$')result=backend[{ '$owned':'queueOwnedState','$validation':'queueStreamUploadValidation','$physical':'queuePhysicalOutput'}[c.name]](...c.args);
+        else if(c.name==='verifyWorldSpritePlan'){
+          const [epoch,sequence,images,expected]=c.args;
+          const planned=await backend.natives[renderNativeName('planWorldSprites')](null,epoch,sequence,images);
+          if(!(expected instanceof Int32Array)||!(planned instanceof Int32Array)||planned.length!==expected.length
+            ||planned.some((id,index)=>id!==expected[index]))throw new Error('Client and worker sprite plans diverged');
+          result=undefined;
+        }
         else result=await backend.natives[renderNativeName(c.name)](null,...c.args);
         if(c.name==='initialize')outputSizer.setMaximum(result);
       }

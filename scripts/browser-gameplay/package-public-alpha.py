@@ -115,7 +115,9 @@ def executable_jar(classes,destination):
 def main():
  p=argparse.ArgumentParser(description=__doc__)
  for flag in ['client-jar','client-receipt','bake-run','compact-run','ram-run']:p.add_argument('--'+flag,type=Path,required=True)
- p.add_argument('--build-id',required=True);a=p.parse_args()
+ p.add_argument('--build-id',required=True)
+ p.add_argument('--world-streaming',action='store_true',help='Include the World Streaming opt-in for a compatible server')
+ a=p.parse_args()
  if not re.fullmatch('[a-z0-9][a-z0-9-]{6,63}',a.build_id):p.error('Lowercase versioned build ID required')
  head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
  if subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True).strip():p.error('Checkpoint all source before packaging')
@@ -159,6 +161,7 @@ def main():
  rc={'schemaVersion':1,'manifestBytes':(ram_data/'manifest.json').stat().st_size,'manifestSha256':sha(ram_data/'manifest.json'),'clientJarSha256':jar_sha,'gpuCatalogSha256':gpu_sha,'sourceBundleBytes':ram['sourceBundle']['bytes'],'sourceBundleSha256':ram['sourceBundle']['sha256'],'preparedBytes':ram['prepared']['bytes'],'preparedSha256':ram['prepared']['sha256'],'retainedPrimitiveBytes':ram['prepared']['retainedPrimitiveBytes'],'rawFiles':1797,'recipes':445,'queryCells':1330,'hiddenRoofs':ram['prepared']['hiddenRoofs']}
  (asset_root/'browser-whole-ram-config.js').unlink();(asset_root/'browser-whole-ram-config.js').write_text('export default Object.freeze('+json.dumps(rc,separators=(',',':'))+');\n')
  deployment={'schemaVersion':1,'origin':ORIGIN,'websocket':WEBSOCKET,'preset':PRESET,'buildId':a.build_id,'assetPrefix':'/'+prefix+'/','clientJarSha256':jar_sha,'clientJarBytes':a.client_jar.stat().st_size,'bootstrapJarSha256':sha(asset_root/'browser-spike.jar'),'bootstrapJarBytes':(asset_root/'browser-spike.jar').stat().st_size}
+ if a.world_streaming:deployment['worldStreaming']=True
  (asset_root/'browser-deployment-config.js').write_text('export default Object.freeze('+json.dumps(deployment,separators=(',',':'))+');\n')
  copy_checked(ROOT/'LICENSE',asset_root/'LICENSE')
  (asset_root/'SOURCE.txt').write_text('Source code for this build: https://github.com/An-actual-duck/open-rsc-spoiled-milk/tree/'+head+'\nJava runtime: CheerpJ by Leaning Technologies, https://cheerpj.com/ (loaded from its official CDN; not redistributed here).\n')
@@ -174,6 +177,7 @@ def main():
   inventory.append({'path':relative,'bytes':file.stat().st_size,'sha256':sha(file)})
  sums=''.join(row['sha256']+'  '+row['path']+'\n'for row in inventory);(web/'SHA256SUMS').write_text(sums)
  release={'schemaVersion':1,'buildId':a.build_id,'frontendSourceCommit':head,'clientSourceCommit':build['clientSourceCommit'],'jarSha256':jar_sha,'origin':ORIGIN,'websocket':WEBSOCKET,'preset':PRESET,'assetPrefix':deployment['assetPrefix'],'files':inventory,'sha256SumsSha256':sha(web/'SHA256SUMS'),'canonicalGpuManifestSha256':gpu_sha,'compactManifestSha256':compact['config']['manifestSha256'],'ramManifestSha256':sha(ram_data/'manifest.json'),'omittedCanonicalGeometryFiles':len(gpu['chunks']),'deliveredCompactGeometryFiles':len(compact['files'])-1,'sourceAndCookBindingsVerified':True,'credentialsCopied':False,'processesStarted':False}
+ if a.world_streaming:release['worldStreaming']=True
  (web/'public-release.json').write_text(json.dumps(release,indent=2)+'\n')
  receipt={**release,'web':str(web),'publicReleaseSha256':sha(web/'public-release.json'),'clientReceiptSha256':sha(a.client_receipt),'gpuReceiptSha256':sha(Path(a.bake_run)/'bake-receipt.json'),'compactReceiptSha256':compact['receiptSha256'],'ramReceiptSha256':sha(Path(a.ram_run)/'ram-bake-receipt.json'),'bootstrapSources':{str(f.relative_to(ROOT)):sha(f)for f in sources},'deployment':deployment,'published':False}
  (run/'package-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps({'web':str(web),'receipt':str(run/'package-receipt.json'),'publicReleaseSha256':receipt['publicReleaseSha256'],'files':len(inventory),'bytes':sum(row['bytes']for row in inventory),'published':False}))

@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {webcrypto,createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-const publicAlpha=process.argv.includes('--public-alpha');
+const publicStreaming=process.argv.includes('--public-streaming');
+const publicAlpha=process.argv.includes('--public-alpha')||publicStreaming;
 const stopAt=process.argv.includes('--stop-before-init')?'init':process.argv.includes('--stop-during-archives')?'archives':process.argv.includes('--stop-during-runtime-download')?'script':null;
 let resumeInit,resumeArchive,resumeScript,runMainCalls=0,createDisplayCalls=0;
 const argument=name=>{const index=process.argv.indexOf(name);return index<0?null:process.argv[index+1];};
@@ -41,6 +42,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
+if(publicStreaming)window.parent={browserSessionLoadingMode:source=>source===window?'streaming':null};
 const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkBounded?'&gpuresidency=bounded':'')+(benchmarkStatic?'&staticscene=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkBaseline?'&baselinereuse=on':'')+(benchmarkCloneTemplates?'&clonetemplates=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(structuredClone(m))},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>{if(stopAt==='script')resumeScript=()=>s.onload();else queueMicrotask(()=>s.onload());}},addEventListener(){}},
@@ -102,10 +104,13 @@ const streamValidationModule=new vm.SourceTextModule(fs.readFileSync(new URL('..
 const spriteKeyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-sprite-key-policy.js',import.meta.url),'utf8'),{context});
 const modelBatchModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-batched-model-kernel.js',import.meta.url),'utf8'),{context});
 const optimizedDefaultsModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-optimized-render-defaults.js',import.meta.url),'utf8'),{context});
+const geometryLayoutModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-geometry-layout.js',import.meta.url),'utf8'),{context});
+const terrainWorkerModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-terrain-worker.js',import.meta.url),'utf8'),{context});
 const wholeZonePolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-whole-zone-policy.js',import.meta.url),'utf8'),{context});
 const zoneConfig={schemaVersion:1,manifestBytes:64,manifestSha256:'d'.repeat(64),clientJarSha256:'c'.repeat(64),externalAssets:['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc'].map(n=>({path:'Cache/video/'+n,bytes:4,sha256:'f'.repeat(64)}))};
 if(publicAlpha)zoneConfig.clientJarSha256=createHash('sha256').update(new Uint8Array([1,2,3])).digest('hex');
 const publicConfig={schemaVersion:1,origin:'https://play.rscspoiledmilk.com',websocket:'wss://play.rscspoiledmilk.com:43505/',preset:'alpha-v1',buildId:'alpha-test1',assetPrefix:'/assets/alpha-test1/',clientJarSha256:zoneConfig.clientJarSha256,clientJarBytes:3,bootstrapJarSha256:createHash('sha256').update(new Uint8Array([5,6])).digest('hex'),bootstrapJarBytes:2};
+if(publicStreaming)publicConfig.worldStreaming=true;
 const zoneConfigModule=new vm.SyntheticModule(['default'],function(){this.setExport('default',zoneConfig);},{context});
 const ramPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-whole-ram.js',import.meta.url),'utf8'),{context});
 const ramConfig={schemaVersion:1,manifestSha256:'a'.repeat(64),manifestBytes:4096,clientJarSha256:zoneConfig.clientJarSha256,gpuCatalogSha256:zoneConfig.manifestSha256,sourceBundleSha256:'b'.repeat(64),sourceBundleBytes:46111334,preparedSha256:'e'.repeat(64),preparedBytes:4096,retainedPrimitiveBytes:60000000,hiddenRoofs:false,rawFiles:1797,recipes:445,queryCells:1330};
@@ -133,6 +138,8 @@ await module.link(specifier=>{
   if(specifier==='./browser-batched-model-kernel.js')return modelBatchModule;
   if(specifier==='./browser-stutter-diagnostics.js')return stutterModule;
   if(specifier==='./browser-geometry-transfer-policy.js')return geometryModule;
+  if(specifier==='./browser-geometry-layout.js')return geometryLayoutModule;
+  if(specifier==='./browser-terrain-worker.js')return terrainWorkerModule;
   if(specifier==='./browser-preparation-candidates.js')return preparationCandidatesModule;
   if(specifier==='./browser-repeatable-policy.js')return repeatableModule;
   if(specifier==='./browser-world-cover.js')return coverModule;
@@ -156,6 +163,27 @@ if(stopAt){
 }
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
 if(withoutNativeModule&&nativeMode==='sync'){assert.equal(configured,undefined);assert.equal(gpuOptions,undefined);assert.equal(gpuDisposed,0);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1);assert.ok(messages.some(m=>m.type==='browser-session-stop'&&m.reason.includes('Private synchronous backend is unavailable')));console.log('PASS unavailableSYNC fails before backend/Java startup; no fallback or fake receipt');process.exit(0);}
+if(publicStreaming){
+  assert.ok(configured,'World Streaming reached Java startup');
+  assert.equal(transportUrl,'wss://play.rscspoiledmilk.com:43505/');
+  assert.equal(gpuOptions.wholeZone,false);
+  assert.equal(gpuOptions.compactScene,true);
+  assert.equal(gpuOptions.physicalOutput,true);
+  assert.equal(gpuOptions.localSpritePlan,true);
+  const props=configured.javaProperties;
+  assert.equal(new Set(props.map(s=>s.split('=')[0])).size,props.length);
+  for(const property of ['browserPublicAlpha=true','browserWorldStreaming=true','browserStagedLogin=true',
+    'browserWholeRam=false','browserWholeZone=false','liveSurfaceHandoff=true','browserSurfaceCompatibilityWorker=true']){
+    assert.ok(props.includes('spoiledmilk.'+property),property);
+  }
+  const file=argument('--properties-output');if(file)fs.writeFileSync(file,props.join('\n')+'\n');
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(publicRunArgs,['orsc.browser.BrowserBootstrap','/app/assets/alpha-test1/browser-spike.jar:/app/assets/alpha-test1/client.jar','webgl']);
+  stopJava(0);
+  await evaluating;
+  console.log('PASS chosen public World Streaming reaches staged login with its fixed WSS endpoint and versioned archive paths');
+  process.exit(0);
+}
 if(publicAlpha){
   assert(configured,'public fixed preset reached Java startup');
   assert.equal(transportUrl,'wss://play.rscspoiledmilk.com:43505/');

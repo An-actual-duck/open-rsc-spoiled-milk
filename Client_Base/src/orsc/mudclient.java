@@ -34,13 +34,14 @@ import orsc.graphics.three.CollisionFlag;
 import orsc.graphics.three.Renderer3DDepthFrame;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DMeshFrame;
-import orsc.graphics.three.Renderer3DMaterialClassifier;
 import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.Renderer3DRoofVisibility;
 import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.Scene;
+import orsc.graphics.three.StaticSceneryModels;
+import orsc.graphics.three.SurfaceSceneryMeshPreparation;
 import orsc.graphics.three.World;
 import orsc.graphics.three.WorldEditorTerrainGrid;
 import orsc.graphics.two.CombatEffectAnimationCatalog;
@@ -77,6 +78,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -100,20 +102,7 @@ public final class mudclient implements Runnable {
 	private static final long SCENE_OBJECT_DEBUG_HOVER_THROTTLE_MILLIS = 1000L;
 	private static final int GROUND_ITEM_NAMEPLATE_LINE_HEIGHT = 12;
 	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
-	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
-	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
-	private static final int DRAGON_SULFUR_ROCK_OBJECT_ID = 1328;
-	private static final int DRAGON_SULFUR_ROCK_COLOR_RESOURCE = GenUtil.colorToResource(255, 112, 16);
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
-	private static final String WATCHTOWER_MODEL_NAME = "watchtower";
-	private static final int WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE = 2048;
-	private static final int REMASTER_FIRE_GLOW_COLOR = 0xff661c;
-	private static final int REMASTER_TORCH_GLOW_RADIUS = 256;
-	private static final int REMASTER_TORCH_GLOW_INTENSITY = 132;
-	private static final int REMASTER_FIRE_GLOW_RADIUS = 320;
-	private static final int REMASTER_FIRE_GLOW_INTENSITY = 170;
-	private static final int REMASTER_FURNACE_GLOW_RADIUS = 384;
-	private static final int REMASTER_FURNACE_GLOW_INTENSITY = 130;
 	private static final long FISHING_SPOT_RIPPLE_FRAME_MILLIS = 70L;
 	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
@@ -127,6 +116,41 @@ public final class mudclient implements Runnable {
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
+	private static final boolean TRACE_BROWSER_TRAVEL = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.browserTravelTrace");
+	public static final int TRAVEL_TIMING_VALUES = 9;
+	static final boolean TRACE_BROWSER_FRAME_STAGES = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.browserFrameStageTrace");
+	private float browserUiDrawMs;
+	private float browserInventoryDrawMs;
+	private float browserMinimapDrawMs;
+	private float browserMinimapRasterMs;
+	private long browserParkRequestedNanos;
+	private long browserParkNanos;
+	private long browserUpdateNanos;
+	private long browserRepositionNanos;
+	private long browserDrawStartedNanos;
+	private int browserUpdates;
+	private float browserSceneSetupMs;
+	private float browserSceneCaptureMs;
+	private float browserSceneryCollectionMs;
+	private final long[] travelWorkNanos = TRACE_BROWSER_TRAVEL ? new long[7] : null;
+	private long slowestTravelPacketNanos;
+	private int slowestTravelPacketOpcode = -1;
+	static final boolean PREDICTED_SCENERY_PREVIEW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
+	static final boolean ROLLING_SURFACE_WINDOW = BrowserWorldStreaming.allowsSurfaceFeatures()
+		&& Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow");
+	static final boolean SURFACE_SCENERY_DRAW = ROLLING_SURFACE_WINDOW
+		&& NativeLayeredTerrainSnapshot.EXPANDED_SURFACE_DRAW_BORDER
+		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
+	static final boolean LIVE_SURFACE_HANDOFF = SURFACE_SCENERY_DRAW
+		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
+	private int rollingSurfaceWindows;
+	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
+		&& Boolean.getBoolean("spoiledmilk.browserPrepareIncomingScenery");
+	private static final int MAX_PREPARED_INCOMING_MODELS = 512;
+	private static final long PREDICTED_SCENERY_BUILD_INTERVAL_NANOS = 75_000_000L;
 	private static final int RESIDENT_ANIMATED_OBJECT_CHUNK_TILE_SIZE = 8;
 	private static final int RESIDENT_OBJECT_BUILD_WORKER_LIMIT = 4;
 	private static final int RESIDENT_OBJECT_PARALLEL_BUILD_MINIMUM = 8;
@@ -935,6 +959,55 @@ public final class mudclient implements Runnable {
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Long, ResidentObjectChunkCacheEntry>();
+	private String retainedFloorSceneryScope;
+	private final Map<Long, ResidentObjectChunkCacheEntry> retainedFloorScenery = new HashMap<>();
+	private final Map<Long, PendingResidentObjectChunkBuild> predictedSceneryCells = new HashMap<>();
+	private final Map<IncomingSceneryPlacement, IncomingSceneryModel> preparedIncomingScenery = new HashMap<>();
+	private int requestedIncomingScenery;
+	private int adoptedIncomingScenery;
+	private final Deque<FutureTask<ResidentObjectChunkBuildResult>> predictedSceneryQueue = new ArrayDeque<>();
+	private FutureTask<ResidentObjectChunkBuildResult> activePredictedSceneryBuild;
+	private volatile List<Renderer3DWorldChunkFrame.ChunkMesh> preparedSceneryMeshes = Collections.emptyList();
+	private long lastPredictedSceneryDispatch;
+	private boolean predictedSceneryAuthorized;
+	private final Map<Long, SurfaceSceneryWork> surfaceSceneryWork = new LinkedHashMap<>();
+	private NativeLayeredTerrainSnapshot surfaceSceneryTerrain;
+	private SurfaceSceneryWork activeSurfaceSceneryWork;
+	private volatile int detachedSurfaceSceneryMeshes;
+	private volatile int detachedSceneryPlacementMeshes;
+	private static final boolean WORKER_SCENERY_PLACEMENTS = BrowserWorldStreaming.allowsSurfaceFeatures()
+		&& Boolean.getBoolean("spoiledmilk.browserWorkerSceneryPlacements");
+	private static final boolean VERIFY_WORKER_SCENERY_PLACEMENTS = WORKER_SCENERY_PLACEMENTS
+		&& Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements");
+	private static final boolean REUSE_DETACHED_SCENERY = WORKER_SCENERY_PLACEMENTS
+		&& Boolean.getBoolean("spoiledmilk.browserReuseDetachedScenery");
+	private volatile SurfaceSceneryReuse surfaceSceneryReuse = REUSE_DETACHED_SCENERY ? new SurfaceSceneryReuse() : null;
+	private volatile byte[] sceneryModelArchiveDigest;
+	private int[] detachedScenerySourceVersions;
+	private volatile int verifiedWorkerSceneryMeshes;
+	private volatile int mismatchedWorkerSceneryMeshes;
+	private volatile int verifiedSceneryReuses;
+	private volatile String firstSceneryReuseMismatch;
+	private int lateSurfaceSceneryMeshes;
+	private int retainedSurfaceSceneryMeshes;
+	private Future<PreparedSurfaceScenery> activeSurfaceSceneryBuild;
+	private int adoptedSurfaceInteractiveModels;
+	private ResidentObjectChunkInput pendingDistantSceneryInput;
+	private Future<ResidentObjectChunkBuildResult> pendingDistantScenery;
+	private final Map<Long, Long> emptyDistantScenery = new HashMap<>();
+
+	private volatile List<Renderer3DWorldChunkFrame.ChunkMesh> surfacePreparedScenery = Collections.emptyList();
+	private boolean adoptSurfaceScenery;
+	private static final boolean PREPARED_SURFACE_SCENE_IMAGE = Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceSceneImage");
+	private PreparedSurfaceSceneImage preparedSurfaceSceneImage;
+	private final List<String> preparedSurfaceSceneReceipts = PREPARED_SURFACE_SCENE_IMAGE ? new ArrayList<>() : null;
+	static final boolean PREPARED_SURFACE_ADDS = LIVE_SURFACE_HANDOFF
+		&& Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceAdds");
+	private PreparedSurfaceSceneryAdds preparedSurfaceSceneryAdds, rollingPreparedSurfaceAdds;
+	private static final Comparator<World.SurfaceSceneryPlacement> SURFACE_DRAW_PLACEMENT_ORDER = Comparator
+		.comparingInt((World.SurfaceSceneryPlacement row) -> row.x).thenComparingInt(row -> row.z)
+		.thenComparingInt(row -> row.type).thenComparingInt(row -> row.direction).thenComparingInt(row -> row.id);
+	private int adoptedSurfaceScenery;
 	private final ExecutorService residentObjectBuildExecutor =
 		Executors.newFixedThreadPool(
 			residentObjectBuildWorkerCount(),
@@ -979,6 +1052,11 @@ public final class mudclient implements Runnable {
 	private int[] residentStaticInputProbe;
 	private int[] residentAnimatedInputIndices;
 	private int residentAnimatedInputCount;
+	private int residentPlacementPublicationsReused;
+	private final LinkedHashMap<ResidentFishingPoseKey, ResidentFishingPose> residentFishingPoses =
+		new LinkedHashMap<>(32, 0.75f, true);
+	private long residentFishingPoseBytes;
+	private int residentFishingPoseRebases;
 	private long builtStaticPresentationRevision = -1L;
 	private int builtStaticPresentationBaseX = Integer.MIN_VALUE;
 	private int builtStaticPresentationBaseZ = Integer.MIN_VALUE;
@@ -1750,7 +1828,12 @@ public final class mudclient implements Runnable {
 						if (telemetryEnabled) {
 							loopSleepNanos = RenderTelemetry.elapsedSince(sleepStart);
 						}
-						now = System.nanoTime();
+						long woke = System.nanoTime();
+						if (TRACE_BROWSER_FRAME_STAGES) {
+							browserParkRequestedNanos += sleepNanos;
+							browserParkNanos += woke - now;
+						}
+						now = woke;
 						if (now < nextUpdateNanos) {
 							if (telemetryEnabled) {
 								RenderTelemetry.recordClientLoop(
@@ -1769,6 +1852,7 @@ public final class mudclient implements Runnable {
 					}
 
 					int updateCount = 0;
+					long browserUpdateStarted = now;
 					while (now >= nextUpdateNanos && updateCount < MODERN_LOOP_MAX_CATCH_UP_UPDATES) {
 						long updateStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
 						this.update();
@@ -1778,6 +1862,10 @@ public final class mudclient implements Runnable {
 						nextUpdateNanos += frameNanos;
 						updateCount++;
 						now = System.nanoTime();
+					}
+					if (TRACE_BROWSER_FRAME_STAGES) {
+						browserUpdates += updateCount;
+						browserUpdateNanos += now - browserUpdateStarted;
 					}
 					if (updateCount == MODERN_LOOP_MAX_CATCH_UP_UPDATES && now >= nextUpdateNanos) {
 						nextUpdateNanos = now + frameNanos;
@@ -1790,6 +1878,7 @@ public final class mudclient implements Runnable {
 					if (telemetryEnabled) {
 						loopRepositionNanos = RenderTelemetry.elapsedSince(repositionStart);
 					}
+					if (TRACE_BROWSER_FRAME_STAGES) browserRepositionNanos += System.nanoTime() - now;
 					if (skippedDraw) {
 						if (this.currentViewMode == GameMode.LOGIN) {
 							this.createLoginPanels(3845);
@@ -1812,7 +1901,13 @@ public final class mudclient implements Runnable {
 					}
 
 					long drawStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+					if (TRACE_BROWSER_FRAME_STAGES) browserDrawStartedNanos = System.nanoTime();
 					this.draw();
+					if (TRACE_BROWSER_FRAME_STAGES) {
+						browserDrawStartedNanos = 0;
+						browserParkRequestedNanos = browserParkNanos = browserUpdateNanos = browserRepositionNanos = 0;
+						browserUpdates = 0;
+					}
 					if (telemetryEnabled) {
 						loopDrawNanos = RenderTelemetry.elapsedSince(drawStart);
 					}
@@ -2543,7 +2638,10 @@ public final class mudclient implements Runnable {
 	private void checkConnection() {
 		try {
 
+			long pollStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 			this.packetHandler.pollLayeredTerrainStageReady();
+			this.packetHandler.pollSurfaceHandoffPackets();
+			if (TRACE_BROWSER_TRAVEL) travelWorkNanos[4] += System.nanoTime() - pollStart;
 			long var2 = GenUtil.currentTimeMillis();
 			if (this.packetHandler.getClientStream().hasFinishedPackets()) {
 				this.lastWrite = var2;
@@ -2572,26 +2670,39 @@ public final class mudclient implements Runnable {
 			 */
 			int processedPackets = 0;
 			boolean activationBurst = this.layeredSceneActivationPending;
-			while (LayeredScenePacketDrainPolicy.shouldReadNext(
+			while ((this.packetHandler.isReceivingSurfaceHandoff()
+					&& processedPackets < LayeredScenePacketDrainPolicy.ATOMIC_ACTIVATION_PACKET_LIMIT)
+				|| LayeredScenePacketDrainPolicy.shouldReadNext(
 					processedPackets,
 					activationBurst,
 					this.layeredSceneActivationPending,
 					this.packetHandler
 						.isLayeredTerrainActivationHaloPrebuildPending(),
 					this.packetHandler.hasLayeredSceneContext())) {
+				long readStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 				int len = this.packetHandler.getClientStream()
 					.readIncomingPacket(
 						this.packetHandler.getPacketsIncoming());
+				if (TRACE_BROWSER_TRAVEL) travelWorkNanos[5] += System.nanoTime() - readStart;
 				if (len <= 0) {
 					break;
 				}
 				boolean wasActivationPending =
 					this.layeredSceneActivationPending;
-				this.packetHandler.handlePacket(
-					this.packetHandler.getPacketsIncoming()
-						.getUnsignedByte(),
-					len);
+				int opcode = this.packetHandler.getPacketsIncoming().getUnsignedByte();
+				boolean receivingSurface = this.packetHandler.isReceivingSurfaceHandoff();
+				long handleStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
+				this.packetHandler.handlePacket(opcode, len);
+				if (TRACE_BROWSER_TRAVEL) {
+					long duration = System.nanoTime() - handleStart;
+					travelWorkNanos[6] += duration;
+					if (duration > slowestTravelPacketNanos) {
+						slowestTravelPacketNanos = duration;
+						slowestTravelPacketOpcode = opcode;
+					}
+				}
 				processedPackets++;
+				if (receivingSurface && !this.packetHandler.isReceivingSurfaceHandoff()) break;
 				activationBurst |= wasActivationPending
 					|| this.layeredSceneActivationPending;
 			}
@@ -3641,7 +3752,7 @@ public final class mudclient implements Runnable {
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
 		model.key = index + ClientSceneInstanceStore.WALL_OBJECT_KEY_BASE;
-		applyRenderer3DMaterialMetadata(
+		StaticSceneryModels.applyRenderer3DMaterialMetadata(
 			Renderer3DModelKind.WALL_OBJECT,
 			type,
 			model);
@@ -3690,7 +3801,9 @@ public final class mudclient implements Runnable {
 			applyExpandedGameObjectPickBounds(objectID, model);
 			this.scene.addModel(model);
 			model.setTranslate(x, -elevation, z);
-		this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
+		if (!this.world.updateSurfaceObjectCollision(objectID, xTile, zTile, this.getGameObjectInstanceDir(index), true)) {
+			this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
+		}
 		if (objectID == 74) {
 			model.translate2(0, -480, 0);
 		}
@@ -3717,8 +3830,11 @@ public final class mudclient implements Runnable {
 		if (!deferSceneRemoval) {
 			this.scene.removeModel(model);
 		}
-		this.world.removeGameObject_CollisonFlags(this.getGameObjectInstanceID(index),
-			this.getGameObjectInstanceX(index), this.getGameObjectInstanceZ(index));
+		int id = this.getGameObjectInstanceID(index);
+		int x = this.getGameObjectInstanceX(index), z = this.getGameObjectInstanceZ(index);
+		if (!this.world.updateSurfaceObjectCollision(id, x, z, this.getGameObjectInstanceDir(index), false)) {
+			this.world.removeGameObject_CollisonFlags(id, x, z);
+		}
 		this.setGameObjectInstanceMaterialized(index, false);
 		return model;
 	}
@@ -3901,102 +4017,529 @@ public final class mudclient implements Runnable {
 		this.builtStaticPresentationRevision = -1L;
 	}
 
-	private RSModel createStaticPresentationGameObjectModel(
-		SceneBaselineState.Record record,
-		int index,
-		int elevation) {
-		GameObjectDef def = EntityHandler.getObjectDef(record.id);
-		if (def == null
-			|| def.modelID < 0
-			|| elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
-			return null;
-		}
-		int localX = record.x - this.midRegionBaseX;
-		int localZ = record.y - this.midRegionBaseZ;
-		int xSize;
-		int zSize;
-		if (record.direction == 0 || record.direction == 4) {
-			xSize = def.getWidth();
-			zSize = def.getHeight();
-		} else {
-			xSize = def.getHeight();
-			zSize = def.getWidth();
-		}
-		int x = (2 * localX + xSize) * this.tileSize / 2;
-		int z = (2 * localZ + zSize) * this.tileSize / 2;
-		RSModel model = cloneBrowserPresentationGameObject(record.id, BrowserPresentationCloneCache.CANONICAL);
-		model.key = -1 - index;
-		model.addRotation(0, record.direction * 32, 0);
-		model.setDiffuseLightAndColor(
-			-50, -10, -50, 48, 48, true, 117);
-		model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
-		model.setTranslate(x, -elevation, z);
-		if (record.id == 74) {
-			model.translate2(0, -480, 0);
-		}
-		return prepareGameObjectInstanceModel(
-			record.id, model);
+	void completeSurfaceSceneryTerrain(NativeLayeredTerrainSnapshot terrain) {
+		if (SURFACE_SCENERY_DRAW) surfaceSceneryTerrain = terrain;
+		if (PREPARED_SURFACE_SCENE_IMAGE) prepareSurfaceSceneImage();
+		if (PREPARED_SURFACE_ADDS) prepareSurfaceSceneryAdds();
 	}
 
-	private RSModel createStaticPresentationWallObjectModel(
-		SceneBaselineState.Record record,
-		int index,
-		int elevation1,
-		int elevation2) {
-		DoorDef definition = EntityHandler.getDoorDef(record.id);
-		if (definition == null
-			|| elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE
-			|| elevation2 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+	void invalidateSurfaceSceneryDraw(int x, int z) {
+		SurfaceSceneryWork previous = surfaceSceneryWork.remove(SurfaceSceneryCells.key(x, z));
+		if (PREPARED_SURFACE_SCENE_IMAGE && previous != null && preparesGameplayScene(previous)) preparedSurfaceSceneImage = null;
+		if (PREPARED_SURFACE_ADDS && previous != null && previous.orderedAdds != null) preparedSurfaceSceneryAdds = null;
+		if (previous != null && previous.prepared != null) publishSurfaceSceneryDraws();
+	}
+
+	void stageSurfaceSceneryDraw(int x, int z, SurfaceSceneryCells.Band band, List<World.SurfaceSceneryPlacement> records) {
+		List<World.SurfaceSceneryPlacement> orderedAdds = null;
+		if (PREPARED_SURFACE_ADDS && band == SurfaceSceneryCells.Band.ENTERING_PLAY) {
+			orderedAdds = records;
+			records = new ArrayList<>(records);
+			records.sort(SURFACE_DRAW_PLACEMENT_ORDER);
+		}
+		SurfaceSceneryWork work = new SurfaceSceneryWork(x, z, band, records, orderedAdds);
+		surfaceSceneryWork.put(SurfaceSceneryCells.key(x, z), work);
+		if (PREPARED_SURFACE_SCENE_IMAGE && preparesGameplayScene(work)) prepareSurfaceSceneImage();
+		if (orderedAdds != null) prepareSurfaceSceneryAdds();
+	}
+
+	private void prepareSurfaceSceneryAdds() {
+		preparedSurfaceSceneryAdds = null;
+		NativeLayeredTerrainSnapshot terrain = surfaceSceneryTerrain;
+		if (terrain == null || adoptSurfaceScenery) return;
+		int centerX = terrain.getCurrentChunkX(), centerZ = terrain.getCurrentChunkY();
+		int baseX = World.sectionToLocalBaseTile(centerX), baseZ = World.sectionToLocalBaseTile(centerZ);
+		int sourceX = midRegionBaseX, sourceZ = midRegionBaseZ;
+		if (Math.floorMod(sourceX, World.SECTION_SIZE) != 0 || Math.floorMod(sourceZ, World.SECTION_SIZE) != 0
+			|| Math.max(Math.abs((long) baseX - sourceX), Math.abs((long) baseZ - sourceZ)) != World.SECTION_SIZE) return;
+		List<World.SurfaceSceneryPlacement> entering = new ArrayList<>();
+		for (int x = centerX - 1; x <= centerX + 1; x++) {
+			for (int z = centerZ - 1; z <= centerZ + 1; z++) {
+				if (World.isLocalTile(x * World.SECTION_SIZE - sourceX, z * World.SECTION_SIZE - sourceZ)) continue;
+				SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(x, z));
+				if (work == null || work.orderedAdds == null) return;
+				entering.addAll(work.orderedAdds);
+			}
+		}
+		preparedSurfaceSceneryAdds = PreparedSurfaceSceneryAdds.from(sourceX, sourceZ, baseX, baseZ, entering);
+	}
+
+	PreparedSurfaceSceneryAdds getRollingPreparedSurfaceAdds() {
+		return rollingPreparedSurfaceAdds;
+	}
+
+	void finishRollingPreparedSurfaceAdds() {
+		rollingPreparedSurfaceAdds = null;
+	}
+
+	private static boolean preparesGameplayScene(SurfaceSceneryWork work) {
+		return work.band == SurfaceSceneryCells.Band.ENTERING_PLAY || work.band == SurfaceSceneryCells.Band.RETAINED_PLAY;
+	}
+
+	private void prepareSurfaceSceneImage() {
+		preparedSurfaceSceneImage = null;
+		if (surfaceSceneryTerrain == null) return;
+		int centerX = surfaceSceneryTerrain.getCurrentChunkX(), centerZ = surfaceSceneryTerrain.getCurrentChunkY();
+		List<World.SurfaceSceneryPlacement> records = new ArrayList<>();
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dz = -1; dz <= 1; dz++) {
+				SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(centerX + dx, centerZ + dz));
+				if (work == null || !preparesGameplayScene(work)) return;
+				records.addAll(work.records);
+			}
+		}
+		preparedSurfaceSceneImage = PreparedSurfaceSceneImage.from(centerX, centerZ, records);
+	}
+
+	void finishSurfaceSceneryDraw(boolean usePrepared) {
+		if (usePrepared && LIVE_SURFACE_HANDOFF && surfaceSceneryTerrain != null) {
+			// The incoming scenery generation now describes the installed coverage.
+			// Its remaining meshes can publish there as each worker result arrives.
+			adoptSurfaceScenery = true;
+			return;
+		}
+		surfaceSceneryTerrain = null;
+		adoptSurfaceScenery = usePrepared && !surfacePreparedScenery.isEmpty();
+		if (!usePrepared || !adoptSurfaceScenery && !LIVE_SURFACE_HANDOFF) clearSurfaceSceneryDraw();
+	}
+
+	void clearSurfaceSceneryDraw() {
+		surfaceSceneryTerrain = null;
+		preparedSurfaceSceneImage = null;
+		preparedSurfaceSceneryAdds = null;
+		rollingPreparedSurfaceAdds = null;
+		adoptSurfaceScenery = false;
+		surfaceSceneryWork.clear();
+		surfacePreparedScenery = Collections.emptyList();
+	}
+
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedSurfaceSceneryDraws() {
+		return adoptSurfaceScenery ? Collections.emptyList() : surfacePreparedScenery;
+	}
+
+	public int getAdoptedSurfaceSceneryDraws() { return adoptedSurfaceScenery; }
+	public int getDetachedSurfaceSceneryMeshes() { return detachedSurfaceSceneryMeshes; }
+	public int getDetachedSceneryPlacementMeshes() { return detachedSceneryPlacementMeshes; }
+	public long[] getDetachedSceneryReuseReceipt() {
+		SurfaceSceneryReuse reuse = surfaceSceneryReuse;
+		return reuse == null ? new long[0] : new long[]{reuse.hits, reuse.bytes};
+	}
+
+	void resetDetachedSceneryReuse() {
+		if (REUSE_DETACHED_SCENERY) surfaceSceneryReuse = new SurfaceSceneryReuse();
+	}
+	public int getVerifiedWorkerSceneryMeshes() { return verifiedWorkerSceneryMeshes; }
+	public int getMismatchedWorkerSceneryMeshes() { return mismatchedWorkerSceneryMeshes; }
+	public int getVerifiedSceneryReuses() { return verifiedSceneryReuses; }
+	public String getFirstSceneryReuseMismatch() { return firstSceneryReuseMismatch; }
+	public int getResidentPlacementPublicationsReused() { return residentPlacementPublicationsReused; }
+
+	public int getResidentFishingPoseRebases() { return residentFishingPoseRebases; }
+	public int getLateSurfaceSceneryMeshes() { return lateSurfaceSceneryMeshes; }
+	public int getRetainedSurfaceSceneryMeshes() { return retainedSurfaceSceneryMeshes; }
+
+	boolean canBeginLiveSurfaceHandoff(int x, int z) {
+		return LIVE_SURFACE_HANDOFF && isRenderer3DWorldReady() && !shouldRetainLastPresentedFrame()
+			&& this.requestedPlane == this.lastHeightOffset
+			&& this.world.canRollSurfaceWindow(this.requestedPlane,
+				this.world.activeSectionXForWorldTile(x + this.worldOffsetX),
+				this.world.activeSectionYForWorldTile(z + this.worldOffsetZ));
+	}
+
+	void publishVerifiedSurfaceWindow(int centerX, int centerZ) {
+		if (PREPARED_SURFACE_SCENE_IMAGE && preparedSurfaceSceneReceipts.size() < 32) {
+			PreparedSurfaceSceneImage prepared = preparedSurfaceSceneImage;
+			String receipt = prepared != null && prepared.centerX == centerX && prepared.centerZ == centerZ
+				? prepared.compareLive(this) : centerX + "," + centerZ + " incomplete";
+			preparedSurfaceSceneReceipts.add(receipt);
+		}
+		List<SceneBaselineState.Record> scenery = new ArrayList<>(), walls = new ArrayList<>();
+		retainSurfacePresentation(staticPresentationSceneryRecords, scenery, centerX, centerZ);
+		retainSurfacePresentation(staticPresentationWallRecords, walls, centerX, centerZ);
+		for (SurfaceSceneryWork work : surfaceSceneryWork.values()) {
+			if (work.band == SurfaceSceneryCells.Band.ENTERING_PLAY || !inSurfacePresentationRing(work.x, work.z, centerX, centerZ)) continue;
+			for (World.SurfaceSceneryPlacement record : work.records) {
+				(record.type == 0 ? scenery : walls).add(new SceneBaselineState.Record(record.id, record.x, record.z,
+					record.direction, record.type));
+			}
+		}
+		replaceStaticScenePresentation(scenery, walls);
+		layeredScenePresentationLatch.reset();
+		if (!adoptSurfaceScenery) clearSurfaceSceneryDraw();
+	}
+
+	public List<String> getPreparedSurfaceSceneReceipts() {
+		return preparedSurfaceSceneReceipts == null ? Collections.emptyList() : new ArrayList<>(preparedSurfaceSceneReceipts);
+	}
+
+	private void retainSurfacePresentation(List<SceneBaselineState.Record> previous, List<SceneBaselineState.Record> retained,
+		int centerX, int centerZ) {
+		for (SceneBaselineState.Record record : previous) {
+			int x = Math.floorDiv(record.x, World.SECTION_SIZE), z = Math.floorDiv(record.y, World.SECTION_SIZE);
+			if (inSurfacePresentationRing(x, z, centerX, centerZ) && !surfaceSceneryWork.containsKey(SurfaceSceneryCells.key(x, z))) {
+				retained.add(record);
+			}
+		}
+	}
+
+	private static boolean inSurfacePresentationRing(int x, int z, int centerX, int centerZ) {
+		return Math.max(Math.abs((long)x - centerX), Math.abs((long)z - centerZ)) == 2;
+	}
+
+	void pollSurfaceSceneryDraw() {
+		if (!SURFACE_SCENERY_DRAW) return;
+		if (activeSurfaceSceneryBuild != null) {
+			if (!activeSurfaceSceneryBuild.isDone()) return;
+			SurfaceSceneryWork work = activeSurfaceSceneryWork;
+			try {
+				PreparedSurfaceScenery result = activeSurfaceSceneryBuild.get();
+				if (surfaceSceneryTerrain != null && surfaceSceneryWork.get(SurfaceSceneryCells.key(work.x, work.z)) == work) {
+					work.prepared = result;
+					if (adoptSurfaceScenery && TRACE_BROWSER_TRAVEL) lateSurfaceSceneryMeshes += result.draws.size();
+					if (work.band == SurfaceSceneryCells.Band.RETAINED_PLAY && TRACE_BROWSER_TRAVEL) {
+						retainedSurfaceSceneryMeshes += result.draws.size();
+					}
+					publishSurfaceSceneryDraws();
+				}
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			} catch (ExecutionException e) {
+				ClientRuntimeLogger.log("Surface scenery preparation failed: " + e.getCause());
+			}
+			activeSurfaceSceneryBuild = null;
+			activeSurfaceSceneryWork = null;
+		}
+		NativeLayeredTerrainSnapshot terrain = surfaceSceneryTerrain;
+		if (terrain == null || surfaceSceneryWork.isEmpty() || !Renderer3DSettings.canUseResidentObjectChunks()) return;
+		Renderer3DWorldChunkFrame frame = world.getRenderer3DWorldChunkFrame();
+		if (frame == null || frame.getChunkCount() == 0) return;
+		SurfaceSceneryWork next = null;
+		for (SurfaceSceneryWork work : surfaceSceneryWork.values()) {
+			if (work.started || work.records.isEmpty()) continue;
+			if (next == null || work.band.ordinal() < next.band.ordinal()) next = work;
+			if (work.band == SurfaceSceneryCells.Band.ENTERING_PLAY) break;
+		}
+		if (next == null) return;
+		SurfaceSceneryWork work = next;
+		work.started = true;
+		int baseX = midRegionBaseX, baseZ = midRegionBaseZ, scale = tileSize;
+		Renderer3DWorldChunkFrame.ChunkMesh anchor = frame.getChunks().get(0);
+		Map<Long, ResidentObjectChunkCacheEntry> resident = work.band == SurfaceSceneryCells.Band.RETAINED_PLAY
+			? new HashMap<>(cachedResidentObjectChunks) : Collections.emptyMap();
+		SurfaceSceneryReuse reuse = surfaceSceneryReuse;
+		activeSurfaceSceneryWork = work;
+		activeSurfaceSceneryBuild = residentObjectBuildExecutor.submit(
+			() -> prepareSurfaceSceneryDraws(work, terrain, anchor, baseX, baseZ, scale, resident, reuse));
+	}
+
+	private PreparedSurfaceScenery prepareSurfaceSceneryDraws(SurfaceSceneryWork work,
+		NativeLayeredTerrainSnapshot terrain, Renderer3DWorldChunkFrame.ChunkMesh anchor, int baseX, int baseZ, int scale,
+		Map<Long, ResidentObjectChunkCacheEntry> resident, SurfaceSceneryReuse reuse) {
+		int role = Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+		int size = residentObjectChunkTileSize(role);
+		Map<Long, ResidentObjectChunkInputBuilder> cells = new LinkedHashMap<>();
+		List<SceneBaselineState.Record> interactive = new ArrayList<>();
+		for (World.SurfaceSceneryPlacement record : work.records) {
+			if (LIVE_SURFACE_HANDOFF && work.band == SurfaceSceneryCells.Band.ENTERING_PLAY && record.type == 0) {
+				interactive.add(new SceneBaselineState.Record(record.id, record.x, record.z, record.direction, record.type));
+			}
+			Renderer3DModelKind kind = record.type == 0 ? Renderer3DModelKind.GAME_OBJECT : Renderer3DModelKind.WALL_OBJECT;
+			if ((work.band == SurfaceSceneryCells.Band.ENTERING_PLAY || work.band == SurfaceSceneryCells.Band.RETAINED_PLAY)
+				&& isAnimatedResidentObjectChunkModel(kind, record.id)) continue;
+			int x = Math.floorDiv(record.x, size), z = Math.floorDiv(record.z, size);
+			long key = residentObjectChunkCellKey(x, z, role);
+			ResidentObjectChunkInputBuilder builder = cells.computeIfAbsent(key, ignored -> new ResidentObjectChunkInputBuilder(
+				anchor, key, x * size - baseX, z * size - baseZ, x, z, role, size, baseX, baseZ, scale));
+			builder.canonicalIdentities.add(createResidentObjectCanonicalIdentity(kind, record.x, record.z, record.id,
+				record.direction, baseX, baseZ, scale, terrain));
+		}
+		List<PreparedSceneryDraw> ready = new ArrayList<>(cells.size());
+		if (reuse != null) reuse.scope(terrain, sceneryModelArchiveDigest);
+		for (ResidentObjectChunkInputBuilder builder : cells.values()) {
+			ResidentObjectChunkInput input = builder.build();
+			ResidentObjectChunkCacheEntry previous = resident.get(input.cellKey);
+			if (previous != null && previous.cacheKey == input.cacheKey) continue;
+			Renderer3DWorldChunkFrame.ChunkMesh mesh = buildResidentObjectChunkMesh(input, true, reuse);
+			if (mesh != null && mesh.getTriangleCount() != 0) ready.add(new PreparedSceneryDraw(input, mesh));
+		}
+		return new PreparedSurfaceScenery(ready, prepareIncomingSceneryModels(interactive));
+	}
+
+	private void publishSurfaceSceneryDraws() {
+		List<Renderer3DWorldChunkFrame.ChunkMesh> ready = new ArrayList<>();
+		for (SurfaceSceneryWork work : surfaceSceneryWork.values()) {
+			if (work.prepared != null) for (PreparedSceneryDraw draw : work.prepared.draws) ready.add(draw.mesh);
+		}
+		surfacePreparedScenery = Collections.unmodifiableList(ready);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh takeSurfaceSceneryDraw(ResidentObjectChunkInput actual) {
+		if (!adoptSurfaceScenery || actual.chunkRole != Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) return null;
+		boolean trace = SurfaceSceneryMeshPreparation.isTracing();
+		long at = trace ? System.currentTimeMillis() : 0;
+		long start = trace ? System.nanoTime() : 0;
+		int sectorX = Math.floorDiv(actual.localOriginTileX + actual.baseX, World.SECTION_SIZE);
+		int sectorZ = Math.floorDiv(actual.localOriginTileZ + actual.baseZ, World.SECTION_SIZE);
+		SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(sectorX, sectorZ));
+		if (work == null || work.prepared == null) return null;
+		for (PreparedSceneryDraw draw : work.prepared.draws) {
+			ResidentObjectChunkInput built = draw.input;
+			if (built.cellKey != actual.cellKey || !matchingStaticScenery(actual, built)) continue;
+			adoptedSurfaceScenery++;
+			Renderer3DWorldChunkFrame.ChunkMesh rebased = draw.mesh.rebaseStaticObjectPresentation(
+				actual.anchor.getCenterSectionX(), actual.anchor.getCenterSectionY(),
+				(built.baseX - actual.baseX) * actual.tileSize, (built.baseZ - actual.baseZ) * actual.tileSize);
+			if (trace) SurfaceSceneryMeshPreparation.traceAdoption(at, System.nanoTime() - start, actual.cellKey, true);
+			return rebased;
+		}
+		if (trace) SurfaceSceneryMeshPreparation.traceAdoption(at, System.nanoTime() - start, actual.cellKey, false);
+		return null;
+	}
+
+	private static final class SurfaceSceneryWork {
+		private final int x, z;
+		private final SurfaceSceneryCells.Band band;
+		private final List<World.SurfaceSceneryPlacement> records;
+		private final List<World.SurfaceSceneryPlacement> orderedAdds;
+		private boolean started;
+		private PreparedSurfaceScenery prepared;
+
+		private SurfaceSceneryWork(int x, int z, SurfaceSceneryCells.Band band, List<World.SurfaceSceneryPlacement> records,
+				List<World.SurfaceSceneryPlacement> orderedAdds) {
+			this.x = x;
+			this.z = z;
+			this.band = band;
+			this.records = records;
+			this.orderedAdds = orderedAdds;
+		}
+	}
+
+	private static final class PreparedSurfaceScenery {
+		private final List<PreparedSceneryDraw> draws;
+		private final Map<IncomingSceneryPlacement, IncomingSceneryModel> interactive;
+
+		private PreparedSurfaceScenery(List<PreparedSceneryDraw> draws, Map<IncomingSceneryPlacement, IncomingSceneryModel> interactive) {
+			this.draws = draws;
+			this.interactive = interactive;
+		}
+	}
+
+	public int getAdoptedSurfaceInteractiveModels() { return adoptedSurfaceInteractiveModels; }
+
+	private static final class PreparedSceneryDraw {
+		private final ResidentObjectChunkInput input;
+		private final Renderer3DWorldChunkFrame.ChunkMesh mesh;
+
+		private PreparedSceneryDraw(ResidentObjectChunkInput input, Renderer3DWorldChunkFrame.ChunkMesh mesh) {
+			this.input = input;
+			this.mesh = mesh;
+		}
+	}
+
+	void prebuildPredictedSceneryCell(NativeLayeredTerrainSnapshot terrain, List<SceneBaselineState.Record> records) {
+		if (!Renderer3DSettings.isBrowserPresentationAvailable() || !Renderer3DSettings.canUseResidentObjectChunks()) {
+			return;
+		}
+		Renderer3DWorldChunkFrame frame = world.getRenderer3DWorldChunkFrame();
+		if (frame == null || frame.getChunkCount() == 0 || predictedSceneryCells.size() >= 44) {
+			return;
+		}
+		int role = Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+		int cellSize = residentObjectChunkTileSize(role);
+		int cellX = Math.floorDiv(records.get(0).x, cellSize);
+		int cellZ = Math.floorDiv(records.get(0).y, cellSize);
+		long key = residentObjectChunkCellKey(cellX, cellZ, role);
+		if (predictedSceneryCells.containsKey(key)) {
+			return;
+		}
+		int baseX = midRegionBaseX;
+		int baseZ = midRegionBaseZ;
+		ResidentObjectChunkInputBuilder builder = new ResidentObjectChunkInputBuilder(
+			frame.getChunks().get(0), key, cellX * cellSize - baseX, cellZ * cellSize - baseZ,
+			cellX, cellZ, role, cellSize, baseX, baseZ, tileSize);
+		List<SceneBaselineState.Record> incoming = PREPARE_INCOMING_SCENERY ? new ArrayList<>() : Collections.emptyList();
+		for (SceneBaselineState.Record record : records) {
+			if (Math.floorDiv(record.x, cellSize) != cellX || Math.floorDiv(record.y, cellSize) != cellZ) {
+				return;
+			}
+			Renderer3DModelKind kind = (record.type & 1) == 0 ? Renderer3DModelKind.GAME_OBJECT : Renderer3DModelKind.WALL_OBJECT;
+			if (PREPARE_INCOMING_SCENERY && record.type == 2
+				&& requestedIncomingScenery + incoming.size() < MAX_PREPARED_INCOMING_MODELS) incoming.add(record);
+			if ((record.type & 2) != 0 && isAnimatedResidentObjectChunkModel(kind, record.id)) continue;
+			ResidentObjectCanonicalIdentity identity = createResidentObjectCanonicalIdentity(
+				kind, record.x, record.y, record.id, record.direction, baseX, baseZ, tileSize, terrain);
+			builder.canonicalIdentities.add(identity);
+		}
+		ResidentObjectChunkInput input = builder.build();
+		ResidentObjectChunkCacheEntry active = cachedResidentObjectChunks.get(key);
+		boolean needsMesh = input.modelCount != 0 && (active == null || active.cacheKey != input.cacheKey);
+		if (!needsMesh && incoming.isEmpty()) return;
+		requestedIncomingScenery += incoming.size();
+		FutureTask<ResidentObjectChunkBuildResult> build = new FutureTask<>(
+			() -> prepareIncomingScenery(input, needsMesh, incoming));
+		predictedSceneryCells.put(key, new PendingResidentObjectChunkBuild(-1, input, build));
+		predictedSceneryQueue.addLast(build);
+	}
+
+	/** Admit at most one build per interval, after the predicted terrain worker is done. */
+	void dispatchPredictedSceneryBuild() {
+		if (activePredictedSceneryBuild != null) {
+			if (!activePredictedSceneryBuild.isDone()) return;
+			if (PREPARE_INCOMING_SCENERY || Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes")) {
+				ResidentObjectChunkBuildResult ready = completedPredictedSceneryBuild(activePredictedSceneryBuild);
+				if (ready != null) preparedIncomingScenery.putAll(ready.incoming);
+				if (ready != null && ready.chunk != null && ready.chunk.getTriangleCount() > 0
+					&& Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes")) {
+					List<Renderer3DWorldChunkFrame.ChunkMesh> meshes = new ArrayList<>(preparedSceneryMeshes);
+					meshes.add(ready.chunk);
+					preparedSceneryMeshes = Collections.unmodifiableList(meshes);
+				}
+			}
+			activePredictedSceneryBuild = null;
+		}
+		if (predictedSceneryQueue.isEmpty()) {
+			return;
+		}
+		long now = System.nanoTime();
+		if (now - lastPredictedSceneryDispatch < PREDICTED_SCENERY_BUILD_INTERVAL_NANOS) {
+			return;
+		}
+		lastPredictedSceneryDispatch = now;
+		activePredictedSceneryBuild = predictedSceneryQueue.removeFirst();
+		residentObjectBuildExecutor.execute(activePredictedSceneryBuild);
+	}
+
+	void authorizePredictedScenery(boolean ordinaryWalking) {
+		predictedSceneryAuthorized = !predictedSceneryCells.isEmpty();
+		if (!ordinaryWalking) preparedIncomingScenery.clear();
+	}
+
+	void clearPredictedScenery() {
+		for (PendingResidentObjectChunkBuild pending : predictedSceneryCells.values()) {
+			pending.future.cancel(false);
+		}
+		predictedSceneryCells.clear();
+		predictedSceneryQueue.clear();
+		activePredictedSceneryBuild = null;
+		preparedSceneryMeshes = Collections.emptyList();
+		preparedIncomingScenery.clear();
+		requestedIncomingScenery = 0;
+		adoptedIncomingScenery = 0;
+		predictedSceneryAuthorized = false;
+	}
+
+	private ResidentObjectChunkBuildResult prepareIncomingScenery(ResidentObjectChunkInput input, boolean needsMesh,
+		List<SceneBaselineState.Record> records) {
+		ResidentObjectChunkBuildResult mesh = needsMesh ? buildResidentObjectChunkMeshMeasured(input)
+			: new ResidentObjectChunkBuildResult(null, 0L);
+		if (records.isEmpty()) return mesh;
+		return new ResidentObjectChunkBuildResult(mesh.chunk, mesh.durationNanos, prepareIncomingSceneryModels(records));
+	}
+
+	private Map<IncomingSceneryPlacement, IncomingSceneryModel> prepareIncomingSceneryModels(List<SceneBaselineState.Record> records) {
+		if (records.isEmpty()) return Collections.emptyMap();
+		Map<IncomingSceneryPlacement, IncomingSceneryModel> incoming = new HashMap<>();
+		long lastYield = System.nanoTime();
+		for (SceneBaselineState.Record record : records) {
+			GameObjectDef def = EntityHandler.getObjectDef(record.id);
+			if (def == null || def.modelID < 0) continue;
+			RSModel source = getModelCacheItem(def.modelID);
+			RSModel model = cloneBrowserPresentationGameObject(record.id, BrowserPresentationCloneCache.LEGACY_DELTA);
+			model.addRotation(0, record.direction * 32, 0);
+			model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
+			incoming.put(new IncomingSceneryPlacement(record.x, record.y, record.id, record.direction),
+				new IncomingSceneryModel(def, source, model));
+			if (System.nanoTime() - lastYield >= 8_000_000L) {
+				try {
+					Thread.sleep(1L);
+				} catch (InterruptedException interrupted) {
+					Thread.currentThread().interrupt();
+					return Collections.emptyMap();
+				}
+				lastYield = System.nanoTime();
+			}
+		}
+		return incoming;
+	}
+
+	RSModel takePreparedIncomingScenery(int localX, int localZ, int id, int direction) {
+		if (LIVE_SURFACE_HANDOFF && adoptSurfaceScenery) {
+			int x = midRegionBaseX + localX, z = midRegionBaseZ + localZ;
+			SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(
+				Math.floorDiv(x, World.SECTION_SIZE), Math.floorDiv(z, World.SECTION_SIZE)));
+			if (work != null && work.prepared != null && work.band == SurfaceSceneryCells.Band.ENTERING_PLAY) {
+				IncomingSceneryModel prepared = work.prepared.interactive.remove(new IncomingSceneryPlacement(x, z, id, direction));
+				if (isCurrentIncomingSceneryModel(id, prepared)) {
+					adoptedSurfaceInteractiveModels++;
+					return prepared.model;
+				}
+			}
+		}
+		if (!predictedSceneryAuthorized || preparedIncomingScenery.isEmpty()) return null;
+		IncomingSceneryModel prepared = preparedIncomingScenery.remove(new IncomingSceneryPlacement(
+			midRegionBaseX + localX, midRegionBaseZ + localZ, id, direction));
+		if (!isCurrentIncomingSceneryModel(id, prepared)) return null;
+		adoptedIncomingScenery++;
+		return prepared.model;
+	}
+
+	private boolean isCurrentIncomingSceneryModel(int id, IncomingSceneryModel prepared) {
+		if (prepared == null) return false;
+		GameObjectDef def = EntityHandler.getObjectDef(id);
+		return def == prepared.definition && def.modelID >= 0 && prepared.source == getModelCacheItem(def.modelID)
+			&& prepared.sourceVersion == prepared.source.getRenderer3DTransformVersion();
+	}
+
+	private ResidentObjectChunkBuildResult takePreparedScenery(ResidentObjectChunkInput actual) {
+		PendingResidentObjectChunkBuild pending = predictedSceneryCells.get(actual.cellKey);
+		if (pending == null || !pending.future.isDone() || pending.future.isCancelled()) {
 			return null;
 		}
-		int x1 = record.x - this.midRegionBaseX;
-		int x2 = x1;
-		int y1 = record.y - this.midRegionBaseZ;
-		int y2 = y1;
-		if (record.direction == 1) {
-			y2++;
+		ResidentObjectChunkInput built = pending.input;
+		if (!matchingStaticScenery(actual, built)) return null;
+		ResidentObjectChunkBuildResult result = completedPredictedSceneryBuild(pending.future);
+		if (result == null || result.chunk == null) return null;
+		return new ResidentObjectChunkBuildResult(result.chunk.rebaseStaticObjectPresentation(
+			actual.anchor.getCenterSectionX(), actual.anchor.getCenterSectionY(),
+			(built.baseX - actual.baseX) * actual.tileSize, (built.baseZ - actual.baseZ) * actual.tileSize),
+			result.durationNanos);
+	}
+
+	private static boolean matchingStaticScenery(ResidentObjectChunkInput actual, ResidentObjectChunkInput built) {
+		return actual.chunkRole == built.chunkRole && actual.cacheKey == built.cacheKey && actual.tileSize == built.tileSize
+			&& matchingStaticPlacements(actual.canonicalIdentities, built.canonicalIdentities);
+	}
+
+	private static boolean matchingStaticPlacements(ResidentObjectCanonicalIdentity[] a, ResidentObjectCanonicalIdentity[] b) {
+		if (a.length != b.length) return false;
+		for (int i = 0; i < a.length; i++) {
+			if (a[i].compareTo(b[i]) != 0) return false;
 		}
-		if (record.direction == 0) {
-			x2++;
+		return true;
+	}
+
+	private static ResidentObjectChunkBuildResult completedPredictedSceneryBuild(Future<ResidentObjectChunkBuildResult> build) {
+		if (!build.isDone() || build.isCancelled()) return null;
+		try {
+			return build.get();
+		} catch (InterruptedException interrupted) {
+			Thread.currentThread().interrupt();
+		} catch (ExecutionException failed) {
+			ClientRuntimeLogger.log("Predicted scenery build failed: " + failed.getCause());
 		}
-		if (record.direction == 2) {
-			x1++;
-			y2++;
+		return null;
+	}
+
+	private RSModel createStaticPresentationGameObjectModel(
+		ResidentObjectChunkInput input, ResidentObjectCanonicalIdentity identity, int index) {
+		GameObjectDef def = EntityHandler.getObjectDef(identity.objectId);
+		if (def == null || def.modelID < 0 || identity.elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+			return null;
 		}
-		if (record.direction == 3) {
-			x2++;
-			y2++;
-		}
-		int x1World = x1 * this.tileSize;
-		int y1World = y1 * this.tileSize;
-		int x2World = x2 * this.tileSize;
-		int y2World = y2 * this.tileSize;
-		int height = definition.getWallObjectHeight();
-		RSModel model = new RSModel(4, 1);
-		int v1 = model.insertVertex(
-			x1World, -elevation1, y1World);
-		int v2 = model.insertVertex(
-			x1World, -elevation1 - height, y1World);
-		int v3 = model.insertVertex(
-			x2World, -height - elevation2, y2World);
-		int v4 = model.insertVertex(
-			x2World, -elevation2, y2World);
-		model.insertFace(
-			4,
-			new int[] {v1, v2, v3, v4},
-			definition.getModelVar2(),
-			definition.getModelVar3(),
-			false);
-		model.setRenderer3DModelKind(
-			Renderer3DModelKind.WALL_OBJECT);
-		model.setDiffuseLightAndColor(
-			-50, -10, -50, 60, 24, false, -95);
-		model.key = -1 - index;
-		applyRenderer3DMaterialMetadata(
-			Renderer3DModelKind.WALL_OBJECT,
-			record.id,
-			model);
-		return model;
+		RSModel model = cloneBrowserPresentationGameObject(identity.objectId, BrowserPresentationCloneCache.CANONICAL);
+		return StaticSceneryModels.gameObject(model, def, identity.objectId,
+			identity.worldTileX - input.baseX, identity.worldTileZ - input.baseZ, identity.direction,
+			input.tileSize, index, identity.elevation1);
 	}
 
 	private static int residentObjectBuildWorkerCount() {
@@ -4024,9 +4567,24 @@ public final class mudclient implements Runnable {
 				|| this.builtStaticPresentationBaseZ
 					!= this.midRegionBaseZ;
 		long inputStartNanos = System.nanoTime();
+		boolean liveSurface = LIVE_SURFACE_HANDOFF && packetHandler.getVerifiedLiveSurfaceContext() > 0;
+		ResidentObjectChunkInput distantInput = null;
+		ResidentObjectChunkBuildResult distantBuild = null;
+		if (pendingDistantScenery != null && pendingDistantScenery.isDone()) {
+			distantInput = pendingDistantSceneryInput;
+			distantBuild = completedPredictedSceneryBuild(pendingDistantScenery);
+			pendingDistantSceneryInput = null;
+			pendingDistantScenery = null;
+		}
 		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
+		restoreBrowserFloorScenery();
         if(orsc.graphics.three.WholeOverworldZoneRegistry.isEnabled())captureWholeOverworldObjectCells(objectInputs);
 		long inputNanos = System.nanoTime() - inputStartNanos;
+		boolean traceHandoffScenery = BrowserRegionHandoffTrace.ENABLED
+			&& (this.shouldRetainLastPresentedFrame() || liveSurface && staticPresentationRebuildPending);
+		if (traceHandoffScenery) {
+			BrowserRegionHandoffTrace.phase("scenery", "input", inputStartNanos, inputNanos);
+		}
 		if (objectInputs.isEmpty()) {
 			clearResidentObjectChunkCache();
 			this.builtStaticPresentationRevision =
@@ -4062,6 +4620,8 @@ public final class mudclient implements Runnable {
 		Set<Long> activeCells = new HashSet<Long>();
 		int cacheHits = 0;
 		int cacheMisses = 0;
+		int preparedSceneryHits = 0;
+		long preparedSceneryNanos = 0L;
 		int canonicalOwnershipMatches = 0;
 		int canonicalOwnershipChanges = 0;
 		int canonicalOwnershipReuse = 0;
@@ -4173,8 +4733,40 @@ public final class mudclient implements Runnable {
 				objectChunk = null;
 			}
 			if (cached == null) {
+				Renderer3DWorldChunkFrame.ChunkMesh staged = takeSurfaceSceneryDraw(input);
+				if (staged != null) {
+					objectChunks.set(inputIndex, acceptResidentObjectChunkBuild(input, staged));
+					continue;
+				}
+				if (predictedSceneryAuthorized) {
+					ResidentObjectChunkBuildResult prepared = takePreparedScenery(input);
+					if (prepared != null) {
+						preparedSceneryHits++;
+						preparedSceneryNanos += prepared.durationNanos;
+						objectChunks.set(inputIndex, acceptResidentObjectChunkBuild(input, prepared.chunk));
+						continue;
+					}
+				}
+				if (liveSurface && input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS
+					&& input.liveModelCount == 0) {
+					if (distantInput != null && distantInput.cellKey == input.cellKey && matchingStaticScenery(input, distantInput)) {
+						if (distantBuild != null && distantBuild.chunk != null) {
+							Renderer3DWorldChunkFrame.ChunkMesh mesh = distantBuild.chunk.rebaseStaticObjectPresentation(
+								input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(),
+								(distantInput.baseX - input.baseX) * input.tileSize, (distantInput.baseZ - input.baseZ) * input.tileSize);
+							objectChunks.set(inputIndex, acceptResidentObjectChunkBuild(input, mesh));
+						} else if (distantBuild != null) {
+							emptyDistantScenery.put(input.cellKey, input.cacheKey);
+						}
+					} else if (pendingDistantScenery == null && !Long.valueOf(input.cacheKey).equals(emptyDistantScenery.get(input.cellKey))) {
+						pendingDistantSceneryInput = input;
+						pendingDistantScenery = residentObjectBuildExecutor.submit(() -> buildResidentObjectChunkMeshMeasured(input));
+					}
+					continue;
+				}
 				cacheMisses++;
-				if (parallelBuild) {
+				if (parallelBuild && !(LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()
+					&& input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)) {
 					if (pendingBuilds.isEmpty()) {
 						parallelBuildStartNanos =
 							System.nanoTime();
@@ -4196,7 +4788,9 @@ public final class mudclient implements Runnable {
 					continue;
 				}
 				ResidentObjectChunkBuildResult result =
-					buildResidentObjectChunkMeshMeasured(input);
+					buildResidentObjectChunkMeshForPresentation(input);
+				if (traceHandoffScenery) BrowserRegionHandoffTrace.sceneryMesh(input.chunkRole, input.liveModelCount,
+					input.presentationModelCount, input.localOriginTileX, input.localOriginTileZ, result.durationNanos);
 				meshBuildNanos += result.durationNanos;
 				meshCpuNanos += result.durationNanos;
 				objectChunk = result.chunk;
@@ -4306,6 +4900,16 @@ public final class mudclient implements Runnable {
 			meshBuildNanos =
 				System.nanoTime() - parallelBuildStartNanos;
 		}
+		if (traceHandoffScenery) {
+			BrowserRegionHandoffTrace.sceneryBuild(objectInputs.size(), cacheHits, cacheMisses,
+				parallelBuild ? residentObjectBuildWorkerCount() : 1, parallelBuildStartNanos, meshBuildNanos);
+		}
+		if (predictedSceneryAuthorized) {
+			BrowserRegionHandoffTrace.preparedScenery(predictedSceneryCells.size(), preparedSceneryHits, preparedSceneryNanos);
+			if (PREPARE_INCOMING_SCENERY) BrowserRegionHandoffTrace.incomingScenery(requestedIncomingScenery, adoptedIncomingScenery);
+			clearPredictedScenery();
+		}
+		if (adoptSurfaceScenery && !LIVE_SURFACE_HANDOFF) clearSurfaceSceneryDraw();
 		for (Renderer3DWorldChunkFrame.ChunkMesh objectChunk
 				: objectChunks) {
 			if (objectChunk != null) {
@@ -4318,6 +4922,7 @@ public final class mudclient implements Runnable {
 		retainedCells.addAll(
 			this.cachedResidentObjectChunkPreviousViewCells);
 		this.cachedResidentObjectChunks.keySet().retainAll(retainedCells);
+		emptyDistantScenery.keySet().retainAll(retainedCells);
 		if (staticPresentationRebuildPending) {
 			BoundaryLoadingDiagnostics.recordStaticPresentationBuild(
 				objectInputs.size(),
@@ -4469,23 +5074,38 @@ public final class mudclient implements Runnable {
 			clearResidentStaticInputCache();
 			return buildResidentObjectChunkInputsUncached(baseFrame);
 		}
-		int required = (int) maximumInputs * 8;
-		if (residentStaticInputProbe == null || residentStaticInputProbe.length < required)
-			residentStaticInputProbe = new int[required];
-		if (residentAnimatedInputIndices == null || residentAnimatedInputIndices.length < getGameObjectInstanceCount())
-			residentAnimatedInputIndices = new int[getGameObjectInstanceCount()];
-		int used = captureResidentStaticInputs();
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
 		ResidentStaticInputCache cached = residentStaticInputCache;
-		if (cached == null || !cached.matches(anchor, midRegionBaseX, midRegionBaseZ, tileSize,
-			staticPresentationRevision, residentStaticInputProbe, used)) {
-			List<ResidentObjectChunkInput> all = buildResidentObjectChunkInputsUncached(baseFrame);
-			List<ResidentObjectChunkInput> statics = new ArrayList<ResidentObjectChunkInput>();
-			for (ResidentObjectChunkInput input : all)
-				if (input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) statics.add(input);
-			residentStaticInputCache = new ResidentStaticInputCache(anchor, midRegionBaseX, midRegionBaseZ,
-				tileSize, staticPresentationRevision, Arrays.copyOf(residentStaticInputProbe, used), statics);
-			return all;
+		NativeLayeredTerrainSnapshot terrain = world.getWholeOverworldSourceSnapshot();
+		boolean publishedPlacement = LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()
+			&& terrain != null && terrain.getLevel() == 0 && "global".equals(terrain.getWorldSpace())
+			&& !WorldEditorBuildSettings.isEnabled() && !world.hasWholeOverworldTerrainPatches();
+		long placementRevision = publishedPlacement ? sceneInstanceStore.getResidentPlacementRevision() : -1;
+		long groundRevision = publishedPlacement ? world.getWholeOverworldSourceRevision() : -1;
+		NativeLayeredTerrainSnapshot visual = publishedPlacement ? world.getSurfacePresentationTerrainBasis() : null;
+		if (publishedPlacement && cached != null && cached.matchesView(anchor, midRegionBaseX, midRegionBaseZ,
+			tileSize, staticPresentationRevision) && cached.matchesPublication(placementRevision, groundRevision, visual)) {
+			if (TRACE_BROWSER_TRAVEL) residentPlacementPublicationsReused++;
+		} else {
+			int required = (int) maximumInputs * 8;
+			if (residentStaticInputProbe == null || residentStaticInputProbe.length < required)
+				residentStaticInputProbe = new int[required];
+			if (residentAnimatedInputIndices == null || residentAnimatedInputIndices.length < getGameObjectInstanceCount())
+				residentAnimatedInputIndices = new int[getGameObjectInstanceCount()];
+			int used = captureResidentStaticInputs();
+			if (cached == null || !cached.matches(anchor, midRegionBaseX, midRegionBaseZ, tileSize,
+				staticPresentationRevision, residentStaticInputProbe, used)) {
+				List<ResidentObjectChunkInput> all = buildResidentObjectChunkInputsUncached(baseFrame);
+				List<ResidentObjectChunkInput> statics = new ArrayList<>();
+				for (ResidentObjectChunkInput input : all) {
+					if (input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) statics.add(input);
+				}
+				residentStaticInputCache = new ResidentStaticInputCache(anchor, midRegionBaseX, midRegionBaseZ,
+					tileSize, staticPresentationRevision, Arrays.copyOf(residentStaticInputProbe, used), statics);
+				residentStaticInputCache.publish(placementRevision, groundRevision, visual);
+				return all;
+			}
+			cached.publish(placementRevision, groundRevision, visual);
 		}
 		if (residentAnimatedInputCount == 0) return cached.inputs;
 		Map<Long, ResidentObjectChunkInputBuilder> builders = new TreeMap<Long, ResidentObjectChunkInputBuilder>();
@@ -4651,6 +5271,12 @@ public final class mudclient implements Runnable {
 				worldCellZ, this.midRegionBaseZ, cellTileSize);
 		long cellKey = residentObjectChunkCellKey(
 			worldCellX, worldCellZ, chunkRole);
+		if (LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()
+			&& chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
+			&& model != null && model.getFishingPose() >= 0) {
+			// The ripple period owns its buffers even when a fire or rotating sail shares the cell.
+			cellKey = mixResidentObjectChunkCacheKey(cellKey, 1);
+		}
 		ResidentObjectChunkInputBuilder builder = builders.get(cellKey);
 		if (builder == null) {
 			builder = new ResidentObjectChunkInputBuilder(
@@ -4661,7 +5287,10 @@ public final class mudclient implements Runnable {
 				worldCellX,
 				worldCellZ,
 				chunkRole,
-				cellTileSize);
+				cellTileSize,
+				this.midRegionBaseX,
+				this.midRegionBaseZ,
+				this.tileSize);
 			builders.put(cellKey, builder);
 		}
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
@@ -4710,59 +5339,6 @@ public final class mudclient implements Runnable {
 			: RESIDENT_OBJECT_CHUNK_TILE_SIZE;
 	}
 
-	private void applyRenderer3DMaterialMetadata(Renderer3DModelKind kind, int objectId, RSModel model) {
-		if (model == null) {
-			return;
-		}
-		model.clearRenderer3DGlowEmitter();
-		GameObjectDef def = kind == Renderer3DModelKind.GAME_OBJECT
-			? EntityHandler.getObjectDef(objectId)
-			: null;
-		Renderer3DGlowSpec glowSpec = renderer3DGlowSpecFor(def);
-		model.setRenderer3DMaterialFamily(
-			Renderer3DMaterialClassifier.classifyObject(kind, def, glowSpec != null));
-		if (glowSpec == null) {
-			return;
-		}
-		model.setRenderer3DGlowEmitter(
-			glowSpec.color,
-			glowSpec.radius,
-			glowSpec.intensity);
-	}
-
-	private Renderer3DGlowSpec renderer3DGlowSpecFor(GameObjectDef def) {
-		if (def == null) {
-			return null;
-		}
-		String modelName = lowerOrEmpty(def.getObjectModel());
-		String objectName = lowerOrEmpty(def.getName());
-		if (modelName.startsWith("torcha") || modelName.startsWith("skulltorcha")) {
-			return new Renderer3DGlowSpec(
-				REMASTER_FIRE_GLOW_COLOR,
-				REMASTER_TORCH_GLOW_RADIUS,
-				REMASTER_TORCH_GLOW_INTENSITY);
-		}
-		if (modelName.startsWith("firea")
-			|| modelName.startsWith("fireplacea")
-			|| modelName.startsWith("firespell")
-			|| objectName.equals("flames")) {
-			return new Renderer3DGlowSpec(
-				REMASTER_FIRE_GLOW_COLOR,
-				REMASTER_FIRE_GLOW_RADIUS,
-				REMASTER_FIRE_GLOW_INTENSITY);
-		}
-		if (modelName.equals("furnace")
-			|| modelName.equals("cave furnace")
-			|| objectName.contains("furnace")
-			|| objectName.contains("lava forge")) {
-			return new Renderer3DGlowSpec(
-				REMASTER_FIRE_GLOW_COLOR,
-				REMASTER_FURNACE_GLOW_RADIUS,
-				REMASTER_FURNACE_GLOW_INTENSITY);
-		}
-		return null;
-	}
-
 	private static String lowerOrEmpty(String value) {
 		return value == null ? "" : value.toLowerCase(Locale.ROOT);
 	}
@@ -4771,12 +5347,20 @@ public final class mudclient implements Runnable {
     public static boolean isBrowserCloneTemplatesEnabled(){return BrowserPresentationCloneCache.isEnabled();}
     public long[] getBrowserCloneTemplateWork(){BrowserPresentationCloneCache c=browserPresentationCloneCache;return c==null?new long[]{1,BrowserPresentationCloneCache.isEnabled()?1:0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}:c.work();}
     RSModel cloneBrowserPresentationGameObject(int id,int owner){
-        if(!BrowserPresentationCloneCache.isEnabled())return getModelCacheItem(EntityHandler.getObjectDef(id).modelID).clone();
+        if(!BrowserPresentationCloneCache.isEnabled())return cloneScenerySource(EntityHandler.getObjectDef(id).modelID);
         BrowserPresentationCloneCache cache=browserPresentationCloneCache;
         if(cache==null){synchronized(this){cache=browserPresentationCloneCache;if(cache==null){cache=new BrowserPresentationCloneCache();browserPresentationCloneCache=cache;}}}
         return cache.clone(this,id,owner);
     }
     void clearBrowserPresentationCloneCache(){if(browserPresentationCloneCache!=null)browserPresentationCloneCache.clear();}
+
+	private RSModel cloneScenerySource(int modelId) {
+		RSModel source = getModelCacheItem(modelId);
+		if (!SURFACE_SCENERY_DRAW) return source.clone();
+		synchronized (source) {
+			return source.clone();
+		}
+	}
 
     boolean isBrowserBaselineStaticObject(int objectId) {
         return !isAnimatedResidentObjectChunkModel(Renderer3DModelKind.GAME_OBJECT, objectId);
@@ -4856,8 +5440,15 @@ public final class mudclient implements Runnable {
 			int worldTileZ,
 			int objectId,
 			int direction) {
-		int localX = worldTileX - this.midRegionBaseX;
-		int localZ = worldTileZ - this.midRegionBaseZ;
+		return createResidentObjectCanonicalIdentity(kind, worldTileX, worldTileZ, objectId, direction,
+			midRegionBaseX, midRegionBaseZ, tileSize, null);
+	}
+
+	private ResidentObjectCanonicalIdentity createResidentObjectCanonicalIdentity(
+		Renderer3DModelKind kind, int worldTileX, int worldTileZ, int objectId, int direction,
+		int baseX, int baseZ, int scale, NativeLayeredTerrainSnapshot predictedTerrain) {
+		int localX = worldTileX - baseX;
+		int localZ = worldTileZ - baseZ;
 		int elevation1 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
 		int elevation2 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
 		if (kind == Renderer3DModelKind.GAME_OBJECT) {
@@ -4873,13 +5464,9 @@ public final class mudclient implements Runnable {
 					xSize = definition.getHeight();
 					zSize = definition.getWidth();
 				}
-				int centerX =
-					(2 * localX + xSize) * this.tileSize / 2;
-				int centerZ =
-					(2 * localZ + zSize) * this.tileSize / 2;
-				elevation1 =
-					this.world.getPresentationTerrainElevation(
-						centerX, centerZ);
+				int centerX = (2 * localX + xSize) * scale / 2;
+				int centerZ = (2 * localZ + zSize) * scale / 2;
+				elevation1 = residentSceneryElevation(predictedTerrain, centerX, centerZ, baseX, baseZ, scale);
 				elevation2 = elevation1;
 			}
 		} else if (kind == Renderer3DModelKind.WALL_OBJECT) {
@@ -4898,14 +5485,8 @@ public final class mudclient implements Runnable {
 				endpointX++;
 				endpointZ++;
 			}
-			elevation1 =
-				this.world.getPresentationTerrainElevation(
-					startX * this.tileSize,
-					startZ * this.tileSize);
-			elevation2 =
-				this.world.getPresentationTerrainElevation(
-					endpointX * this.tileSize,
-					endpointZ * this.tileSize);
+			elevation1 = residentSceneryElevation(predictedTerrain, startX * scale, startZ * scale, baseX, baseZ, scale);
+			elevation2 = residentSceneryElevation(predictedTerrain, endpointX * scale, endpointZ * scale, baseX, baseZ, scale);
 		}
 		return new ResidentObjectCanonicalIdentity(
 			kind.ordinal(),
@@ -4917,36 +5498,242 @@ public final class mudclient implements Runnable {
 			elevation2);
 	}
 
-	private static final class Renderer3DGlowSpec {
-		private final int color;
-		private final int radius;
-		private final int intensity;
-
-		private Renderer3DGlowSpec(int color, int radius, int intensity) {
-			this.color = color;
-			this.radius = radius;
-			this.intensity = intensity;
-		}
+	private int residentSceneryElevation(NativeLayeredTerrainSnapshot terrain,
+		int localPixelX, int localPixelZ, int baseX, int baseZ, int scale) {
+		return terrain == null
+			? world.getPresentationTerrainElevation(localPixelX, localPixelZ)
+			: World.getPredictedPresentationElevation(terrain, localPixelX + baseX * scale, localPixelZ + baseZ * scale);
 	}
 
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
+		return buildResidentObjectChunkMesh(input, false, null);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input, boolean detach,
+		SurfaceSceneryReuse reuse) {
+		boolean useWorker = detach && input.anchor.getPlane() == 0 && SurfaceSceneryMeshPreparation.isAvailable();
+		boolean trace = useWorker && SurfaceSceneryMeshPreparation.isTracing();
+		long at = trace ? System.currentTimeMillis() : 0;
+		long start = trace ? System.nanoTime() : 0;
+		int originX = input.anchor.getOriginWorldX() + input.localOriginTileX * input.tileSize;
+		int originZ = input.anchor.getOriginWorldZ() + input.localOriginTileZ * input.tileSize;
+		if (useWorker && WORKER_SCENERY_PLACEMENTS && input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) {
+			Renderer3DWorldChunkFrame.ChunkMesh placed = buildWorkerSceneryPlacements(input, originX, originZ, at, start, reuse);
+			if (placed != null) {
+				detachedSurfaceSceneryMeshes++;
+				return placed;
+			}
+			if (trace) {
+				at = System.currentTimeMillis();
+				start = System.nanoTime();
+			}
+		}
 		RSModel[] models = input.models;
 		if (input.chunkRole
 				== Renderer3DWorldChunkFrame
 					.CHUNK_ROLE_STATIC_OBJECTS) {
 			models = buildCanonicalResidentObjectModels(input);
 		}
+		if (useWorker) {
+			Renderer3DWorldChunkFrame.ChunkMesh prepared = SurfaceSceneryMeshPreparation.prepare(
+				input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(), originX, originZ, models,
+				input.cellKey, at, trace ? System.nanoTime() - start : 0);
+			if (prepared != null) {
+				detachedSurfaceSceneryMeshes++;
+				return prepared;
+			}
+		}
 		return RSModel.buildRenderer3DObjectChunkMesh(
 			input.anchor.getPlane(),
 			input.anchor.getCenterSectionX(),
 			input.anchor.getCenterSectionY(),
-			input.anchor.getOriginWorldX()
-				+ input.localOriginTileX * this.tileSize,
-			input.anchor.getOriginWorldZ()
-				+ input.localOriginTileZ * this.tileSize,
+			originX,
+			originZ,
 			models,
 			input.modelCount,
 			input.chunkRole);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh buildWorkerSceneryPlacements(ResidentObjectChunkInput input,
+		int originX, int originZ, long at, long start, SurfaceSceneryReuse reuse) {
+		byte[] digest = sceneryModelArchiveDigest;
+		ResidentObjectCanonicalIdentity[] identities = input.canonicalIdentities;
+		if (digest == null || identities == null || identities.length == 0 || input.tileSize != 128) return null;
+		for (ResidentObjectCanonicalIdentity identity : identities) {
+			if (identity.kind == Renderer3DModelKind.WALL_OBJECT.ordinal()) continue;
+			if (identity.kind != Renderer3DModelKind.GAME_OBJECT.ordinal() || !hasDetachedScenerySource(identity.objectId)) {
+				SurfaceSceneryMeshPreparation.tracePlacementRefusal(at, input.cellKey, identity.objectId);
+				return null;
+			}
+		}
+		if (reuse != null && reuse.archive == digest) {
+			Renderer3DWorldChunkFrame.ChunkMesh cached = reuse.find(input, originX, originZ);
+			if (cached != null) {
+				if (VERIFY_WORKER_SCENERY_PLACEMENTS) {
+					Renderer3DWorldChunkFrame.ChunkMesh rebuilt = RSModel.buildRenderer3DObjectChunkMesh(0,
+						input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(), originX, originZ,
+						buildCanonicalResidentObjectModels(input), input.modelCount, input.chunkRole);
+					if (!ResidentObjectChunkGeometryComparison.sameExactDraw(cached, rebuilt)) {
+						mismatchedWorkerSceneryMeshes++;
+						if (firstSceneryReuseMismatch == null) {
+							firstSceneryReuseMismatch = ResidentObjectChunkGeometryComparison.compare(cached, rebuilt).summary();
+						}
+						return rebuilt;
+					}
+					verifiedSceneryReuses++;
+				}
+				return cached;
+			}
+		}
+		int[] placements = new int[identities.length * 7];
+		int i = 0;
+		for (ResidentObjectCanonicalIdentity identity : identities) {
+			placements[i++] = identity.kind;
+			placements[i++] = identity.objectId;
+			placements[i++] = identity.worldTileX;
+			placements[i++] = identity.worldTileZ;
+			placements[i++] = identity.direction;
+			placements[i++] = identity.elevation1;
+			placements[i++] = identity.elevation2;
+		}
+		int sectionX = input.anchor.getCenterSectionX(), sectionZ = input.anchor.getCenterSectionY();
+		Renderer3DWorldChunkFrame.ChunkMesh result = SurfaceSceneryMeshPreparation.preparePlacements(sectionX, sectionZ,
+			originX, originZ, input.baseX, input.baseZ, input.tileSize, input.canonicalContentKey, digest, placements,
+			input.cellKey, at, start);
+		if (result == null || digest != sceneryModelArchiveDigest) return null;
+		for (ResidentObjectCanonicalIdentity identity : identities) {
+			if (identity.kind == Renderer3DModelKind.GAME_OBJECT.ordinal() && !hasDetachedScenerySource(identity.objectId)) return null;
+		}
+		if (VERIFY_WORKER_SCENERY_PLACEMENTS) {
+			Renderer3DWorldChunkFrame.ChunkMesh expected = RSModel.buildRenderer3DObjectChunkMesh(0, sectionX, sectionZ,
+				originX, originZ, buildCanonicalResidentObjectModels(input), input.modelCount, input.chunkRole);
+			if (!SurfaceSceneryMeshPreparation.sameGeometry(expected, result)) {
+				mismatchedWorkerSceneryMeshes++;
+				return null;
+			}
+			verifiedWorkerSceneryMeshes++;
+		}
+		detachedSceneryPlacementMeshes++;
+		if (reuse != null && reuse.archive == digest) reuse.remember(input, result);
+		return result;
+	}
+
+	/** Owned by the serial scenery executor for one signed world and loaded model archive. */
+	private static final class SurfaceSceneryReuse {
+		private static final long MAX_BYTES = 64L * 1024 * 1024;
+		private static final int MAX_CELLS = 96;
+		private final Map<Long, ReusableSceneryMesh> cells = new LinkedHashMap<>(16, 0.75F, true);
+		private String map, space;
+		private int level;
+		private int definitionFlags;
+		private byte[] archive;
+		private volatile long hits, bytes;
+
+		void scope(NativeLayeredTerrainSnapshot terrain, byte[] digest) {
+			int flags = SurfaceSceneryMeshPreparation.definitionFlags();
+			if (archive == digest && level == terrain.getLevel() && definitionFlags == flags
+				&& terrain.packageIdentity().equals(map) && terrain.getWorldSpace().equals(space)) return;
+			cells.clear();
+			bytes = 0;
+			archive = digest;
+			map = terrain.packageIdentity();
+			space = terrain.getWorldSpace();
+			level = terrain.getLevel();
+			definitionFlags = flags;
+		}
+
+		Renderer3DWorldChunkFrame.ChunkMesh find(ResidentObjectChunkInput input, int x, int z) {
+			ReusableSceneryMesh cached = cells.get(input.cellKey);
+			if (cached == null || cached.key != input.cacheKey || cached.tileSize != input.tileSize
+				|| definitionFlags != SurfaceSceneryMeshPreparation.definitionFlags()
+				|| cached.mesh.getOriginWorldX() != x || cached.mesh.getOriginWorldZ() != z
+				|| !matchingStaticPlacements(cached.placements, input.canonicalIdentities)) return null;
+			Renderer3DWorldChunkFrame.ChunkMesh reused = cached.mesh.reuseStaticObjectPresentation(input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(),
+				(cached.baseX - input.baseX) * input.tileSize, (cached.baseZ - input.baseZ) * input.tileSize);
+			if (reused != null) hits++;
+			return reused;
+		}
+
+		void remember(ResidentObjectChunkInput input, Renderer3DWorldChunkFrame.ChunkMesh mesh) {
+			ReusableSceneryMesh cell = new ReusableSceneryMesh(input, mesh);
+			if (cell.bytes > MAX_BYTES || definitionFlags != SurfaceSceneryMeshPreparation.definitionFlags()) return;
+			ReusableSceneryMesh previous = cells.remove(input.cellKey);
+			if (previous != null) bytes -= previous.bytes;
+			Iterator<ReusableSceneryMesh> oldest = cells.values().iterator();
+			while (bytes + cell.bytes > MAX_BYTES || cells.size() >= MAX_CELLS) {
+				bytes -= oldest.next().bytes;
+				oldest.remove();
+			}
+			cells.put(input.cellKey, cell);
+			bytes += cell.bytes;
+		}
+	}
+
+	private static final class ReusableSceneryMesh {
+		private final long key, bytes;
+		private final int baseX, baseZ, tileSize;
+		private final ResidentObjectCanonicalIdentity[] placements;
+		private final Renderer3DWorldChunkFrame.ChunkMesh mesh;
+
+		ReusableSceneryMesh(ResidentObjectChunkInput input, Renderer3DWorldChunkFrame.ChunkMesh mesh) {
+			key = input.cacheKey;
+			baseX = input.baseX;
+			baseZ = input.baseZ;
+			tileSize = input.tileSize;
+			placements = input.canonicalIdentities;
+			this.mesh = mesh;
+			bytes = 1024L + mesh.getVertexCount() * 64L + mesh.getTriangleCount() * 32L + mesh.getShadowCasterCount() * 112L
+				+ mesh.getGlowEmitterCount() * 64L + placements.length * 64L;
+		}
+	}
+
+	private boolean hasDetachedScenerySource(int id) {
+		GameObjectDef def = EntityHandler.getObjectDef(id);
+		if (def == null || def.modelID < 0 || def.modelID >= detachedScenerySourceVersions.length) return false;
+		RSModel source = getModelCacheItem(def.modelID);
+		// The existing cell builder excludes live animation from playable cells.
+		// The distant draw may include the canonical windmill model. The primitive
+		// reply can carry that dense cell without the serialized reply's 4 MiB cap.
+		return (id != 74 || SurfaceSceneryMeshPreparation.isWordWorkerAvailable()) && source != null
+			&& source.getRenderer3DTransformVersion() == detachedScenerySourceVersions[def.modelID];
+	}
+
+	private ResidentObjectChunkBuildResult buildResidentObjectChunkMeshForPresentation(ResidentObjectChunkInput input) {
+		if (!LIVE_SURFACE_HANDOFF || !Renderer3DSettings.isBrowserPresentationAvailable()
+			|| input.chunkRole != Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) {
+			return buildResidentObjectChunkMeshMeasured(input);
+		}
+		ResidentFishingPoseKey key = ResidentFishingPoseKey.forInput(input);
+		if (key == null) return buildResidentObjectChunkMeshMeasured(input);
+		long start = System.nanoTime();
+		ResidentFishingPose cached = residentFishingPoses.get(key);
+		if (cached != null) {
+			int dx = (cached.baseX - input.baseX) * input.tileSize;
+			int dz = (cached.baseZ - input.baseZ) * input.tileSize;
+			Renderer3DWorldChunkFrame.ChunkMesh pose = cached.mesh.rebaseStaticObjectPresentation(
+				input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(), dx, dz);
+			if ((dx != 0 || dz != 0) && TRACE_BROWSER_TRAVEL) residentFishingPoseRebases++;
+			return new ResidentObjectChunkBuildResult(pose, System.nanoTime() - start);
+		}
+		ResidentObjectChunkBuildResult built = buildResidentObjectChunkMeshMeasured(input);
+		if (built.chunk == null) return built;
+		built.chunk.markResidentFishingPose();
+		long bytes = residentFishingPoseCost(built.chunk);
+		long byteLimit = 12L * 1024 * 1024;
+		if (bytes <= byteLimit) {
+			Iterator<ResidentFishingPose> oldest = residentFishingPoses.values().iterator();
+			while (residentFishingPoses.size() >= 96 || residentFishingPoseBytes + bytes > byteLimit) {
+				residentFishingPoseBytes -= residentFishingPoseCost(oldest.next().mesh);
+				oldest.remove();
+			}
+			residentFishingPoses.put(key, new ResidentFishingPose(built.chunk, input.baseX, input.baseZ));
+			residentFishingPoseBytes += bytes;
+		}
+		return built;
+	}
+
+	private static long residentFishingPoseCost(Renderer3DWorldChunkFrame.ChunkMesh mesh) {
+		return 128L * mesh.getVertexCount() + 32L * mesh.getTriangleCount();
 	}
 
 	private RSModel[] buildCanonicalResidentObjectModels(
@@ -4958,27 +5745,11 @@ public final class mudclient implements Runnable {
 		for (int index = 0; index < models.length; index++) {
 			ResidentObjectCanonicalIdentity identity =
 				identities[index];
-			SceneBaselineState.Record record =
-				new SceneBaselineState.Record(
-					identity.objectId,
-					identity.worldTileX,
-					identity.worldTileZ,
-					identity.direction,
-					identity.kind
-						== Renderer3DModelKind.WALL_OBJECT.ordinal()
-							? 1 : 0);
-			models[index] =
-				identity.kind
-						== Renderer3DModelKind.GAME_OBJECT.ordinal()
-					? createStaticPresentationGameObjectModel(
-						record,
-						index,
-						identity.elevation1)
-					: createStaticPresentationWallObjectModel(
-						record,
-						index,
-						identity.elevation1,
-						identity.elevation2);
+			models[index] = identity.kind == Renderer3DModelKind.GAME_OBJECT.ordinal()
+				? createStaticPresentationGameObjectModel(input, identity, index)
+				: StaticSceneryModels.wallObject(identity.objectId, identity.worldTileX - input.baseX,
+					identity.worldTileZ - input.baseZ, identity.direction, input.tileSize, index,
+					identity.elevation1, identity.elevation2);
 		}
 		return models;
 	}
@@ -5017,8 +5788,8 @@ public final class mudclient implements Runnable {
 				input.cacheKey,
 				input.canonicalContentKey,
 				objectChunk,
-				this.midRegionBaseX,
-				this.midRegionBaseZ,
+				input.baseX,
+				input.baseZ,
 				input.liveModelCount,
 				input.presentationModelCount));
 		return objectChunk;
@@ -5044,12 +5815,51 @@ public final class mudclient implements Runnable {
 	private static final class ResidentObjectChunkBuildResult {
 		private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
 		private final long durationNanos;
+		private final Map<IncomingSceneryPlacement, IncomingSceneryModel> incoming;
 
 		private ResidentObjectChunkBuildResult(
 			Renderer3DWorldChunkFrame.ChunkMesh chunk,
 			long durationNanos) {
+			this(chunk, durationNanos, Collections.emptyMap());
+		}
+
+		private ResidentObjectChunkBuildResult(Renderer3DWorldChunkFrame.ChunkMesh chunk, long durationNanos,
+			Map<IncomingSceneryPlacement, IncomingSceneryModel> incoming) {
 			this.chunk = chunk;
 			this.durationNanos = durationNanos;
+			this.incoming = incoming;
+		}
+	}
+
+	private static final class IncomingSceneryPlacement {
+		private final int x, z, id, direction;
+
+		private IncomingSceneryPlacement(int x, int z, int id, int direction) {
+			this.x = x;
+			this.z = z;
+			this.id = id;
+			this.direction = direction;
+		}
+
+		@Override public int hashCode() { return ((x * 31 + z) * 31 + id) * 31 + direction; }
+
+		@Override public boolean equals(Object other) {
+			if (!(other instanceof IncomingSceneryPlacement)) return false;
+			IncomingSceneryPlacement placement = (IncomingSceneryPlacement) other;
+			return x == placement.x && z == placement.z && id == placement.id && direction == placement.direction;
+		}
+	}
+
+	private static final class IncomingSceneryModel {
+		private final GameObjectDef definition;
+		private final RSModel source, model;
+		private final int sourceVersion;
+
+		private IncomingSceneryModel(GameObjectDef definition, RSModel source, RSModel model) {
+			this.definition = definition;
+			this.source = source;
+			this.model = model;
+			this.sourceVersion = source.getRenderer3DTransformVersion();
 		}
 	}
 
@@ -5069,12 +5879,56 @@ public final class mudclient implements Runnable {
 	}
 
 	private void clearResidentObjectChunkCache() {
+		if (pendingDistantScenery != null) pendingDistantScenery.cancel(false);
+		pendingDistantSceneryInput = null;
+		pendingDistantScenery = null;
+		emptyDistantScenery.clear();
+		residentFishingPoses.clear();
+		residentFishingPoseBytes = 0;
 		clearResidentStaticInputCache();
 		this.cachedResidentObjectChunks.clear();
 		this.cachedResidentObjectChunkCurrentViewCells.clear();
 		this.cachedResidentObjectChunkPreviousViewCells.clear();
 		this.cachedResidentObjectChunkViewBaseX = Integer.MIN_VALUE;
 		this.cachedResidentObjectChunkViewBaseZ = Integer.MIN_VALUE;
+	}
+
+	void retainBrowserFloorScenery(NativeLayeredTerrainSnapshot destination) {
+		if (!BrowserWorldStreaming.enabled() || world == null) return;
+		NativeLayeredTerrainSnapshot current = world.getWholeOverworldSourceSnapshot();
+		if (current == null || destination == null || WorldEditorBuildSettings.isEnabled() || world.hasWholeOverworldTerrainPatches()
+			|| !current.packageIdentity().equals(destination.packageIdentity())
+			|| !"global".equals(current.getWorldSpace()) || !"global".equals(destination.getWorldSpace())) {
+			clearBrowserFloorScenery();
+			return;
+		}
+		if (current.getLevel() != 0 || destination.getLevel() == 0) return;
+		clearBrowserFloorScenery();
+		retainedFloorSceneryScope = current.scopeIdentity();
+		for (Long key : cachedResidentObjectChunkCurrentViewCells) {
+			ResidentObjectChunkCacheEntry entry = cachedResidentObjectChunks.get(key);
+			if (entry != null && entry.chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) {
+				retainedFloorScenery.put(key, entry);
+			}
+		}
+	}
+
+	private void restoreBrowserFloorScenery() {
+		if (retainedFloorSceneryScope == null || !isRenderer3DWorldReady()) return;
+		NativeLayeredTerrainSnapshot current = world.getWholeOverworldSourceSnapshot();
+		if (current == null || current.getLevel() != 0) return;
+		if (!WorldEditorBuildSettings.isEnabled() && !world.hasWholeOverworldTerrainPatches()
+			&& retainedFloorSceneryScope.equals(current.scopeIdentity())) {
+			// The normal cache lookup still validates each cell against the current
+			// authoritative scenery and elevation. Only immutable draw meshes are retained.
+			retainedFloorScenery.forEach(cachedResidentObjectChunks::putIfAbsent);
+		}
+		clearBrowserFloorScenery();
+	}
+
+	void clearBrowserFloorScenery() {
+		retainedFloorSceneryScope = null;
+		retainedFloorScenery.clear();
 	}
 
 	private int getDebugPlayerWorldTileX() {
@@ -5331,6 +6185,8 @@ public final class mudclient implements Runnable {
 		private final long revision;
 		private final int[] descriptors;
 		private final List<ResidentObjectChunkInput> inputs;
+		private long placementRevision = -1, groundRevision = -1;
+		private NativeLayeredTerrainSnapshot visual;
 		private ResidentStaticInputCache(Renderer3DWorldChunkFrame.ChunkMesh anchor, int baseX, int baseZ,
 			int tileSize, long revision, int[] descriptors, List<ResidentObjectChunkInput> inputs) {
 			this.anchor = anchor; this.baseX = baseX; this.baseZ = baseZ; this.tileSize = tileSize;
@@ -5339,16 +6195,82 @@ public final class mudclient implements Runnable {
 		}
 		private boolean matches(Renderer3DWorldChunkFrame.ChunkMesh anchor, int baseX, int baseZ,
 			int tileSize, long revision, int[] probe, int used) {
-			if (this.anchor != anchor || this.baseX != baseX || this.baseZ != baseZ || this.tileSize != tileSize
-				|| this.revision != revision || descriptors.length != used) return false;
+			if (!matchesView(anchor, baseX, baseZ, tileSize, revision) || descriptors.length != used) return false;
 			for (int i = 0; i < used; i++) if (descriptors[i] != probe[i]) return false;
 			return true;
+		}
+		private boolean matchesView(Renderer3DWorldChunkFrame.ChunkMesh anchor, int baseX, int baseZ,
+			int tileSize, long revision) {
+			return this.anchor == anchor && this.baseX == baseX && this.baseZ == baseZ
+				&& this.tileSize == tileSize && this.revision == revision;
+		}
+		private void publish(long placementRevision, long groundRevision, NativeLayeredTerrainSnapshot visual) {
+			this.placementRevision = placementRevision;
+			this.groundRevision = groundRevision;
+			this.visual = visual;
+		}
+		private boolean matchesPublication(long placementRevision, long groundRevision, NativeLayeredTerrainSnapshot visual) {
+			return this.placementRevision == placementRevision && this.groundRevision == groundRevision && this.visual == visual;
+		}
+	}
+
+	private static final class ResidentFishingPose {
+		private final Renderer3DWorldChunkFrame.ChunkMesh mesh;
+		private final int baseX, baseZ;
+
+		private ResidentFishingPose(Renderer3DWorldChunkFrame.ChunkMesh mesh, int baseX, int baseZ) {
+			this.mesh = mesh;
+			this.baseX = baseX;
+			this.baseZ = baseZ;
+		}
+	}
+
+	private static final class ResidentFishingPoseKey {
+		private final int plane, originX, originZ, scale;
+		private final RSModel[] models;
+		private final int[] basesAndPhases;
+
+		private ResidentFishingPoseKey(ResidentObjectChunkInput input, int[] basesAndPhases) {
+			plane = input.anchor.getPlane();
+			scale = input.tileSize;
+			originX = input.anchor.getOriginWorldX() + input.localOriginTileX * scale;
+			originZ = input.anchor.getOriginWorldZ() + input.localOriginTileZ * scale;
+			models = input.models;
+			this.basesAndPhases = basesAndPhases;
+		}
+
+		private static ResidentFishingPoseKey forInput(ResidentObjectChunkInput input) {
+			int[] basesAndPhases = new int[2 * input.modelCount];
+			for (int i = 0; i < input.modelCount; i++) {
+				RSModel model = input.models[i];
+				int phase = model.getFishingPose();
+				if (phase < 0) return null;
+				basesAndPhases[2 * i] = model.getFishingPoseBasisVersion();
+				basesAndPhases[2 * i + 1] = phase;
+			}
+			return new ResidentFishingPoseKey(input, basesAndPhases);
+		}
+
+		@Override public int hashCode() {
+			int hash = 31 * (31 * (31 * plane + originX) + originZ) + scale;
+			for (RSModel model : models) hash = 31 * hash + System.identityHashCode(model);
+			return 31 * hash + Arrays.hashCode(basesAndPhases);
+		}
+
+		@Override public boolean equals(Object other) {
+			if (!(other instanceof ResidentFishingPoseKey)) return false;
+			ResidentFishingPoseKey key = (ResidentFishingPoseKey) other;
+			if (plane != key.plane || scale != key.scale || originX != key.originX || originZ != key.originZ
+				|| models.length != key.models.length) return false;
+			for (int i = 0; i < models.length; i++) if (models[i] != key.models[i]) return false;
+			return Arrays.equals(basesAndPhases, key.basesAndPhases);
 		}
 	}
 
 	private static final class ResidentObjectChunkInput {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
 		private final long cellKey;
+		private final int baseX, baseZ, tileSize;
 		private final int localOriginTileX;
 		private final int localOriginTileZ;
 		private final int chunkRole;
@@ -5366,6 +6288,9 @@ public final class mudclient implements Runnable {
 		private ResidentObjectChunkInput(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
 			long cellKey,
+			int baseX,
+			int baseZ,
+			int tileSize,
 			int localOriginTileX,
 			int localOriginTileZ,
 			int chunkRole,
@@ -5380,6 +6305,9 @@ public final class mudclient implements Runnable {
 			String debugFirstModelSummary) {
 			this.anchor = anchor;
 			this.cellKey = cellKey;
+			this.baseX = baseX;
+			this.baseZ = baseZ;
+			this.tileSize = tileSize;
 			this.localOriginTileX = localOriginTileX;
 			this.localOriginTileZ = localOriginTileZ;
 			this.chunkRole = chunkRole;
@@ -5398,6 +6326,7 @@ public final class mudclient implements Runnable {
 	private static final class ResidentObjectChunkInputBuilder {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
 		private final long cellKey;
+		private final int baseX, baseZ, tileSize;
 		private final int localOriginTileX;
 		private final int localOriginTileZ;
 		private final int chunkRole;
@@ -5419,9 +6348,15 @@ public final class mudclient implements Runnable {
 			int worldCellX,
 			int worldCellZ,
 			int chunkRole,
-			int cellTileSize) {
+			int cellTileSize,
+			int baseX,
+			int baseZ,
+			int tileSize) {
 			this.anchor = anchor;
 			this.cellKey = cellKey;
+			this.baseX = baseX;
+			this.baseZ = baseZ;
+			this.tileSize = tileSize;
 			this.localOriginTileX = localOriginTileX;
 			this.localOriginTileZ = localOriginTileZ;
 			this.chunkRole = chunkRole;
@@ -5517,6 +6452,9 @@ public final class mudclient implements Runnable {
 			return new ResidentObjectChunkInput(
 				this.anchor,
 				this.cellKey,
+				this.baseX,
+				this.baseZ,
+				this.tileSize,
 				this.localOriginTileX,
 				this.localOriginTileZ,
 				this.chunkRole,
@@ -5835,6 +6773,13 @@ public final class mudclient implements Runnable {
 					== fresh.isObjectChunk()
 				&& cached.getChunkRole()
 					== fresh.getChunkRole();
+		}
+
+		private static boolean sameExactDraw(Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			return sameDrawMetadata(cached, fresh) && samePositions(cached, fresh) && sameVertexAttributes(cached, fresh)
+				&& sameIndices(cached, fresh) && sameTriangleAttributes(cached, fresh) && sameShadowCasters(cached, fresh)
+				&& sameGlowEmitters(cached, fresh);
 		}
 
 		private static boolean samePositions(
@@ -8649,6 +9594,7 @@ public final class mudclient implements Runnable {
 						this.drawLoadingPleaseWaitFrame();
 					} else if (this.world.playerAlive) {
 						long drawPreparationStart = RenderTelemetry.now();
+						long travelDrawStart = TRACE_BROWSER_TRAVEL || TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
 						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
@@ -9109,22 +10055,41 @@ public final class mudclient implements Runnable {
 					this.queuedProjectileEffectCount = 0;
 					this.queuedProjectileImpactCount = 0;
 					this.queuedCombatEffectCount = 0;
+					boolean traceHandoffFrame = BrowserRegionHandoffTrace.ENABLED
+						&& this.shouldRetainLastPresentedFrame();
+					long handoffPhaseStart = traceHandoffFrame ? System.nanoTime() : 0L;
 					this.ensureGameplayRendererWorldChunkFrame();
+					BrowserRegionHandoffTrace.finishFramePhase("world-frame", handoffPhaseStart);
 					long beforeSceneNanos = RenderTelemetry.elapsedSince(drawPreparationStart);
 					long sceneRenderStart = RenderTelemetry.now();
+					long travelSceneStart = TRACE_BROWSER_TRAVEL || TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
+					if (TRACE_BROWSER_TRAVEL) travelWorkNanos[1] += travelSceneStart - travelDrawStart;
+					if (TRACE_BROWSER_FRAME_STAGES) {
+						browserSceneSetupMs = (travelSceneStart - travelDrawStart) / 1_000_000f;
+						browserSceneryCollectionMs = 0;
+					}
+					handoffPhaseStart = traceHandoffFrame ? System.nanoTime() : 0L;
 					this.scene.setRendererSignedWorldLevel(this.packetHandler.getLogicalWorldLevel(
 						this.midRegionBaseZ + (this.localPlayer == null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize)));
 					this.scene.endScene(-113);
+					long travelObjectsStart = TRACE_BROWSER_TRAVEL || TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
+					if (TRACE_BROWSER_TRAVEL) travelWorkNanos[2] += travelObjectsStart - travelSceneStart;
+					if (TRACE_BROWSER_FRAME_STAGES) browserSceneCaptureMs = (travelObjectsStart - travelSceneStart) / 1_000_000f;
+					BrowserRegionHandoffTrace.finishFramePhase("scene-render", handoffPhaseStart);
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					long residentObjectsStart = RenderTelemetry.now();
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 					if (renderer3DFrame != null) {
 						renderer3DFrame.setRoofVisibility(roofVisibility, this.lastHeightOffset);
+						handoffPhaseStart = traceHandoffFrame ? System.nanoTime() : 0L;
 						Renderer3DWorldChunkFrame presentedWorldChunkFrame =
 							this.appendResidentObjectChunkFrame(
 								this.world.getRenderer3DWorldChunkFrame());
 						renderer3DFrame.setWorldChunkFrame(
 							presentedWorldChunkFrame);
+						if (TRACE_BROWSER_TRAVEL) travelWorkNanos[3] += System.nanoTime() - travelObjectsStart;
+						if (TRACE_BROWSER_FRAME_STAGES) browserSceneryCollectionMs = (System.nanoTime() - travelObjectsStart) / 1_000_000f;
+						BrowserRegionHandoffTrace.finishFramePhase("object-frame", handoffPhaseStart);
 						this.completeLayeredSceneActivationFreshFrame(
 							presentedWorldChunkFrame);
 						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
@@ -9482,6 +10447,12 @@ public final class mudclient implements Runnable {
 
 						long worldOverlayNanos = RenderTelemetry.elapsedSince(worldOverlayStart);
 						long uiOverlayStart = RenderTelemetry.now();
+						long browserUiStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
+						if (TRACE_BROWSER_FRAME_STAGES) {
+							browserInventoryDrawMs = -1;
+							browserMinimapDrawMs = -1;
+							browserMinimapRasterMs = -1;
+						}
                         this.getSurface().captureRenderer2DUiBaseFrame();
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
 						if (this.messageTabSelected == MessageTab.ALL) {
@@ -9552,6 +10523,7 @@ public final class mudclient implements Runnable {
 					this.drawUi(0);
 					this.getSurface().loggedIn = false;
 					this.drawChatMessageTabs(var1 - 8);
+					if (TRACE_BROWSER_FRAME_STAGES) browserUiDrawMs = (System.nanoTime() - browserUiStart) / 1_000_000f;
 					RenderTelemetry.recordClientDrawPreparation(beforeSceneNanos, residentObjectsNanos,
 						worldOverlayNanos, RenderTelemetry.elapsedSince(uiOverlayStart));
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
@@ -12184,7 +13156,9 @@ public final class mudclient implements Runnable {
 				}
 
 				if (visibleSideMenuTab == Config.INVENTORY_TAB) {
+					long panelStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 					this.drawUiTab1(-15252, acceptTabInput);
+					if (TRACE_BROWSER_FRAME_STAGES) browserInventoryDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
 				if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
@@ -12192,7 +13166,9 @@ public final class mudclient implements Runnable {
 				}
 
 				if (this.shouldDrawMinimapPanel()) {
+					long panelStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 					this.drawUiTabMinimap(mustDrawMenu, (byte) 125);
+					if (TRACE_BROWSER_FRAME_STAGES) browserMinimapDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
 				if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) {
@@ -15168,8 +16144,10 @@ public final class mudclient implements Runnable {
 			int var11 = FastMath.trigTable_1024[(1023 & 1024 - var7 * 4) + 1024];
 			int var12 = mX * var11 + var10 * mZ >> 18;
 			mZ = mZ * var11 - mX * var10 >> 18;
+			long rasterStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 			this.getSurface().drawMinimapSprite(this.getSurface().minimapSprite, posY - (-(var5 / 2) - mZ),
 				var4 / 2 + posX - var12, 842218000, var6, 255 & 64 + var7);
+			if (TRACE_BROWSER_FRAME_STAGES) browserMinimapRasterMs = (System.nanoTime() - rasterStart) / 1_000_000f;
 
 			int var13;
 			for (var13 = 0; var13 < this.getGameObjectInstanceCount(); ++var13) {
@@ -18325,7 +19303,9 @@ public final class mudclient implements Runnable {
 					this.elixirTimer = 0;
 				}
 			}
+			long travelNetworkStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
 			this.checkConnection();
+			if (TRACE_BROWSER_TRAVEL) travelWorkNanos[0] += System.nanoTime() - travelNetworkStart;
 			if (this.logoutTimeout > 0) {
 				--this.logoutTimeout;
 			}
@@ -21600,6 +22580,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadModels() {
+		sceneryModelArchiveDigest = null;
 		byte[] models = unpackData("video" + File.separator + "models.orsc", "3d models", 60);
 
 		String[] modelNames = {"torcha2", "torcha3", "torcha4", "skulltorcha2", "skulltorcha3", "skulltorcha4",
@@ -21614,6 +22595,10 @@ public final class mudclient implements Runnable {
 			return;
 		}
 
+		if (WORKER_SCENERY_PLACEMENTS) {
+			detachedScenerySourceVersions = new int[EntityHandler.getModelCount()];
+			Arrays.fill(detachedScenerySourceVersions, -1);
+		}
 		for (int j = 0; j < EntityHandler.getModelCount(); j++) {
 			String modelName = EntityHandler.getModelName(j);
 			int k = DataOperations.getDataFileOffset(modelName + ".ob3", models);
@@ -21622,39 +22607,24 @@ public final class mudclient implements Runnable {
 			} else {
 				modelCache[j] = new RSModel(models, k, true);
 			}
-			modelCache[j] = normalizeLoadedModel(modelName, modelCache[j]);
+			modelCache[j] = StaticSceneryModels.normalizeLoadedModel(modelName, modelCache[j]);
 			modelCache[j].m_cb = modelName.equals("giantcrystal");
+			if (WORKER_SCENERY_PLACEMENTS && (k != 0 || SurfaceSceneryMeshPreparation.isWordWorkerAvailable()
+				&& StaticSceneryModels.isAirGlyphPlaceholder(modelName))) {
+				detachedScenerySourceVersions[j] = modelCache[j].getRenderer3DTransformVersion();
+			}
 		}
-	}
-
-	private RSModel normalizeLoadedModel(String modelName, RSModel model) {
-		if (TIN_ROCK_MODEL_NAME.equals(modelName)) {
-			model.hideBackFacesMatching(TIN_ROCK_LEGACY_RED_BACK_FACE);
-		}
-		if (WATCHTOWER_MODEL_NAME.equals(modelName)) {
-			model.hideFacesUsingVerticesOutsideLocalBounds(
-				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE,
-				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE,
-				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE);
-		}
-		if (FISHING_SPOT_MODEL_NAME.equals(modelName)) {
-			return model.withFishingSpotClarityOverlay();
-		}
-		return model;
+		if (WORKER_SCENERY_PLACEMENTS) sceneryModelArchiveDigest = SurfaceSceneryMeshPreparation.archiveDigest(models);
 	}
 
 	private RSModel createGeneratedModel(String modelName) {
-		if ("myworld_air_glyph".equals(modelName)) {
-			return createMyWorldAirGlyphModel();
+		if (StaticSceneryModels.isAirGlyphPlaceholder(modelName)) {
+			return StaticSceneryModels.createAirGlyphPlaceholder();
 		}
 		if (modelName.startsWith("myworld_cosmic_sparkles")) {
 			int frame = modelName.charAt(modelName.length() - 1) - '1';
 			return createMyWorldCosmicSparklesModel(frame);
 		}
-		return new RSModel(1, 1);
-	}
-
-	private RSModel createMyWorldAirGlyphModel() {
 		return new RSModel(1, 1);
 	}
 
@@ -21705,14 +22675,10 @@ public final class mudclient implements Runnable {
 				if (!hardAreaLoad
 					&& this.hasCompletedInitialRegionLoad
 					&& this.lastHeightOffset == this.requestedPlane
-					&& this.currentRegionMinX < wantX
-					&& this.currentRegionMaxX > wantX && this.currentRegionMinZ < wantZ
-					&& wantZ < this.currentRegionMaxZ) {
+					&& this.isInsideLoadedRegion(wantX, wantZ)) {
 					this.world.playerAlive = true;
 					return false;
 				} else {
-					clearClericBuffPlayback();
-					clearClericCursePlaybacks();
 					long transitionStartNanos = System.nanoTime();
 					int oldBaseX = this.midRegionBaseX;
 					int oldBaseZ = this.midRegionBaseZ;
@@ -21724,9 +22690,18 @@ public final class mudclient implements Runnable {
 						this.world.hasNativeLayeredTerrain();
 					int midRegionX =
 						this.world.activeSectionXForWorldTile(wantX);
-					this.midRegionBaseX = World.sectionToLocalBaseTile(midRegionX);
 					int midRegionZ =
 						this.world.activeSectionYForWorldTile(wantZ);
+					int nextBaseX = World.sectionToLocalBaseTile(midRegionX) - this.worldOffsetX;
+					int nextBaseZ = World.sectionToLocalBaseTile(midRegionZ) - this.worldOffsetZ;
+					int baseDX = nextBaseX - oldBaseX, baseDZ = nextBaseZ - oldBaseZ;
+					boolean rolling = ROLLING_SURFACE_WINDOW && !hardAreaLoad && !heightOffsetChanged
+						&& this.hasCompletedInitialRegionLoad
+						&& this.world.canRollSurfaceWindow(this.requestedPlane, midRegionX, midRegionZ);
+					if (!rolling) {
+						clearClericBuffPlayback();
+						clearClericCursePlaybacks();
+					}
 					this.lastHeightOffset = this.requestedPlane;
 					this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE
 						+ (centeredNativeWindow ? World.SECTION_SIZE : 32);
@@ -21734,15 +22709,17 @@ public final class mudclient implements Runnable {
 						+ (centeredNativeWindow ? World.SECTION_SIZE : 32);
 					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE
 						- (centeredNativeWindow ? 1 : 32);
-					this.midRegionBaseZ = World.sectionToLocalBaseTile(midRegionZ);
 					this.currentRegionMinX = midRegionX * World.SECTION_SIZE
 						- (centeredNativeWindow ? 1 : 32);
 					long phaseStartNanos = System.nanoTime();
-					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
-						this.dematerializeGameObjectInstance(i);
-					}
-					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
-						this.dematerializeWallObjectInstance(i);
+					if (rolling) {
+						PreparedSurfaceSceneryAdds adds = preparedSurfaceSceneryAdds;
+						rollingPreparedSurfaceAdds = adds != null && adds.moves(oldBaseX, oldBaseZ, nextBaseX, nextBaseZ) ? adds : null;
+						preparedSurfaceSceneryAdds = null;
+						rollSurfaceScenery(baseDX, baseDZ);
+					} else {
+						for (int i = 0; i < this.getGameObjectInstanceCount(); i++) this.dematerializeGameObjectInstance(i);
+						for (int i = 0; i < this.getWallObjectInstanceCount(); i++) this.dematerializeWallObjectInstance(i);
 					}
 					if (hardAreaLoad || heightOffsetChanged) {
 						this.clearResidentObjectChunkCache();
@@ -21750,13 +22727,12 @@ public final class mudclient implements Runnable {
 					long dematerializeNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
-					this.world.loadSections(wantX, wantZ, this.lastHeightOffset);
+					this.world.loadSections(wantX, wantZ, this.lastHeightOffset, rolling);
 					long worldLoadNanos =
 						System.nanoTime() - phaseStartNanos;
-					this.midRegionBaseZ -= this.worldOffsetZ;
-					this.midRegionBaseX -= this.worldOffsetX;
-					int baseDX = this.midRegionBaseX - oldBaseX;
-					int baseDZ = this.midRegionBaseZ - oldBaseZ;
+					this.midRegionBaseX = nextBaseX;
+					this.midRegionBaseZ = nextBaseZ;
+					if (ROLLING_SURFACE_WINDOW) this.world.clearIncomingSurfaceScenery();
 
 					if (hardAreaLoad || heightOffsetChanged) {
 						this.retainPendingAreaLoadStaticScene();
@@ -21764,14 +22740,20 @@ public final class mudclient implements Runnable {
 
 					phaseStartNanos = System.nanoTime();
 					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
-						this.setGameObjectInstanceX(i, this.getGameObjectInstanceX(i) - baseDX);
-						this.setGameObjectInstanceZ(i, this.getGameObjectInstanceZ(i) - baseDZ);
+						if (!rolling) {
+							this.setGameObjectInstanceX(i, this.getGameObjectInstanceX(i) - baseDX);
+							this.setGameObjectInstanceZ(i, this.getGameObjectInstanceZ(i) - baseDZ);
+						}
 						int xTile = this.getGameObjectInstanceX(i);
 						int zTile = this.getGameObjectInstanceZ(i);
 
 						try {
 							int dir = this.getGameObjectInstanceDir(i);
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
+							if (rolling && this.isGameObjectInstanceMaterialized(i)
+								&& !World.isLocalFaceTile(xTile + baseDX, zTile + baseDZ)) {
+								this.world.updateSurfaceObjectCollision(this.getGameObjectInstanceID(i), xTile, zTile, dir, true);
+							}
 						} catch (RuntimeException var21) {
 							System.out.println("Loc Error: " + var21.getMessage());
 							System.out.println("i:" + i + " obj:" + this.getGameObjectInstanceModel(i));
@@ -21780,15 +22762,20 @@ public final class mudclient implements Runnable {
 					}
 
 					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
-						this.setWallObjectInstanceX(i, this.getWallObjectInstanceX(i) - baseDX);
-						this.setWallObjectInstanceZ(i, this.getWallObjectInstanceZ(i) - baseDZ);
+						if (!rolling) {
+							this.setWallObjectInstanceX(i, this.getWallObjectInstanceX(i) - baseDX);
+							this.setWallObjectInstanceZ(i, this.getWallObjectInstanceZ(i) - baseDZ);
+							this.setWallObjectInstanceModel(i, null);
+						}
 						int xTile = this.getWallObjectInstanceX(i);
 						int zTile = this.getWallObjectInstanceZ(i);
 						int dir = this.getWallObjectInstanceDir(i);
-						this.setWallObjectInstanceModel(i, null);
-
 						try {
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
+							if (rolling && this.isWallObjectInstanceMaterialized(i)
+								&& !World.isLocalFaceTile(xTile + baseDX, zTile + baseDZ)) {
+								this.world.applyWallToCollisionFlags(this.getWallObjectInstanceID(i), xTile, zTile, dir);
+							}
 						} catch (RuntimeException var20) {
 							System.out.println("Bound Error: " + var20.getMessage());
 							var20.printStackTrace();
@@ -21829,35 +22816,32 @@ public final class mudclient implements Runnable {
 					long groundItemsNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
+					int baseOffsetX = this.tileSize * baseDX;
+					int baseOffsetZ = this.tileSize * baseDZ;
 					for (int i = 0; i < this.playerCount; ++i) {
-						ORSCharacter var23 = this.players[i];
-						var23.currentX -= this.tileSize * baseDX;
-						var23.currentZ -= baseDZ * this.tileSize;
-
-						for (int j = 0; j <= var23.waypointIndexCurrent; ++j) {
-							var23.waypointsX[j] -= this.tileSize * baseDX;
-							var23.waypointsZ[j] -= baseDZ * this.tileSize;
-						}
+						this.players[i].rebaseMovementPosition(baseOffsetX, baseOffsetZ);
 					}
 
 					for (int i = 0; i < this.npcCount; ++i) {
-						ORSCharacter var23 = this.npcs[i];
-						var23.currentZ -= this.tileSize * baseDZ;
-						var23.currentX -= this.tileSize * baseDX;
-
-						for (int j = 0; var23.waypointIndexCurrent >= j; ++j) {
-							var23.waypointsX[j] -= this.tileSize * baseDX;
-							var23.waypointsZ[j] -= baseDZ * this.tileSize;
-						}
+						this.npcs[i].rebaseMovementPosition(baseOffsetX, baseOffsetZ);
 					}
 					long actorRebaseNanos =
 						System.nanoTime() - phaseStartNanos;
 
 					phaseStartNanos = System.nanoTime();
-					int baseOffsetX = this.tileSize * baseDX;
-					int baseOffsetZ = this.tileSize * baseDZ;
 					this.cameraPositionX -= baseOffsetX;
 					this.cameraPositionZ -= baseOffsetZ;
+					if (rolling) {
+						for (int i = 0; i < this.teleportBubbleCount; i++) {
+							this.teleportBubbleX[i] -= baseDX;
+							this.teleportBubbleZ[i] -= baseDZ;
+						}
+						for (int i = 0; i < this.detachedCombatEffectCount; i++) {
+							this.detachedCombatEffectX[i] -= baseOffsetX;
+							this.detachedCombatEffectZ[i] -= baseOffsetZ;
+						}
+						this.rollingSurfaceWindows++;
+					}
 
 					this.hasCompletedInitialRegionLoad = true;
 					this.world.playerAlive = true;
@@ -21870,8 +22854,13 @@ public final class mudclient implements Runnable {
 					}
 					long baselineNanos =
 						System.nanoTime() - phaseStartNanos;
+					long transitionNanos = System.nanoTime() - transitionStartNanos;
+					if (rolling) {
+						this.packetHandler.recordSurfaceRollRegion(transitionNanos, dematerializeNanos, worldLoadNanos,
+							staticRebaseNanos, staticMaterializeNanos, groundItemsNanos, actorRebaseNanos, finalizeNanos, baselineNanos);
+					}
 					RenderTelemetry.recordClientRegionTransition(
-						this.world.hasNativeLayeredTerrain()
+						rolling ? "rolling-surface" : this.world.hasNativeLayeredTerrain()
 							? "native-authoritative"
 							: "legacy",
 						hardAreaLoad,
@@ -21882,7 +22871,7 @@ public final class mudclient implements Runnable {
 						this.getWallObjectInstanceCount(),
 						this.playerCount,
 						this.npcCount,
-						System.nanoTime() - transitionStartNanos,
+						transitionNanos,
 						dematerializeNanos,
 						worldLoadNanos,
 						staticRebaseNanos,
@@ -21897,6 +22886,64 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "client.MB(" + wantZ + ',' + wantX + ',' + var3 + ')');
 		}
+	}
+
+	public int getRollingSurfaceWindows() { return rollingSurfaceWindows; }
+
+	private void rollSurfaceScenery(int dx, int dz) {
+		RSModel[] retired = new RSModel[getGameObjectInstanceCount() + getWallObjectInstanceCount()];
+		int removed = 0, retained = 0;
+		int pixelX = -dx * tileSize, pixelZ = -dz * tileSize;
+		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
+			int x = getGameObjectInstanceX(i), z = getGameObjectInstanceZ(i);
+			if (rollingPreparedSurfaceAdds != null && !World.isLocalTile(x, z)) rollingPreparedSurfaceAdds = null;
+			if (!World.isLocalTile(x - dx, z - dz)) {
+				RSModel model = deferGameObjectSceneRemoval(i);
+				if (model != null) retired[removed++] = model;
+				continue;
+			}
+			if (isGameObjectInstanceMaterialized(i)) {
+				if (!World.isLocalFaceTile(x - dx, z - dz)) {
+					world.updateSurfaceObjectCollision(getGameObjectInstanceID(i), x, z, getGameObjectInstanceDir(i), false);
+				}
+				getGameObjectInstanceModel(i).rebaseWorldOrigin(pixelX, pixelZ);
+			}
+			sceneInstanceStore.moveGameObject(i, retained++, x - dx, z - dz);
+		}
+		setGameObjectInstanceCount(retained);
+		retained = 0;
+		for (int i = 0; i < getWallObjectInstanceCount(); i++) {
+			int x = getWallObjectInstanceX(i), z = getWallObjectInstanceZ(i);
+			if (rollingPreparedSurfaceAdds != null && !World.isLocalTile(x, z)) rollingPreparedSurfaceAdds = null;
+			if (!World.isLocalTile(x - dx, z - dz)) {
+				RSModel model = deferWallObjectSceneRemoval(i);
+				if (model != null) retired[removed++] = model;
+				continue;
+			}
+			if (isWallObjectInstanceMaterialized(i)) {
+				if (!World.isLocalFaceTile(x - dx, z - dz)) {
+					world.removeWallObject_CollisionFlags(true, getWallObjectInstanceDir(i), z, x, getWallObjectInstanceID(i));
+				}
+				getWallObjectInstanceModel(i).translate2(pixelX, 0, pixelZ);
+			}
+			sceneInstanceStore.moveWallObject(i, retained++, x - dx, z - dz);
+		}
+		setWallObjectInstanceCount(retained);
+		scene.removeModels(retired, removed);
+	}
+
+	private boolean isInsideLoadedRegion(int worldX, int worldZ) {
+		if (this.world.hasNativeLayeredTerrain()) {
+			int loadedBaseX = this.midRegionBaseX + this.worldOffsetX;
+			int loadedBaseZ = this.midRegionBaseZ + this.worldOffsetZ;
+			// Native receipts select the active center. A step within that same
+			// installed window does not need to load it again at its middle edge.
+			return loadedBaseX == World.sectionToLocalBaseTile(this.world.activeSectionXForWorldTile(worldX))
+				&& loadedBaseZ == World.sectionToLocalBaseTile(this.world.activeSectionYForWorldTile(worldZ))
+				&& World.isLocalTile(worldX - loadedBaseX, worldZ - loadedBaseZ);
+		}
+		return this.currentRegionMinX < worldX && worldX < this.currentRegionMaxX
+			&& this.currentRegionMinZ < worldZ && worldZ < this.currentRegionMaxZ;
 	}
 
 	private void drawLoadingPleaseWaitFrame() {
@@ -24225,7 +25272,13 @@ public final class mudclient implements Runnable {
 						}
 
 						boolean stagedLoginRequested=BrowserStagedLogin.enabled();
-						if(stagedLoginRequested&&!BrowserStagedLogin.support(this.packetHandler.getClientStream())) {
+						if (BrowserWorldStreaming.enabled()
+							&& (!stagedLoginRequested || !BrowserStagedLogin.supportWorldStreaming(this.packetHandler.getClientStream()))) {
+							this.closeClientStreamOnly();
+							this.showLoginScreenStatus("World Streaming is unavailable.", "You can play with World Chunks.");
+							return;
+						}
+						if(stagedLoginRequested&&!BrowserWorldStreaming.enabled()&&!BrowserStagedLogin.support(this.packetHandler.getClientStream())) {
 							this.closeClientStreamOnly();
 							this.showLoginScreenStatus("This server needs an update.","Browser world preparation is not available yet.");
 							return;
@@ -25768,6 +26821,22 @@ public final class mudclient implements Runnable {
 		appendCustomMovementWaypoint(this.localPlayer, this.playerLocalX, this.playerLocalZ, direction);
 	}
 
+	/** Apply a server waypoint on installed ground without initiating scene or terrain work. */
+	boolean applyCoveredMovement(int worldX, int worldZ, int direction) {
+		if (this.localPlayer == null || this.loadingArea || this.deathScreenTimeout != 0
+			|| !this.hasCompletedInitialRegionLoad || !isValidCustomMovementDirection(direction)) return false;
+		int localX = worldX - this.midRegionBaseX;
+		int localZ = worldZ - this.midRegionBaseZ;
+		if (!this.world.isTerrainLoadedAtLocalTile(localX, localZ)) return false;
+		this.playerLocalX = localX;
+		this.playerLocalZ = localZ;
+		int currentX = localX * this.tileSize + 64;
+		int currentZ = localZ * this.tileSize + 64;
+		traceLocalWalkServerUpdate(localX, localZ, currentX, currentZ, this.localPlayer);
+		appendCustomMovementWaypoint(this.localPlayer, localX, localZ, direction);
+		return true;
+	}
+
 	private void preloadTerrainForLocalTarget(int localTileX, int localTileZ) {
 		this.predictiveTerrainPreloader.preloadLocalTarget(
 			this.world,
@@ -26299,7 +27368,7 @@ public final class mudclient implements Runnable {
 
 	public void setGameObjectInstanceModel(int i, RSModel m) {
 		ensureGameObjectInstanceCapacity(i + 1);
-		RSModel preparedModel = prepareGameObjectInstanceModel(getGameObjectInstanceID(i), m);
+		RSModel preparedModel = StaticSceneryModels.prepareGameObjectInstanceModel(getGameObjectInstanceID(i), m);
 		this.sceneInstanceStore.setGameObjectModel(i, preparedModel);
 	}
 
@@ -26325,24 +27394,6 @@ public final class mudclient implements Runnable {
 
 	public void setGameObjectInstanceID(int i, int n) {
 		this.sceneInstanceStore.setGameObjectId(i, n);
-	}
-
-	private RSModel prepareGameObjectInstanceModel(int objectId, RSModel model) {
-		if (model == null) {
-			return null;
-		}
-
-		GameObjectDef definition = EntityHandler.getObjectDef(objectId);
-		model.setInteractionOnly(definition != null && definition.isInteractionOnly());
-
-		if (objectId == DRAGON_SULFUR_ROCK_OBJECT_ID) {
-			model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE);
-		}
-		applyRenderer3DMaterialMetadata(
-			Renderer3DModelKind.GAME_OBJECT,
-			objectId,
-			model);
-		return model;
 	}
 
 	public int getGameObjectInstanceID(int i) {
@@ -26675,6 +27726,46 @@ public final class mudclient implements Runnable {
 		this.layeredScenePresentationLatch.reset();
 	}
 
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedTerrainMeshes(boolean includeCenter) {
+		return packetHandler.getPreparedTerrainMeshes(includeCenter);
+	}
+
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedSceneryMeshes() {
+		return preparedSceneryMeshes;
+	}
+
+	/** Client frame phases followed by terrain polling, socket reads and packet handling. */
+	public void drainTravelTimings(float[] target, int offset) {
+		if (!TRACE_BROWSER_TRAVEL) return;
+		for (int i = 0; i < travelWorkNanos.length; i++) {
+			target[offset + i] = travelWorkNanos[i] / 1_000_000f;
+			travelWorkNanos[i] = 0L;
+		}
+		target[offset + 7] = slowestTravelPacketNanos / 1_000_000f;
+		target[offset + 8] = slowestTravelPacketOpcode;
+		slowestTravelPacketNanos = 0L;
+		slowestTravelPacketOpcode = -1;
+	}
+
+	void copyBrowserUiTimings(float[] target, int offset) {
+		target[offset] = browserUiDrawMs;
+		target[offset + 1] = browserInventoryDrawMs;
+		target[offset + 2] = browserMinimapDrawMs;
+		target[offset + 3] = browserMinimapRasterMs;
+	}
+
+	void copyBrowserLoopTimings(float[] target, int offset, long bridgeStarted) {
+		target[offset] = browserParkRequestedNanos / 1_000_000f;
+		target[offset + 1] = browserParkNanos / 1_000_000f;
+		target[offset + 2] = browserUpdateNanos / 1_000_000f;
+		target[offset + 3] = browserRepositionNanos / 1_000_000f;
+		target[offset + 4] = browserUpdates;
+		target[offset + 5] = browserDrawStartedNanos == 0 ? -1 : (bridgeStarted - browserDrawStartedNanos) / 1_000_000f;
+		target[offset + 6] = browserSceneSetupMs;
+		target[offset + 7] = browserSceneCaptureMs;
+		target[offset + 8] = browserSceneryCollectionMs;
+	}
+
 	public boolean shouldRetainLastPresentedFrame() {
 		return this.layeredScenePresentationLatch
 			.shouldRetainLastPresentedFrame();
@@ -26695,6 +27786,9 @@ public final class mudclient implements Runnable {
 		boolean presentationProductsReady =
 			!this.packetHandler
 				.isLayeredTerrainPresentationStagePending();
+		if (BrowserRegionHandoffTrace.ENABLED && this.shouldRetainLastPresentedFrame()) {
+			BrowserRegionHandoffTrace.candidate(presentationProductsReady, staticChunkCount, previousSamples);
+		}
 		RenderTelemetry.recordBoundaryPresentationProductsReady(
 			presentationProductsReady);
 		if (!presentationProductsReady
@@ -26783,7 +27877,8 @@ public final class mudclient implements Runnable {
 		int legacyPlane,
 		boolean scopeChanged,
 		boolean syntheticDeepFixture,
-		NativeLayeredTerrainSnapshot nativeTerrainSnapshot) {
+		NativeLayeredTerrainSnapshot nativeTerrainSnapshot,
+		World.NativeLayeredTerrainHaloPrebuildResult preparedWalkingTerrain) {
 		if (legacyPlane < 0 || legacyPlane > 3) {
 			throw new IllegalArgumentException(
 				"Unsupported layered scene compatibility plane: " + legacyPlane);
@@ -26802,7 +27897,8 @@ public final class mudclient implements Runnable {
 				false,
 				nativeTerrainSnapshot,
 				this.worldOffsetX,
-				this.worldOffsetZ);
+				this.worldOffsetZ,
+				preparedWalkingTerrain);
 		}
 		this.requestedPlane = legacyPlane;
 	}
@@ -29053,7 +30149,7 @@ public final class mudclient implements Runnable {
 					&& pixZ > -OBJECT_ANIMATION_TILE_RADIUS && pixZ < OBJECT_ANIMATION_TILE_RADIUS) {
 					this.dematerializeGameObjectInstance(instanceNumber);
 					int modelFileIndex = EntityHandler.storeModel(modelFileName);
-					RSModel model = this.modelCache[modelFileIndex].clone();
+					RSModel model = cloneScenerySource(modelFileIndex);
 					model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, -74);
 					model.copyRot256AndTranslateFrom(this.getGameObjectInstanceModel(instanceNumber), 6029);
 					this.setGameObjectInstanceModel(instanceNumber, model);

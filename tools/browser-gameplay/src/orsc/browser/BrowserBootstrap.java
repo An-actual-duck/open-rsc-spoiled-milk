@@ -2,9 +2,24 @@ package orsc.browser;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayDeque;
 
 /** Private browser spike entry point. Not part of the desktop/client build. */
 public final class BrowserBootstrap {
+    private static native boolean terrainWorkerAvailable();
+    private static native byte[] inflateTerrainSector(byte[] compressed, int expectedLength);
+    private static native boolean startSurfaceMeshWorker();
+    private static native byte[] buildSurfaceMesh(byte[] source, int offsetX, int offsetZ, int dx, int dz,
+        boolean withRoofs, boolean customSprites, boolean gameplay);
+    private static native int[] buildSurfaceDrawWords(byte[] source, int offsetX, int offsetZ, int dx, int dz,
+        boolean withRoofs, boolean customSprites);
+    private static native int[] buildSurfaceCompatibilityWords(byte[] source, int offsetX, int offsetZ, int dx, int dz,
+        boolean withRoofs, boolean customSprites);
+    private static native int[] buildSurfaceGameplayWords(byte[] source, int offsetX, int offsetZ,
+        boolean withRoofs, boolean customSprites);
+    private static native byte[] buildSurfaceSceneryMesh(byte[] source);
+    private static native int[] buildSurfaceSceneryWords(byte[] source);
+
     private BrowserBootstrap() { }
     public static native void report(String message);
     public static native void reportState(String mode, int fps, int loadingPercent);
@@ -36,6 +51,7 @@ public final class BrowserBootstrap {
     private static native byte[] wsRead(int socket, int maximum);
     private static native int wsAvailable(int socket);
     private static native boolean wsConnected(int socket);
+    private static native int wsReadable(int socket);
     private static native void wsWrite(int socket, byte[] bytes);
     private static native void wsClose(int socket);
     private static native int[] awaitMiddleMouseEvent();
@@ -89,6 +105,26 @@ public final class BrowserBootstrap {
         final boolean benchmark=Boolean.getBoolean("spoiledmilk.browserBenchmark");
         final boolean publicAlpha=BrowserPublicAlpha.enabled(System.getProperties());
         BrowserPublicAlpha.validate(System.getProperties(),webgl);
+        final boolean surfaceFeatures=orsc.BrowserWorldStreaming.allowsSurfaceFeatures();
+        if (surfaceFeatures && webgl && Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff") && terrainWorkerAvailable()) {
+            orsc.NativeLayeredTerrainPacketDecoder.installPredictedSectorInflater(BrowserBootstrap::inflateTerrainSector);
+        }
+        if (surfaceFeatures && webgl && Boolean.getBoolean("spoiledmilk.browserSurfaceMeshWorker") && startSurfaceMeshWorker()) {
+            orsc.graphics.three.World.installSurfaceMeshWorker(BrowserBootstrap::buildSurfaceMesh);
+            if (Boolean.getBoolean("spoiledmilk.browserSurfaceTerrainWords")) {
+                orsc.graphics.three.World.installSurfaceDrawWordWorker(BrowserBootstrap::buildSurfaceDrawWords);
+                if (Boolean.getBoolean("spoiledmilk.browserSurfaceCompatibilityWorker")) {
+                    orsc.graphics.three.World.installSurfaceCompatibilityWordWorker(BrowserBootstrap::buildSurfaceCompatibilityWords);
+                }
+            }
+            if (Boolean.getBoolean("spoiledmilk.browserSurfaceGameplayWords")) {
+                orsc.graphics.three.World.installSurfaceGameplayWordWorker(BrowserBootstrap::buildSurfaceGameplayWords);
+            }
+            orsc.graphics.three.SurfaceSceneryMeshPreparation.install(BrowserBootstrap::buildSurfaceSceneryMesh);
+            if (Boolean.getBoolean("spoiledmilk.browserSurfaceSceneryWords")) {
+                orsc.graphics.three.SurfaceSceneryMeshPreparation.installWords(BrowserBootstrap::buildSurfaceSceneryWords);
+            }
+        }
         final String assetRoot=BrowserPublicAlpha.assetRoot(System.getProperties());
         final BrowserOptimizedDefaults.Resolution optimizedDefaults=BrowserOptimizedDefaults.apply(webgl,benchmark,
             BrowserOptimizedDefaults.capabilities(BrowserBootstrap.class.getClassLoader()));
@@ -293,19 +329,21 @@ public final class BrowserBootstrap {
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));reportBaselineReuseWork(snapshotBaselineReuseWork(client));reportCloneTemplateWork(snapshotCloneTemplateWork(client));}
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeRam")){reportWholeRamWork(snapshotWholeRamWork());if(publicAlpha)reportWholeRamRoofSelection(orsc.BrowserWholeOverworldRam.getRoofSelectionWork());}
-                                if(Boolean.getBoolean("spoiledmilk.browserLoadProfile")){
-                                    double[] trace=snapshotRegionHandoffTrace();
-                                    if(trace[2]!=lastHandoffRevision){
-                                        String phases=(String)Class.forName("orsc.BrowserWebGLBridge").getMethod("getRegionHandoffTracePhases").invoke(null);
-                                        reportRegionHandoffTrace(phases,trace);lastHandoffRevision=trace[2];
-                                    }
-                                }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));
                                 reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
                                     surface!=null && surface.isBrowserFramePreparationActive(),
                                     Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true")));
+                            }
+                            if(webgl && ((benchmark && Boolean.getBoolean("spoiledmilk.browserLoadProfile"))
+                                    || !publicAlpha && Boolean.getBoolean("spoiledmilk.browserRegionHandoffTrace"))) {
+                                double[] trace=snapshotRegionHandoffTrace();
+                                if(trace[2]!=lastHandoffRevision) {
+                                    String phases=(String)Class.forName("orsc.BrowserWebGLBridge").getMethod("getRegionHandoffTracePhases").invoke(null);
+                                    reportRegionHandoffTrace(phases,trace);
+                                    lastHandoffRevision=trace[2];
+                                }
                             }
                             reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
                         }
@@ -401,7 +439,15 @@ public final class BrowserBootstrap {
         if(!host.isLoopbackAddress()||port!=expected)throw new IOException("Private prototype permits only the selected loopback fixture port");
     }
     private static final class BrowserSocket extends SocketImpl {
+        private static final int READ_AHEAD_LIMIT = 16 * 1024;
+        private final boolean readAhead = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+            && Boolean.getBoolean("spoiledmilk.browserSocketReadAhead");
+        private final boolean detachedReceive = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+            && Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
         private int connection = -1;
+        private BrowserReceiveBuffer receiveBuffer;
+        private byte[] received;
+        private int receivedOffset;
         protected void create(boolean stream) throws IOException {
             if (!stream) throw new IOException("Only TCP-style game streams are supported");
         }
@@ -411,6 +457,12 @@ public final class BrowserBootstrap {
             else validatePrivateConnection(host,port,System.getProperty("spoiledmilk.browserRepeatableFixture"),System.getProperty("spoiledmilk.browserPrivateLoopbackPort"));
             address = host; this.port = port; connection = wsOpen();
             if (connection < 0) throw new IOException("Game connection could not be opened");
+            if (detachedReceive) {
+                receiveBuffer = new BrowserReceiveBuffer(connection);
+                Thread receiver = new Thread(receiveBuffer, "browser-game-receive");
+                receiver.setDaemon(true);
+                receiver.start();
+            }
         }
         protected void connect(SocketAddress target, int timeout) throws IOException {
             InetSocketAddress address = (InetSocketAddress) target; connect(address.getAddress(), address.getPort());
@@ -418,10 +470,19 @@ public final class BrowserBootstrap {
         protected InputStream getInputStream() { return new InputStream() {
             public int available() throws IOException { return BrowserSocket.this.available(); }
             public int read() throws IOException {
+                if (receiveBuffer != null) return receiveBuffer.read();
+                if (received != null && receivedOffset < received.length) return received[receivedOffset++] & 255;
                 byte[] value = wsRead(connection, 1); return value.length == 0 ? -1 : value[0] & 255;
             }
             public int read(byte[] target, int offset, int length) throws IOException {
                 if (length == 0) return 0;
+                if (receiveBuffer != null) return receiveBuffer.read(target, offset, length);
+                if (received != null && receivedOffset < received.length) {
+                    int count = Math.min(length, received.length - receivedOffset);
+                    System.arraycopy(received, receivedOffset, target, offset, count);
+                    receivedOffset += count;
+                    return count;
+                }
                 byte[] value = wsRead(connection, length);
                 if (value.length == 0) return -1;
                 System.arraycopy(value, 0, target, offset, value.length); return value.length;
@@ -435,8 +496,36 @@ public final class BrowserBootstrap {
             }
             public void close() { BrowserSocket.this.close(); }
         }; }
-        protected int available() throws IOException { int buffered=wsAvailable(connection);if(buffered==0&&!wsConnected(connection))throw new IOException("Game connection closed");return buffered; }
-        protected void close() { if (connection >= 0) { wsClose(connection); connection = -1; } }
+        protected int available() throws IOException {
+            if (receiveBuffer != null) return receiveBuffer.available();
+            if (!readAhead) {
+                int buffered = wsAvailable(connection);
+                if (buffered == 0 && !wsConnected(connection)) throw new IOException("Game connection closed");
+                return buffered;
+            }
+            int buffered = received == null ? 0 : received.length - receivedOffset;
+            // The frame parser needs two bytes together for a split header.
+            if (buffered >= 2) return buffered;
+            int readable = wsReadable(connection);
+            if (readable < 0 && buffered == 0) throw new IOException("Game connection closed");
+            if (readable <= 0) return buffered;
+            byte[] next = wsRead(connection, Math.min(readable, READ_AHEAD_LIMIT));
+            if (buffered != 0) {
+                byte[] joined = new byte[buffered + next.length];
+                System.arraycopy(received, receivedOffset, joined, 0, buffered);
+                System.arraycopy(next, 0, joined, buffered, next.length);
+                next = joined;
+            }
+            received = next;
+            receivedOffset = 0;
+            return received.length;
+        }
+        protected void close() {
+            if (receiveBuffer != null) receiveBuffer.close();
+            received = null;
+            receivedOffset = 0;
+            if (connection >= 0) { wsClose(connection); connection = -1; }
+        }
         protected void bind(InetAddress host, int port) throws IOException { throw new IOException("No listening sockets"); }
         protected void listen(int backlog) throws IOException { throw new IOException("No listening sockets"); }
         protected void accept(SocketImpl socket) throws IOException { throw new IOException("No listening sockets"); }
@@ -444,4 +533,96 @@ public final class BrowserBootstrap {
         public void setOption(int option, Object value) { }
         public Object getOption(int option) { return option == SocketOptions.SO_TIMEOUT ? Integer.valueOf(30000) : Boolean.FALSE; }
     }
+
+    /** The socket's receive thread owns browser waits. The game reads bytes already in Java. */
+    private static final class BrowserReceiveBuffer implements Runnable {
+        private static final int TRANSFER_SIZE = 16 * 1024;
+        private static final int CAPACITY = 512 * 1024;
+        private final int connection;
+        private final ArrayDeque<byte[]> queued = new ArrayDeque<>();
+        private int available;
+        private int offset;
+        private boolean closed;
+
+        BrowserReceiveBuffer(int connection) {
+            this.connection = connection;
+        }
+
+        @Override public void run() {
+            try {
+                while (awaitWritable()) {
+                    byte[] received = wsRead(connection, TRANSFER_SIZE);
+                    if (received.length == 0) return;
+                    synchronized (this) {
+                        if (closed) return;
+                        queued.addLast(received);
+                        available += received.length;
+                        notifyAll();
+                    }
+                }
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            } finally {
+                markClosed();
+            }
+        }
+
+        private synchronized boolean awaitWritable() throws InterruptedException {
+            while (!closed && available > CAPACITY - TRANSFER_SIZE) wait();
+            return !closed;
+        }
+
+        synchronized int available() throws IOException {
+            if (closed && available == 0) throw new IOException("Game connection closed");
+            return available;
+        }
+
+        synchronized int read() throws IOException {
+            if (!awaitReadable()) return -1;
+            int value = queued.peekFirst()[offset] & 255;
+            consume(1);
+            return value;
+        }
+
+        synchronized int read(byte[] target, int targetOffset, int length) throws IOException {
+            if (!awaitReadable()) return -1;
+            byte[] head = queued.peekFirst();
+            int count = Math.min(length, head.length - offset);
+            System.arraycopy(head, offset, target, targetOffset, count);
+            consume(count);
+            return count;
+        }
+
+        private boolean awaitReadable() throws IOException {
+            try {
+                while (!closed && available == 0) wait();
+                return available > 0;
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new InterruptedIOException("Game receive interrupted");
+            }
+        }
+
+        private void consume(int count) {
+            offset += count;
+            available -= count;
+            if (offset == queued.peekFirst().length) {
+                queued.removeFirst();
+                offset = 0;
+            }
+            if (available <= CAPACITY - TRANSFER_SIZE) notifyAll();
+        }
+
+        private synchronized void markClosed() {
+            closed = true;
+            notifyAll();
+        }
+
+        synchronized void close() {
+            queued.clear();
+            available = offset = 0;
+            markClosed();
+        }
+    }
+
 }

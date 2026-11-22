@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import {COMPACT_GEOMETRY,LEGACY_GEOMETRY,COMPACT_CONTRACT,packCompactVertices,verifyCompactVertices,bindGeometryAttributes,bindShadowGeometryAttributes,geometryBytes,validateCompactShaderAttributes} from '../../tools/browser-gameplay/web/browser-geometry-layout.js';
+import {COMPACT_GEOMETRY,LEGACY_GEOMETRY,COMPACT_CONTRACT,packCompactVertices,packCompactVertexBlock,verifyCompactVertices,bindGeometryAttributes,bindShadowGeometryAttributes,geometryBytes,validateCompactShaderAttributes} from '../../tools/browser-gameplay/web/browser-geometry-layout.js';
 import {decodeWholeZoneChunk,validateWholeZoneManifest} from '../../tools/browser-gameplay/web/browser-whole-zone.js';
 import {selectCompactCatalog,validateCompactConfig} from '../../tools/browser-gameplay/web/browser-compact-catalog.js';
 import {createBoundedChunkUpload} from '../../tools/browser-gameplay/web/browser-bounded-upload.js';
@@ -19,6 +19,29 @@ for(let n=0;n<count;n++){
  for(const c of [9,10,11,12,13])legacy[v+c]=NaN; // These are not browser shader inputs.
 }
 const compact=packCompactVertices(legacy);equal(compact.byteLength,count*48);equal(verifyCompactVertices(legacy,compact),count*23);
+const blockOutput=new Int32Array((count+2)*12).fill(-1);
+const offsetOutput=blockOutput.subarray(12);
+for(let first=0;first<count;first+=128){
+ const size=Math.min(128,count-first);
+ check(packCompactVertexBlock(legacy.subarray(first*28),size,offsetOutput,first*12));
+}
+equal(new Uint8Array(blockOutput.buffer,48,count*48),compact,'Bounded runtime blocks match the offline oracle');
+check(blockOutput.slice(0,12).every(word=>word===-1));
+check(blockOutput.slice(-12).every(word=>word===-1));
+check(!packCompactVertexBlock(legacy,129,offsetOutput,0));
+check(!packCompactVertexBlock(legacy,1,offsetOutput,1));
+check(!packCompactVertexBlock(legacy,1,offsetOutput,offsetOutput.length));
+check(!packCompactVertexBlock(legacy,1,new Int32Array(legacy.buffer),0));
+const edge=legacy.slice(0,28),edgeBits=new Uint32Array(edge.buffer),edgeOutput=new Int32Array(12);
+edgeBits[0]=0xffc01234;edgeBits[1]=0x80000000;edgeBits[2]=0x7f800000;
+check(packCompactVertexBlock(edge,1,edgeOutput,0));
+equal(Array.from(new Uint32Array(edgeOutput.buffer).slice(0,3)),[0x7fc00000,0x80000000,0x7f800000]);
+for(const offset of [3,4,5,6,14,15,16,17,21,22,23,24,25,26,27]){
+ const prior=edge[offset];
+ edge[offset]=-0;check(!packCompactVertexBlock(edge,1,edgeOutput,0));
+ edge[offset]=Math.fround(.123456);check(!packCompactVertexBlock(edge,1,edgeOutput,0));
+ edge[offset]=prior;
+}
 // Oracle is a literal layout table, independently interpreting native attribute types.
 const expected=[['aPosition',3,0,0,'FLOAT',false],['aMaterialColor',4,3,32,'UNSIGNED_BYTE',true],['aTexCoord',2,7,12,'FLOAT',false],['aRawMaterialColor',3,15,36,'UNSIGNED_BYTE',true],['aBaseLegacyLight',1,14,39,'UNSIGNED_BYTE',false],['aNormal',3,18,20,'FLOAT',false],['aModelKind',1,21,43,'UNSIGNED_BYTE',false],['aMaterialFamily',1,22,44,'UNSIGNED_BYTE',false],['aTerrainVariationMask',1,23,45,'UNSIGNED_BYTE',false],['aTerrainBlendColor',3,24,40,'UNSIGNED_BYTE',true],['aTerrainBlendStrength',1,27,46,'UNSIGNED_BYTE',false]];
 const bytes=new DataView(compact.buffer),wordBuf=new ArrayBuffer(4),floats=new Float32Array(wordBuf),words=new Uint32Array(wordBuf),word=x=>{floats[0]=x;return words[0];},old=new Uint32Array(legacy.buffer);

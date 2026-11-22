@@ -3,10 +3,16 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createBrowserWebGL,atlasTexelCenter} from '../../tools/browser-gameplay/web/webgl.js';
+import {verifyCompactVertices} from '../../tools/browser-gameplay/web/browser-geometry-layout.js';
 const reference=process.argv[2];
 if(reference)for(const row of fs.readFileSync(reference,'utf8').trim().split('\n')) {
   const [position,size,unit,extent,expected]=row.split('\t').map(Number);
   assert.equal(atlasTexelCenter(position,size,unit,extent),Math.fround(expected),'sprite UV differs from actual native atlas reference');
+}
+if(reference) {
+  const legacy=new Float32Array(new Uint8Array(fs.readFileSync(reference+'.legacy')).buffer);
+  const compact=new Uint8Array(fs.readFileSync(reference+'.compact'));
+  assert.equal(verifyCompactVertices(legacy,compact),legacy.length/28*23,'Java compact bytes changed a shader attribute');
 }
 let next=1,active=1000,currentProgram=null,currentVAO=null,lastSubData=null;
 const constants={NO_ERROR:0,TEXTURE0:1000,TEXTURE1:1001,TEXTURE2:1002,TEXTURE3:1003,TEXTURE4:1004,TEXTURE5:1005,TEXTURE6:1006,TEXTURE7:1007};

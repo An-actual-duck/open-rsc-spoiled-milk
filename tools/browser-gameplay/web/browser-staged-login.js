@@ -15,7 +15,10 @@ export function createStagedLoginGate({enabled=false}={}){
     if(committed){if(stats.phase!=='preparing'||!stats.approved||!Number.isSafeInteger(submitted)||submitted<0)throw Error('Unprepared browser commit');stats.phase='committed';stats.requiredFrame=submitted+1;}
     else stats.phase='cancelled';
   }
-  function observe(mode,{worldReady=false,completedFrame=0,blocked=true}={}){if(stats.phase==='committed'&&mode==='GAME'&&worldReady===true&&completedFrame>=stats.requiredFrame&&!blocked)stats.phase='entered';}
+  function observe(mode,{worldReady=false,interfaceReady=false,completedFrame=0,blocked=true}={}){
+    if(stats.phase==='committed'&&mode==='GAME'&&(worldReady===true||interfaceReady===true)
+      &&completedFrame>=stats.requiredFrame&&!blocked)stats.phase='entered';
+  }
   function dispose(){stats.phase='disposed';}
   return {stats,begin,ready,finish,observe,dispose,get blocked(){return stats.phase==='preparing'||stats.phase==='committed';}};
 }

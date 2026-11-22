@@ -92,6 +92,11 @@ public final class RSModel {
 	private int minX;
 	private int minY;
 	private int minZ;
+    static final boolean BROWSER_RESIDENT_CAMERA_CULL = Boolean.getBoolean("spoiledmilk.browserResidentCameraCull");
+    private static final boolean BROWSER_KEEP_REBASED_MODELS = Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels");
+    private static long preservedRebases, preservedRebaseVertices;
+    private boolean browserProjectionRowsOwned;
+    private boolean browserProjectionTopologyChecked;
 	private int rot256X;
 	private int rot256Y;
 	private int rot256Z;
@@ -109,6 +114,8 @@ public final class RSModel {
 	private int translateZ;
 	private int vertexCount2;
 	private int renderer3DTransformVersion;
+	private int fishingPoseUpdates;
+	private int worldOriginUpdates;
 	private int fishingSpotClarityAnimationState = -1;
 	private int[] fishingSpotClarityBaseX;
 	private int[] fishingSpotClarityBaseY;
@@ -561,9 +568,76 @@ public final class RSModel {
 		if (changed) {
 			this.m_Yb = 1;
 			this.renderer3DTransformVersion++;
+			this.fishingPoseUpdates++;
 		}
 		return changed;
 	}
+
+	/** The geometry of this ripple repeats at the same phase for a given model basis. */
+	public int getFishingPose() {
+		return fishingSpotClarityAnimationState;
+	}
+
+	public int getFishingPoseBasisVersion() {
+		return renderer3DTransformVersion - fishingPoseUpdates - worldOriginUpdates;
+	}
+
+	/** Changes the local carrier for a retained model within the same signed surface. */
+	public void rebaseWorldOrigin(int x, int z) {
+		if (!BROWSER_KEEP_REBASED_MODELS || !shiftCachedWorldOrigin(x, z)) translate2(x, 0, z);
+		worldOriginUpdates++;
+	}
+
+    private boolean shiftCachedWorldOrigin(int x, int z) {
+        // Aliased source storage and stale or unsupported caches keep the
+        // literal transform rebuild, including its validation and lighting.
+        if (m_v || !hasStableProjectionCache()
+            || !canShiftBounds(minX, maxX, x) || !canShiftBounds(minZ, maxZ, z)) return false;
+        boolean invalidateCameraNormals = !dontComputeDiffuse || !m_c;
+        if (!m_c && (!hasFaceCapacity(faceMinX) || !hasFaceCapacity(faceMaxX)
+            || !hasFaceCapacity(faceMinZ) || !hasFaceCapacity(faceMaxZ))) return false;
+        if (invalidateCameraNormals && !hasFaceCapacity(scenePolyNormalShift)) return false;
+        this.translateX += x;
+        this.translateZ += z;
+        computeAppliedTransform();
+        for (int v = 0; v < vertHead; v++) {
+            vertXTransform[v] += x;
+            vertZTransform[v] += z;
+        }
+        if (!m_c) {
+            for (int f = 0; f < faceHead; f++) {
+                faceMinX[f] += x;
+                faceMaxX[f] += x;
+                faceMinZ[f] += z;
+                faceMaxZ[f] += z;
+            }
+        }
+        minX += x;
+        maxX += x;
+        minZ += z;
+        maxZ += z;
+        // Edge differences and diffuse lighting are translation-invariant.
+        // Camera polygon normals still use the literal invalidation rule.
+        if (invalidateCameraNormals) Arrays.fill(scenePolyNormalShift, 0, faceHead, -1);
+        renderer3DTransformVersion++;
+        preservedRebases++;
+        preservedRebaseVertices += vertHead;
+        return true;
+    }
+
+    private boolean hasFaceCapacity(int[] values) {
+        return values != null && values.length >= faceHead;
+    }
+
+    private static boolean canShiftBounds(int low, int high, int shift) {
+        // calculateBoundingBoxes begins with finite sentinel extrema.
+        return low <= high && low > -999999 && high < 999999
+            && (double) low + shift > -999999 && (double) high + shift < 999999;
+    }
+
+    public static long[] getBrowserRebaseWork() {
+        return new long[]{preservedRebases, preservedRebaseVertices};
+    }
 
 	private static RSModel createFishingSpotClarityOverlay() {
 		RSModel model = new RSModel(96, 40);
@@ -1113,6 +1187,7 @@ public final class RSModel {
 			this.maxX = -999999;
 			this.maxY = -999999;
 			this.maxFaceDimension = -999999;
+            boolean projectionTopology = BROWSER_RESIDENT_CAMERA_CULL;
 
 			for (int face = 0; face < this.faceHead; ++face) {
 				int[] fIndex = this.faceIndices[face];
@@ -1127,6 +1202,7 @@ public final class RSModel {
 
 				for (int vert = 0; fIndexCount > vert; ++vert) {
 					vID = fIndex[vert];
+                    if (projectionTopology && vID >= this.vertHead) projectionTopology = false;
 					if (this.vertZTransform[vID] >= minZ) {
 						if (this.vertZTransform[vID] > maxZ) {
 							maxZ = this.vertZTransform[vID];
@@ -1195,6 +1271,7 @@ public final class RSModel {
 					this.minZ = minZ;
 				}
 			}
+            this.browserProjectionTopologyChecked = projectionTopology;
 
 		} catch (RuntimeException var13) {
 			throw GenUtil.makeThrowable(var13, "ca.C(" + var1 + ')');
@@ -1212,6 +1289,7 @@ public final class RSModel {
 			this.vertYRot = new int[this.vertHead];
 			this.vertZRot = new int[this.vertHead];
 			this.vertexParam6 = new int[this.vertHead];
+            this.browserProjectionRowsOwned = BROWSER_RESIDENT_CAMERA_CULL;
 
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "ca.H(" + var1 + ')');
@@ -1851,6 +1929,7 @@ public final class RSModel {
 			int i;
 			if (this.m_Yb == 2) {
 				this.m_Yb = 0;
+                this.browserProjectionTopologyChecked = false;
 
 				for (i = 0; i < this.vertHead; ++i) {
 					this.vertXTransform[i] = this.vertX[i];
@@ -2194,41 +2273,9 @@ public final class RSModel {
 			if (!isPlausibleModelShadowCaster(kind, spanX, spanZ)) {
 				return;
 			}
-			int centerX = (minX + maxX) / 2;
-			int centerZ = (minZ + maxZ) / 2;
-			int baseX0;
-			int baseZ0;
-			int baseX1;
-			int baseZ1;
-			if (spanX >= spanZ) {
-				baseX0 = minX;
-				baseZ0 = centerZ;
-				baseX1 = maxX;
-				baseZ1 = centerZ;
-			} else {
-				baseX0 = centerX;
-				baseZ0 = minZ;
-				baseX1 = centerX;
-				baseZ1 = maxZ;
-			}
-			int width = Math.max(1, Math.max(spanX, spanZ));
-			int opacity = kind == Renderer3DModelKind.WALL_OBJECT ? 176 : 144;
-			shadowCasters.add(new Renderer3DWorldChunkFrame.ShadowCaster(
-				kind,
-				baseX0,
-				minY,
-				baseZ0,
-				baseX1,
-				baseZ1,
-					height,
-					width,
-					opacity,
-					true,
-					minX,
-					maxX,
-					minZ,
-					maxZ));
-			}
+			shadowCasters.add(Renderer3DWorldChunkFrame.ShadowCaster.fromObjectFootprint(
+				kind, minX, maxX, minY, height, minZ, maxZ));
+		}
 
 		private boolean isPlausibleModelShadowCaster(Renderer3DModelKind kind, int spanX, int spanZ) {
 			int maxSpan = kind == Renderer3DModelKind.WALL_OBJECT
@@ -2732,6 +2779,30 @@ public final class RSModel {
             && this.minX <= MiscFunctions.frustumMinY && this.maxX >= MiscFunctions.frustumMaxY
             && this.minY <= MiscFunctions.frustumNearZ && this.maxY >= MiscFunctions.frustumFarZ;
     }
+    final boolean copyWorldFaceBounds(int[] bounds) {
+        if (m_Yb != 0 || faceHead == 0 || vertHead == 0) return false;
+        bounds[0] = minX;
+        bounds[1] = maxX;
+        bounds[2] = minY;
+        bounds[3] = maxY;
+        bounds[4] = minZ;
+        bounds[5] = maxZ;
+        return true;
+    }
+    final boolean canUseResidentCameraCull() {
+        return hasStableProjectionCache() && isBrowserBatchFrustumVisible();
+    }
+    private boolean hasStableProjectionCache() {
+        return isBrowserBatchCacheClean() && browserProjectionRowsOwned && browserProjectionTopologyChecked
+            && faceHead > 0 && vertHead > 0
+            && hasProjectionCapacity(vertXTransform) && hasProjectionCapacity(vertYTransform)
+            && hasProjectionCapacity(vertZTransform) && hasProjectionCapacity(vertexParam6)
+            && hasProjectionCapacity(vertexParam2) && hasProjectionCapacity(vertXRot)
+            && hasProjectionCapacity(vertYRot) && hasProjectionCapacity(vertZRot);
+    }
+    private boolean hasProjectionCapacity(int[] rows) {
+        return rows != null && rows.length >= vertHead;
+    }
     final void borrowBrowserBatchArrays(int[][] rows, int offset) {
         rows[offset] = this.vertXTransform; rows[offset + 1] = this.vertYTransform;
         rows[offset + 2] = this.vertZTransform; rows[offset + 3] = this.vertexParam6;
@@ -2869,6 +2940,8 @@ public final class RSModel {
 
 	private void setFaceVertexCount(int faceCount, int vertexCount, int var3) {
 		try {
+            this.browserProjectionRowsOwned = false;
+            this.browserProjectionTopologyChecked = false;
 			if (!this.m_db) {
 				this.m_zb = new byte[faceCount];
 				this.facePickIndex = new int[faceCount];
@@ -2893,6 +2966,7 @@ public final class RSModel {
 				this.vertXRot = new int[vertexCount];
 				this.vertZRot = new int[vertexCount];
 				this.vertexParam6 = new int[vertexCount];
+                this.browserProjectionRowsOwned = BROWSER_RESIDENT_CAMERA_CULL;
 			}
 
 

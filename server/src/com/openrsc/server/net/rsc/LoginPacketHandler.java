@@ -540,6 +540,7 @@ public class LoginPacketHandler {
                             ||packet.readInt()!=StagedLoginProtocol.MAGIC||packet.readUnsignedByte()!=StagedLoginProtocol.VERSION){channel.close();return;}
                         stagedRequested=true;
                     }
+                    if(attachment.browserWorldStreaming.get()&&!stagedRequested){channel.close();return;}
                     final boolean stagedBrowser=stagedRequested;
 					LOGGER.info(
 						"CUSTOM_CLIENT_LIMITS username={} clientVersion={} maxItemId={} maxNpcId={} maxSceneryId={} maxAnimationId={} maxBankItems={} mapHash={}",

@@ -19,6 +19,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     public static String getOverlayRectMode(){return isOverlayDeltaTransportEnabled()
         ? System.getProperty("spoiledmilk.browserOverlayRectMode","off") : "off";}
     private static final boolean WHOLE_ZONE=WholeOverworldZoneRegistry.isEnabled();
+    public static void prepareWorkerSurfaceLighting(Renderer3DWorldChunkFrame.ChunkMesh mesh) {
+        OpenGLWorldChunkRenderer.prepareSurfaceDiffuseLighting(mesh);
+    }
+
     private BrowserWholeOverworldZone wholeZone;
     private BrowserWholeOverworldRam wholeRam;
     private static final int[] WHOLE_RAM_FAILED_WORK=new int[]{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -33,6 +37,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             public void begin(int owner){stagedLoginState(owner,0);}
             public void prepareData(){
                 BrowserWebGLBridge bridge=installedBridge;
+                if(BrowserWorldStreaming.enabled()){
+                    if(bridge==null||WHOLE_ZONE||BrowserWholeOverworldRam.isEnabled())throw new IllegalStateException("Streaming preparation backend mismatch");
+                    return;
+                }
                 if(bridge==null||!WHOLE_ZONE||!BrowserWholeOverworldRam.isEnabled())throw new IllegalStateException("Browser preparation backend is unavailable");
                 if(bridge.wholeZone==null)bridge.wholeZone=new BrowserWholeOverworldZone();
                 if(bridge.wholeRam==null)bridge.wholeRam=new BrowserWholeOverworldRam(bridge.wholeZone.manifestHash(),bridge.packing.backendPackingSettings());
@@ -71,6 +79,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native int initializeWholeZone(String manifestIdentity,int[] settings,int[] materials);
     private static native void wholeZoneFrame(int[] metadata,int[] objectCells);
     private static final int MAX_CHUNKS=256, MAX_VERTICES=524288, MAX_PIXELS=2097152, UPLOAD_VERTICES_PER_FRAME=32768;
+    private static final int FLOOR_LOAD_UPLOAD_VERTICES_PER_FRAME=131072;
+    private Integer presentedWorldLevel;
     private final Map<WorldChunkBufferKey,CachedChunk> chunks=new LinkedHashMap<WorldChunkBufferKey,CachedChunk>(32,.75f,true);
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
     private final Map<Integer,int[]> textureMetadata=new HashMap<Integer,int[]>();
@@ -104,10 +114,104 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private int maxTextureSize;
     private static final long CHUNK_BUDGET=224L*1024*1024; // reserve32MiB for the bounded world texture catalog
     private static final boolean ACTIVE_ONLY="active".equals(System.getProperty("spoiledmilk.browserCachePolicy","lru"));
+    private static final boolean PREUPLOAD_PREDICTED = !WHOLE_ZONE && !ACTIVE_ONLY
+        && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+        && Boolean.getBoolean("spoiledmilk.browserPreuploadPredictedTerrain");
+    private static final boolean FIXED_SURFACE_DRAW = !WHOLE_ZONE && !ACTIVE_ONLY
+        && BrowserWorldStreaming.allowsSurfaceFeatures() && Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
+    private static final boolean LIVE_OUTER_SURFACE_DRAW = FIXED_SURFACE_DRAW
+        && NativeLayeredTerrainSnapshot.EXPANDED_SURFACE_DRAW_BORDER;
+    private static final boolean LIVE_SCENERY_DRAW = LIVE_OUTER_SURFACE_DRAW && mudclient.SURFACE_SCENERY_DRAW;
+    private static final boolean LIVE_SURFACE_HANDOFF = LIVE_SCENERY_DRAW && mudclient.LIVE_SURFACE_HANDOFF;
+    private int lastPresentedTravelGeneration;
+    private volatile int[] surfaceCoverageReceipt = new int[0];
+
+    public static int[] getSurfaceCoverageReceipt() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? new int[0] : bridge.surfaceCoverageReceipt.clone();
+    }
+    public static int getResidentTerrainLightingFields() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? 0 : bridge.lightingData.getResidentTerrainFields();
+    }
+    private volatile int[] surfaceDrawBuffers = new int[0];
+    private volatile int[] optionalSurfaceDrawBuffers = new int[0];
+    private volatile int[] optionalSceneryDrawBuffers = new int[0];
+    private volatile int[] activeSceneryDrawBuffers = new int[0];
+    private volatile int[] sceneryPublicationCounts = new int[0];
+
+    public static int[] getSurfaceDrawBuffers() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? new int[0] : bridge.surfaceDrawBuffers.clone();
+    }
+
+    public static int[] getOptionalSurfaceDrawBuffers() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? new int[0] : bridge.optionalSurfaceDrawBuffers.clone();
+    }
+
+    public static int[] getSceneryDrawBuffers(boolean optional) {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? new int[0] : (optional ? bridge.optionalSceneryDrawBuffers : bridge.activeSceneryDrawBuffers).clone();
+    }
+
+    public static int[] getSceneryPublicationCounts() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? new int[0] : bridge.sceneryPublicationCounts.clone();
+    }
+    private static final boolean PREUPLOAD_SCENE_MESHES = PREUPLOAD_PREDICTED
+        && Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes");
+    private static final boolean COMPACT_SCENERY = (PREUPLOAD_SCENE_MESHES || LIVE_SCENERY_DRAW)
+        && Boolean.getBoolean("spoiledmilk.browserCompactScenery");
+    private static final boolean SLICE_PREUPLOAD = LIVE_SCENERY_DRAW
+        || PREUPLOAD_SCENE_MESHES && Boolean.getBoolean("spoiledmilk.browserSlicePreupload");
+    private static final long PREDICTED_PACK_SLICE_NANOS = 4_000_000L;
+    private static final boolean TRAVEL_TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+        && Boolean.getBoolean("spoiledmilk.browserTravelTrace");
+    private static final boolean FRAME_STAGE_TRACE = mudclient.TRACE_BROWSER_FRAME_STAGES;
+    // Sprite stages, presentation, sprite packing, UI, and the client loop leading up to the bridge.
+    private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[30] : null;
+    private static final long PREDICTED_BUFFER_BUDGET = (COMPACT_SCENERY ? 64L : 48L) * 1024 * 1024;
+    private static final long PREDICTED_UPLOAD_INTERVAL_NANOS = 75_000_000L;
+    private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
+    private List<Renderer3DWorldChunkFrame.ChunkMesh> stagedSource = Collections.emptyList();
+    private List<Renderer3DWorldChunkFrame.ChunkMesh> stagedScenery = Collections.emptyList();
+    private Set<WorldChunkBufferKey> predictedKeys = Collections.emptySet();
+    private PendingStagePack pendingStagePack, pendingOptionalDrawPack;
+    private long lastPredictedUploadNanos;
+    private long stagedBytes, preuploadedBytes, adoptedBytes, longestPreuploadNanos;
+    private int preuploadedChunks, adoptedChunks;
+    private final long[] submittedSceneBytes = new long[3];
+    private int adoptedScenery;
+    private int compactSceneryUploads;
+    private boolean stagingUpload;
+    private volatile String predictedTerrainReceipt = "uploaded=0:bytes=0:adopted=0:adoptedBytes=0:stagedBytes=0";
+
+    public static String getPredictedTerrainReceipt() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? "unavailable" : bridge.predictedTerrainReceipt;
+    }
+
+    public static String getSceneUploadReceipt() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? "unavailable" : "terrain=" + bridge.submittedSceneBytes[0]
+            + ":scenery=" + bridge.submittedSceneBytes[1] + ":animated=" + bridge.submittedSceneBytes[2]
+            + ":adoptedScenery=" + bridge.adoptedScenery + ":compactUploads=" + bridge.compactSceneryUploads
+            + ":fishingPoseHits=" + bridge.fishingPoseHits + ":fishingPoseUploads=" + bridge.fishingPoseUploads;
+    }
+
+    private long fishingPoseHits, fishingPoseUploads;
+
     private static final boolean ANIMATED_BUFFER_REUSE=Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true"));
     /** Actual Java-selected private control; never changes desktop renderer policy. */
     public static boolean isAnimatedBufferReuseEnabled(){return ANIMATED_BUFFER_REUSE;}
     static WorldChunkBufferKey chunkKey(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+        if (chunk.isResidentFishingPose()) {
+            // Finite animation keeps the exact current pose as immutable storage for this cell.
+            return new WorldChunkBufferKey(chunk.getPlane(), 0, 0,
+                chunk.getOriginWorldX(), chunk.getOriginWorldZ(), true, chunk.getChunkRole(), true,
+                chunk.getStorageSignature(), 0L);
+        }
         if(!ANIMATED_BUFFER_REUSE&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) {
             // Native from(chunk,false) still gives animated positional identity.
             // The private control explicitly restores immutable per-pose storage.
@@ -138,10 +242,12 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }); }
     BrowserWebGLBridge(ChunkBackend backend) { if(backend==null)throw new NullPointerException("chunk backend");chunkBackend=backend; }
     private static native void uploadChunk(int id,float[] vertices,int[] indices,int[] batches);
+    private static native void uploadCompactSceneChunk(int id,int[] vertices,int[] indices,int[] batches);
     private static native void uploadTexture(int id,int width,int height,int[] rgba,boolean transparency);
     private static native void replaceChunk(int id,float[] vertices,int[] indices,int[] batches);
     private static native void deleteTextures(int[] ids);
-    private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
+    private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay,
+        int[] progress,double overlayGeneration,double overlaySequence,float[] transmittance);
     private static native void frameWork(float[] milliseconds,int[] pose);
     private static native void worldProgress(int[] metadata);
     private static native void regionTransition(boolean ordinaryWalking);
@@ -149,6 +255,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     @Override public void worldTransition(boolean ordinaryWalking) {
         overlayDeltaReset=true;
         loadState.beginTransition();
+        lastPresentedTravelGeneration=0;
+        pendingOptionalDrawPack=null;
         if(initialized)regionTransition(ordinaryWalking);
     }
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
@@ -163,7 +271,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         PreparedOverlay(WorldOverlayCoverage.Frame frame,WorldOverlayCoverage.Delta delta){this.frame=frame;this.delta=delta;}
     }
     private void acknowledgeOverlay(PreparedOverlay prepared){
-        if(prepared!=null){prepared.frame.acknowledgeDeltaTransport(prepared.delta);overlayDeltaReset=false;}
+        if(prepared!=null&&prepared.delta!=null){prepared.frame.acknowledgeDeltaTransport(prepared.delta);overlayDeltaReset=false;}
     }
 
     private static native void deleteChunks(int[] ids);
@@ -215,19 +323,20 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         boolean hasWorld=world!=null&&world.getChunkCount()>0;
         if(!hasWorld) {
             boolean game=client!=null&&(client.isGameView()||client.isBrowserStagedLoginPreparing()),modal=client!=null&&client.isFullScreenModalUiActive();
+            if(!game)presentedWorldLevel=null;
             int[] progress=loadState.frame(game,modal,false,frame,0,0,0,0,0,w,h,textures.size());
             if(game&&!modal&&loadState.shouldHold(false,0,0,0)) {
                 overlayDeltaReset=true;if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}worldProgress(progress);holdWorld();if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=1;return;
             }
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.LIGHTING);
-            exportLighting(null);
+            exportLighting(null, Collections.emptyList());
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.SKY);
             exportSky(null);
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.OVERLAY);
-            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface);
+            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface,false);
             if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}
             worldProgress(progress);
-            present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image));
+            present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image),null,0,0,null);
             acknowledgeOverlay(preparedOverlay);
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=4;
             return;
@@ -237,7 +346,17 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             overlayDeltaReset=true;worldProgress(progress);holdWorld();if(loadProfile!=null){loadProfile.progress(progress);loadProfile.values[BrowserLoadProfile.PATH]=2;}return;
         }
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
-        Renderer3DWorldChunkFrame presentationWorld=world;
+        List<Renderer3DWorldChunkFrame.ChunkMesh> presentationChunks=world.getChunks();
+        List<Renderer3DWorldChunkFrame.ChunkMesh> surfaceDraw = FIXED_SURFACE_DRAW && client != null
+            ? fixedSurfaceDraw(client, world) : Collections.emptyList();
+        if (!surfaceDraw.isEmpty()) {
+            List<Renderer3DWorldChunkFrame.ChunkMesh> cells = new ArrayList<>(surfaceDraw);
+            for (Renderer3DWorldChunkFrame.ChunkMesh chunk : world.getChunks()) {
+                if (chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD) cells.add(chunk);
+            }
+            // The draw path needs the mesh list. Lighting and textures use the captured frame.
+            presentationChunks = cells;
+        }
         if(WHOLE_ZONE){
             if(client==null||client.getWorld()==null)throw new IllegalStateException("Whole-zone requires actual client source authority");
             if(wholeZone==null)wholeZone=new BrowserWholeOverworldZone();
@@ -245,15 +364,22 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(!wholeZone.ready())wholeZone.uploaded(initializeWholeZone(wholeZone.manifestHash(),wholeZone.settings(),wholeZone.materials()));
             if(BrowserWholeOverworldRam.isEnabled()){if(wholeRam==null)wholeRam=new BrowserWholeOverworldRam(wholeZone.manifestHash(),packing.backendPackingSettings());wholeRam.validateOptions(packing.backendPackingSettings());wholeRamWork=wholeRam.diagnostics();}
             wholeZoneFrame(wholeZone.metadata(),wholeZone.objectRows());
-            presentationWorld=wholeZone.filter(world);wholeZoneWork=wholeZone.diagnostics();staticSceneReuseWork=wholeZone.staticSceneDiagnostics();
+            presentationChunks=wholeZone.filter(world).getChunks();wholeZoneWork=wholeZone.diagnostics();staticSceneReuseWork=wholeZone.staticSceneDiagnostics();
         }
-        final int catalogCoveredSources=world.getChunkCount()-presentationWorld.getChunkCount();
+        final int catalogCoveredSources=WHOLE_ZONE ? world.getChunkCount()-presentationChunks.size() : 0;
+        if (presentationChunks.size() > MAX_CHUNKS) throw new IllegalStateException("Browser draw field exceeds chunk capacity");
+        int travelGeneration = LIVE_SURFACE_HANDOFF && client != null ? client.packetHandler.getPersistentMovementGeneration() : 0;
+        boolean verifiedRolling = travelGeneration > 0 && travelGeneration == lastPresentedTravelGeneration
+            && !surfaceDraw.isEmpty() && client.packetHandler.getVerifiedLiveSurfaceContext() > 0;
+        Set<WorldChunkBufferKey> required = verifiedRolling ? interactiveDrawKeys(surfaceDraw, activeTerrainAnchor(world)) : null;
+        final int requiredSources = required != null ? required.size() : surfaceDraw.isEmpty()
+            ? world.getChunkCount() : presentationChunks.size();
         Renderer3DFrame previous=RendererFrameLighting.bind(frame);
         try {
             // Evict the old view before uploading the current logical/immutable active set.
             // A count-only cache bound can exceed the byte budget long before 512 chunks.
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.ACTIVE);
-            Set<WorldChunkBufferKey> active=activeKeys(presentationWorld);
+            Set<WorldChunkBufferKey> active=activeKeys(presentationChunks);
             evictInactive(active);
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.TEXTURES);
             for(Renderer3DTextureData texture:frame.getTextures()) {
@@ -271,19 +397,39 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             Iterator<Map.Entry<Integer,int[]>> materialIterator=textureMetadata.entrySet().iterator();
             while(materialIterator.hasNext()){int id=materialIterator.next().getKey();if(frame.getTexture(id)==null){removedTextures[removedCount++]=id;materialIterator.remove();textures.remove(id);materialRevision++;}}
             if(removedCount>0)deleteTextures(Arrays.copyOf(removedTextures,removedCount));
+            if (PREUPLOAD_PREDICTED || FIXED_SURFACE_DRAW) {
+                List<Renderer3DWorldChunkFrame.ChunkMesh> predicted = FIXED_SURFACE_DRAW && client != null
+                    ? client.packetHandler.getPreparedFixedSurfaceDraw() : client == null
+                    ? Collections.emptyList() : client.getPreparedTerrainMeshes(PREUPLOAD_SCENE_MESHES);
+                List<Renderer3DWorldChunkFrame.ChunkMesh> scenery = LIVE_SCENERY_DRAW && client != null
+                    ? client.getPreparedSurfaceSceneryDraws() : PREUPLOAD_SCENE_MESHES && client != null
+                    ? client.getPreparedSceneryMeshes() : Collections.emptyList();
+                reconcileStagedTerrain(active, predicted, scenery);
+            }
             long textureEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.GEOMETRY);
-            ChunkDraws geometry=prepareChunks(frame,presentationWorld,active);
-            int[] draws=geometry.draws;int count=draws.length,remainingRepacks=geometry.remainingRepacks;
-            long geometryEnd=System.nanoTime();
             boolean authority=client!=null&&(client.isRenderer3DWorldReady()||client.isBrowserStagedSceneReady());
-            int[] progress=loadState.frame(client!=null&&(client.isGameView()||client.isBrowserStagedLoginPreparing()),client!=null&&client.isFullScreenModalUiActive(),authority,frame,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks,0,0,w,h,textures.size());
-            // Core already retained its last coherent CPU frame during area activation.
-            // Preserve that same final GPU image until EVERY new source chunk is ready.
-            // Uploads are synchronous, so no borrowed frame storage escapes this call.
-            if(progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks)) {
+            // The destination is covered until its floor is ready. Use fewer large
+            // upload batches there while keeping the walking budget for live frames.
+            boolean floorLoad=BrowserWorldStreaming.enabled()&&authority&&presentedWorldLevel!=null
+                &&frame.getSignedWorldLevel()!=presentedWorldLevel.intValue();
+            ChunkDraws geometry=prepareChunks(frame,presentationChunks,active,required,
+                floorLoad?FLOOR_LOAD_UPLOAD_VERTICES_PER_FRAME:UPLOAD_VERTICES_PER_FRAME);
+            int[] draws=geometry.draws;
+            int readySources = geometry.requiredReady + catalogCoveredSources, remainingRepacks = geometry.requiredRepacks;
+            long geometryEnd=System.nanoTime();
+            int[] progress=loadState.frame(client!=null&&(client.isGameView()||client.isBrowserStagedLoginPreparing()),client!=null&&client.isFullScreenModalUiActive(),authority,frame,requiredSources,readySources,remainingRepacks,0,0,w,h,textures.size(),verifiedRolling);
+            if (LIVE_SURFACE_HANDOFF && TRAVEL_TRACE) surfaceCoverageReceipt = new int[]{verifiedRolling ? 1 : 0,
+                progress[2], requiredSources, readySources, presentationChunks.size() - draws.length / 8};
+            if(progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,requiredSources,readySources,remainingRepacks)) {
                 overlayDeltaReset=true;if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}worldProgress(progress);holdWorld();if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=2;return;
             }
+            long stagingStart = FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+            if ((PREUPLOAD_PREDICTED || FIXED_SURFACE_DRAW) && progress[1] == BrowserWorldLoadState.WORLD
+                && readySources == requiredSources && remainingRepacks == 0 && geometry.uploadedVertices == 0) {
+                preuploadPredictedTerrain(frame, active);
+            }
+            long stagingEnd = TRAVEL_TRACE || FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.backendCameraToClipProjectionMatrix(frame),matrices,32);
@@ -291,31 +437,404 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             int spriteGroups=uploadSprites(frame);
             long spriteEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.LIGHTING);
-            exportLighting(frame);
+            exportLighting(frame, surfaceDraw);
             long lightingEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.SKY);
             exportSky(frame);
             long skyEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.OVERLAY);
-            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface);
+            // Verified live frames can send their readiness and fresh overlay
+            // with the draw. Loading, retention and resets declare separately.
+            boolean inlineProgress=verifiedRolling && progress[1]==BrowserWorldLoadState.WORLD
+                && readySources==requiredSources;
+            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface,inlineProgress);
+            long overlayDeclared=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
             if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}
-            progress[6]=progress[7]=spriteGroups;worldProgress(progress);
-            present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
+            progress[6]=progress[7]=spriteGroups;
+            if(!inlineProgress)worldProgress(progress);
+            long progressSubmitted=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+            int[] presentedPose = TRAVEL_TRACE && client != null && client.getLocalPlayer() != null
+                ? travelPose(frame, client) : pose(frame);
+            OptionalSurfaceDraw optional = LIVE_OUTER_SURFACE_DRAW && authority && !surfaceDraw.isEmpty()
+                && readySources == requiredSources ? optionalSurfaceDraw(frame, surfaceDraw, draws) : null;
+            if (optional != null) draws = optional.draws;
+            long submitStart=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+            WorldOverlayCoverage.Frame inlineOverlay=preparedOverlay!=null&&preparedOverlay.delta==null
+                ? preparedOverlay.frame : null;
+            present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image),inlineProgress?progress:null,
+                inlineOverlay==null?0:inlineOverlay.generation,inlineOverlay==null?0:inlineOverlay.frameSequence,
+                inlineOverlay==null?null:inlineOverlay.transmittance);
+            if(FRAME_STAGE_TRACE){
+                frameStageWork[3]=(overlayDeclared-skyEnd)/1000000f;
+                frameStageWork[4]=(progressSubmitted-overlayDeclared)/1000000f;
+                frameStageWork[5]=(submitStart-progressSubmitted)/1000000f;
+                frameStageWork[6]=(System.nanoTime()-submitStart)/1000000f;
+                frameStageWork[22]=(submitStart-frameStart)/1000000f;
+                frameStageWork[23]=(stagingEnd-stagingStart)/1000000f;
+            }
             acknowledgeOverlay(preparedOverlay);
-            loadState.presented(OVERLAY_COVERAGE&&authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks);
-            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
+            loadState.presented(OVERLAY_COVERAGE&&authority,requiredSources,readySources,remainingRepacks);
+            if(progress[1]==BrowserWorldLoadState.WORLD&&requiredSources==readySources&&remainingRepacks==0) {
+                presentedWorldLevel=Integer.valueOf(frame.getSignedWorldLevel());
+            }
+            if (authority && progress[1] == BrowserWorldLoadState.WORLD) lastPresentedTravelGeneration = travelGeneration;
+            if (FIXED_SURFACE_DRAW && TRAVEL_TRACE) {
+                recordSurfaceDrawBuffers(surfaceDraw);
+                optionalSurfaceDrawBuffers = optional == null ? EMPTY_SURFACE_RECEIPT : optional.receipt;
+                if (LIVE_SCENERY_DRAW) {
+                    optionalSceneryDrawBuffers = optional == null ? EMPTY_SURFACE_RECEIPT : optional.sceneryReceipt;
+                    activeSceneryDrawBuffers = recordSceneryDrawBuffers(world);
+                }
+            }
+            long end=System.nanoTime();
+            float[] frameStats = {(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()};
+            if(TRAVEL_TRACE){
+                frameStats=Arrays.copyOf(frameStats,15+mudclient.TRAVEL_TIMING_VALUES);
+                frameStats[14]=(stagingEnd-geometryEnd)/1000000f;
+                if(client!=null)client.drainTravelTimings(frameStats,15);
+            }
+            if(FRAME_STAGE_TRACE){
+                int offset=15+mudclient.TRAVEL_TIMING_VALUES;
+                if(client!=null){
+                    client.copyBrowserUiTimings(frameStageWork,9);
+                    client.copyBrowserLoopTimings(frameStageWork,13,frameStart);
+                }
+                frameStats=Arrays.copyOf(frameStats,offset+frameStageWork.length);
+                System.arraycopy(frameStageWork,0,frameStats,offset,frameStageWork.length);
+            }
+            frameWork(frameStats,presentedPose);
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=3;
         } finally { RendererFrameLighting.restore(previous); }
     }
+
+    private static Set<WorldChunkBufferKey> interactiveDrawKeys(List<Renderer3DWorldChunkFrame.ChunkMesh> terrain,
+                                                               Renderer3DWorldChunkFrame.ChunkMesh active) {
+        Set<WorldChunkBufferKey> keys = new HashSet<>();
+        for (Renderer3DWorldChunkFrame.ChunkMesh cell : terrain) {
+            int dx = cell.getCenterSectionX() - active.getCenterSectionX();
+            int dz = cell.getCenterSectionY() - active.getCenterSectionY();
+            if (Math.max(Math.abs(dx), Math.abs(dz)) <= 1) keys.add(chunkKey(cell));
+        }
+        return keys;
+    }
+
+    private static final int[] EMPTY_SURFACE_RECEIPT = new int[0];
+
+    /** Append resident cells beyond the live view. Their absence never changes coverage readiness. */
+    private OptionalSurfaceDraw optionalSurfaceDraw(Renderer3DFrame frame, List<Renderer3DWorldChunkFrame.ChunkMesh> active,
+                                                   int[] required) {
+        if (stagedSource.isEmpty()) return null;
+        Renderer3DWorldChunkFrame.ChunkMesh firstActive = active.get(0);
+        int baseX = firstActive.getLogicalWorldOffsetX(), baseZ = firstActive.getLogicalWorldOffsetZ();
+        int[] settings = packing.backendPackingSettings();
+        final int RECORD_WORDS = 8;
+        int capacity = Math.min(MAX_CHUNKS - required.length / RECORD_WORDS, stagedSource.size() + stagedScenery.size());
+        int[] optionalDraws = new int[capacity * RECORD_WORDS];
+        int[] receipt = TRAVEL_TRACE ? new int[capacity * 3] : EMPTY_SURFACE_RECEIPT;
+        Set<Long> enteringTerrain = LIVE_SCENERY_DRAW ? new HashSet<>() : Collections.emptySet();
+        int used = 0, receiptWords = 0;
+        for (Renderer3DWorldChunkFrame.ChunkMesh cell : stagedSource) {
+            if (used == optionalDraws.length) break;
+            if (containsSurfacePosition(active, cell)) continue;
+            CachedChunk cached = chunks.get(chunkKey(cell));
+            if (cached == null || cached.materialRevision != materialRevision || !Arrays.equals(cached.settings, settings)) continue;
+            int visibility = 0;
+            for (Renderer3DModelKind kind : Renderer3DModelKind.values()) {
+                if (frame.isWorldChunkModelKindVisible(kind, cell.getPlane())) visibility |= 1 << kind.ordinal();
+            }
+            optionalDraws[used++] = cached.id;
+            optionalDraws[used++] = cell.getOriginWorldX() - baseX - cached.x;
+            optionalDraws[used++] = cell.getOriginWorldZ() - baseZ - cached.z;
+            optionalDraws[used++] = baseX;
+            optionalDraws[used++] = baseZ;
+            optionalDraws[used++] = visibility;
+            optionalDraws[used++] = cell.getPlane();
+            optionalDraws[used++] = cell.getChunkRole();
+            if (LIVE_SCENERY_DRAW) enteringTerrain.add(SurfaceSceneryCells.key(cell.getCenterSectionX(), cell.getCenterSectionY()));
+            if (TRAVEL_TRACE) {
+                receipt[receiptWords++] = cell.getCenterSectionX();
+                receipt[receiptWords++] = cell.getCenterSectionY();
+                receipt[receiptWords++] = cached.id;
+            }
+        }
+        if (used == 0) return null;
+        int[] sceneryReceipt = LIVE_SCENERY_DRAW && TRAVEL_TRACE ? new int[capacity * 3] : EMPTY_SURFACE_RECEIPT;
+        int sceneryWords = 0, enteringScenery = 0, residentScenery = 0, currentMaterials = 0;
+        for (Renderer3DWorldChunkFrame.ChunkMesh cell : stagedScenery) {
+            if (!LIVE_SCENERY_DRAW || used == optionalDraws.length) break;
+            int sectorUnits = World.SECTION_SIZE * 128;
+            int sx = Math.floorDiv(cell.getOriginWorldX(), sectorUnits);
+            int sz = Math.floorDiv(cell.getOriginWorldZ(), sectorUnits);
+            if (!enteringTerrain.contains(SurfaceSceneryCells.key(sx, sz))) continue;
+            enteringScenery++;
+            CachedChunk cached = chunks.get(chunkKey(cell));
+            if (cached != null) residentScenery++;
+            if (cached == null || cached.materialRevision != materialRevision
+                || !Arrays.equals(cached.settings, settings)) continue;
+            currentMaterials++;
+            int visibility = 0;
+            for (Renderer3DModelKind kind : Renderer3DModelKind.values()) {
+                if (frame.isWorldChunkModelKindVisible(kind, cell.getPlane())) visibility |= 1 << kind.ordinal();
+            }
+            optionalDraws[used++] = cached.id;
+            optionalDraws[used++] = cell.getVertexOffsetX() - cached.x;
+            optionalDraws[used++] = cell.getVertexOffsetZ() - cached.z;
+            optionalDraws[used++] = cell.getLogicalWorldOffsetX();
+            optionalDraws[used++] = cell.getLogicalWorldOffsetZ();
+            optionalDraws[used++] = visibility;
+            optionalDraws[used++] = cell.getPlane();
+            optionalDraws[used++] = cell.getChunkRole();
+            if (TRAVEL_TRACE) {
+                sceneryReceipt[sceneryWords++] = cell.getOriginWorldX();
+                sceneryReceipt[sceneryWords++] = cell.getOriginWorldZ();
+                sceneryReceipt[sceneryWords++] = cached.id;
+            }
+        }
+        if (LIVE_SCENERY_DRAW && TRAVEL_TRACE) {
+            sceneryPublicationCounts = new int[]{stagedScenery.size(), enteringScenery, residentScenery, currentMaterials};
+        }
+        int[] draws = Arrays.copyOf(required, required.length + used);
+        System.arraycopy(optionalDraws, 0, draws, required.length, used);
+        return new OptionalSurfaceDraw(draws, Arrays.copyOf(receipt, receiptWords), Arrays.copyOf(sceneryReceipt, sceneryWords));
+    }
+
+    private int[] recordSceneryDrawBuffers(Renderer3DWorldChunkFrame world) {
+        int[] receipt = new int[world.getChunkCount() * 3];
+        int words = 0;
+        for (Renderer3DWorldChunkFrame.ChunkMesh cell : world.getChunks()) {
+            if (cell.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) continue;
+            CachedChunk cached = chunks.get(chunkKey(cell));
+            if (cached == null) continue;
+            receipt[words++] = cell.getOriginWorldX();
+            receipt[words++] = cell.getOriginWorldZ();
+            receipt[words++] = cached.id;
+        }
+        return Arrays.copyOf(receipt, words);
+    }
+
+    private static boolean containsSurfacePosition(List<Renderer3DWorldChunkFrame.ChunkMesh> active,
+                                                   Renderer3DWorldChunkFrame.ChunkMesh cell) {
+        for (Renderer3DWorldChunkFrame.ChunkMesh other : active) {
+            if (other.getCenterSectionX() == cell.getCenterSectionX() && other.getCenterSectionY() == cell.getCenterSectionY()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final class OptionalSurfaceDraw {
+        private final int[] draws, receipt, sceneryReceipt;
+
+        private OptionalSurfaceDraw(int[] draws, int[] receipt, int[] sceneryReceipt) {
+            this.draws = draws;
+            this.receipt = receipt;
+            this.sceneryReceipt = sceneryReceipt;
+        }
+    }
+
+    private static List<Renderer3DWorldChunkFrame.ChunkMesh> fixedSurfaceDraw(mudclient client, Renderer3DWorldChunkFrame frame) {
+        Renderer3DWorldChunkFrame.ChunkMesh terrain = activeTerrainAnchor(frame);
+        return terrain == null ? Collections.emptyList()
+            : client.getWorld().getFixedSurfaceDraw(terrain.getCenterSectionX(), terrain.getCenterSectionY());
+    }
+
+    private static Renderer3DWorldChunkFrame.ChunkMesh activeTerrainAnchor(Renderer3DWorldChunkFrame frame) {
+        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getChunks()) {
+            if (chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD) return chunk;
+        }
+        return null;
+    }
+
+    private void recordSurfaceDrawBuffers(List<Renderer3DWorldChunkFrame.ChunkMesh> surfaceDraw) {
+        int[] receipt = new int[surfaceDraw.size() * 3];
+        int index = 0;
+        for (Renderer3DWorldChunkFrame.ChunkMesh cell : surfaceDraw) {
+            CachedChunk cached = chunks.get(chunkKey(cell));
+            if (cached == null) continue;
+            receipt[index++] = cell.getCenterSectionX();
+            receipt[index++] = cell.getCenterSectionY();
+            receipt[index++] = cached.id;
+        }
+        surfaceDrawBuffers = index == receipt.length ? receipt : Arrays.copyOf(receipt, index);
+    }
     static final class ChunkDraws {
-        final int[] draws;final int remainingRepacks;
-        ChunkDraws(int[] draws,int remainingRepacks){this.draws=draws;this.remainingRepacks=remainingRepacks;}
+        final int[] draws;
+        final int remainingRepacks, uploadedVertices;
+        final int requiredReady, requiredRepacks;
+        ChunkDraws(int[] draws,int remainingRepacks,int uploadedVertices,int requiredReady,int requiredRepacks){
+            this.draws=draws;this.remainingRepacks=remainingRepacks;this.uploadedVertices=uploadedVertices;
+            this.requiredReady=requiredReady;this.requiredRepacks=requiredRepacks;
+        }
+    }
+
+    private void reconcileStagedTerrain(Set<WorldChunkBufferKey> active,
+                                        List<Renderer3DWorldChunkFrame.ChunkMesh> predicted,
+                                        List<Renderer3DWorldChunkFrame.ChunkMesh> scenery) {
+        boolean keyed = PREUPLOAD_SCENE_MESHES || LIVE_SCENERY_DRAW;
+        if (keyed && (stagedSource != predicted || stagedScenery != scenery)) {
+            Set<WorldChunkBufferKey> keys = new HashSet<>();
+            for (Renderer3DWorldChunkFrame.ChunkMesh chunk : predicted) keys.add(chunkKey(chunk));
+            for (Renderer3DWorldChunkFrame.ChunkMesh chunk : scenery) keys.add(chunkKey(chunk));
+            predictedKeys = keys;
+        }
+        stagedScenery = scenery;
+        if (pendingStagePack != null && !predictedKeys.contains(pendingStagePack.key)) pendingStagePack = null;
+        if (stagedTerrain.isEmpty()) {
+            stagedSource = predicted;
+            return;
+        }
+        int[] settings = packing.backendPackingSettings();
+        int[] deleted = null;
+        int count = 0;
+        long previousStagedBytes = stagedBytes;
+        Iterator<Map.Entry<WorldChunkBufferKey, CachedChunk>> iterator = stagedTerrain.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<WorldChunkBufferKey, CachedChunk> entry = iterator.next();
+            WorldChunkBufferKey key = entry.getKey();
+            CachedChunk staged = entry.getValue();
+            boolean resident = chunks.get(key) == staged;
+            boolean matches = resident && staged.materialRevision == materialRevision
+                && Arrays.equals(staged.settings, settings);
+            boolean stillPredicted = keyed ? predictedKeys.contains(key) : stagedSource == predicted;
+            if (matches && !active.contains(key) && stillPredicted) continue;
+            if (matches && active.contains(key)) {
+                adoptedChunks++;
+                adoptedBytes += staged.bytes;
+                if (key.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) adoptedScenery++;
+            } else if (resident) {
+                chunks.remove(key);
+                residentChunkBytes -= staged.bytes;
+                if (deleted == null) deleted = new int[stagedTerrain.size()];
+                deleted[count++] = staged.id;
+            }
+            stagedBytes -= staged.bytes;
+            iterator.remove();
+        }
+        if (deleted != null) chunkBackend.delete(Arrays.copyOf(deleted, count));
+        stagedSource = predicted;
+        if (previousStagedBytes != stagedBytes) updatePredictedTerrainReceipt();
+    }
+
+    private void preuploadPredictedTerrain(Renderer3DFrame frame, Set<WorldChunkBufferKey> active) {
+        if (PREUPLOAD_SCENE_MESHES && System.nanoTime() - lastPredictedUploadNanos < PREDICTED_UPLOAD_INTERVAL_NANOS) return;
+        if (!preuploadOne(frame, stagedSource, active) && (PREUPLOAD_SCENE_MESHES || LIVE_SCENERY_DRAW)) {
+            preuploadOne(frame, stagedScenery, active);
+        }
+    }
+
+    private boolean preuploadOne(Renderer3DFrame frame, List<Renderer3DWorldChunkFrame.ChunkMesh> candidates,
+                                 Set<WorldChunkBufferKey> active) {
+        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : candidates) {
+            WorldChunkBufferKey key = chunkKey(chunk);
+            if ((!PREUPLOAD_SCENE_MESHES && !LIVE_SCENERY_DRAW && chunk.getVertexCount() > UPLOAD_VERTICES_PER_FRAME)
+                || chunks.containsKey(key)) continue;
+            long bytes = chunkBytes(chunk);
+            if (stagedBytes + bytes > PREDICTED_BUFFER_BUDGET || !reserveOptionalSpace(active, bytes)) continue;
+            if (SLICE_PREUPLOAD && chunk.getVertexCount() > 8192) {
+                advanceStagePack(frame, chunk, key);
+                return true;
+            }
+            // The ordinary presenter owns this upload. It has already exported this frame's textures.
+            long started = System.nanoTime();
+            CachedChunk cached;
+            stagingUpload = true;
+            try {
+                cached = upload(frame, chunk, packing.backendPackingSettings());
+            } finally {
+                stagingUpload = false;
+            }
+            publishStagedUpload(key, cached, started);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean reserveOptionalSpace(Set<WorldChunkBufferKey> active, long bytes) {
+        if (residentChunkBytes + bytes <= CHUNK_BUDGET && chunks.size() < MAX_CHUNKS * 2) return true;
+        if (!LIVE_SCENERY_DRAW) return false;
+        Set<WorldChunkBufferKey> retained = new HashSet<>(active);
+        retained.addAll(stagedTerrain.keySet());
+        long reclaimableBytes = 0;
+        int reclaimableChunks = 0;
+        for (Map.Entry<WorldChunkBufferKey, CachedChunk> entry : chunks.entrySet()) {
+            if (retained.contains(entry.getKey())) continue;
+            reclaimableBytes += entry.getValue().bytes;
+            reclaimableChunks++;
+        }
+        if (residentChunkBytes - reclaimableBytes + bytes > CHUNK_BUDGET
+            || chunks.size() - reclaimableChunks >= MAX_CHUNKS * 2) return false;
+        makeRoom(retained, bytes);
+        return true;
+    }
+
+    private void advanceStagePack(Renderer3DFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk, WorldChunkBufferKey key) {
+        long started = System.nanoTime();
+        if (!matchesPack(pendingStagePack, key)) {
+            pendingStagePack = beginPack(chunk, key);
+        } else {
+            stagingUpload = true;
+            try {
+                CachedChunk cached = advancePack(frame, chunk, pendingStagePack, started);
+                if (cached != null) {
+                    publishStagedUpload(key, cached, started);
+                    pendingStagePack = null;
+                }
+            } finally {
+                stagingUpload = false;
+            }
+        }
+        longestPreuploadNanos = Math.max(longestPreuploadNanos, System.nanoTime() - started);
+    }
+
+    private boolean matchesPack(PendingStagePack work, WorldChunkBufferKey key) {
+        return work != null && key.equals(work.key) && work.materialRevision == materialRevision
+            && Arrays.equals(work.settings, packing.backendPackingSettings());
+    }
+
+    private PendingStagePack beginPack(Renderer3DWorldChunkFrame.ChunkMesh chunk, WorldChunkBufferKey key) {
+        boolean compact = COMPACT_SCENERY && chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+        return new PendingStagePack(key, packing.backendPackingSettings(), materialRevision,
+            packing.new PendingBackendVertices(chunk, compact));
+    }
+
+    private CachedChunk advancePack(Renderer3DFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk,
+                                    PendingStagePack work, long started) {
+        if (!work.verticesFinished) {
+            work.verticesFinished = work.vertices.advance(frame, started + PREDICTED_PACK_SLICE_NANOS);
+        } else if (work.materials == null) {
+            work.materials = packMaterials(frame, chunk);
+        } else {
+            return uploadPacked(frame, chunk, work.settings, work.materials, work.vertices.compact, work.vertices.legacy);
+        }
+        return null;
+    }
+
+    private void publishStagedUpload(WorldChunkBufferKey key, CachedChunk cached, long started) {
+        lastPredictedUploadNanos = System.nanoTime();
+        longestPreuploadNanos = Math.max(longestPreuploadNanos, lastPredictedUploadNanos - started);
+        chunks.put(key, cached);
+        stagedTerrain.put(key, cached);
+        residentChunkBytes += cached.bytes;
+        stagedBytes += cached.bytes;
+        preuploadedChunks++;
+        preuploadedBytes += cached.bytes;
+        updatePredictedTerrainReceipt();
+    }
+
+    private void updatePredictedTerrainReceipt() {
+        predictedTerrainReceipt = "uploaded=" + preuploadedChunks + ":bytes=" + preuploadedBytes
+            + ":adopted=" + adoptedChunks + ":adoptedBytes=" + adoptedBytes + ":stagedBytes=" + stagedBytes
+            + ":maxSubmitMillis=" + longestPreuploadNanos / 1_000_000L;
     }
     // Production native identity: static chunks retain immutable/rebased storage;
     // animated chunks own one positional slot and replace its latest exact pose.
     static Set<WorldChunkBufferKey> activeKeys(Renderer3DWorldChunkFrame world) {
+        return activeKeys(world.getChunks());
+    }
+
+    private static Set<WorldChunkBufferKey> activeKeys(List<Renderer3DWorldChunkFrame.ChunkMesh> chunks) {
         Set<WorldChunkBufferKey> active=new HashSet<WorldChunkBufferKey>();
-        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
+        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:chunks) {
             if(!active.add(chunkKey(chunk))&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)
                 throw new IllegalStateException("Conflicting animated browser chunk identity");
         }
@@ -329,51 +848,92 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(count>0)chunkBackend.delete(Arrays.copyOf(deleted,count));
     }
     ChunkDraws prepareChunks(Renderer3DFrame frame,Renderer3DWorldChunkFrame world,Set<WorldChunkBufferKey> active) {
+        return prepareChunks(frame,world.getChunks(),active,null,UPLOAD_VERTICES_PER_FRAME);
+    }
+    private ChunkDraws prepareChunks(Renderer3DFrame frame,List<Renderer3DWorldChunkFrame.ChunkMesh> sources,
+                                     Set<WorldChunkBufferKey> active, Set<WorldChunkBufferKey> required,int uploadBudget) {
         int[] packingSettings=packing.backendPackingSettings();
-        int[] draws=new int[world.getChunkCount()*8];int count=0,uploaded=0,remainingRepacks=0;
+        int[] draws=new int[sources.size()*8];
+        int count=0,uploaded=0,remainingRepacks=0,requiredReady=0,requiredRepacks=0;
+        if (required != null) {
+            sources = new ArrayList<>(sources);
+            sources.sort(Comparator.comparing(chunk -> !required.contains(chunkKey(chunk))));
+        }
         List<PendingRepack> pending=new ArrayList<PendingRepack>();
-        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
+        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:sources) {
             CachedChunk cached=chunks.get(chunkKey(chunk));if(cached==null)continue;
             int[] materialState=cached.materials;
             if(cached.signature!=chunk.getStorageSignature()||cached.materialRevision!=materialRevision){materialState=BrowserChunkVariant.materials(frame,chunk);if(Arrays.equals(materialState,cached.materials))cached.materialRevision=materialRevision;}
             if(cached.signature!=chunk.getStorageSignature()||cached.vertices!=chunk.getVertexCount()||cached.indices!=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3||!Arrays.equals(cached.settings,packingSettings)||!Arrays.equals(cached.materials,materialState))pending.add(new PendingRepack(cached,chunk,materialState));
         }
-        Collections.sort(pending,(a,b)->Long.compare(a.cached.packedAt,b.cached.packedAt));
+        pending.sort(Comparator.comparing((PendingRepack change) -> required != null && !required.contains(chunkKey(change.chunk)))
+            .thenComparingLong(change -> change.cached.packedAt));
         for(PendingRepack update:pending) {
             // Settings-only repacks retain the existing bounded budget. A changed
             // animation pose must be uploaded now, never drawn from an older pose.
             boolean poseChanged=update.cached.signature!=update.chunk.getStorageSignature();
-            if(!poseChanged&&uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME){remainingRepacks++;continue;}
+            if(!poseChanged&&uploaded>0&&uploaded+update.chunk.getVertexCount()>uploadBudget){
+                remainingRepacks++;
+                if (required == null || required.contains(chunkKey(update.chunk))) requiredRepacks++;
+                continue;
+            }
             updateChunk(frame,update.chunk,update.cached,packingSettings,update.materials,active);
             // Mandatory animation uploads are separate from discretionary load/
             // settings work. Otherwise every frame loses the uploaded==0 escape
             // that lets one new oversized chunk make forward progress.
             if(!poseChanged)uploaded+=update.chunk.getVertexCount();
         }
-        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
+        if (pendingOptionalDrawPack != null && (required == null || !active.contains(pendingOptionalDrawPack.key)
+            || chunks.containsKey(pendingOptionalDrawPack.key))) pendingOptionalDrawPack = null;
+        boolean advancedOptional = false;
+        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:sources) {
             WorldChunkBufferKey key=chunkKey(chunk);CachedChunk cached=chunks.get(key);
-            if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
-                long required=chunkBytes(chunk);
-                makeRoom(active,required);
-                cached=upload(frame,chunk,required,packingSettings);chunks.put(key,cached);residentChunkBytes+=required;uploaded+=chunk.getVertexCount();
+            boolean needed = required == null || required.contains(key);
+            boolean fishingPose = chunk.isResidentFishingPose();
+            if (fishingPose && cached != null) fishingPoseHits++;
+            boolean independentDraw = !needed && chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS;
+            if (cached == null && independentDraw) {
+                if (!advancedOptional && (pendingOptionalDrawPack == null || key.equals(pendingOptionalDrawPack.key))) {
+                    advancedOptional = true;
+                    if (!matchesPack(pendingOptionalDrawPack, key)) {
+                        pendingOptionalDrawPack = beginPack(chunk, key);
+                    } else if (reserveOptionalSpace(active, chunkBytes(chunk))) {
+                        cached = advancePack(frame, chunk, pendingOptionalDrawPack, System.nanoTime());
+                        if (cached != null) {
+                            chunks.put(key, cached);
+                            residentChunkBytes += cached.bytes;
+                            uploaded += chunk.getVertexCount();
+                            pendingOptionalDrawPack = null;
+                        }
+                    } else {
+                        pendingOptionalDrawPack = null;
+                    }
+                }
+            } else if(cached==null && (fishingPose||uploaded==0||uploaded+chunk.getVertexCount()<=uploadBudget)) {
+                long bytes=chunkBytes(chunk);
+                makeRoom(active,bytes);
+                cached=upload(frame,chunk,packingSettings);chunks.put(key,cached);residentChunkBytes+=cached.bytes;
+                if (fishingPose) fishingPoseUploads++;
+                else uploaded+=chunk.getVertexCount();
             }
             if(cached==null)continue;
+            if (needed) requiredReady++;
             draws[count++]=cached.id;draws[count++]=chunk.getVertexOffsetX()-cached.x;draws[count++]=chunk.getVertexOffsetZ()-cached.z;
             draws[count++]=chunk.getLogicalWorldOffsetX();draws[count++]=chunk.getLogicalWorldOffsetZ();
             int visibility=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if(frame.isWorldChunkModelKindVisible(kind,chunk.getPlane()))visibility|=1<<kind.ordinal();
             draws[count++]=visibility;draws[count++]=chunk.getPlane();draws[count++]=chunk.getChunkRole();
         }
-        return new ChunkDraws(Arrays.copyOf(draws,count),remainingRepacks);
+        return new ChunkDraws(Arrays.copyOf(draws,count),remainingRepacks,uploaded,requiredReady,requiredRepacks);
     }
     private CachedChunk updateChunk(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,CachedChunk cached,int[] settings,int[] materials,Set<WorldChunkBufferKey> active) {
         int packedIndices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;
-        if(cached.vertices!=chunk.getVertexCount()||cached.indices!=packedIndices) {
+        if(cached.compact||cached.vertices!=chunk.getVertexCount()||cached.indices!=packedIndices) {
             long required=chunkBytes(chunk);makeRoom(active,required);
-            CachedChunk replacement=upload(frame,chunk,required,settings);
+            CachedChunk replacement=upload(frame,chunk,settings);
             // Allocate+validate first. A failed native upload leaves the old cache
             // entry and accounting intact; it can never masquerade as this pose.
             chunks.put(chunkKey(chunk),replacement);
-            residentChunkBytes+=required-cached.bytes;
+            residentChunkBytes+=replacement.bytes-cached.bytes;
             chunkBackend.delete(new int[]{cached.id});
             return replacement;
         }
@@ -393,7 +953,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             return (mudclient)mainClientField.get(null);
         } catch(ReflectiveOperationException e){throw new IllegalStateException("Browser cannot inspect its current surface",e);}
     }
-    private PreparedOverlay prepareOverlay(BufferedImage image,GraphicsController surface) {
+    private PreparedOverlay prepareOverlay(BufferedImage image,GraphicsController surface,boolean inline) {
         if(!OVERLAY_COVERAGE)return null;
         PreparedOverlay prepared=null;
         if(GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE&&surface!=null)surface.observeOverlayJournalBarrier(OverlayJournalObserver.AWT);
@@ -421,6 +981,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                     delta.baseGeneration,delta.baseFrameSequence,delta.bands(),delta.work(),pixels,coverage.transmittance);
                 }
                 prepared=new PreparedOverlay(coverage,delta);
+            }else if(inline&&!reset&&!OVERLAY_DELTA&&coverage.mode==WorldOverlayCoverage.MODE_WORLD){
+                prepared=new PreparedOverlay(coverage,null);
             }else{
                 if(OVERLAY_DELTA)overlayDeltaReset=true;
                 overlayFrame(width,height,coverage.mode,coverage.generation,coverage.frameSequence,coverage.retainedFadeCount,reset,coverage.transmittance);
@@ -435,17 +997,29 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     static int[] pose(Renderer3DFrame frame) {
         return new int[]{frame.getCameraOffsetX(),frame.getCameraOffsetY(),frame.getCameraOffsetZ(),frame.getCameraRotationX(),frame.getCameraRotationY(),frame.getCameraRotationZ(),frame.getCenterX(),frame.getCenterY(),frame.getViewportWidth(),frame.getViewportHeight(),frame.getPerspectiveShift(),frame.getFogStartDistance(),frame.getFogDistance(),frame.getSignedWorldLevel()};
     }
+    private static int[] travelPose(Renderer3DFrame frame, mudclient client) {
+        int[] result = Arrays.copyOf(pose(frame), 18);
+        int x = client.getMidRegionBaseX(), z = client.getMidRegionBaseZ(), scale = client.getTileSize();
+        result[14] = x + client.getLocalPlayerX();
+        result[15] = z + client.getLocalPlayerZ();
+        result[16] = x * scale + client.getLocalPlayer().currentX;
+        result[17] = z * scale + client.getLocalPlayer().currentZ;
+        return result;
+    }
     private void exportSky(Renderer3DFrame frame) {
         BrowserSkyData.Frame sky=skyData.prepare(frame);
         if(sky.geometry!=null)uploadSkyGeometry(sky.geometry,sky.ranges,(int)sky.values[3]);
         skyFrame(sky.values,sky.palette);
     }
-    private void exportLighting(Renderer3DFrame frame) {
-        BrowserLightingData.Frame light=lightingData.prepare(frame,maxTextureSize);
+    private void exportLighting(Renderer3DFrame frame, List<Renderer3DWorldChunkFrame.ChunkMesh> surfaceDraw) {
+        BrowserLightingData.Frame light=lightingData.prepare(frame,maxTextureSize,surfaceDraw,frameStageWork,24);
+        long exportStarted = FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
         for(BrowserLightingData.Mask mask:light.changes)uploadLightingMask(mask.unit,mask.width,mask.height,mask.rgba,mask.bounds);
         lightingFrame(light.values);
+        if (FRAME_STAGE_TRACE) frameStageWork[29] = (System.nanoTime() - exportStarted) / 1_000_000f;
     }
     private int uploadSprites(Renderer3DFrame frame) {
+        long start=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
         if(frame.getWorldSpriteSnapshotCount()>1024)throw new IllegalStateException("Browser world sprite count exceeds capacity");
         BrowserWorldSpriteBatch batch=new BrowserWorldSpriteBatch();
         // Strong references protect the entire gathered frame from CPU LRU evictions.
@@ -465,8 +1039,22 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         }
         if(spriteSequence>=9007199254740991L)throw new IllegalStateException("Sprite sequence exhausted");
         long sequence=++spriteSequence;int epoch=spriteCache.getEpoch();
-        int[] missing=planWorldSprites(epoch,sequence,batch.descriptors());
-        commitWorldSprites(epoch,sequence,batch.pixels(missing),batch.vertices());
+        long gathered=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+        int[] descriptors=batch.descriptors();
+        long planStart=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+        int[] missing=planWorldSprites(epoch,sequence,descriptors);
+        long planned=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+        byte[] pixels=batch.pixels(missing);
+        float[] vertices=batch.vertices();
+        long commitStart=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+        commitWorldSprites(epoch,sequence,pixels,vertices);
+        if(FRAME_STAGE_TRACE){
+            frameStageWork[0]=(gathered-start)/1000000f;
+            frameStageWork[1]=(planned-gathered)/1000000f;
+            frameStageWork[2]=(System.nanoTime()-planned)/1000000f;
+            frameStageWork[7]=(planStart-gathered)/1000000f;
+            frameStageWork[8]=(commitStart-planned)/1000000f;
+        }
         return batch.size();
     }
     static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {
@@ -492,10 +1080,44 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(count>0)chunkBackend.delete(Arrays.copyOf(deleted,count));
         if(residentChunkBytes+required>CHUNK_BUDGET||chunks.size()>=MAX_CHUNKS*2)throw new IllegalStateException("Active browser scene exceeds resident byte budget");
     }
-    private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings) {
+    private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,int[] settings) {
         BrowserChunkMaterials.Buffers materials=packMaterials(frame,chunk);
-        int id=nextId++;submitChunk(false,id,chunk,packVertices(frame,chunk),materials.indices,materials.batches);
-        return new CachedChunk(id,chunk,bytes,settings,BrowserChunkVariant.materials(frame,chunk),materialRevision,++packingSequence);
+        int[] compact = COMPACT_SCENERY && chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS
+            ? packing.copyBackendCompactChunkVertices(chunk,frame) : null;
+        return uploadPacked(frame, chunk, settings, materials, compact, compact==null?packVertices(frame,chunk):null);
+    }
+
+    private CachedChunk uploadPacked(Renderer3DFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk,
+        int[] settings, BrowserChunkMaterials.Buffers materials, int[] compact, float[] legacy) {
+        int id=nextId++;
+        long bytes;
+        if (compact != null) {
+            uploadCompactSceneChunk(id,compact,materials.indices,materials.batches);
+            bytes = ((long) compact.length + materials.indices.length) * 4;
+            recordSceneUploadBytes(chunk, bytes);
+            compactSceneryUploads++;
+        } else {
+            submitChunk(false,id,chunk,legacy,materials.indices,materials.batches);
+            bytes = ((long) legacy.length + materials.indices.length) * 4;
+        }
+        return new CachedChunk(id,chunk,bytes,compact!=null,settings,BrowserChunkVariant.materials(frame,chunk),materialRevision,++packingSequence);
+    }
+
+    private static final class PendingStagePack {
+        final WorldChunkBufferKey key;
+        final int[] settings;
+        final long materialRevision;
+        final OpenGLWorldChunkRenderer.PendingBackendVertices vertices;
+        boolean verticesFinished;
+        BrowserChunkMaterials.Buffers materials;
+
+        PendingStagePack(WorldChunkBufferKey key, int[] settings, long materialRevision,
+                         OpenGLWorldChunkRenderer.PendingBackendVertices vertices) {
+            this.key = key;
+            this.settings = settings;
+            this.materialRevision = materialRevision;
+            this.vertices = vertices;
+        }
     }
     private BrowserChunkMaterials.Buffers packMaterials(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk){
         if(loadProfile==null)return BrowserChunkMaterials.pack(packing,frame,chunk);
@@ -508,8 +1130,17 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private void submitChunk(boolean replacement,int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,float[] vertices,int[] indices,int[] batches){
         long start=loadProfile==null?0:System.nanoTime();
         try{if(replacement)chunkBackend.replace(id,vertices,indices,batches);else chunkBackend.upload(id,vertices,indices,batches);
+            recordSceneUploadBytes(chunk, ((long) vertices.length + indices.length) * 4);
             if(loadProfile!=null)loadProfile.submitted(replacement,chunk.getVertexCount(),(long)vertices.length*4+(long)indices.length*4+(long)batches.length*4);
         }finally{if(loadProfile!=null)loadProfile.elapsed(BrowserLoadProfile.SUBMIT,start);}
+    }
+
+    private void recordSceneUploadBytes(Renderer3DWorldChunkFrame.ChunkMesh chunk, long bytes) {
+        if ((!PREUPLOAD_PREDICTED && !LIVE_SCENERY_DRAW) || stagingUpload) return;
+        int role = chunk.getChunkRole();
+        int bucket = role == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD ? 0
+            : role == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS ? 1 : 2;
+        submittedSceneBytes[bucket] += bytes;
     }
     static int[] borrowOverlay(BufferedImage image) {
         if (!(image.getRaster().getDataBuffer() instanceof DataBufferInt)
@@ -543,7 +1174,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         PendingRepack(CachedChunk cached,Renderer3DWorldChunkFrame.ChunkMesh chunk,int[] materials){this.cached=cached;this.chunk=chunk;this.materials=materials;}
     }
     private static final class CachedChunk {
-        final int id,vertices,indices;int x,z;final long bytes;int[] settings,materials;long signature,materialRevision,packedAt;
-        CachedChunk(int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings,int[] materials,long materialRevision,long packedAt){this.id=id;this.x=chunk.getVertexOffsetX();this.z=chunk.getVertexOffsetZ();this.vertices=chunk.getVertexCount();this.indices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;this.signature=chunk.getStorageSignature();this.bytes=bytes;this.settings=settings;this.materials=materials;this.materialRevision=materialRevision;this.packedAt=packedAt;}
+        final int id,vertices,indices;int x,z;final long bytes;final boolean compact;int[] settings,materials;long signature,materialRevision,packedAt;
+        CachedChunk(int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,boolean compact,int[] settings,int[] materials,long materialRevision,long packedAt){this.id=id;this.x=chunk.getVertexOffsetX();this.z=chunk.getVertexOffsetZ();this.vertices=chunk.getVertexCount();this.indices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;this.signature=chunk.getStorageSignature();this.bytes=bytes;this.compact=compact;this.settings=settings;this.materials=materials;this.materialRevision=materialRevision;this.packedAt=packedAt;}
     }
 }

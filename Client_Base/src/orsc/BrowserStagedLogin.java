@@ -41,14 +41,20 @@ public final class BrowserStagedLogin {
     }
     private static void end(DataInputStream in)throws IOException{if(in.available()!=0)throw new IOException("Trailing staged login control");}
     static boolean support(Network_Socket stream)throws IOException {
+        return support(stream,0);
+    }
+    static boolean supportWorldStreaming(Network_Socket stream)throws IOException {
+        return support(stream,6);
+    }
+    private static boolean support(Network_Socket stream,int action)throws IOException {
         int readLimit=stream.m_d;stream.m_d=0;
         try{
-            stream.newPacket(OPCODE);header(stream.bufferBits,0);stream.finishPacketAndFlush();
+            stream.newPacket(OPCODE);header(stream.bufferBits,action);stream.finishPacketAndFlush();
             RSBuffer_Bits input=new RSBuffer_Bits(8192);long deadline=System.nanoTime()+10000000000L;
             while(System.nanoTime()<deadline){
                 int n=stream.readIncomingPacket(input);
                 if(n>0){if(input.getUnsignedByte()!=OPCODE)return false;
-                    DataInputStream data=control(input,n);boolean ok=data.readUnsignedByte()==0;end(data);return ok;}
+                    DataInputStream data=control(input,n);boolean ok=data.readUnsignedByte()==action;end(data);return ok;}
                 GenUtil.sleepShadow(20L);
             }
             return false;

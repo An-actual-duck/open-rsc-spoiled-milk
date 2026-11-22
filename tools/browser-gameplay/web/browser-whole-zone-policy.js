@@ -15,13 +15,15 @@ export function wholeZonePolicy(mode,options){
   if(enabled&&(mode!=='webgl'||!options.has('benchmark')||options.get('renderworker')!=='on'||options.get('overlay')!=='coverage'||!['off',null].includes(options.get('overlaydelta'))))throw new Error('Whole zone requires private Worker WebGL full coverage');
   const residency=options.get('gpuresidency')||'full';
   if(!['full','bounded'].includes(residency)||residency==='bounded'&&!enabled)throw new Error('Bounded GPU residency requires private wholezone admission');
+  const liveCells=options.get('livecells')||'off';
+  if(!['on','off'].includes(liveCells)||liveCells==='on'&&residency!=='bounded')throw new Error('Live cells require private bounded GPU residency');
   const budget=options.get('gpubudget');
   if(budget!==null&&!['256','512'].includes(budget)||budget!==null&&residency!=='bounded')throw new Error('Explicit GPU budget requires bounded256 or512MiB');
   const geometryFormat=options.get('geometryformat')||'legacy';
   if(!['legacy','compact'].includes(geometryFormat)||geometryFormat==='compact'&&!enabled)throw new Error('Compact geometry requires private wholezone admission');
   const staticScene=options.get('staticscene')||'off';
   if(!['on','off'].includes(staticScene)||staticScene==='on'&&!enabled)throw new Error('Static scene reuse requires private wholezone admission');
-  return {requested:enabled,enabled,residency,geometryFormat,gpuBudgetMiB:budget===null?256:Number(budget),properties:enabled?['spoiledmilk.browserWholeZone=true',...(staticScene==='on'?['spoiledmilk.browserStaticSceneReuse=true']:[])]:[]};
+  return {requested:enabled,enabled,residency,liveCells:liveCells==='on',geometryFormat,gpuBudgetMiB:budget===null?256:Number(budget),properties:enabled?['spoiledmilk.browserWholeZone=true',...(staticScene==='on'?['spoiledmilk.browserStaticSceneReuse=true']:[]),...(liveCells==='on'?['spoiledmilk.browserLiveCells=true']:[])]:[]};
 }
 export function wholeZoneCapacity(options){
   if(options.gpuResidency==='bounded'&&options.wholeZone!==true)throw new Error('Bounded capacity requires private wholezone admission');

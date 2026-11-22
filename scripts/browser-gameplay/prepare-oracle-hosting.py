@@ -12,6 +12,7 @@ def verify(web,expected):
  manifest=web/'public-release.json'
  if not re.fullmatch('[0-9a-f]{64}',expected)or sha(manifest)!=expected:raise ValueError('Public release manifest hash mismatch')
  m=json.loads(manifest.read_text());build=m['buildId']
+ if 'worldStreaming' in m and m['worldStreaming'] is not True:raise ValueError('Invalid World Streaming release flag')
  if not re.fullmatch('[a-zA-Z0-9_-]{1,80}',build):raise ValueError('Unsafe build ID')
  prefix='assets/'+build+'/'
  if m['schemaVersion']!=1 or m['origin']!=ORIGIN or m['websocket']!=WSS or m['preset']!='alpha-v1' or m['assetPrefix']!='/'+prefix or m['sourceAndCookBindingsVerified']is not True:raise ValueError('Public endpoint/source contract mismatch')
@@ -36,4 +37,6 @@ if __name__=='__main__':
  a.out.mkdir(parents=True)
  for name in ('nginx-play.conf','certbot-deploy-hook.sh'):shutil.copyfile(ROOT/'config/browser-hosting'/name,a.out/name)
  plan=dict(schemaVersion=1,preparedOnly=True,liveOperations=False,origin=ORIGIN,websocket=WSS,subprotocol='binary',buildId=m['buildId'],files=len(m['files']),bytes=total,releaseManifestSha256=a.manifest_sha256,staticRoot='/srv/spoiled-milk-browser',releaseDirectory='/srv/spoiled-milk-browser/releases/'+m['buildId'],immutableAssetDirectory='/srv/spoiled-milk-browser/assets/'+m['buildId'],currentRootMustBeSymlink=True,serverSystemProperties={'spoiledmilk.publicWebSocketOrigin':ORIGIN,'spoiledmilk.publicWebSocketCert':'/home/ubuntu/spoiled-milk/tls/current/fullchain.pem','spoiledmilk.publicWebSocketKey':'/home/ubuntu/spoiled-milk/tls/current/key.pem'},hostOperationsRequireManager=True,configSha256={n:sha(a.out/n)for n in ('nginx-play.conf','certbot-deploy-hook.sh')})
+ if m.get('worldStreaming') is True:
+  plan['serverSystemProperties']['spoiledmilk.browserWorldStreaming']='true'
  (a.out/'deployment-plan.json').write_text(json.dumps(plan,indent=2)+'\n');print(json.dumps(plan))

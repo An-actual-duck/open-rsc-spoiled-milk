@@ -2932,6 +2932,156 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         return values;
     }
 
+    /** Writes the browser's compact48-v1 layout without allocating a float plane. */
+    int[] copyBackendCompactChunkVertices(Renderer3DWorldChunkFrame.ChunkMesh chunk, Renderer3DFrame frame) {
+        int count = chunk.getVertexCount();
+        int[] words = new int[count * 12];
+        int[] diffuse = buildChunkSmoothDiffuseLights(chunk, count);
+        boolean unbaked = shouldUseUnbakedRemasterMaterialBase();
+        if (BROWSER_COMPACT_BLOCKS) {
+            for (int first = 0; first < count; first += COMPACT_BLOCK_VERTICES) {
+                int size = Math.min(COMPACT_BLOCK_VERTICES, count - first);
+                if (!packCompactBlock(chunk, frame, first, size, diffuse, unbaked, words)) return null;
+            }
+            return words;
+        }
+        float[] vertex = new float[FLOATS_PER_VERTEX];
+        for (int i = 0; i < count; i++) {
+            writeChunkVertex(vertex, 0, chunk, frame, i, false, true, diffuse, null, unbaked);
+            if (!writeCompactVertex(words, i * 12, vertex)) return null;
+        }
+        return words;
+    }
+
+    private static final int COMPACT_BLOCK_VERTICES = 128;
+    private static final boolean BROWSER_COMPACT_BLOCKS = Boolean.getBoolean("spoiledmilk.browserCompactVertexBlocks");
+    private static final boolean VERIFY_COMPACT_BLOCKS = Boolean.getBoolean("spoiledmilk.verifyBrowserCompactVertexBlocks");
+    // The browser packer consumes this scratch synchronously. Pending jobs own
+    // their published destination buffers and never retain the source block.
+    private float[] browserCompactBlock;
+    private float[] browserCompactVertex;
+    private final int[] browserCompactCheck = VERIFY_COMPACT_BLOCKS ? new int[12] : null;
+
+    private static native boolean packBrowserCompactBlock(float[] source, int count, int[] output, int wordOffset);
+
+    private boolean packCompactBlock(Renderer3DWorldChunkFrame.ChunkMesh chunk, Renderer3DFrame frame,
+                                     int first, int size, int[] diffuse, boolean unbaked, int[] output) {
+        if (browserCompactBlock == null) browserCompactBlock = new float[COMPACT_BLOCK_VERTICES * FLOATS_PER_VERTEX];
+        for (int i = 0; i < size; i++) {
+            writeChunkVertex(browserCompactBlock, i * FLOATS_PER_VERTEX, chunk, frame, first + i,
+                false, true, diffuse, null, unbaked);
+        }
+        boolean packed = packBrowserCompactBlock(browserCompactBlock, size, output, first * 12);
+        if (packed && !VERIFY_COMPACT_BLOCKS) return true;
+        if (browserCompactVertex == null) browserCompactVertex = new float[FLOATS_PER_VERTEX];
+        for (int i = 0; i < size; i++) {
+            System.arraycopy(browserCompactBlock, i * FLOATS_PER_VERTEX, browserCompactVertex, 0, FLOATS_PER_VERTEX);
+            int at = (first + i) * 12;
+            if (packed) {
+                if (!writeCompactVertex(browserCompactCheck, 0, browserCompactVertex))
+                    throw new IllegalStateException("Browser compact packer accepted an inexact vertex");
+                for (int word = 0; word < 12; word++)
+                    if (output[at + word] != browserCompactCheck[word])
+                        throw new IllegalStateException("Browser compact packer changed vertex bits");
+            } else if (!writeCompactVertex(output, at, browserCompactVertex)) return false;
+        }
+        return true;
+    }
+
+    private static boolean writeCompactVertex(int[] words, int at, float[] vertex) {
+        for (int axis = 0; axis < 3; axis++) {
+            words[at + axis] = Float.floatToIntBits(vertex[axis]);
+            words[at + 5 + axis] = Float.floatToIntBits(vertex[18 + axis]);
+        }
+        words[at + 3] = Float.floatToIntBits(vertex[7]);
+        words[at + 4] = Float.floatToIntBits(vertex[8]);
+        long color = compactBytes(vertex, 3, 4);
+        int raw = (int) compactBytes(vertex, 15, 3);
+        int blend = (int) compactBytes(vertex, 24, 3);
+        int light = compactByte(vertex[14], false);
+        int kind = compactByte(vertex[21], false);
+        int family = compactByte(vertex[22], false);
+        int variation = compactByte(vertex[23], false);
+        int strength = compactByte(vertex[27], false);
+        if (color < 0 || raw < 0 || blend < 0 || light < 0 || kind < 0 || family < 0 || variation < 0 || strength < 0) return false;
+        words[at + 8] = (int) color;
+        words[at + 9] = raw | light << 24;
+        words[at + 10] = blend | kind << 24;
+        words[at + 11] = family | variation << 8 | strength << 16;
+        return true;
+    }
+
+    /** Owns an unpublished vertex buffer until packing completes under matching renderer inputs. */
+    final class PendingBackendVertices {
+        private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
+        private final int[] diffuse;
+        private final boolean unbaked;
+        private final float[] scratch = new float[FLOATS_PER_VERTEX];
+        int[] compact;
+        float[] legacy;
+        private int nextVertex;
+
+        PendingBackendVertices(Renderer3DWorldChunkFrame.ChunkMesh chunk, boolean preferCompact) {
+            this.chunk = chunk;
+            int count = chunk.getVertexCount();
+            this.diffuse = buildChunkSmoothDiffuseLights(chunk, count);
+            this.unbaked = shouldUseUnbakedRemasterMaterialBase();
+            if (preferCompact) compact = new int[count * 12];
+            else legacy = new float[count * FLOATS_PER_VERTEX];
+        }
+
+        boolean advance(Renderer3DFrame frame, long stopAtNanos) {
+            int count = chunk.getVertexCount();
+            while (nextVertex < count) {
+                if (compact != null && BROWSER_COMPACT_BLOCKS) {
+                    int size = Math.min(COMPACT_BLOCK_VERTICES, count - nextVertex);
+                    if (!packCompactBlock(chunk, frame, nextVertex, size, diffuse, unbaked, compact)) {
+                        useLegacyPacking(count);
+                        return false;
+                    }
+                    nextVertex += size;
+                    if (System.nanoTime() >= stopAtNanos) break;
+                    continue;
+                }
+                if (compact == null) {
+                    writeChunkVertex(legacy, nextVertex * FLOATS_PER_VERTEX, chunk, frame,
+                        nextVertex, false, true, diffuse, null, unbaked);
+                } else {
+                    writeChunkVertex(scratch, 0, chunk, frame, nextVertex, false, true, diffuse, null, unbaked);
+                    if (!writeCompactVertex(compact, nextVertex * 12, scratch)) {
+                        useLegacyPacking(count);
+                        return false;
+                    }
+                }
+                nextVertex++;
+                if ((nextVertex & 127) == 0 && System.nanoTime() >= stopAtNanos) break;
+            }
+            return nextVertex == count;
+        }
+
+        private void useLegacyPacking(int count) {
+            legacy = new float[count * FLOATS_PER_VERTEX];
+            compact = null;
+            nextVertex = 0;
+        }
+    }
+
+    private static long compactBytes(float[] vertex, int first, int count) {
+        long word = 0;
+        for (int i = 0; i < count; i++) {
+            int value = compactByte(vertex[first + i], true);
+            if (value < 0) return -1;
+            word |= (long) value << (8 * i);
+        }
+        return word;
+    }
+
+    private static int compactByte(float value, boolean normalized) {
+        int code = Math.round(normalized ? value * 255f : value);
+        float expected = normalized ? code / 255f : code;
+        return code >= 0 && code <= 255 && Float.floatToIntBits(value) == Float.floatToIntBits(expected) ? code : -1;
+    }
+
     int[] backendPackingSettings() {
         return new int[]{currentBrightnessBits(),currentFogModeBits(),currentLightingModeBits(),currentGeometryModeBits()};
     }
@@ -3083,10 +3233,21 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return clampLegacyLight(legacyLight + Math.round(shadow * 230.0f));
 	}
 
-	private int[] buildChunkSmoothDiffuseLights(Renderer3DWorldChunkFrame.ChunkMesh chunk, int vertexCount) {
+	private static int[] buildChunkSmoothDiffuseLights(Renderer3DWorldChunkFrame.ChunkMesh chunk, int vertexCount) {
+		boolean flat = RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.FACETED
+			|| RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.WIRE;
+		int[] prepared = chunk.borrowPreparedDiffuseLighting(flat);
+		return prepared == null ? buildChunkDiffuseLighting(chunk, vertexCount, flat) : prepared;
+	}
+
+	static void prepareSurfaceDiffuseLighting(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		int count = chunk.getVertexCount();
+		chunk.setPreparedDiffuseLighting(buildChunkDiffuseLighting(chunk, count, false), buildChunkDiffuseLighting(chunk, count, true));
+	}
+
+	private static int[] buildChunkDiffuseLighting(Renderer3DWorldChunkFrame.ChunkMesh chunk, int vertexCount, boolean flat) {
 		int[] diffuseLights = new int[vertexCount];
-		if (RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.FACETED
-			|| RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.WIRE) {
+		if (flat) {
 			int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
 			for (int triangle = 0; triangle < triangleCount; triangle++) {
 				int faceDiffuse = chunkFaceDiffuseLight(chunk, triangle);
@@ -3145,7 +3306,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return diffuseLights;
 	}
 
-	private boolean isChunkVertexIndexValid(
+	private static boolean isChunkVertexIndexValid(
 		Renderer3DWorldChunkFrame.ChunkMesh chunk,
 		int vertex,
 		int expectedVertexCount) {
@@ -3320,7 +3481,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return clampLegacyLight(legacyLight);
 	}
 
-	private int chunkFaceDiffuseLight(Renderer3DWorldChunkFrame.ChunkMesh chunk, int triangle) {
+	private static int chunkFaceDiffuseLight(Renderer3DWorldChunkFrame.ChunkMesh chunk, int triangle) {
 		int sourceIndex = triangle * 3;
 		if (triangle < 0 || sourceIndex + 2 >= chunk.getIndexCount()) {
 			return 0;

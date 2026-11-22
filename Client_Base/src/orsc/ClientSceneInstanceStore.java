@@ -25,6 +25,7 @@ final class ClientSceneInstanceStore {
 	private int[] gameObjectZ;
 	private int gameObjectCount;
 	private long gameObjectRevision;
+	private long residentPlacementRevision;
 
 	private boolean[] wallObjectFrameMarks;
 	private int[] wallObjectDirections;
@@ -76,12 +77,17 @@ final class ClientSceneInstanceStore {
 		}
 		if (gameObjectCount != count) {
 			gameObjectRevision++;
+			residentPlacementRevision++;
 		}
 		gameObjectCount = count;
 	}
 
 	long getGameObjectRevision() {
 		return gameObjectRevision;
+	}
+
+	long getResidentPlacementRevision() {
+		return residentPlacementRevision;
 	}
 
 	int getWallObjectCount() {
@@ -95,6 +101,7 @@ final class ClientSceneInstanceStore {
 			wallObjectPendingAreaLoad[index] = false;
 			wallObjectModels[index] = null;
 		}
+		if (wallObjectCount != count) residentPlacementRevision++;
 		wallObjectCount = count;
 	}
 
@@ -156,6 +163,7 @@ final class ClientSceneInstanceStore {
 		ensureGameObjectCapacity(index + 1);
 		if (gameObjectX[index] != value) {
 			gameObjectRevision++;
+			residentPlacementRevision++;
 		}
 		gameObjectX[index] = value;
 	}
@@ -168,6 +176,7 @@ final class ClientSceneInstanceStore {
 		ensureGameObjectCapacity(index + 1);
 		if (gameObjectZ[index] != value) {
 			gameObjectRevision++;
+			residentPlacementRevision++;
 		}
 		gameObjectZ[index] = value;
 	}
@@ -180,6 +189,7 @@ final class ClientSceneInstanceStore {
 		ensureGameObjectCapacity(index + 1);
 		if (gameObjectIds[index] != value) {
 			gameObjectRevision++;
+			residentPlacementRevision++;
 		}
 		gameObjectIds[index] = value;
 	}
@@ -190,6 +200,7 @@ final class ClientSceneInstanceStore {
 
 	void setGameObjectDirection(int index, int value) {
 		ensureGameObjectCapacity(index + 1);
+		if (gameObjectDirections[index] != value) residentPlacementRevision++;
 		gameObjectDirections[index] = value;
 	}
 
@@ -199,6 +210,7 @@ final class ClientSceneInstanceStore {
 
 	void setGameObjectModel(int index, RSModel model) {
 		ensureGameObjectCapacity(index + 1);
+		if ((gameObjectModels[index] == null) != (model == null)) residentPlacementRevision++;
 		gameObjectModels[index] = model;
 		if (model != null) {
 			model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
@@ -212,6 +224,7 @@ final class ClientSceneInstanceStore {
 
 	void setGameObjectMaterialized(int index, boolean materialized) {
 		ensureGameObjectCapacity(index + 1);
+		if (gameObjectMaterialized[index] != materialized) residentPlacementRevision++;
 		gameObjectMaterialized[index] = materialized;
 	}
 
@@ -230,6 +243,7 @@ final class ClientSceneInstanceStore {
 
 	void setWallObjectX(int index, int value) {
 		ensureWallObjectCapacity(index + 1);
+		if (wallObjectX[index] != value) residentPlacementRevision++;
 		wallObjectX[index] = value;
 	}
 
@@ -239,6 +253,7 @@ final class ClientSceneInstanceStore {
 
 	void setWallObjectZ(int index, int value) {
 		ensureWallObjectCapacity(index + 1);
+		if (wallObjectZ[index] != value) residentPlacementRevision++;
 		wallObjectZ[index] = value;
 	}
 
@@ -248,6 +263,7 @@ final class ClientSceneInstanceStore {
 
 	void setWallObjectId(int index, int value) {
 		ensureWallObjectCapacity(index + 1);
+		if (wallObjectIds[index] != value) residentPlacementRevision++;
 		wallObjectIds[index] = value;
 	}
 
@@ -257,6 +273,7 @@ final class ClientSceneInstanceStore {
 
 	void setWallObjectDirection(int index, int value) {
 		ensureWallObjectCapacity(index + 1);
+		if (wallObjectDirections[index] != value) residentPlacementRevision++;
 		wallObjectDirections[index] = value;
 	}
 
@@ -266,6 +283,7 @@ final class ClientSceneInstanceStore {
 
 	void setWallObjectModel(int index, RSModel model) {
 		ensureWallObjectCapacity(index + 1);
+		if ((wallObjectModels[index] == null) != (model == null)) residentPlacementRevision++;
 		wallObjectModels[index] = model;
 		if (model != null) {
 			model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
@@ -279,6 +297,7 @@ final class ClientSceneInstanceStore {
 
 	void setWallObjectMaterialized(int index, boolean materialized) {
 		ensureWallObjectCapacity(index + 1);
+		if (wallObjectMaterialized[index] != materialized) residentPlacementRevision++;
 		wallObjectMaterialized[index] = materialized;
 	}
 
@@ -294,6 +313,28 @@ final class ClientSceneInstanceStore {
 	void clearPendingAreaLoadMarks() {
 		Arrays.fill(gameObjectPendingAreaLoad, 0, gameObjectCount, false);
 		Arrays.fill(wallObjectPendingAreaLoad, 0, wallObjectCount, false);
+	}
+
+	void moveGameObject(int from, int to, int x, int z) {
+		setGameObjectX(to, x);
+		setGameObjectZ(to, z);
+		if (from == to) return;
+		setGameObjectId(to, gameObjectIds[from]);
+		setGameObjectDirection(to, gameObjectDirections[from]);
+		setGameObjectModel(to, gameObjectModels[from]);
+		setGameObjectMaterialized(to, gameObjectMaterialized[from]);
+		gameObjectPendingAreaLoad[to] = gameObjectPendingAreaLoad[from];
+	}
+
+	void moveWallObject(int from, int to, int x, int z) {
+		setWallObjectX(to, x);
+		setWallObjectZ(to, z);
+		if (from == to) return;
+		setWallObjectId(to, wallObjectIds[from]);
+		setWallObjectDirection(to, wallObjectDirections[from]);
+		setWallObjectModel(to, wallObjectModels[from]);
+		setWallObjectMaterialized(to, wallObjectMaterialized[from]);
+		wallObjectPendingAreaLoad[to] = wallObjectPendingAreaLoad[from];
 	}
 
 	void clearFrameMarks() {

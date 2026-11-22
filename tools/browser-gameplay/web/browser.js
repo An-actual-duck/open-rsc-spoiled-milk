@@ -12,6 +12,7 @@ import {createRegionHandoffTraceCollector} from './browser-region-handoff-profil
 import {renderWorkerPolicy} from './browser-render-worker-protocol.js';
 import {optimizedRenderDefaults,canonicalRenderProperties} from './browser-optimized-render-defaults.js';
 import {createBatchedModelKernel} from './browser-batched-model-kernel.js';
+import {packCompactVertexBlock} from './browser-geometry-layout.js';
 import {browserGeometryTransferPolicy} from './browser-geometry-transfer-policy.js';
 import {privatePreparationCandidates} from './browser-preparation-candidates.js';
 import {createStutterDiagnostics,stutterDiagnosticsPolicy} from './browser-stutter-diagnostics.js';
@@ -21,6 +22,7 @@ import {browserSpriteKeyBenchmarkControls} from './browser-sprite-key-policy.js'
 import {browserUploadValidationBenchmarkPolicy} from './browser-upload-validation.js';
 const started = performance.now();
 import {createTransport} from './transport.js';
+import {createBrowserTerrainWorker} from './browser-terrain-worker.js';
 import {createWorldCover} from './browser-world-cover.js';
 import {createWorldPreparationProgress} from './browser-world-preparation.js';
 import {createStagedLoginGate} from './browser-staged-login.js';
@@ -28,7 +30,7 @@ import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 import {createBrowserDisplay} from './browser-display.js';
 import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
 const status = document.querySelector('#status');
-const deployment=resolveBrowserDeployment(deploymentConfig,location);
+const deployment=resolveBrowserDeployment(deploymentConfig,location,window.parent?.browserSessionLoadingMode?.(window)??'chunks');
 const options = deployment.options;
 function nativeCallPolicy(mode,parameters){
   if(mode!=='webgl'||!parameters.has('benchmark'))return 'async';
@@ -37,13 +39,15 @@ function nativeCallPolicy(mode,parameters){
   return value;
 }
 const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',options);
-const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options);
+const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options,
+  deployment.streaming||!deployment.publicAlpha&&window.browserPrivateTestRoute?.surfaceDrawWorker===true);
 const wholeZone=wholeZonePolicy(options.get('mode')||'software',options);
+if(deployment.publicAlpha&&wholeZone.liveCells)throw new Error('Live cells are a private renderer path');
 const cloneTemplates=cloneTemplatePolicy(options.get('mode')||'software',options);
 const baselineReuse=baselineReusePolicy(options.get('mode')||'software',options);
 const wholeRam=wholeRamPolicy(options.get('mode')||'software',options);
 const stagedLoginEnabled=options.get('stagedlogin')==='on';
-if(options.has('stagedlogin')&&!['on','off'].includes(options.get('stagedlogin'))||stagedLoginEnabled&&(!wholeRam.enabled||!wholeZone.enabled||!renderWorker.enabled))throw new Error('Staged browser login requires the complete WebGL preparation backend');
+if(options.has('stagedlogin')&&!['on','off'].includes(options.get('stagedlogin'))||stagedLoginEnabled&&(!renderWorker.enabled||!deployment.streaming&&(!wholeRam.enabled||!wholeZone.enabled)))throw new Error('Staged browser login requires the complete WebGL preparation backend');
 const stagedLogin=createStagedLoginGate({enabled:stagedLoginEnabled});
 const loadProfilePolicy=browserLoadProfilePolicy(options.get('mode')||'software',options);
 const javaVersion = Number(options.get('java') || '8');
@@ -64,7 +68,8 @@ let preparationControls = {properties: [], requested: null};
 let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
 let gpu,worldCover,awaitingGameFrame=false,displayLayout,stutterDiagnostics,wholeZoneCatalogConfig=null,wholeRamCatalogConfig=null;
-const boundedInputGate=wholeZone.residency==='bounded'?createBoundedInputGate():null;
+const boundedInputGate=wholeZone.residency==='bounded'?createBoundedInputGate({liveCells:wholeZone.liveCells}):null;
+const stagedWorldReady=()=>gpu?.stats.worldReadiness?.phase==='ready';
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput&&!boundedInputGate?.blocked&&!stagedLogin.blocked;
 function updateWholeRamProof(){
   if(!wholeRam.enabled)return;
@@ -75,7 +80,8 @@ function updateWholeRamProof(){
 }
 function updateWorldCover(){
   updateWholeRamProof();
-  stagedLogin.observe(window.browserProof.state?.mode,{worldReady:gpu?.stats.worldReadiness?.phase==='ready',completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,blocked:boundedInputGate?.blocked!==false});
+  stagedLogin.observe(window.browserProof.state?.mode,{worldReady:stagedWorldReady(),interfaceReady:gpu?.stats.worldReadiness?.phase==='ui',
+    completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,blocked:boundedInputGate?.blocked??false});
   if(boundedInputGate)window.browserProof.boundedResidencyInput={blocked:boundedInputGate.blocked,requiredWorkerFrame:boundedInputGate.afterFrame,scope:'Producer scope/mutation identity must receive a matching-or-newer coverage-ready ACK before world input'};
   let state=gpu?.stats.worldReadiness;const error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null)||window.browserProof.wholeRamError||worldPreparation.stats.latest?.failureCode;
   if(boundedInputGate?.blocked&&!['loading','error','login'].includes(state?.phase))state={...state,phase:'streaming',reason:'Preparing required GPU cells',blocksWorldInput:true,blocksKeyboard:true};
@@ -103,7 +109,7 @@ function publish(finalReceipt=false) {
 function dispose() {
   if (stopped) return;
   bulkStaging?.dispose();startupProgress.close();stagedLogin.dispose();
-  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); terrainWorker?.dispose(); surfaceMeshWorker?.dispose(); surfaceSceneryMeshWorker?.dispose(); gpu?.dispose();
   publish(true);
 }
 function finish(reason) {
@@ -135,10 +141,13 @@ const candidatePreparation=privatePreparationCandidates(window.browserProof.mode
 const optimizedDefaults=optimizedRenderDefaults(window.browserProof.mode,options);
 const modelBatchKernel=createBatchedModelKernel();
 window.browserProof.batchedModelKernelWork=modelBatchKernel.stats;
+const compactPackWork={blocks:0,vertices:0,rejected:0};
+window.browserProof.compactPackWork=compactPackWork;
 const fixturePolicy=deployment.publicAlpha?{properties:[],requested:null,tcpPort:43605,websocket:deployment.websocket}:repeatableFixturePolicy(window.browserProof.mode,options,window.browserPrivateTestRoute,location.origin);
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
 const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
+let terrainWorker, surfaceMeshWorker, surfaceSceneryMeshWorker;
 const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseInput(window,document,{logicalExtent:()=>({width:gpu?.stats.physicalOutput?.logicalWidth||gpu?.stats.display?.internalWidth||960,height:gpu?.stats.physicalOutput?.logicalHeight||gpu?.stats.display?.internalHeight||540})}) : undefined;
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
@@ -157,8 +166,8 @@ const natives = {
   Java_orsc_BrowserWebGLBridge_stagedLoginReady(lib,owner){
     if(stopped)return false;
     return stagedLogin.ready(owner,{completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,
-      worldReady:gpu?.stats.worldReadiness?.phase==='ready',coverageReady:gpu?.stats.wholeZone?.ready===true,
-      cpuReady:window.browserProof.wholeRamJava?.preparedReady===true,blocked:boundedInputGate?.blocked!==false,
+      worldReady:stagedWorldReady(),coverageReady:deployment.streaming?stagedWorldReady():gpu?.stats.wholeZone?.ready===true,
+      cpuReady:deployment.streaming||window.browserProof.wholeRamJava?.preparedReady===true,blocked:boundedInputGate?.blocked??false,
       error:!!(gpu?.stats.lastError||gpu?.stats.contextLost||window.browserProof.wholeRamError||worldPreparation.stats.latest?.failureCode)});
   },
   async Java_orsc_browser_BrowserBootstrap_prepareRamBulkFile(lib,relative){
@@ -199,6 +208,13 @@ const natives = {
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
+  Java_orsc_OpenGLWorldChunkRenderer_packBrowserCompactBlock(lib,input,count,output,outputAt){
+    if(deployment.publicAlpha)return false;
+    const packed=packCompactVertexBlock(input,count,output,outputAt);
+    if(packed){compactPackWork.blocks++;compactPackWork.vertices+=count;}
+    else compactPackWork.rejected++;
+    return packed;
+  },
   Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(lib,input){
     if(stopped)return;
     if(!deployment.publicAlpha||!input||input.length!==6||Array.from(input).some(v=>v!==0&&v!==1)||input[0]!==1||input[1]!==1||input[5]!==Number(input[2]===1&&input[3]===input[4]))throw new Error('Invalid public roof selection receipt');
@@ -314,9 +330,56 @@ const natives = {
     setStatus(`${window.browserProof.mode === 'webgl' ? 'Experimental WebGL client' : 'Software client'} · ${mode} · ${fps} reported Java loop frames/s · private loopback world`);
     publish();
   },
+  async Java_orsc_browser_BrowserBootstrap_terrainWorkerAvailable() {
+    return (!deployment.publicAlpha||deployment.streaming) && typeof Worker === 'function' && typeof DecompressionStream === 'function';
+  },
+  async Java_orsc_browser_BrowserBootstrap_inflateTerrainSector(lib, compressed, expectedLength) {
+    if (deployment.publicAlpha&&!deployment.streaming || stopped) throw new Error('Terrain worker is unavailable');
+    terrainWorker ??= createBrowserTerrainWorker();
+    const stats = window.browserProof.terrainWorker ??= {completedSectors: 0, completedBytes: 0};
+    const sector = await terrainWorker.inflate(compressed, expectedLength);
+    stats.completedSectors++;
+    stats.completedBytes += sector.byteLength;
+    return sector;
+  },
+  async Java_orsc_browser_BrowserBootstrap_startSurfaceMeshWorker() {
+    if (deployment.publicAlpha&&!deployment.streaming || stopped || typeof Worker !== 'function') return false;
+    const {createBrowserSurfaceMeshWorker} = await import('./browser-surface-mesh-worker-client.js');
+    if (stopped) return false;
+    surfaceMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion);
+    surfaceSceneryMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion, true);
+    window.browserProof.surfaceMeshWorker = surfaceMeshWorker.stats;
+    window.browserProof.surfaceSceneryMeshWorker = surfaceSceneryMeshWorker.stats;
+    return true;
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceMesh(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay) {
+    if (stopped || !surfaceMeshWorker) return null;
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay]);
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceDrawWords(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites) {
+    if (stopped || !surfaceMeshWorker) return null;
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, false], true);
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceCompatibilityWords(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites) {
+    if (stopped || !surfaceMeshWorker) return null;
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, false], true, true);
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceGameplayWords(lib, source, offsetX, offsetZ, withRoofs, customSprites) {
+    if (stopped || !surfaceMeshWorker) return null;
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, 0, 0, withRoofs, customSprites, true], true);
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceSceneryMesh(lib, source) {
+    if (stopped || !surfaceSceneryMeshWorker) return null;
+    return surfaceSceneryMeshWorker.build(source, []);
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceSceneryWords(lib, source) {
+    if (stopped || !surfaceSceneryMeshWorker) return null;
+    return surfaceSceneryMeshWorker.build(source, [], true);
+  },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },
   async Java_orsc_browser_BrowserBootstrap_wsConnected(lib, id) { return transport.connected(id); },
+  async Java_orsc_browser_BrowserBootstrap_wsReadable(lib, id) { return transport.readable(id); },
   async Java_orsc_browser_BrowserBootstrap_wsRead(lib, id, maximum) { return transport.read(id, maximum); },
   async Java_orsc_browser_BrowserBootstrap_wsWrite(lib, id, bytes) { transport.write(id, bytes); },
   async Java_orsc_browser_BrowserBootstrap_wsClose(lib, id) { transport.close(id); },
@@ -355,7 +418,7 @@ try {
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
     const wholeZoneCatalog=wholeZone.enabled?(await import('./browser-whole-zone-config.js')).default:null;wholeZoneCatalogConfig=wholeZoneCatalog;
     if(wholeRam.enabled){wholeRamCatalogConfig=validateWholeRamConfig((await import('./browser-whole-ram-config.js')).default,wholeZoneCatalog);window.browserProof.wholeRamDelivery={...wholeRamCatalogConfig,declaredOnly:true,scope:'Immutable files staged for conditional Java preload; not runtime retained/decoded/prepared readiness'};}
-    if(deployment.publicAlpha&&wholeZoneCatalog?.clientJarSha256!==deployment.config.clientJarSha256)throw new Error('Browser alpha executable/catalogue mismatch');
+    if(deployment.publicAlpha&&wholeZone.enabled&&wholeZoneCatalog?.clientJarSha256!==deployment.config.clientJarSha256)throw new Error('Browser alpha executable/catalogue mismatch');
     if(deployment.publicAlpha&&wholeRam.enabled){
       bulkStaging=createBulkStaging({enabled:true,assetPrefix:deployment.config.assetPrefix,config:wholeRamCatalogConfig,
         addFile:(path,data)=>{if(typeof globalThis.cheerpOSAddStringFile!=='function')throw new Error('Public staging API unavailable');globalThis.cheerpOSAddStringFile(path,data);},
@@ -364,9 +427,31 @@ try {
       window.browserProof.bulkStaging=bulkStaging.stats;
     }
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
-    const gpuOptions={wholeZone:wholeZone.enabled,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
+    const gpuOptions={wholeZone:wholeZone.enabled,liveCells:wholeZone.liveCells,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
+    if(deployment.streaming)gpuOptions.compactScene=true;
+    gpuOptions.measureFrameStages=!deployment.publicAlpha&&window.browserPrivateTestRoute?.frameStages===true;
+    gpuOptions.localSpritePlan=renderWorker.enabled
+      &&(deployment.streaming||!deployment.publicAlpha&&window.browserPrivateTestRoute?.localSpritePlan===true);
     ensureStarting();
-    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;ensureStarting();gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(stopped)return;boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});if(stopped)gpu.dispose();ensureStarting();}
+    if(renderWorker.enabled){
+      const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;
+      ensureStarting();
+      gpu=await factory(canvas,report,{...gpuOptions,
+        worldInputAllowed:()=>window.browserWorldInputAllowed(),
+        onFatal:error=>finish('Private render worker failed: '+error),
+        onComplete:ack=>{
+          if(stopped)return;
+          const phase=gpu.stats.worldReadiness?.phase;
+          boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:phase==='ready'});
+          // A first-login appearance screen needs input before it can start the world.
+          if(ack.frameId&&(phase==='ui'||phase==='ready'&&gpu.stats.javaWorldFrames>0))awaitingGameFrame=false;
+          const blocked=worldCover?.blocksWorldInput;
+          updateWorldCover();
+          if(blocked!==worldCover?.blocksWorldInput)publish();
+        }});
+      if(stopped)gpu.dispose();
+      ensureStarting();
+    }
     else gpu=createBrowserWebGL(canvas,report,gpuOptions);
     window.browserProof.renderWorker={...renderWorker,actual:renderWorker.enabled===true};
     window.browserProof.wholeZoneRequested=wholeZone.requested;window.browserProof.wholeRamRequested=wholeRam.requested;

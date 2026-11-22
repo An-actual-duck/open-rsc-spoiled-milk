@@ -30,6 +30,83 @@ public final class WholeRamData {
         public long bytes(){return bytes;}
         public int size(){return entries.size();}
         public void discardIndex(){index.clear();}
+
+        /** Sizes the exact primitive-array table for the detached gameplay reply. */
+        int wordCount() {
+            long words = 1;
+            for (Object value : entries) words += 2 + arrayWords(wordType(value), java.lang.reflect.Array.getLength(value));
+            return Math.toIntExact(words);
+        }
+
+        void writeWords(int[] packet, int offset) {
+            packet[offset++] = entries.size();
+            for (Object value : entries) {
+                int type = wordType(value);
+                int size = java.lang.reflect.Array.getLength(value);
+                packet[offset++] = type;
+                packet[offset++] = size;
+                if (value instanceof int[]) {
+                    System.arraycopy(value, 0, packet, offset, size);
+                    offset += size;
+                } else if (value instanceof byte[]) {
+                    byte[] bytes = (byte[]) value;
+                    for (int i = 0; i < size; i++) packet[offset + (i >>> 2)] |= (bytes[i] & 255) << ((i & 3) * 8);
+                    offset += (size + 3) >>> 2;
+                } else if (value instanceof float[]) {
+                    for (float number : (float[]) value) packet[offset++] = Float.floatToRawIntBits(number);
+                } else {
+                    for (long number : (long[]) value) {
+                        packet[offset++] = (int) number;
+                        packet[offset++] = (int) (number >>> 32);
+                    }
+                }
+            }
+        }
+
+        static Pool readWords(int[] packet, int offset, int end, long budget) throws IOException {
+            if (offset < 0 || end > packet.length || offset >= end) throw new IOException("Prepared word table bounds");
+            Pool pool = new Pool(budget);
+            int count = bounded(packet[offset++], Math.min(MAX_ENTRIES, (end - offset) / 2), "word table length");
+            for (int i = 0; i < count; i++) {
+                if (end - offset < 2) throw new IOException("Prepared word table header");
+                int type = packet[offset++], size = bounded(packet[offset++], MAX_ARRAY, "word array length");
+                if (type < 1 || type > 4) throw new IOException("Prepared word array type");
+                long bytes = size * (type == 1 ? 1L : type == 4 ? 8L : 4L);
+                int words = arrayWords(type, size);
+                if (words > end - offset || pool.retainedBytes + bytes + 256 > budget) throw new IOException("Prepared word array budget");
+                Object value;
+                if (type == 1) {
+                    byte[] field = new byte[size];
+                    for (int j = 0; j < size; j++) field[j] = (byte) (packet[offset + (j >>> 2)] >>> ((j & 3) * 8));
+                    value = field;
+                } else if (type == 2) {
+                    value = Arrays.copyOfRange(packet, offset, offset + size);
+                } else if (type == 3) {
+                    float[] field = new float[size];
+                    for (int j = 0; j < size; j++) field[j] = Float.intBitsToFloat(packet[offset + j]);
+                    value = field;
+                } else {
+                    long[] field = new long[size];
+                    for (int j = 0; j < size; j++) field[j] = (packet[offset + j * 2] & 0xffffffffL) | (long) packet[offset + j * 2 + 1] << 32;
+                    value = field;
+                }
+                pool.entries.add(value);
+                pool.bytes += bytes;
+                pool.retainedBytes += bytes + 256;
+                offset += words;
+            }
+            if (offset != end) throw new IOException("Trailing prepared words");
+            return pool;
+        }
+
+        private static int wordType(Object value) {
+            return value instanceof byte[] ? 1 : value instanceof int[] ? 2 : value instanceof float[] ? 3 : 4;
+        }
+
+        private static int arrayWords(int type, int length) {
+            return type == 1 ? (length + 3) >>> 2 : type == 4 ? length * 2 : length;
+        }
+
         public void write(DataOutput out)throws IOException{out.writeInt(entries.size());for(Object value:entries){int type=value instanceof byte[]?1:value instanceof int[]?2:value instanceof float[]?3:4;out.writeInt(type);out.writeInt(java.lang.reflect.Array.getLength(value));if(type==1)out.write((byte[])value);else if(type==2)for(int v:(int[])value)out.writeInt(v);else if(type==3)for(float v:(float[])value)out.writeInt(Float.floatToRawIntBits(v));else for(long v:(long[])value)out.writeLong(v);}}
         public static Pool read(DataInput in)throws IOException{
             Pool p=new Pool();int count=bounded(in.readInt(),MAX_ENTRIES,"pool count");for(int i=0;i<count;i++){int type=in.readInt(),n=bounded(in.readInt(),MAX_ARRAY,"array length");long b=(long)n*(type==1?1:type==4?8:4);if(type<1||type>4||p.bytes+b>MAX_BYTES)throw new IOException("Prepared primitive budget/type");Object value;if(type==1){byte[] a=new byte[n];in.readFully(a);value=a;}else if(type==2){int[] a=new int[n];for(int j=0;j<n;j++)a[j]=in.readInt();value=a;}else if(type==3){float[] a=new float[n];for(int j=0;j<n;j++)a[j]=Float.intBitsToFloat(in.readInt());value=a;}else{long[] a=new long[n];for(int j=0;j<n;j++)a[j]=in.readLong();value=a;}p.entries.add(value);p.bytes+=b;p.retainedBytes+=b+256;}return p;

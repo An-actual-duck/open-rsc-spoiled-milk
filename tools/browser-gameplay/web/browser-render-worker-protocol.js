@@ -4,13 +4,14 @@ export const RENDER_WORKER_MAX_BYTES=64*1024*1024;
 export const RENDER_WORKER_MAX_COMMANDS=1024;
 const P='Java_orsc_BrowserWebGLBridge_';
 // n finite scalar, i safe integer, b boolean, s bounded shader, I/F/B primitive plane.
+// N nullable float plane. P nullable int plane.
 export const RENDER_WORKER_SCHEMA=Object.freeze({
   initialize:['s','s'],initializeWholeZone:['s','I','I'],wholeZoneFrame:['I','I'],initializeLighting:['s','s'],initializeSky:[],
   uploadLightingMask:['i','i','i','B','F'],lightingFrame:['F'],uploadSkyGeometry:['F','I','i'],skyFrame:['F','F'],
-  overlayFrame:['i','i','i','n','n','i','b','N'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
+  overlayFrame:['i','i','i','n','n','i','b','N'],uploadCompactSceneChunk:['i','I','I','I'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],
-  present:['i','i','b','F','F','I','I'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
-  planWorldSprites:['i','n','I'],commitWorldSprites:['i','n','B','F'],
+  present:['i','i','b','F','F','I','I','P','n','n','N'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
+  planWorldSprites:['i','n','I'],verifyWorldSpritePlan:['i','n','I','I'],commitWorldSprites:['i','n','B','F'],
   '$owned':['b'],'$validation':['b'],'$physical':['b'],'$measurement':['b']
 });
 const TA=Object.getPrototypeOf(Uint8Array.prototype),get=(name)=>Object.getOwnPropertyDescriptor(TA,name).get;
@@ -26,13 +27,15 @@ function bytes(value,kind){
   return {buffer,offset,length};
 }
 export function inspectRenderCommand(name,args){
-  const schema=RENDER_WORKER_SCHEMA[name];if(!schema||!Array.isArray(args)||args.length!==schema.length)throw new Error('Unknown render command/schema');
+  const schema=RENDER_WORKER_SCHEMA[name];
+  if(!schema||!Array.isArray(args)||args.length!==schema.length&&!(name==='present'&&args.length===7))
+    throw new Error('Unknown render command/schema');
   let count=0;
   const planes=[];
-  for(let n=0;n<schema.length;n++){
+  for(let n=0;n<args.length;n++){
     const kind=schema[n],value=args[n];
-    if(kind==='N'&&value===null)continue;
-    if('IFBN'.includes(kind)){const actual=kind==='N'?'F':kind;const shape=bytes(value,actual);planes.push({n,kind:actual,...shape});count+=shape.length;}
+    if((kind==='N'||kind==='P')&&value===null)continue;
+    if('IFBNP'.includes(kind)){const actual=kind==='N'?'F':kind==='P'?'I':kind;const shape=bytes(value,actual);planes.push({n,kind:actual,...shape});count+=shape.length;}
     else if(kind==='s'){if(typeof value!=='string'||value.length>131072)throw new Error('Invalid shader text');count+=value.length*2;}
     else if(kind==='b'){if(typeof value!=='boolean')throw new Error('Invalid render boolean');}
     else if(typeof value!=='number'||!Number.isFinite(value)||(kind==='i'&&!Number.isSafeInteger(value)))throw new Error('Invalid render scalar');
@@ -63,7 +66,11 @@ export function validateRenderBatch(packet){
   if(total!==packet.bytes)throw new Error('Render byte receipt mismatch');
   return total;
 }
-export function renderWorkerPolicy(mode,options){
+export function renderWorkerPolicy(mode,options,surfaceFixture=false){
+  if(surfaceFixture){
+    if(mode!=='webgl'||options.has('benchmark'))throw new Error('Live surface renderer requires the private gameplay route');
+    return {requested:true,enabled:true};
+  }
   const v=options.get('renderworker');if(v!==null&&!['on','off'].includes(v))throw new Error('Invalid private renderworker policy');
   const enabled=v==='on';if(enabled&&(mode!=='webgl'||!options.has('benchmark')||options.get('overlay')!=='coverage'||!['off',null].includes(options.get('overlaydelta'))||options.get('nativecalls')==='sync'))throw new Error('Render worker requires private async WebGL full coverage');
   return {requested:enabled,enabled};

@@ -26,6 +26,15 @@ public final class NativeLayeredTerrainSnapshot {
 	public static final int STREAMING_CHUNK_SIZE = SECTOR_SIZE;
 	public static final int STREAMING_CHUNK_RADIUS = 1;
 	public static final int SYMMETRIC_RESIDENCY_CHUNK_RADIUS = 2;
+	static final boolean EXPANDED_SURFACE_DRAW_BORDER = BrowserWorldStreaming.allowsSurfaceFeatures()
+		&& Boolean.getBoolean("spoiledmilk.expandedSurfaceDrawBorder");
+	private static final int SURFACE_DRAW_SOURCE_RADIUS = 3;
+
+	public static boolean isSymmetricSourceRadius(int radius, String worldSpace, int level) {
+		return radius == SYMMETRIC_RESIDENCY_CHUNK_RADIUS
+			|| EXPANDED_SURFACE_DRAW_BORDER && radius == SURFACE_DRAW_SOURCE_RADIUS
+				&& level == 0 && "global".equals(worldSpace);
+	}
 
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
@@ -44,6 +53,7 @@ public final class NativeLayeredTerrainSnapshot {
 	private final String packageVersion;
 	private final String manifestSha256;
 	private final String packageIdentity;
+	private final String scopeIdentity;
 	private final int presentationChunkSize;
 	private final String worldSpace;
 	private final int level;
@@ -126,6 +136,7 @@ public final class NativeLayeredTerrainSnapshot {
 		this.chunks = new NativeLayeredTerrainChunk[0];
 		this.queryIndexEligible = false;
 		this.queryMinimumX = this.queryMinimumY = this.queryDimension = 0;
+		this.scopeIdentity = buildScopeIdentity();
 	}
 
 	public NativeLayeredTerrainSnapshot(
@@ -203,13 +214,9 @@ public final class NativeLayeredTerrainSnapshot {
 			currentChunkY, presentationChunkSize, "current chunk Y");
 		this.currentChunkX = currentChunkX;
 		this.currentChunkY = currentChunkY;
-		int expectedChunkRadius =
-			protocolVersion == SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
-					|| protocolVersion
-						== SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
-				? SYMMETRIC_RESIDENCY_CHUNK_RADIUS
-				: STREAMING_CHUNK_RADIUS;
-		if (chunkRadius != expectedChunkRadius) {
+		boolean symmetric = protocolVersion == SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| protocolVersion == SYMMETRIC_STRUCTURE_PROTOCOL_VERSION;
+		if (symmetric ? !isSymmetricSourceRadius(chunkRadius, worldSpace, level) : chunkRadius != STREAMING_CHUNK_RADIUS) {
 			throw new IllegalArgumentException(
 				"Chunked native terrain has an invalid residency radius");
 		}
@@ -258,6 +265,7 @@ public final class NativeLayeredTerrainSnapshot {
 		this.verticalWall = 0;
 		this.horizontalWall = 0;
 		this.diagonalWall = 0;
+		this.scopeIdentity = buildScopeIdentity();
 	}
 
 	public boolean covers(
@@ -329,7 +337,9 @@ public final class NativeLayeredTerrainSnapshot {
 			.groundOverlay(worldX, worldY);
 	}
 
-	public String scopeIdentity() {
+	public String scopeIdentity() { return scopeIdentity; }
+
+	private String buildScopeIdentity() {
 		String identity = packageIdentity()
 			+ ":" + worldSpace + ":" + level;
 		if (isChunkedProtocol()) {
@@ -388,6 +398,9 @@ public final class NativeLayeredTerrainSnapshot {
 		return manifestSha256;
 	}
 
+	String getPackageId() { return packageId; }
+	String getPackageVersion() { return packageVersion; }
+
 	public int getSectorX() {
 		return sectorX;
 	}
@@ -432,6 +445,69 @@ public final class NativeLayeredTerrainSnapshot {
         return chunks[index];
     }
 
+	/** Exact source footprint for the detached surface renderer. */
+	public byte[] surfaceWorkerSource(int cellX, int cellZ) throws java.io.IOException {
+		if (level != 0 || !"global".equals(worldSpace) || presentationChunkSize != STREAMING_CHUNK_SIZE) {
+			throw new IllegalArgumentException("Surface worker requires checked global terrain");
+		}
+		java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream(256 * 1024);
+		try (java.io.DataOutputStream output = new java.io.DataOutputStream(bytes)) {
+			output.writeUTF(packageId);
+			output.writeUTF(packageVersion);
+			output.writeUTF(manifestSha256);
+			output.writeInt(cellX);
+			output.writeInt(cellZ);
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) {
+					int x = cellX + dx, z = cellZ + dz;
+					NativeLayeredTerrainChunk source = null;
+					for (NativeLayeredTerrainChunk chunk : chunks) {
+						if (chunk.getChunkX() == x && chunk.getChunkY() == z) {
+							source = chunk;
+							break;
+						}
+					}
+					(source == null ? NativeLayeredTerrainChunk.voidChunk(presentationChunkSize, x, z) : source)
+						.writeSurfaceWorkerSource(output);
+				}
+			}
+		}
+		return bytes.toByteArray();
+	}
+
+	public static NativeLayeredTerrainSnapshot readSurfaceWorkerSource(byte[] bytes) throws java.io.IOException {
+		if (bytes == null || bytes.length > 256 * 1024) throw new IllegalArgumentException("Surface worker source bounds");
+		try (java.io.DataInputStream input = new java.io.DataInputStream(new java.io.ByteArrayInputStream(bytes))) {
+			String packageId = input.readUTF(), version = input.readUTF(), manifest = input.readUTF();
+			int x = input.readInt(), z = input.readInt(), size = STREAMING_CHUNK_SIZE;
+			NativeLayeredTerrainChunk[] cells = new NativeLayeredTerrainChunk[9];
+			int index = 0;
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) {
+					cells[index++] = NativeLayeredTerrainChunk.readSurfaceWorkerSource(input, size, x + dx, z + dz);
+				}
+			}
+			if (input.read() != -1) throw new IllegalArgumentException("Trailing surface worker data");
+			return new NativeLayeredTerrainSnapshot(ATOMIC_ACTIVATION_PROTOCOL_VERSION, packageId, version, manifest,
+				size, "global", 0, x, z, 1, cells);
+		}
+	}
+
+	boolean matchesPreparedSurface(String space, int level, String id, String version, String manifest, int x, int z) {
+		return level == 0 && "global".equals(space) && this.level == level && worldSpace.equals(space)
+			&& protocolVersion == SYMMETRIC_RESIDENCY_PROTOCOL_VERSION && currentChunkX == x && currentChunkY == z
+			&& packageId.equals(id) && packageVersion.equals(version) && manifestSha256.equals(manifest);
+	}
+
+	NativeLayeredTerrainChunk findPreparedSurfaceChunk(int x, int z, int sourceX, int sourceZ, String encoding, String hash) {
+		for (NativeLayeredTerrainChunk chunk : chunks) {
+			if (chunk.isAvailable() && chunk.getChunkX() == x && chunk.getChunkY() == z
+				&& chunk.getSourceSectorX() == sourceX && chunk.getSourceSectorY() == sourceZ
+				&& chunk.getSourceEncoding().equals(encoding) && chunk.getSourcePayloadSha256().equals(hash)) return chunk;
+		}
+		return null;
+	}
+
 	public int getChunkSlotCount() {
 		return isChunkedProtocol() ? chunks.length : 1;
 	}
@@ -447,7 +523,7 @@ public final class NativeLayeredTerrainSnapshot {
 	}
 
 	/**
-	 * Extracts the authoritative radius-one window carried inside a radius-two
+	 * Extracts the authoritative radius-one window carried inside a symmetric
 	 * prediction. A complete predicted presentation is represented by merged
 	 * visual and structural protocol data, while the inner nine sectors remain
 	 * the same full authoritative source image in either form. The returned
@@ -458,9 +534,9 @@ public final class NativeLayeredTerrainSnapshot {
 	public NativeLayeredTerrainSnapshot toAtomicActivationInnerWindow() {
 		if ((protocolVersion != SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
 				&& protocolVersion != SYMMETRIC_STRUCTURE_PROTOCOL_VERSION)
-			|| chunkRadius != SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
+			|| !isSymmetricSourceRadius(chunkRadius, worldSpace, level)) {
 			throw new IllegalStateException(
-				"Only a radius-two presentation has an atomic inner window");
+				"Only a symmetric presentation has an atomic inner window");
 		}
 		int sourceWidth = chunkRadius * 2 + 1;
 		NativeLayeredTerrainChunk[] inner =

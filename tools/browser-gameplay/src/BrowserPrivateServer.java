@@ -1,8 +1,11 @@
 import com.openrsc.server.Server;
 import com.openrsc.server.config.ServerConfigurationLoader;
 import com.openrsc.server.database.DatabaseType;
+import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.model.Point;
+import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.json.JSONObject;
@@ -14,9 +17,12 @@ public final class BrowserPrivateServer {
         final Path serverRoot = Paths.get(".").toRealPath();
         final Path run = serverRoot.getParent();
         if (!Files.isRegularFile(run.resolve("stage.json")) || !Files.isRegularFile(serverRoot.resolve("BROWSER-PRIVATE.json"))) throw new IllegalStateException("Private staged world required");
+        if (args.length != 0 && args.length != 2) throw new IllegalArgumentException("Supply both loopback ports");
+        int tcpPort = args.length == 0 ? 43629 : Integer.parseInt(args[0]);
+        int wsPort = args.length == 0 ? 43529 : Integer.parseInt(args[1]);
         com.openrsc.server.config.ServerConfigurationLoadResult loaded = ServerConfigurationLoader.load("myworld.conf");
         com.openrsc.server.ServerConfiguration config = loaded.getLegacyConfiguration();
-        if (!"127.0.0.1".equals(config.SERVER_BIND_ADDRESS) || loaded.getProcessNetwork().getServerPort() != 43629 || loaded.getProcessNetwork().getWebsocketPort() != 43529 || !config.WANT_FEATURE_WEBSOCKETS || config.DB_TYPE != DatabaseType.SQLITE || !"browser_spike_dev".equals(config.DB_NAME)) throw new IllegalStateException("Private bindings/database required");
+        if (!"127.0.0.1".equals(config.SERVER_BIND_ADDRESS) || loaded.getProcessNetwork().getServerPort() != tcpPort || loaded.getProcessNetwork().getWebsocketPort() != wsPort || !config.WANT_FEATURE_WEBSOCKETS || config.DB_TYPE != DatabaseType.SQLITE || !"browser_spike_dev".equals(config.DB_NAME)) throw new IllegalStateException("Private bindings/database required");
         if (config.WANT_DISCORD_BOT || config.WANT_DISCORD_GENERAL_LOGGING || config.WANT_DISCORD_AUCTION_UPDATES || config.WANT_DISCORD_ITEM_SHOWCASE || config.WANT_DISCORD_MONITORING_UPDATES) throw new IllegalStateException("External services must be disabled");
         Files.write(run.resolve("server.pid"), java.lang.management.ManagementFactory.getRuntimeMXBean().getName().split("@")[0].getBytes("UTF-8"));
         final Server server = Server.startServer("myworld.conf");
@@ -25,13 +31,39 @@ public final class BrowserPrivateServer {
             if (id < 0) throw new IllegalStateException("Could not create disposable browser account");
         }
         server.getGameEventHandler().add(new GameTickEvent(server.getWorld(), null, 1, "Private browser proof status", DuplicationStrategy.ONE_PER_SERVER) {
+            private final boolean traceTravel = Boolean.getBoolean("spoiledmilk.browserTravelTrace");
+            private final boolean protectWalk = Boolean.getBoolean("spoiledmilk.privateSafeWalkFixture");
+            private final boolean mutateScenery = Boolean.getBoolean("spoiledmilk.surfaceSceneryMutation");
+            private GameObject testScenery;
+            private boolean sceneryRemoved;
             public void run() {
                 try {
                     Player player = server.getWorld().getPlayer(DataConversions.usernameToHash("browserdemo"));
+                    if (protectWalk && player != null && !player.stateIsInvulnerable()) player.setCacheInvulnerable(true);
+                    if (mutateScenery && player != null && !sceneryRemoved && player.getY() == 609) {
+                        if (player.getX() == 258 && testScenery == null) {
+                            Point tile = Point.location(305, 620);
+                            if (server.getWorld().getRegionManager().findInteractionScenery(tile, player) != null) {
+                                throw new IllegalStateException("Private scenery fixture needs an empty tile");
+                            }
+                            testScenery = new GameObject(server.getWorld(), tile, SceneryId.ANVIL.id(), 0, 0);
+                            server.getWorld().registerGameObject(testScenery);
+                            System.out.println("PRIVATE_SURFACE_SCENERY added anvil at 305,620");
+                        } else if (player.getX() == 259 && testScenery != null) {
+                            server.getWorld().unregisterGameObject(testScenery);
+                            sceneryRemoved = true;
+                            System.out.println("PRIVATE_SURFACE_SCENERY removed anvil at 305,620");
+                        }
+                    }
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
                     Path temp = run.resolve("status.next"); Files.write(temp, state.toString().getBytes("UTF-8"));
                     Files.move(temp, run.resolve("status.json"), StandardCopyOption.REPLACE_EXISTING);
+                    if (traceTravel && player != null) {
+                        JSONObject row = state.put("time", System.currentTimeMillis()).put("tick", server.getCurrentTick());
+                        Files.write(run.resolve("travel-server.ndjson"), (row + "\n").getBytes("UTF-8"),
+                            StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                    }
                 } catch (Exception error) { error.printStackTrace(); }
             }
         });

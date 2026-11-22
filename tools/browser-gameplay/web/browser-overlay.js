@@ -4,12 +4,14 @@ import {validateOverlayDelta} from './browser-overlay-delta.js';
 import {createBrowserRetainedFrame} from './browser-retained-frame.js';
 /** Optional exact-coverage compositor. RGB is the ordinary software result over
  * black; transmittance is the surviving world coefficient. No world readback. */
-export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,deferRetainedReset=false,physicalOutput=false,deltaTransport=false,overlayRectMode='off',measurePacking=false,maxTextureSize=0}={}) {
+export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,deferRetainedReset=false,physicalOutput=false,deltaTransport=false,overlayRectMode='off',measurePacking=false,measureStages=false,maxTextureSize=0}={}) {
   if(!['off','observe','on','packed'].includes(overlayRectMode)||overlayRectMode!=='off'&&!deltaTransport)throw new Error('Invalid overlay rectangle transport mode');
   const rectEnabled=['on','packed'].includes(overlayRectMode);
   const staging=overlayRectMode==='packed'?createOverlayStaging({stats,measure:measurePacking===true}):null;
   const MAX_PIXELS=2097152, UNIT=8;
   const retained=createBrowserRetainedFrame(gl,{stats,ownedFrame,reserveBytes:extra=>reserveCombined(extra)});
+  // Private CPU wall times for coverage upload, RGB upload, composition, and capture.
+  const stageSamples=measureStages?(stats.overlayStageSamples=[]):null;
   let outputWidth=0,outputHeight=0;
   let deltaHistory=null;
   let deferredReset=false;
@@ -97,8 +99,10 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
       if(rgb)gl.deleteTexture(rgb);if(coverage)gl.deleteTexture(coverage);rgb=coverage=null;width=height=tWidth=tHeight=0;stats.overlayRgbBytes=stats.overlayCoverageBytes=0;account();
     }
     if(reset||width!==w||height!==h){if(deferRetainedReset&&mode===1)deferredReset=true;else retained.reset();}
+    const uploadStart=stageSamples?performance.now():0;
     if(mode!==0){coverage=textureUpload(coverage,tWidth,tHeight,w,h,gl.R32F,gl.FLOAT,transmittance,UNIT);tWidth=w;tHeight=h;stats.overlayCoverageBytes=w*h*4;}
     account();stats.overlayDeclaration={width:w,height:h,mode,generation,frameSequence,fades,reset};pending={w,h,mode,token:{generation,frameSequence},fades};
+    if(stageSamples)pending.transmittanceUploadMs=performance.now()-uploadStart;
   }
   /** Called after parent clear, before any new world draw. */
   function outputSize(w,h,desiredWidth=w,desiredHeight=h){
@@ -115,14 +119,23 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
   }
   function draw(w,h,bytes){
     alive();if(!active||active.w!==w||active.h!==h||!(bytes instanceof Uint8Array)||bytes.length!==w*h*4)throw new Error('Coverage RGB frame mismatch');initialize();
+    const sampled=stageSamples&&active.mode===1&&!active.delta;
+    const uploadStart=sampled?performance.now():0;
     if(!active.delta){rgb=textureUpload(rgb,width,height,w,h,gl.RGBA8,gl.UNSIGNED_BYTE,bytes,0);width=w;height=h;stats.overlayRgbBytes=w*h*4;}
+    const compositeStart=sampled?performance.now():0;
     if(ownedFrame?.active)ownedFrame.target();
     const old=ownedFrame?.active?null:{program:gl.getParameter(gl.CURRENT_PROGRAM),vao:gl.getParameter(gl.VERTEX_ARRAY_BINDING),active:gl.getParameter(gl.ACTIVE_TEXTURE),depth:gl.isEnabled(gl.DEPTH_TEST),blend:gl.isEnabled(gl.BLEND),depthMask:gl.getParameter(gl.DEPTH_WRITEMASK),srcRgb:gl.getParameter(gl.BLEND_SRC_RGB),dstRgb:gl.getParameter(gl.BLEND_DST_RGB),srcAlpha:gl.getParameter(gl.BLEND_SRC_ALPHA),dstAlpha:gl.getParameter(gl.BLEND_DST_ALPHA),eqRgb:gl.getParameter(gl.BLEND_EQUATION_RGB),eqAlpha:gl.getParameter(gl.BLEND_EQUATION_ALPHA)};
     gl.activeTexture(gl.TEXTURE0);const oldRgb=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D);gl.activeTexture(gl.TEXTURE0+UNIT);const oldCoverage=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D);
     try{gl.useProgram(program);gl.bindVertexArray(vao);gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,rgb);gl.activeTexture(gl.TEXTURE0+UNIT);gl.bindTexture(gl.TEXTURE_2D,coverage||rgb);gl.uniform1i(gl.getUniformLocation(program,'image'),0);gl.uniform1i(gl.getUniformLocation(program,'transmittance'),UNIT);gl.uniform1i(gl.getUniformLocation(program,'transparent'),active.mode!==0?1:0);if(physicalOutput){gl.uniform2f(gl.getUniformLocation(program,'logicalSize'),w,h);gl.uniform2f(gl.getUniformLocation(program,'outputSize'),active.outputWidth,active.outputHeight);}
       if(active.mode!==0){gl.enable(gl.BLEND);gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);}else gl.disable(gl.BLEND);gl.drawArrays(gl.TRIANGLES,0,3);check();
     }catch(e){failed=true;throw e;}finally{if(ownedFrame?.active){gl.disable(gl.BLEND);gl.depthMask(true);gl.activeTexture(gl.TEXTURE0);}else{gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,oldRgb);gl.activeTexture(gl.TEXTURE0+UNIT);gl.bindTexture(gl.TEXTURE_2D,oldCoverage);gl.activeTexture(old.active);gl.useProgram(old.program);gl.bindVertexArray(old.vao);old.depth?gl.enable(gl.DEPTH_TEST):gl.disable(gl.DEPTH_TEST);old.blend?gl.enable(gl.BLEND):gl.disable(gl.BLEND);gl.depthMask(old.depthMask);gl.blendFuncSeparate(old.srcRgb,old.dstRgb,old.srcAlpha,old.dstAlpha);gl.blendEquationSeparate(old.eqRgb,old.eqAlpha);}}
+    const captureStart=sampled?performance.now():0;
     try{if(active.mode!==0||retainOpaqueFull){if(active.mode===0&&stats.overlayCoverageMode!==0)retained.reset();retained.capture(active.outputWidth,active.outputHeight,active.token);}else retained.reset();account();}catch(e){failed=true;throw e;}stats.overlayCoverageFrames++;stats.overlayCoverageMode=active.mode;
+    if(sampled){
+      stageSamples.push([active.transmittanceUploadMs,compositeStart-uploadStart,
+        captureStart-compositeStart,performance.now()-captureStart]);
+      if(stageSamples.length>600)stageSamples.shift();
+    }
     if(active.delta){deltaHistory={width:w,height:h,...active.token};stats.overlayDeltaPresentedFrames++;}
     active=null;
   }

@@ -9,6 +9,8 @@ import org.json.*;
 
 /** Private immutable catalog index; normal local gameplay authority is never replaced. */
 public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegistry.Resolver {
+    private static final boolean LIVE_CELLS = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+        && Boolean.getBoolean("spoiledmilk.browserLiveCells");
     public static boolean isEnabled(){return WholeOverworldZoneRegistry.isEnabled();}
     /** Private same-artifact control; ordinary and default whole-zone paths stay literal. */
     public static boolean isStaticSceneReuseEnabled(){return WholeOverworldZoneRegistry.isStaticSceneReuseEnabled();}
@@ -141,17 +143,31 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
         active="global".equals(authoritative.getWorldSpace())&&authoritative.getLevel()==0&&frame.getSignedWorldLevel()==0;
         refreshObserved(client,reuse);
         int centerX=Math.floorDiv(authoritative.getCurrentChunkX()*authoritative.getPresentationChunkSize(),48),centerY=Math.floorDiv(authoritative.getCurrentChunkY()*authoritative.getPresentationChunkSize(),48);
+        int drawCenterX=centerX,drawCenterY=centerY;
+        if(LIVE_CELLS&&active&&client.getLocalPlayer()!=null){
+            int playerX=Math.floorDiv(baseX+client.getLocalPlayerX(),48);
+            int playerY=Math.floorDiv(baseZ+client.getLocalPlayerZ(),48);
+            // Keep the entire interactive window within the draw ring until
+            // gameplay coverage can also advance by individual cells.
+            drawCenterX=Math.max(centerX-1,Math.min(centerX+1,playerX));
+            drawCenterY=Math.max(centerY-1,Math.min(centerY+1,playerY));
+        }
         long epoch=world.getWholeOverworldSourceRevision(),placements=client.getWholeOverworldObjectCellsRevision(),authority=client.getWholeZoneObjectAuthorityRevision();
         boolean cacheable=reuse&&placements>0&&authority>=0;
-        if(cacheable&&rowCacheValid&&rowClient==client&&rowAuthorityOwner==client.packetHandler&&rowWorld==world&&rowSource==authoritative&&rowSourceRevision==epoch&&rowPlacementRevision==placements&&rowAuthorityRevision==authority&&rowBaseX==baseX&&rowBaseZ==baseZ&&rowCenterX==centerX&&rowCenterY==centerY&&rowSignedLevel==frame.getSignedWorldLevel()&&rowRequestedPlane==client.getRequestedPlane()&&rowActive==active)rowHits++;
+        if(cacheable&&rowCacheValid&&rowClient==client&&rowAuthorityOwner==client.packetHandler&&rowWorld==world&&rowSource==authoritative&&rowSourceRevision==epoch&&rowPlacementRevision==placements&&rowAuthorityRevision==authority&&rowBaseX==baseX&&rowBaseZ==baseZ&&rowCenterX==drawCenterX&&rowCenterY==drawCenterY&&rowSignedLevel==frame.getSignedWorldLevel()&&rowRequestedPlane==client.getRequestedPlane()&&rowActive==active)rowHits++;
         else {
-            buildRows(client,centerX,centerY,reuse);rowCacheValid=cacheable;
-            rowClient=client;rowAuthorityOwner=client.packetHandler;rowWorld=world;rowSource=authoritative;rowSourceRevision=epoch;rowPlacementRevision=placements;rowAuthorityRevision=authority;rowBaseX=baseX;rowBaseZ=baseZ;rowCenterX=centerX;rowCenterY=centerY;rowSignedLevel=frame.getSignedWorldLevel();rowRequestedPlane=client.getRequestedPlane();rowActive=active;
+            buildRows(client,drawCenterX,drawCenterY,reuse);rowCacheValid=cacheable;
+            rowClient=client;rowAuthorityOwner=client.packetHandler;rowWorld=world;rowSource=authoritative;rowSourceRevision=epoch;rowPlacementRevision=placements;rowAuthorityRevision=authority;rowBaseX=baseX;rowBaseZ=baseZ;rowCenterX=drawCenterX;rowCenterY=drawCenterY;rowSignedLevel=frame.getSignedWorldLevel();rowRequestedPlane=client.getRequestedPlane();rowActive=active;
         }
         // Roof visibility and signed carriers remain current even when object rows persist.
-        metadata=new int[18];metadata[0]=1;metadata[1]=active?1:0;metadata[2]=frame.getSignedWorldLevel();metadata[3]=Math.multiplyExact(baseX,128);metadata[4]=Math.multiplyExact(baseZ,128);metadata[5]=centerX;metadata[6]=centerY;metadata[7]=2;
+        metadata=new int[LIVE_CELLS?21:18];metadata[0]=1;metadata[1]=active?1:0;metadata[2]=frame.getSignedWorldLevel();metadata[3]=Math.multiplyExact(baseX,128);metadata[4]=Math.multiplyExact(baseZ,128);metadata[5]=centerX;metadata[6]=centerY;metadata[7]=2;
         for(int plane=0;plane<=2;plane++){int mask=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if((kind!=Renderer3DModelKind.ROOF||!Config.C_HIDE_ROOFS)&&frame.isWorldChunkModelKindVisible(kind,plane)&&(plane==0||kind!=Renderer3DModelKind.GAME_OBJECT&&kind!=Renderer3DModelKind.WALL_OBJECT))mask|=1<<kind.ordinal();metadata[8+plane]=mask;}
         System.arraycopy(settings,0,metadata,11,4);metadata[15]=(int)epoch;metadata[16]=(int)(epoch>>>32);metadata[17]="global".equals(authoritative.getWorldSpace())?0:1;resolvedStatic=liveStatic=skippedWorld=0;
+        if(LIVE_CELLS){
+            metadata[18]=client.packetHandler.getPersistentMovementGeneration();
+            metadata[19]=drawCenterX;
+            metadata[20]=drawCenterY;
+        }
     }
     public void invalidate(){ready=false;active=false;descriptors.clear();rowCacheValid=false;rowSource=null;rowWorld=null;rowClient=null;rowAuthorityOwner=null;observedClient=null;observedRevision=-1;validatedMaterials=null;if(retainedCells!=null)retainedCells.clear();WholeOverworldZoneRegistry.clear();}
     public boolean ready(){return ready;}

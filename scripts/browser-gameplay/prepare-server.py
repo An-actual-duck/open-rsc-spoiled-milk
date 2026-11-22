@@ -14,7 +14,43 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument('run', type=Path)
+    parser.add_argument('--tcp-port', type=int, default=43629)
+    parser.add_argument('--ws-port', type=int, default=43529)
+    parser.add_argument('--covered-walking-preview', action='store_true')
+    parser.add_argument('--persistent-movement', action='store_true', help='Enable the matched private travel movement stream')
+    parser.add_argument('--surface-scenery-cells', action='store_true', help='Publish authoritative incoming scenery cells')
+    parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Send source neighbors for every render cell')
+    parser.add_argument('--live-surface-handoff', action='store_true')
+    parser.add_argument('--surface-scenery-draw', action='store_true', help='Stream scenery revisions for draw cells')
+    parser.add_argument('--prepared-surface-adds', action='store_true', help='Send entering scenery in legacy addition order')
+    parser.add_argument('--browser-world-streaming', action='store_true', help='Enable per-browser World Streaming negotiation')
+    parser.add_argument('--safe-walk-fixture', action='store_true', help='Protect the disposable walk probe from incidental combat')
+    parser.add_argument('--surface-scenery-mutation', action='store_true', help='Change scenery during the automated route')
+    parser.add_argument('--predicted-scenery', action='store_true', help='Enable the private scenery prediction')
+    parser.add_argument('--prebuild-ownership', action='store_true', help='Stage scenery in the ownership transition strips')
+    parser.add_argument('--travel-trace', action='store_true', help='Record the disposable character position on each server tick')
+    parser.add_argument('--outer-coverage', action='store_true', help='Spawn at the private outer coverage test route')
     args = parser.parse_args(); run = args.run.resolve()
+    if not all(1024 <= port <= 65535 for port in (args.tcp_port, args.ws_port)) or args.tcp_port == args.ws_port:
+        parser.error('Use two different nonprivileged loopback ports')
+    if args.outer_coverage and not (args.covered_walking_preview or args.browser_world_streaming):
+        parser.error('The outer coverage route requires the covered walking preview')
+    if args.persistent_movement and not args.covered_walking_preview:
+        parser.error('The private travel stream requires installed surface coverage')
+    if args.surface_scenery_cells and not args.persistent_movement:
+        parser.error('Surface scenery cells require the private travel stream')
+    if args.expanded_surface_draw_border and not args.surface_scenery_cells:
+        parser.error('Expanded draw sources require private surface scenery cells')
+    if args.surface_scenery_draw and not args.expanded_surface_draw_border:
+        parser.error('Scenery draw cells require the expanded terrain sources')
+    if args.live_surface_handoff and not args.surface_scenery_draw:
+        parser.error('Live surface references require the matched scenery stream')
+    if args.surface_scenery_mutation and not (args.surface_scenery_cells and args.outer_coverage):
+        parser.error('The scenery mutation fixture requires the outer coverage route and surface scenery cells')
+    if args.predicted_scenery and not args.covered_walking_preview:
+        parser.error('Predicted scenery requires the covered walking preview')
+    if args.prebuild_ownership and not args.predicted_scenery:
+        parser.error('Scenery ownership prediction requires the scenery preview')
     if not (run / 'stage.json').is_file() or (run / 'server').exists(): parser.error('Use a staged run without a server; existing data is preserved')
     selection = json.loads(subprocess.check_output(['python3', str(ROOT / 'scripts/installed-map-selection.py'), str(ROOT)]))
     server = run / 'server'; server.mkdir()
@@ -23,11 +59,15 @@ def main():
     package = server / 'package'; shutil.copytree(selection['serverPackage'], package)
     config = (ROOT / 'server/myworld.conf').read_text()
     values = dict(db_name='browser_spike_dev', server_name='Private Browser Proof', server_name_welcome='Private Browser Proof',
-                  server_bind_address='127.0.0.1', server_port='43629', ws_server_port='43529', want_feature_websockets='true',
+                  server_bind_address='127.0.0.1', server_port=str(args.tcp_port), ws_server_port=str(args.ws_port), want_feature_websockets='true',
                   want_discord_bot='false', want_discord_general_logging='false', want_discord_auction_updates='false',
                   want_discord_item_showcase='false', want_discord_monitoring_updates='false', want_auto_server_shutdown='false',
                   layered_native_terrain_package_path=str(package), layered_native_terrain_manifest_sha256=selection['manifestSha256'],
                   layered_native_world_runtime_profile='world-builder-installed')
+    if args.outer_coverage:
+        values.update(respawn_location_x='239', respawn_location_y='609')
+    if args.persistent_movement or args.browser_world_streaming:
+        values.update(want_sync_movement_snapshot='true')
     for key, value in values.items():
         config, count = re.subn(r'(?m)^([ \t]*)' + key + r':.*$', lambda m: m[1] + key + ': ' + value, config)
         if not count: config += '\n' + key + ': ' + value + '\n'
@@ -66,7 +106,35 @@ def main():
     classes = run / 'server-classes'; classes.mkdir()
     cp = ':'.join([str(lib / name) for name in ordered] + [str(server / 'core-gameplay-overlay.jar'), str(server / 'core.jar'), str(server / 'plugins.jar'), str(lib / '*'), str(classes)])
     subprocess.run(['javac', '-source', '8', '-target', '8', '-cp', cp, '-d', str(classes), str(ROOT / 'tools/browser-gameplay/src/BrowserPrivateServer.java')], check=True)
-    (run / 'server-command.json').write_text(json.dumps(dict(cwd=str(server), command=['java', '-Xmx2g', '-XX:+UseSerialGC', '-cp', cp, 'BrowserPrivateServer']), indent=2) + '\n')
+    command = ['java', '-Xmx2g', '-XX:+UseSerialGC']
+    if args.covered_walking_preview:
+        command.append('-Dspoiledmilk.coveredWalkingPreview=true')
+    if args.persistent_movement:
+        command.append('-Dspoiledmilk.persistentMovementPreview=true')
+    if args.surface_scenery_cells:
+        command.append('-Dspoiledmilk.surfaceSceneryCells=true')
+    if args.expanded_surface_draw_border:
+        command.append('-Dspoiledmilk.expandedSurfaceDrawBorder=true')
+    if args.surface_scenery_draw:
+        command.append('-Dspoiledmilk.surfaceSceneryDraw=true')
+    if args.live_surface_handoff:
+        command.append('-Dspoiledmilk.liveSurfaceHandoff=true')
+    if args.prepared_surface_adds:
+        command.append('-Dspoiledmilk.browserPreparedSurfaceAdds=true')
+    if args.browser_world_streaming:
+        command.append('-Dspoiledmilk.browserWorldStreaming=true')
+    if args.safe_walk_fixture:
+        command.append('-Dspoiledmilk.privateSafeWalkFixture=true')
+    if args.surface_scenery_mutation:
+        command.append('-Dspoiledmilk.surfaceSceneryMutation=true')
+    if args.predicted_scenery:
+        command.append('-Dspoiledmilk.predictedSceneryPreview=true')
+    if args.prebuild_ownership:
+        command.append('-Dspoiledmilk.predictedSceneryOwnershipPreview=true')
+    if args.travel_trace:
+        command.append('-Dspoiledmilk.browserTravelTrace=true')
+    command += ['-cp', cp, 'BrowserPrivateServer', str(args.tcp_port), str(args.ws_port)]
+    (run / 'server-command.json').write_text(json.dumps(dict(cwd=str(server), command=command), indent=2) + '\n')
     print('Prepared private server. Disposable credentials: browserdemo / BrowserProof13')
 
 

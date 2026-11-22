@@ -136,6 +136,19 @@ import static com.openrsc.server.plugins.Functions.inArray;
  * A single player.
  */
 public final class Player extends Mob {
+	private volatile int movementRelocation;
+
+	@Override
+	public void setTeleporting(final boolean teleporting) {
+		if (teleporting) {
+			movementRelocation++;
+		}
+		super.setTeleporting(teleporting);
+	}
+
+	public int getMovementRelocation() {
+		return movementRelocation;
+	}
 	public static final String BULK_GROUND_ITEM_TAKE_COUNT_ATTRIBUTE = "bulkGroundItemTakeCount";
 	public static final int MAX_BULK_GROUND_ITEM_TAKE_COUNT = 5000;
 
