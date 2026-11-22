@@ -14,8 +14,9 @@ final class SurfaceCollisionCells {
 	private static final int CELL_SIZE = World.SECTION_SIZE;
 	private final Map<Long, int[]> terrain = new HashMap<>();
 	private final Map<Long, IncomingScenery> incomingScenery = new HashMap<>();
-	private final Map<Long, TileContributions> live = new HashMap<>();
-	private final Map<Placement, Integer> placements = new HashMap<>();
+	private Map<Long, TileContributions> live = new HashMap<>();
+	private Map<Placement, Integer> placements = new HashMap<>();
+	private long revision;
 	private String scope;
 	private int baseX;
 	private int baseZ;
@@ -33,9 +34,23 @@ final class SurfaceCollisionCells {
 		live.clear();
 		placements.clear();
 		incomingCells = 0;
+		revision++;
 	}
 
 	void install(String mapScope, int x, int z, int[][] staticFlags) {
+		setWindow(mapScope, x, z, staticFlags);
+		for (Map.Entry<Long, TileContributions> entry : live.entrySet()) {
+			long key = entry.getKey();
+			int localX = (int)(key >> 32) - baseX, localZ = (int)key - baseZ;
+			if (World.isLocalTile(localX, localZ)) {
+				TileContributions tile = entry.getValue();
+				tile.terrainFlags = view[localX][localZ];
+				view[localX][localZ] = tile.terrainFlags | tile.flags;
+			}
+		}
+	}
+
+	private void setWindow(String mapScope, int x, int z, int[][] flags) {
 		if (!mapScope.equals(scope)) clear();
 		scope = mapScope;
 		baseX = x;
@@ -49,17 +64,44 @@ final class SurfaceCollisionCells {
 				if (cellX < west - 1 || cellX > west + 3 || cellZ < south - 1 || cellZ > south + 3) cached.remove();
 			}
 		}
-		view = staticFlags;
-		if (live.isEmpty()) return;
+		view = flags;
+		revision++;
+	}
+
+	/** Copy only collision ownership. The current pathfinding grid stays installed. */
+	SurfaceCollisionCells copyForRoll() {
+		SurfaceCollisionCells next = new SurfaceCollisionCells();
+		next.scope = scope;
+		next.baseX = baseX;
+		next.baseZ = baseZ;
+		next.placements.putAll(placements);
 		for (Map.Entry<Long, TileContributions> entry : live.entrySet()) {
-			long key = entry.getKey();
-			int localX = (int)(key >> 32) - baseX, localZ = (int)key - baseZ;
-			if (World.isLocalTile(localX, localZ)) {
-				TileContributions tile = entry.getValue();
-				tile.terrainFlags = view[localX][localZ];
-				view[localX][localZ] = tile.terrainFlags | tile.flags;
-			}
+			next.live.put(entry.getKey(), entry.getValue().copy());
 		}
+		return next;
+	}
+
+	long revision() { return revision; }
+
+	void installRoll(SurfaceCollisionCells prepared) {
+		setWindow(prepared.scope, prepared.baseX, prepared.baseZ, prepared.view);
+		placements = prepared.placements;
+		live = prepared.live;
+	}
+
+	int[][] installedFlags() { return view; }
+
+	boolean hasWindow(String mapScope, int x, int z) { return scope.equals(mapScope) && baseX == x && baseZ == z; }
+
+	boolean matchesInstalledCollision(SurfaceCollisionCells other) {
+		if (!hasWindow(other.scope, other.baseX, other.baseZ) || !Arrays.deepEquals(view, other.view)
+			|| !placements.equals(other.placements) || live.size() != other.live.size()) return false;
+		for (Map.Entry<Long, TileContributions> entry : live.entrySet()) {
+			TileContributions current = entry.getValue(), expected = other.live.get(entry.getKey());
+			if (expected == null || current.flags != expected.flags || current.terrainFlags != expected.terrainFlags
+				|| !Arrays.equals(current.counts, expected.counts)) return false;
+		}
+		return true;
 	}
 
 	void stage(String mapScope, Prepared prepared) {
@@ -146,6 +188,7 @@ final class SurfaceCollisionCells {
 		else if (copies == 0) return false;
 		else if (copies == 1) placements.remove(placement);
 		else placements.put(placement, copies - 1);
+		revision++;
 		return true;
 	}
 
@@ -285,6 +328,14 @@ final class SurfaceCollisionCells {
 		private final int[] counts = new int[8];
 		private int flags;
 		private int terrainFlags;
+
+		private TileContributions copy() {
+			TileContributions copy = new TileContributions();
+			System.arraycopy(counts, 0, copy.counts, 0, counts.length);
+			copy.flags = flags;
+			copy.terrainFlags = terrainFlags;
+			return copy;
+		}
 	}
 
 	private static final class Placement {

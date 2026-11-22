@@ -49,6 +49,8 @@ def main():
     parser.add_argument('--resident-camera-cull', action='store_true', help='Omit projection for certified resident models outside the pointer bounds')
     parser.add_argument('--integer-camera-bounds', action='store_true', help='Use checked fixed-point shifts and integer rounding for camera bounds')
     parser.add_argument('--roll-timings', action='store_true', help='Correlate the verified scene rolls with fresh render-worker submissions')
+    parser.add_argument('--prepare-collision-roll', action='store_true', help='Stage the destination collision view before ordinary walking rolls')
+    parser.add_argument('--verify-prepared-collision-roll', action='store_true', help='Compare staged collision with actual ordered collision replay')
     parser.add_argument('--keep-rebased-models', action='store_true', help='Keep verified resident model transforms across translation-only scene rolls')
     parser.add_argument('--skip-empty-model-removals', action='store_true', help='Skip legacy scene removal requests for missing models')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
@@ -102,6 +104,10 @@ def main():
         parser.error('Integer camera bounds require certified resident projection models')
     if args.roll_timings and (not args.presentation_only or not args.surface_draw_worker or args.frame_stages):
         parser.error('Roll timing requires the untraced presentation route and the render worker')
+    if args.prepare_collision_roll and not (args.live_surface_handoff and (args.manual or args.roll_timings)):
+        parser.error('Prepared collision requires the live render-worker roll route or a manual live preview')
+    if args.verify_prepared_collision_roll and not (args.prepare_collision_roll and args.roll_timings):
+        parser.error('Prepared collision verification requires the measured roll fixture')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -194,6 +200,8 @@ def main():
            f'        System.setProperty("spoiledmilk.browserTravelTrace", "{str(args.travel_trace).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPresentationOnly", "{str(args.presentation_only).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPresentationRollTimings", "{str(args.roll_timings).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserPrepareCollisionRoll", "{str(args.prepare_collision_roll).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserVerifyPreparedCollisionRoll", "{str(args.verify_prepared_collision_roll).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserFrameStageTrace", "{str(args.frame_stages).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProjectionDemand", "{str(args.projection_demand).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserResidentCameraCull", "{str(args.resident_camera_cull).lower()}");\n'
@@ -325,6 +333,8 @@ def main():
         'residentCameraCull': args.resident_camera_cull,
         'integerCameraBounds': args.integer_camera_bounds,
         'rollTimings': args.roll_timings,
+        'prepareCollisionRoll': args.prepare_collision_roll,
+        'verifyPreparedCollisionRoll': args.verify_prepared_collision_roll,
         'keepRebasedModels': args.keep_rebased_models,
         'skipEmptyModelRemovals': args.skip_empty_model_removals,
         'profilePanels': args.profile_panels,

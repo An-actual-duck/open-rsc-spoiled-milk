@@ -349,6 +349,14 @@ public final class BrowserOuterCoverageProbe {
 				+ Arrays.toString(before) + " to " + Arrays.toString(after));
 		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":rolled=3");
+		if (Boolean.getBoolean("spoiledmilk.browserPrepareCollisionRoll")) {
+			int installed = (int) World.class.getMethod("getPreparedCollisionRollInstalls").invoke(client.getWorld());
+			int verified = (int) World.class.getMethod("getPreparedCollisionRollVerifications").invoke(client.getWorld());
+			BrowserBootstrap.report("outer-coverage:prepared-collision-rolls:" + installed + ":verified=" + verified);
+			if (installed != 3 || verified != (Boolean.getBoolean("spoiledmilk.browserVerifyPreparedCollisionRoll") ? 3 : 0)) {
+				throw new IllegalStateException("The prepared collision route did not install all three views");
+			}
+		}
 		if (Boolean.getBoolean("spoiledmilk.browserPresentationRollTimings")) {
 			long[] timing = (long[]) PacketHandler.class.getMethod("getSurfaceRollTiming").invoke(client.packetHandler);
 			if (timing.length != 9) throw new IllegalStateException("Expected timestamps for three verified scene rolls");

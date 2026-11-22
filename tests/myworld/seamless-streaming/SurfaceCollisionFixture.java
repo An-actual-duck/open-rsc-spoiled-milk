@@ -66,7 +66,37 @@ public final class SurfaceCollisionFixture {
 		int[][] newWorld = terrain();
 		cells.install("replacement-surface", 0, -48, newWorld);
 		check(newWorld[85][47] == 0 && cells.incomingCells() == 0, "world replacement discarded old contributors");
+		verifyDetachedRoll();
 		System.out.println("PASS published collision strips, cross-cell footprints, overlapping contributors and scope changes");
+	}
+
+	private static void verifyDetachedRoll() {
+		SurfaceCollisionCells live = new SurfaceCollisionCells();
+		int[][] current = terrain();
+		live.install("walk", 0, 0, current);
+		live.object(1, 47, 50, 0, 3, 2, 1, true);
+		live.wall(2, 48, 50, 1, true);
+		live.wall(2, 48, 50, 1, true);
+		live.wall(3, 55, 51, 2, true);
+		long revision = live.revision();
+		SurfaceCollisionCells staged = live.copyForRoll();
+		staged.object(1, 47, 50, 0, 3, 2, 1, false);
+		int[][] stagedFlags = terrain();
+		stagedFlags[0][50] = CollisionFlag.WALL_SOUTH;
+		staged.install("walk", 48, 0, stagedFlags);
+		check(live.revision() == revision && (current[48][50] & CollisionFlag.FULL_BLOCK_C) != 0,
+			"preparation must not change the active collision view");
+		live.object(1, 47, 50, 0, 3, 2, 1, false);
+		check(live.revision() != revision, "live contributor changes invalidate a prepared view");
+		int[][] literalFlags = terrain();
+		literalFlags[0][50] = CollisionFlag.WALL_SOUTH;
+		live.install("walk", 48, 0, literalFlags);
+		check(live.matchesInstalledCollision(staged), "prepared grid and all contribution counts match ordered replay");
+		live.installRoll(staged);
+		live.wall(2, 0, 50, 1, false);
+		check((live.installedFlags()[0][50] & CollisionFlag.WALL_EAST) != 0, "installed view kept duplicate walls");
+		live.wall(2, 0, 50, 1, false);
+		check(live.installedFlags()[0][50] == CollisionFlag.WALL_SOUTH, "installed view kept authored collision after removal");
 	}
 
 	private static int[][] terrain() { return new int[World.LOCAL_TILE_COUNT][World.LOCAL_TILE_COUNT]; }
