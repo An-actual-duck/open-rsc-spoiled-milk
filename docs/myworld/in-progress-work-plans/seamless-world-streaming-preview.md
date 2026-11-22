@@ -2370,6 +2370,24 @@ and visibility match. A change uses one stable compaction and appends
 the same models in cell order. Ambiguous duplicate membership keeps
 the literal path.
 
+The candidate matched the literal raster, picks, sprite anchors and
+resident geometry through 96 drawn frames with visibility changes,
+scenery mutations, and terrain-order invalidation. It also rejected
+duplicate inputs and duplicate installed models before mutating the
+scene. The route reused the resulting order on more than 4,300 Chrome
+frames and reconciled it four times.
+
+| Browser | Longest switch interval | 99th percentile | Lowest one-second FPS |
+| --- | ---: | ---: | ---: |
+| Chrome | 115.2 → 113.9 ms | 23.7 → 23.7 ms | 55 → 54 |
+| Firefox | 144 → 171 ms | 25 → 24 ms | 50 → 51 |
+
+Both matched pairs reached the server-confirmed destination across
+three verified switches with zero holds and input closures. Whole-walk
+pacing was mixed and the largest Firefox switch regressed. The trial
+was retired at the first matched comparison.
+[Native frame parity](../../../output/tests/seamless-world-streaming/terrain-structure-order-build/native-terrain-structure-order.log) · [Chrome control](../../../output/tests/browser-gameplay-spike/terrain-structure-order-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/terrain-structure-order-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/terrain-structure-order-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/terrain-structure-order-trial-firefox/firefox-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

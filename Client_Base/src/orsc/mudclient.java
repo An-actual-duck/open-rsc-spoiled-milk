@@ -146,8 +146,6 @@ public final class mudclient implements Runnable {
 		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
 	static final boolean LIVE_SURFACE_HANDOFF = SURFACE_SCENERY_DRAW
 		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
-	private static final boolean STABLE_TERRAIN_STRUCTURE_ORDER = LIVE_SURFACE_HANDOFF
-		&& Boolean.getBoolean("spoiledmilk.browserStableTerrainStructureOrder");
 	private int rollingSurfaceWindows;
 	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
 		&& Boolean.getBoolean("spoiledmilk.browserPrepareIncomingScenery");
@@ -9475,19 +9473,15 @@ public final class mudclient implements Runnable {
 						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
 						boolean roofsVisible = roofVisibility.areRoofsVisible();
 						boolean automaticRoofCameraZoom = roofVisibility.usesAutomaticRoofCameraZoom();
-						boolean synchronizedStructures = STABLE_TERRAIN_STRUCTURE_ORDER
-							&& this.world.synchronizeTerrainStructures(this.lastHeightOffset, roofsVisible);
 
 						int centerX;
 					for (centerX = 0; centerX < this.world.modelRoofGrid[this.lastHeightOffset].length; ++centerX) {
-						if (!synchronizedStructures) {
-							this.scene.removeModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
-							if (this.lastHeightOffset == 0) {
-								this.scene.removeModel(this.world.modelWallGrid[1][centerX]);
-								this.scene.removeModel(this.world.modelRoofGrid[1][centerX]);
-								this.scene.removeModel(this.world.modelWallGrid[2][centerX]);
-								this.scene.removeModel(this.world.modelRoofGrid[2][centerX]);
-							}
+						this.scene.removeModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
+						if (this.lastHeightOffset == 0) {
+							this.scene.removeModel(this.world.modelWallGrid[1][centerX]);
+							this.scene.removeModel(this.world.modelRoofGrid[1][centerX]);
+							this.scene.removeModel(this.world.modelWallGrid[2][centerX]);
+							this.scene.removeModel(this.world.modelRoofGrid[2][centerX]);
 						}
 
 						// If the player is hiding roofs, we want to skip the camera zoom
@@ -9500,14 +9494,12 @@ public final class mudclient implements Runnable {
 						cameraZoom = minCameraZoom + (osConfig.C_LAST_ZOOM * 2);
 
 						if (roofsVisible) {
-							if (!synchronizedStructures) {
-								this.scene.addModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
-								if (this.lastHeightOffset == 0) {
-									this.scene.addModel(this.world.modelWallGrid[1][centerX]);
-									this.scene.addModel(this.world.modelRoofGrid[1][centerX]);
-									this.scene.addModel(this.world.modelWallGrid[2][centerX]);
-									this.scene.addModel(this.world.modelRoofGrid[2][centerX]);
-								}
+							this.scene.addModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
+							if (this.lastHeightOffset == 0) {
+								this.scene.addModel(this.world.modelWallGrid[1][centerX]);
+								this.scene.addModel(this.world.modelRoofGrid[1][centerX]);
+								this.scene.addModel(this.world.modelWallGrid[2][centerX]);
+								this.scene.addModel(this.world.modelRoofGrid[2][centerX]);
 							}
 
 							if (this.doCameraZoom) {

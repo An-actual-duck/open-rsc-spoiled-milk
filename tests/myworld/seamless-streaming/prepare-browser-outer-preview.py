@@ -52,7 +52,6 @@ def main():
     parser.add_argument('--roll-packet-timings', action='store_true', help='Capture each packet in the verified replay after the walk')
     parser.add_argument('--keep-rebased-models', action='store_true', help='Keep verified resident model transforms across translation-only scene rolls')
     parser.add_argument('--skip-empty-model-removals', action='store_true', help='Skip legacy scene removal requests for missing models')
-    parser.add_argument('--stable-terrain-structure-order', action='store_true', help='Reconcile roof and upper wall scene order in one pass when membership changes')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
     parser.add_argument('--profile-minimap-walk', action='store_true', help='Keep the minimap open for the profiled walk')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
@@ -86,8 +85,6 @@ def main():
     parser.add_argument('--dependency-jar', type=Path, help='Use an explicit immutable client build for a matched comparison')
     parser.add_argument('--client-source-commit', help='Record the source commit of the supplied client build')
     args = parser.parse_args()
-    if args.stable_terrain_structure_order and not (args.live_surface_handoff and args.skip_empty_model_removals):
-        parser.error('Terrain structure reconciliation requires live handoff and the null-removal guard')
     if args.compatibility_mesh_worker and not (args.terrain_words and args.surface_mesh_worker and args.fixed_surface_draw):
         parser.error('Compatibility mesh preparation requires worker terrain words and fixed surface drawing')
     sustained_trace = args.sustained_walk and args.travel_trace
@@ -210,7 +207,6 @@ def main():
            f'        System.setProperty("spoiledmilk.browserIntegerCameraBounds", "{str(args.integer_camera_bounds).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserKeepRebasedModels", "{str(args.keep_rebased_models).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSkipEmptyModelRemovals", "{str(args.skip_empty_model_removals).lower()}");\n'
-           f'        System.setProperty("spoiledmilk.browserStableTerrainStructureOrder", "{str(args.stable_terrain_structure_order).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfilePanels", "{str(args.profile_panels).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfileMinimapWalk", "{str(args.profile_minimap_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSlicePreupload", "{str(args.slice_preupload).lower()}");\n'
@@ -340,7 +336,6 @@ def main():
         'rollPacketTimings': args.roll_packet_timings,
         'keepRebasedModels': args.keep_rebased_models,
         'skipEmptyModelRemovals': args.skip_empty_model_removals,
-        'stableTerrainStructureOrder': args.stable_terrain_structure_order,
         'profilePanels': args.profile_panels,
         'profileMinimapWalk': args.profile_minimap_walk,
         'slicePreupload': args.slice_preupload,

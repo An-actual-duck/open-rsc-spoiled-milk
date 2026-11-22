@@ -473,11 +473,6 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
-		if (Boolean.getBoolean("spoiledmilk.browserStableTerrainStructureOrder")) {
-			int[] work = client.getScene().getTerrainStructureOrderWork();
-			if (work[0] <= 0 || work[1] <= 0) throw new IllegalStateException("No reconciled terrain structure order was reused");
-			BrowserBootstrap.report("outer-coverage:terrain-structure-order:reconciled=" + work[0] + ":reused=" + work[1]);
-		}
 		if (Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels")) {
 			long[] work;
 			try {

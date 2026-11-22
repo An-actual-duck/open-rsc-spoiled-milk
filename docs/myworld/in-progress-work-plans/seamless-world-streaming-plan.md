@@ -607,18 +607,14 @@ The repeated walks had mixed overall pacing, so the trial was retired.
 The compatibility mesh worker remains enabled on the private preview.
 [Terrain geometry preparation between rolls](seamless-world-streaming-preview.md#terrain-geometry-preparation-between-rolls)
 
-The first-roll packet measurements continue to put the largest span in
-legacy local scene installation. Most of the work inside that span
-retires scenery and translates retained models. The earlier cached-row
-trial removed most vertex writes with mixed end-to-end pacing.
-The next structural candidate should give retained scenery a persistent
-world-space position in the client instance store. Derive the current
-local view from that position and origin, and apply membership changes
-for the entering and leaving cells. Check stable model identity,
-interaction order, collision, and the alignment of the new view with
-the verified server context before switching the normal reader to it.
-The packet fence continues to publish the authority transition.
-[Region installation costs](seamless-world-streaming-preview.md#packet-costs-inside-a-verified-scene-roll) · [Prior row-write trial](seamless-world-streaming-preview.md#deferred-cached-transform-rows)
+A fixed world-space origin eliminated nearly all retained model
+coordinate writes and matched the native render and picking output.
+The longest switch interval stayed level in both browsers. Reusing the
+unchanged roof and upper-wall order eliminated more than 4,300
+Chrome reconciliations and still produced mixed pacing. Both trials
+are preserved as exactness references. Redirect effort from model
+coordinates and roof membership to the largest live frame costs.
+[World-space trial](seamless-world-streaming-preview.md#world-space-scenery-at-the-switch) · [Terrain structure trial](seamless-world-streaming-preview.md#terrain-roof-and-upper-wall-order)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
