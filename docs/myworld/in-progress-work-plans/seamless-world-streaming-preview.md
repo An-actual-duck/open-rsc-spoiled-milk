@@ -1523,6 +1523,17 @@ the divergent pacing results. The projection source and exact staged
 bundles remain available.
 [Firefox control](../../../output/tests/browser-gameplay-spike/model-batch-scratch-control-firefox/firefox-result.json) · [Firefox scratch](../../../output/tests/browser-gameplay-spike/model-batch-scratch-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/model-batch-scratch-control-chrome/chrome-result.json) · [Chrome scratch](../../../output/tests/browser-gameplay-spike/model-batch-scratch-chrome/chrome-result.json)
 
+The independent alias-check trial delegated inter-model alias checks
+to the browser's full-packet buffer validation. Native Scene, array,
+and rejected-packet replay digests matched the controls. The browser
+walks removed more than 15 million Java role-map operations per browser.
+Firefox's worst second fell from 39 to 36 FPS and Chrome's from 43 to
+38 FPS. Firefox's seconds below 60 fell from 28 to 22 and Chrome's
+remained 15. All four walks preserved movement authority, one epoch and
+zero sampled holds or input closures. The change was removed after the
+mixed pacing results.
+[Native parity](../../../output/tests/seamless-world-streaming/single-model-validation-build/parity.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/native-validation-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/native-validation-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/native-validation-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/native-validation-chrome/chrome-result.json)
+
 #### Compact scenery conversion
 
 The largest generated JavaScript allocation stack matched the Java

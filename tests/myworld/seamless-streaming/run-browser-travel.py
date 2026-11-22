@@ -358,7 +358,6 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
                 modelBatchWork:p.batchedModelKernelWork,
-                modelBatchPreparation:p.batchedModelPreparationWork,
                 compactPackWork:p.compactPackWork,
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
@@ -399,10 +398,6 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                     result['chromeProfile']['hotJitSources'] = save_hot_jit_sources(run, profile, chrome_command)
                 except (OSError, KeyError, ValueError) as error:
                     result['chromeProfile']['hotJitSourceError'] = str(error)
-            if fixture.get('modelBatchNativeValidation'):
-                preparation = result.get('modelBatchPreparation') or {}
-                if not preparation.get('nativeModels') or preparation.get('roleMapOperations') != 0:
-                    raise RuntimeError('The walk did not exercise native-only inter-model alias checks')
             if fixture.get('compactVertexBlocks'):
                 packing = result.get('compactPackWork') or {}
                 if not packing.get('blocks') or packing.get('vertices', 0) < 128:
