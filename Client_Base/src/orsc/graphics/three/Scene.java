@@ -19,6 +19,7 @@ public final class Scene {
 	private static final int MIN_EXPANDED_PICK_PADDING_PIXELS = 14;
 	private final boolean browserOverlayCoverage = Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
 	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
+	private final boolean skipEmptyModelRemovals = Boolean.getBoolean("spoiledmilk.browserSkipEmptyModelRemovals");
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
 	private final boolean browserModelPickBounds = Boolean.parseBoolean(System.getProperty("spoiledmilk.browserModelPickBounds", "true"));
 	public boolean isBrowserModelPickBoundsEnabled() { return browserModelPickBounds && isBrowserFullResidentOwnershipEnabled(); }
@@ -3929,7 +3930,7 @@ public final class Scene {
 		try {
             // Legal active entries are nonnull; render stores m_T outside modelCount.
             // Keep the literal nonnull/duplicate removal and metadata order unchanged.
-            if (var1 == null && WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()) return;
+            if (var1 == null && (skipEmptyModelRemovals || WholeOverworldZoneRegistry.isStaticSceneReuseEnabled())) return;
 			for (int i = 0; i < this.modelCount; ++i) {
 				if (this.models[i] == var1) {
 					--this.modelCount;
