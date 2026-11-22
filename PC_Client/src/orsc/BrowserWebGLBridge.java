@@ -163,6 +163,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final boolean TRAVEL_TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
         && Boolean.getBoolean("spoiledmilk.browserTravelTrace");
     private static final boolean FRAME_STAGE_TRACE = mudclient.TRACE_BROWSER_FRAME_STAGES;
+    private static final boolean FINISH_LIVE_FRAME_AT_PRESENT = LIVE_SURFACE_HANDOFF && !TRAVEL_TRACE
+        && !FRAME_STAGE_TRACE && !LOAD_PROFILE && !WHOLE_ZONE
+        && Boolean.getBoolean("spoiledmilk.browserFinishLiveFrameAtPresent");
     // Sprite stages, presentation, sprite packing, UI, and the client loop leading up to the bridge.
     private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[24] : null;
     private static final long PREDICTED_BUFFER_BUDGET = (COMPACT_SCENERY ? 64L : 48L) * 1024 * 1024;
@@ -241,7 +244,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void replaceChunk(int id,float[] vertices,int[] indices,int[] batches);
     private static native void deleteTextures(int[] ids);
     private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay,
-        int[] progress,double overlayGeneration,double overlaySequence,float[] transmittance);
+        int[] progress,double overlayGeneration,double overlaySequence,float[] transmittance,boolean finishAtPresent);
     private static native void frameWork(float[] milliseconds,int[] pose);
     private static native void worldProgress(int[] metadata);
     private static native void regionTransition(boolean ordinaryWalking);
@@ -329,7 +332,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface,false);
             if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}
             worldProgress(progress);
-            present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image),null,0,0,null);
+            present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image),null,0,0,null,false);
             acknowledgeOverlay(preparedOverlay);
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=4;
             return;
@@ -441,8 +444,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             progress[6]=progress[7]=spriteGroups;
             if(!inlineProgress)worldProgress(progress);
             long progressSubmitted=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
-            int[] presentedPose = TRAVEL_TRACE && client != null && client.getLocalPlayer() != null
-                ? travelPose(frame, client) : pose(frame);
+            boolean finishAtPresent = FINISH_LIVE_FRAME_AT_PRESENT && inlineProgress;
+            int[] presentedPose = finishAtPresent ? null
+                : TRAVEL_TRACE && client != null && client.getLocalPlayer() != null
+                    ? travelPose(frame, client) : pose(frame);
             OptionalSurfaceDraw optional = LIVE_OUTER_SURFACE_DRAW && authority && !surfaceDraw.isEmpty()
                 && readySources == requiredSources ? optionalSurfaceDraw(frame, surfaceDraw, draws) : null;
             if (optional != null) draws = optional.draws;
@@ -451,7 +456,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 ? preparedOverlay.frame : null;
             present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image),inlineProgress?progress:null,
                 inlineOverlay==null?0:inlineOverlay.generation,inlineOverlay==null?0:inlineOverlay.frameSequence,
-                inlineOverlay==null?null:inlineOverlay.transmittance);
+                inlineOverlay==null?null:inlineOverlay.transmittance,finishAtPresent);
             if(FRAME_STAGE_TRACE){
                 frameStageWork[3]=(overlayDeclared-skyEnd)/1000000f;
                 frameStageWork[4]=(progressSubmitted-overlayDeclared)/1000000f;
@@ -463,6 +468,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             acknowledgeOverlay(preparedOverlay);
             loadState.presented(OVERLAY_COVERAGE&&authority,requiredSources,readySources,remainingRepacks);
             if (authority && progress[1] == BrowserWorldLoadState.WORLD) lastPresentedTravelGeneration = travelGeneration;
+            if (finishAtPresent) return;
             if (FIXED_SURFACE_DRAW && TRAVEL_TRACE) {
                 recordSurfaceDrawBuffers(surfaceDraw);
                 optionalSurfaceDrawBuffers = optional == null ? EMPTY_SURFACE_RECEIPT : optional.receipt;

@@ -388,6 +388,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 compactPackWork:p.compactPackWork,
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
+                presentFinalizedFrames:p.gpu?.presentFinalizedFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
                 javaRuntime:{version:p.javaVersion,release:p.runtimeVersion,wasmGC:p.wasmGC},
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
@@ -432,6 +433,8 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                     raise RuntimeError('The walk did not exercise batched compact scenery packing')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
+            if fixture.get('finishAtPresent'):
+                completed = completed and (result.get('presentFinalizedFrames') or 0) >= 1000
             server_status = json.loads((run / 'status.json').read_text())
             if completed and fixture.get('persistentMovement'):
                 arrival = next(event['message'] for event in reversed(result['events'])

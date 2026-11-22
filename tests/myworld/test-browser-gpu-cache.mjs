@@ -118,6 +118,14 @@ if(process.argv[3]){
  assert.equal(c.stats.javaBridgeReportedWorldFrames,c.stats.javaWorldFrames,'Completed bridge metadata not published atomically');
  const reported=c.stats.javaBridgeReportedWorldFrames;await colorFrame();assert.equal(c.stats.javaBridgeReportedWorldFrames,reported,'Present advanced bridge receipt before its later callback');
  await cn.Java_orsc_BrowserWebGLBridge_frameWork(null,new Float32Array(14),new Int32Array(14));assert.equal(c.stats.javaBridgeReportedWorldFrames,c.stats.javaWorldFrames,'Later metadata did not close snapshot skew');
+ const beforePresentOnly=c.stats.javaBridgeReportedWorldFrames,drawsBeforePresentOnly=c.stats.drawCalls;
+ const progress=new Int32Array([1,2,1,101,101,0,0,0,1,960,540,0]);
+ await cn.Java_orsc_BrowserWebGLBridge_present(null,960,540,true,clip,values,new Int32Array(all),
+     new Int32Array(960*540).fill(0x01000000),progress,0,0,null,true);
+ assert.equal(c.stats.drawCalls,drawsBeforePresentOnly,'Completing live presentation changed draw calls');
+ assert.equal(c.stats.worldReadiness.phase,'ready');
+ assert.equal(c.stats.presentFinalizedFrames,1);
+ assert.equal(c.stats.javaBridgeReportedWorldFrames,beforePresentOnly,'Completing presentation invented Java diagnostics');
  const moved=geometry(0);await cn.Java_orsc_BrowserWebGLBridge_replaceChunk(null,2,moved,new Int32Array([2,1,0]),new Int32Array([-1,0,3,1,0]));moved.fill(1e8);await colorFrame();assert.equal(c.stats.drawCalls,2,'repacked bounds stale or retained borrowed vertices');assert.equal(c.stats.shadowNearDraws,101);
  const unknown=geometry(1e30);unknown[0]=NaN;await cn.Java_orsc_BrowserWebGLBridge_replaceChunk(null,3,unknown,indices,new Int32Array([-1,0,3,1,0]));await colorFrame();assert.equal(c.stats.drawCalls,3,'unproven bounds must stay visible');
  clip[0]=NaN;await colorFrame();assert.equal(c.stats.drawCalls,101,'unproven projection must retain all color draws');

@@ -295,8 +295,10 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
 
     },
     async Java_orsc_BrowserWebGLBridge_present(lib,width,height,world,matrixInput,uniformInput,drawInput,pixelInput,
-      frameProgress=null,overlayGeneration=0,overlaySequence=0,transmittance=null){
+      frameProgress=null,overlayGeneration=0,overlaySequence=0,transmittance=null,finishAtPresent=false){
       alive();stats.presentedOwnedState=!!ownedFrame?.active;if(spriteAtlas)spriteAtlas.assertCommitted();const submitStart=performance.now();
+      if(finishAtPresent&&(!world||frameProgress===null||travel||frameStageSamples))
+        throw new Error('Completing at presentation requires an untraced live world frame');
       if(frameProgress!==null){
         if(!world||frameProgress[1]!==2||frameProgress[3]<=0||frameProgress[3]!==frameProgress[4]||frameProgress[8]!==1)
           throw new Error('Inline readiness requires complete live world coverage');
@@ -429,6 +431,10 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       worldReady.presented({world:world&&!retainedWorld,width,height,textures:textures.size,sprites:spriteDraws.length,lighting:!!lightingValues});
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;
+      if(finishAtPresent){
+        uploadValidation.frameComplete();commitOwnedState();
+        stats.presentFinalizedFrames=(stats.presentFinalizedFrames||0)+1;
+      }
     },
     async Java_orsc_BrowserWebGLBridge_frameWork(lib,values,poseInput){
       alive();const p=typed(poseInput,Int32Array);

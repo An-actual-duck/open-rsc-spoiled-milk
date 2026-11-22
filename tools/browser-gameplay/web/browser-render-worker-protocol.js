@@ -10,7 +10,7 @@ export const RENDER_WORKER_SCHEMA=Object.freeze({
   uploadLightingMask:['i','i','i','B','F'],lightingFrame:['F'],uploadSkyGeometry:['F','I','i'],skyFrame:['F','F'],
   overlayFrame:['i','i','i','n','n','i','b','N'],uploadCompactSceneChunk:['i','I','I','I'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],
-  present:['i','i','b','F','F','I','I','P','n','n','N'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
+  present:['i','i','b','F','F','I','I','P','n','n','N','b'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
   planWorldSprites:['i','n','I'],verifyWorldSpritePlan:['i','n','I','I'],commitWorldSprites:['i','n','B','F'],
   '$owned':['b'],'$validation':['b'],'$physical':['b'],'$measurement':['b']
 });
@@ -28,7 +28,7 @@ function bytes(value,kind){
 }
 export function inspectRenderCommand(name,args){
   const schema=RENDER_WORKER_SCHEMA[name];
-  if(!schema||!Array.isArray(args)||args.length!==schema.length&&!(name==='present'&&args.length===7))
+  if(!schema||!Array.isArray(args)||args.length!==schema.length&&!(name==='present'&&(args.length===7||args.length===11)))
     throw new Error('Unknown render command/schema');
   let count=0;
   const planes=[];
@@ -41,6 +41,8 @@ export function inspectRenderCommand(name,args){
     else if(typeof value!=='number'||!Number.isFinite(value)||(kind==='i'&&!Number.isSafeInteger(value)))throw new Error('Invalid render scalar');
   }
   if(count>RENDER_WORKER_MAX_BYTES)throw new Error('Render command payload cap');
+  if(name==='present'&&args[11]===true&&(args[2]!==true||args[7]===null))
+    throw new Error('Completing at presentation requires a live world progress declaration');
   return {bytes:count,planes};
 }
 export function ownRenderCommand(name,args,acquire=length=>new ArrayBuffer(length)){
@@ -60,7 +62,10 @@ export function validateRenderBatch(packet){
   const last=packet.commands[packet.commands.length-1];
   if(packet.frameId){
     if(holds.length===1){if(presents.length||works.length||last.name!=='holdWorld')throw new Error('Invalid held frame boundary');}
-    else if(presents.length===1){if(presents[0].args[2]?(works.length!==1||last.name!=='frameWork'):(works.length!==0||last.name!=='present'))throw new Error('Invalid frame completion boundary');}
+    else if(presents.length===1){
+      const expectsWork=presents[0].args[2]&&presents[0].args[11]!==true;
+      if(expectsWork?(works.length!==1||last.name!=='frameWork'):(works.length!==0||last.name!=='present'))throw new Error('Invalid frame completion boundary');
+    }
     else throw new Error('Missing frame presentation');
   }else if(presents.length||holds.length||works.length)throw new Error('Unacknowledged presentation boundary');
   if(total!==packet.bytes)throw new Error('Render byte receipt mismatch');

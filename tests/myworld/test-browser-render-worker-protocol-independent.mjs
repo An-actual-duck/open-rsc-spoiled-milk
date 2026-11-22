@@ -102,6 +102,20 @@ function backend(){const calls=[];const natives={};for(const name of Object.keys
 {
  const {t,sent}=fake();t.enqueue('present',[960,540,true,new Float32Array(16),new Float32Array(),new Int32Array(),new Int32Array()]);eq(sent.length,0);await assert.rejects(t.drain());checks++;await t.enqueue('frameWork',[new Float32Array(14),new Int32Array()]);eq(sent.length,1);eq(sent[0].commands.map(c=>c.name),['present','frameWork']);eq(t.stats.completedFrames,0);t.receive(ack(sent[0]));await t.drain();eq(t.stats.completedFrames,1);t.dispose();
 }
+// A complete live world can dispatch at present and still waits for the render ACK.
+{
+ const {t,sent}=fake(),progress=new Int32Array([1,2,1,9,9,0,0,0,1,960,540,0]);
+ const args=[960,540,true,new Float32Array(48),new Float32Array(30),new Int32Array(),new Int32Array(),progress,0,0,null,true];
+ const missing=args.slice();missing[7]=null;
+ assert.throws(()=>P.inspectRenderCommand('present',missing),/requires a live world/);checks++;
+ await t.enqueue('present',args);
+ eq(sent.length,1);eq(sent[0].commands.map(c=>c.name),['present']);eq(t.stats.completedFrames,0);
+ assert.throws(()=>P.validateRenderBatch(batch([command('present',args),command('frameWork',[new Float32Array(14),new Int32Array()])],{frameId:1})),/completion boundary/);checks++;
+ const b=backend(),replay=createRenderWorkerReplay({backend:b,outputSizer:createWorkerOutputSizer()});
+ eq((await replay.execute(sent[0])).frameId,1);eq(b.calls.map(c=>c[0]),['present']);
+ t.receive(ack(sent[0]));await t.drain();eq(t.stats.completedFrames,1);replay.dispose();t.dispose();
+}
+
 // Exact ACK identities: stale/foreign/frame/layout mistakes never release/count slots.
 for(const mutate of [x=>({...x,version:99}),x=>({...x,id:2}),x=>({...x,frameId:4}),x=>({...x,layoutEpoch:2}),x=>({...x,type:'queued'})]){
  const {t,sent}=fake();const p=t.enqueue('initialize',['v','f']);p.catch(()=>{});await tick();t.receive(mutate(ack(sent[0])));await assert.rejects(p);checks++;eq(t.stats.completedPackets,0);eq(t.stats.inFlightBytes,0);t.dispose();

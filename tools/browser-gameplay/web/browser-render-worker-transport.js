@@ -41,7 +41,7 @@ export function createRenderWorkerTransport({postMessage,layout,now=()=>performa
     const begin=now(),owned=ownRenderCommand(name,args,acquire);stats.copyMilliseconds+=now()-begin;stats.copiedBytes+=owned.transfers.reduce((sum,b)=>sum+b.byteLength,0);commands.push(owned.command);transfers.push(...owned.transfers);bytes+=owned.bytes;stats.stagedBytes=bytes;stats.maxStagedBytes=Math.max(stats.maxStagedBytes,bytes);
     if(name==='present'){
       if(worldPending){const e=new Error('Missing world frameWork before next present');fail(e);throw e;}
-      if(args[2]){worldPending=true;return;}
+      if(args[2]&&args[11]!==true){worldPending=true;return;}
       return flush({frame:true});
     }
     if(name==='frameWork'){if(!worldPending){const e=new Error('frameWork without world presentation');fail(e);throw e;}worldPending=false;return flush({frame:true});}
