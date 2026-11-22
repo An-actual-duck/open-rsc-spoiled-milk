@@ -37,6 +37,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             public void begin(int owner){stagedLoginState(owner,0);}
             public void prepareData(){
                 BrowserWebGLBridge bridge=installedBridge;
+                if(BrowserWorldStreaming.enabled()){
+                    if(bridge==null||WHOLE_ZONE||BrowserWholeOverworldRam.isEnabled())throw new IllegalStateException("Streaming preparation backend mismatch");
+                    return;
+                }
                 if(bridge==null||!WHOLE_ZONE||!BrowserWholeOverworldRam.isEnabled())throw new IllegalStateException("Browser preparation backend is unavailable");
                 if(bridge.wholeZone==null)bridge.wholeZone=new BrowserWholeOverworldZone();
                 if(bridge.wholeRam==null)bridge.wholeRam=new BrowserWholeOverworldRam(bridge.wholeZone.manifestHash(),bridge.packing.backendPackingSettings());
@@ -112,7 +116,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
         && Boolean.getBoolean("spoiledmilk.browserPreuploadPredictedTerrain");
     private static final boolean FIXED_SURFACE_DRAW = !WHOLE_ZONE && !ACTIVE_ONLY
-        && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha") && Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
+        && BrowserWorldStreaming.allowsSurfaceFeatures() && Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
     private static final boolean LIVE_OUTER_SURFACE_DRAW = FIXED_SURFACE_DRAW
         && NativeLayeredTerrainSnapshot.EXPANDED_SURFACE_DRAW_BORDER;
     private static final boolean LIVE_SCENERY_DRAW = LIVE_OUTER_SURFACE_DRAW && mudclient.SURFACE_SCENERY_DRAW;

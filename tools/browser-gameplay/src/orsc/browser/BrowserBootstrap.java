@@ -105,10 +105,11 @@ public final class BrowserBootstrap {
         final boolean benchmark=Boolean.getBoolean("spoiledmilk.browserBenchmark");
         final boolean publicAlpha=BrowserPublicAlpha.enabled(System.getProperties());
         BrowserPublicAlpha.validate(System.getProperties(),webgl);
-        if (!publicAlpha && webgl && Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff") && terrainWorkerAvailable()) {
+        final boolean surfaceFeatures=orsc.BrowserWorldStreaming.allowsSurfaceFeatures();
+        if (surfaceFeatures && webgl && Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff") && terrainWorkerAvailable()) {
             orsc.NativeLayeredTerrainPacketDecoder.installPredictedSectorInflater(BrowserBootstrap::inflateTerrainSector);
         }
-        if (!publicAlpha && webgl && Boolean.getBoolean("spoiledmilk.browserSurfaceMeshWorker") && startSurfaceMeshWorker()) {
+        if (surfaceFeatures && webgl && Boolean.getBoolean("spoiledmilk.browserSurfaceMeshWorker") && startSurfaceMeshWorker()) {
             orsc.graphics.three.World.installSurfaceMeshWorker(BrowserBootstrap::buildSurfaceMesh);
             if (Boolean.getBoolean("spoiledmilk.browserSurfaceTerrainWords")) {
                 orsc.graphics.three.World.installSurfaceDrawWordWorker(BrowserBootstrap::buildSurfaceDrawWords);

@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--live-surface-handoff', action='store_true')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Stream scenery revisions for draw cells')
     parser.add_argument('--prepared-surface-adds', action='store_true', help='Send entering scenery in legacy addition order')
+    parser.add_argument('--browser-world-streaming', action='store_true', help='Enable per-browser World Streaming negotiation')
     parser.add_argument('--safe-walk-fixture', action='store_true', help='Protect the disposable walk probe from incidental combat')
     parser.add_argument('--surface-scenery-mutation', action='store_true', help='Change scenery during the automated route')
     parser.add_argument('--predicted-scenery', action='store_true', help='Enable the private scenery prediction')
@@ -32,7 +33,7 @@ def main():
     args = parser.parse_args(); run = args.run.resolve()
     if not all(1024 <= port <= 65535 for port in (args.tcp_port, args.ws_port)) or args.tcp_port == args.ws_port:
         parser.error('Use two different nonprivileged loopback ports')
-    if args.outer_coverage and not args.covered_walking_preview:
+    if args.outer_coverage and not (args.covered_walking_preview or args.browser_world_streaming):
         parser.error('The outer coverage route requires the covered walking preview')
     if args.persistent_movement and not args.covered_walking_preview:
         parser.error('The private travel stream requires installed surface coverage')
@@ -65,7 +66,7 @@ def main():
                   layered_native_world_runtime_profile='world-builder-installed')
     if args.outer_coverage:
         values.update(respawn_location_x='239', respawn_location_y='609')
-    if args.persistent_movement:
+    if args.persistent_movement or args.browser_world_streaming:
         values.update(want_sync_movement_snapshot='true')
     for key, value in values.items():
         config, count = re.subn(r'(?m)^([ \t]*)' + key + r':.*$', lambda m: m[1] + key + ': ' + value, config)
@@ -120,6 +121,8 @@ def main():
         command.append('-Dspoiledmilk.liveSurfaceHandoff=true')
     if args.prepared_surface_adds:
         command.append('-Dspoiledmilk.browserPreparedSurfaceAdds=true')
+    if args.browser_world_streaming:
+        command.append('-Dspoiledmilk.browserWorldStreaming=true')
     if args.safe_walk_fixture:
         command.append('-Dspoiledmilk.privateSafeWalkFixture=true')
     if args.surface_scenery_mutation:

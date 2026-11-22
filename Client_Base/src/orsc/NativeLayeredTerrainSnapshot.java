@@ -26,7 +26,7 @@ public final class NativeLayeredTerrainSnapshot {
 	public static final int STREAMING_CHUNK_SIZE = SECTOR_SIZE;
 	public static final int STREAMING_CHUNK_RADIUS = 1;
 	public static final int SYMMETRIC_RESIDENCY_CHUNK_RADIUS = 2;
-	static final boolean EXPANDED_SURFACE_DRAW_BORDER = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+	static final boolean EXPANDED_SURFACE_DRAW_BORDER = BrowserWorldStreaming.allowsSurfaceFeatures()
 		&& Boolean.getBoolean("spoiledmilk.expandedSurfaceDrawBorder");
 	private static final int SURFACE_DRAW_SOURCE_RADIUS = 3;
 

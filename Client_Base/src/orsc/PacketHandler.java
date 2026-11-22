@@ -56,7 +56,7 @@ public class PacketHandler {
 	private static final int SCENE_BASELINE_PRESENTATION_PAGE_SIZE = 512;
 	private static final int SCENE_BASELINE_SECTOR_SIZE = 48;
 	private static final boolean PERSISTENT_MOVEMENT_PREVIEW =
-		!Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		BrowserWorldStreaming.allowsSurfaceFeatures()
 			&& Boolean.getBoolean("spoiledmilk.persistentMovementPreview");
 	private static final boolean SURFACE_SCENERY_CELLS = PERSISTENT_MOVEMENT_PREVIEW
 		&& Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision")

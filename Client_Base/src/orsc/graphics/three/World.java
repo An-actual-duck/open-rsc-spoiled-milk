@@ -52,14 +52,14 @@ import java.util.zip.ZipFile;
 public final class World {
 	private static final boolean PRESENTATION_HALO_MATCH_REUSE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.presentationHaloMatchReuse", "true"));
-	private static final boolean PACE_BROWSER_TERRAIN_PREDICTION = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+	private static final boolean PACE_BROWSER_TERRAIN_PREDICTION = orsc.BrowserWorldStreaming.allowsSurfaceFeatures()
 		&& Boolean.getBoolean("spoiledmilk.browserPaceTerrainPrediction");
-	private static final boolean PREPARE_BROWSER_LOCAL_TERRAIN = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+	private static final boolean PREPARE_BROWSER_LOCAL_TERRAIN = orsc.BrowserWorldStreaming.allowsSurfaceFeatures()
 		&& (Boolean.getBoolean("spoiledmilk.browserPrepareLocalTerrain")
 			|| Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow"));
-	private static final boolean PERSISTENT_SURFACE_COLLISION = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+	private static final boolean PERSISTENT_SURFACE_COLLISION = orsc.BrowserWorldStreaming.allowsSurfaceFeatures()
 		&& Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision");
-	private static final boolean FIXED_SURFACE_DRAW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+	private static final boolean FIXED_SURFACE_DRAW = orsc.BrowserWorldStreaming.allowsSurfaceFeatures()
 		&& Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
 	private volatile SurfaceTerrainDrawField fixedSurfaceDraw;
 	private volatile SurfaceDrawPreparation preparedSurfaceDraw;

@@ -52,9 +52,16 @@ public final class StagedLoginSession {
         if(session!=null){session.receive(packet);return true;}
         if(packet.getID()!=StagedLoginProtocol.OPCODE)return false;
         try{
-            if(!supports(server,attachment)||!server.getPacketFilter().shouldAllowPacket(channel,false)
-                ||StagedLoginProtocol.header(packet)!=StagedLoginProtocol.SUPPORT||packet.getReadableBytes()!=0)throw new IllegalArgumentException("Unsupported login negotiation");
-            attachment.stagedLoginAdvertised.set(true);channel.writeAndFlush(StagedLoginProtocol.packet(StagedLoginProtocol.SUPPORT).toPacket());
+            if(!supports(server,attachment)||!server.getPacketFilter().shouldAllowPacket(channel,false))
+                throw new IllegalArgumentException("Unsupported login negotiation");
+            int action=StagedLoginProtocol.header(packet);
+            if(packet.getReadableBytes()!=0)throw new IllegalArgumentException("Trailing login negotiation data");
+            if(action==StagedLoginProtocol.WORLD_STREAMING_SUPPORT
+                &&Boolean.getBoolean("spoiledmilk.browserWorldStreaming")
+                &&server.getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT)attachment.browserWorldStreaming.set(true);
+            else if(action!=StagedLoginProtocol.SUPPORT)throw new IllegalArgumentException("Unsupported login negotiation");
+            attachment.stagedLoginAdvertised.set(true);
+            channel.writeAndFlush(StagedLoginProtocol.packet(action).toPacket());
         }catch(RuntimeException invalid){channel.close();}
         return true;
     }

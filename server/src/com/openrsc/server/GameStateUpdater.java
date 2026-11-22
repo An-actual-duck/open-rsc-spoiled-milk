@@ -276,7 +276,7 @@ public final class GameStateUpdater {
 		recordUpdateNpcs(() -> updateNpcs(player, visibleNpcs));
 		recordUpdateNpcAppearances(() -> updateNpcAppearances(player));
 		publishTravelBaseline(player);
-		if (SURFACE_SCENERY_CELLS) updateSurfaceSceneryCells(player);
+		if (SURFACE_SCENERY_CELLS || usesBrowserWorldStreaming(player)) updateSurfaceSceneryCells(player);
 		final boolean[] sceneryChanged = new boolean[1];
 		final boolean[] wallsChanged = new boolean[1];
 		final boolean[] groundItemsChanged = new boolean[1];
@@ -532,13 +532,13 @@ public final class GameStateUpdater {
 		context.legacyX = expectedLegacy.getX();
 		context.legacyY = expectedLegacy.getY();
 		if (nativeTerrain != null) {
-			boolean preparedSurface = LIVE_SURFACE_HANDOFF && predictedSymmetricReady && usesCoveredWalkingPreview(player)
+			boolean preparedSurface = usesLiveSurfaceHandoff(player) && predictedSymmetricReady
 				&& context.protocolVersion == ATOMIC_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION
 				&& !player.isTeleporting() && player.isLoggedIn()
 				&& !player.getAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, false);
 			nativeTerrain.populate(context, preparedSurface);
 		}
-		if (SURFACE_SCENERY_DRAW && predictedSymmetricReady) {
+		if (usesSurfaceSceneryDraw(player) && predictedSymmetricReady) {
 			SurfaceScenerySubscription subscription = player.getAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE, null);
 			if (subscription != null && subscription.matchesTarget(nativeTerrain.currentChunkX, nativeTerrain.currentChunkY)) {
 				updateSurfaceSceneryCells(player);
@@ -639,7 +639,7 @@ public final class GameStateUpdater {
 		 */
 		if (previous == null || !previous.equals(next)
 			|| player.getAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, false)) {
-			if (PERSISTENT_MOVEMENT_PREVIEW) player.removeAttribute(TRAVEL_BASELINE_ATTRIBUTE);
+			player.removeAttribute(TRAVEL_BASELINE_ATTRIBUTE);
 			player.getLocalNpcs().clear();
 			player.getLocalPlayers().clear();
 			player.getKnownPlayerAppearanceIDs().clear();
@@ -665,7 +665,7 @@ public final class GameStateUpdater {
 			player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
 			player.removeAttribute(NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE);
 			player.removeAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE);
-			if (PERSISTENT_MOVEMENT_PREVIEW) player.removeAttribute(TRAVEL_BASELINE_ATTRIBUTE);
+			player.removeAttribute(TRAVEL_BASELINE_ATTRIBUTE);
 			player.setAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, Boolean.TRUE);
 			return;
 		}
@@ -1181,7 +1181,7 @@ public final class GameStateUpdater {
 		final NativeLayeredTerrainStageReadiness accepted =
 			player.getAttribute(
 				NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE, null);
-		final boolean preparedRetargeting = LIVE_SURFACE_HANDOFF && usesCoveredWalkingPreview(player);
+		final boolean preparedRetargeting = usesLiveSurfaceHandoff(player);
 		final boolean acknowledged = pending != null && pending.equals(accepted);
 		final boolean visualReady = acknowledged && pending.hasProtocolVersion(LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION);
 		final boolean structuralReady = acknowledged
@@ -1220,16 +1220,17 @@ public final class GameStateUpdater {
 		if (!advanceToStructure && sent != null) {
 			int sequence = player.getAttribute(NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE, 0);
 			sendPredictedSceneryCells(player, activeTerrain, stagedTerrain, sequence);
-			if (SURFACE_SCENERY_CELLS && usesIndependentMovement(player) && player.isLoggedIn()) {
+			if ((SURFACE_SCENERY_CELLS || usesBrowserWorldStreaming(player)) && usesIndependentMovement(player) && player.isLoggedIn()) {
 				int stepX = stagedTerrain.currentChunkX - activeTerrain.currentChunkX;
 				int stepY = stagedTerrain.currentChunkY - activeTerrain.currentChunkY;
 				TravelBaseline travel = player.getAttribute(TRAVEL_BASELINE_ATTRIBUTE, null);
-				boolean adjacent = SURFACE_SCENERY_DRAW ? Math.max(Math.abs(stepX), Math.abs(stepY)) == 1
+				boolean drawCells = usesSurfaceSceneryDraw(player);
+				boolean adjacent = drawCells ? Math.max(Math.abs(stepX), Math.abs(stepY)) == 1
 					: Math.abs(stepX) + Math.abs(stepY) == 1;
 				if (adjacent && travel != null && travel.relocation == player.getMovementRelocation()) {
 					player.setAttribute(SURFACE_SCENERY_CELLS_ATTRIBUTE, new SurfaceScenerySubscription(
 						contextSequence, travel.generation, sequence, stagedTerrain.currentChunkX,
-						stagedTerrain.currentChunkY, stepX, stepY, SURFACE_SCENERY_DRAW));
+						stagedTerrain.currentChunkY, stepX, stepY, drawCells));
 				}
 			}
 		}
@@ -1417,7 +1418,8 @@ public final class GameStateUpdater {
 			residency = player.getAttribute(
 				NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE, null);
 			if (residency == null) {
-				residency = EXPANDED_SURFACE_DRAW_BORDER && "127.0.0.1".equals(getServer().getConfig().SERVER_BIND_ADDRESS)
+				residency = usesBrowserWorldStreaming(player)
+					|| EXPANDED_SURFACE_DRAW_BORDER && "127.0.0.1".equals(getServer().getConfig().SERVER_BIND_ADDRESS)
 					? new NativeLayeredTerrainClientResidency(128) : new NativeLayeredTerrainClientResidency();
 				player.setAttribute(
 					NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE,
@@ -3480,7 +3482,7 @@ public final class GameStateUpdater {
 	}
 
 	private boolean usesIndependentMovement(final Player player) {
-		return PERSISTENT_MOVEMENT_PREVIEW
+		return (PERSISTENT_MOVEMENT_PREVIEW || usesBrowserWorldStreaming(player))
 			&& getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT
 			&& getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
 			&& player.isUsingCustomClient()
@@ -3694,15 +3696,31 @@ public final class GameStateUpdater {
 	// This first milestone isolates walking within installed surface coverage.
 	// A transition at the outer margin still uses the current scene protocol.
 	private static boolean usesCoveredWalkingPreview(final Player viewer) {
-		return COVERED_WALKING_PREVIEW
-			&& "127.0.0.1".equals(viewer.getConfig().SERVER_BIND_ADDRESS)
+		return (usesBrowserWorldStreaming(viewer) || COVERED_WALKING_PREVIEW
+			&& "127.0.0.1".equals(viewer.getConfig().SERVER_BIND_ADDRESS))
 			&& !viewer.getConfig().WORLD_BUILDER_MODE
 			&& viewer.getWorldLocation().getCoordinate().getLevel() == 0
 			&& "global".equals(viewer.getWorldLocation().getWorldSpace().getValue());
 	}
 
+	private static boolean usesBrowserWorldStreaming(Player player) {
+		io.netty.channel.Channel channel = player.getChannel();
+		if (channel == null || !player.isUsingCustomClient()) return false;
+		com.openrsc.server.net.ConnectionAttachment connection =
+			channel.attr(com.openrsc.server.net.RSCConnectionHandler.attachment).get();
+		return connection != null && connection.browserWorldStreaming.get();
+	}
+
+	private static boolean usesSurfaceSceneryDraw(Player player) {
+		return (SURFACE_SCENERY_DRAW || usesBrowserWorldStreaming(player)) && usesCoveredWalkingPreview(player);
+	}
+
+	private static boolean usesLiveSurfaceHandoff(Player player) {
+		return (LIVE_SURFACE_HANDOFF || usesBrowserWorldStreaming(player)) && usesCoveredWalkingPreview(player);
+	}
+
 	private static int surfaceDrawSourceRadius(Player player) {
-		return EXPANDED_SURFACE_DRAW_BORDER && usesCoveredWalkingPreview(player)
+		return (EXPANDED_SURFACE_DRAW_BORDER || usesBrowserWorldStreaming(player)) && usesCoveredWalkingPreview(player)
 			? NATIVE_LAYERED_SURFACE_DRAW_SOURCE_RADIUS : NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS;
 	}
 

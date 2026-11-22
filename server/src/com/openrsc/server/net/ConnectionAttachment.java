@@ -11,6 +11,7 @@ public class ConnectionAttachment {
 
     public final AtomicReference<com.openrsc.server.login.StagedLoginSession> stagedLogin=new AtomicReference<com.openrsc.server.login.StagedLoginSession>();
     public final java.util.concurrent.atomic.AtomicBoolean stagedLoginAdvertised=new java.util.concurrent.atomic.AtomicBoolean();
+    public final java.util.concurrent.atomic.AtomicBoolean browserWorldStreaming=new java.util.concurrent.atomic.AtomicBoolean();
 
 	public AtomicReference<ISAACContainer> ISAAC = new AtomicReference<ISAACContainer>();
 

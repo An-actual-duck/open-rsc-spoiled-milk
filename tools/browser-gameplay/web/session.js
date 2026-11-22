@@ -6,9 +6,11 @@ import {resolveBrowserDeployment,browserCapabilityProblem} from './browser-publi
 import {createDisplayModes} from './browser-display-modes.js';
 import {createStartupReceiver} from './browser-startup-progress.js';
 const start = document.querySelector('#start'), stop = document.querySelector('#stop');
+const loadingChoices = document.querySelector('#loading-choices');
+const playChunks = document.querySelector('#play-chunks'), playStreaming = document.querySelector('#play-streaming');
 const status = document.querySelector('#status'), session = document.querySelector('#session');
 const welcome = document.querySelector('#welcome');
-let frame, startup;
+let frame, startup, loadingMode='chunks', selectedButton=start;
 const meter=document.querySelector('#startup-progress'),detail=document.querySelector('#startup-detail');
 function hideProgress(){meter.hidden=true;detail.hidden=true;}
 function renderProgress(value){
@@ -20,6 +22,17 @@ function renderProgress(value){
 let deployment;
 try{deployment=resolveBrowserDeployment(deploymentConfig,location);}
 catch(error){status.textContent=String(error.message);start.disabled=true;throw error;}
+function showPlayOptions(label) {
+  if(deployment.loadingChoices){
+    loadingChoices.hidden=false;
+    start.hidden=true;
+  }else{
+    start.textContent=label;
+    start.hidden=false;
+    start.disabled=false;
+  }
+}
+if(deployment.loadingChoices)showPlayOptions('Play');
 if(deployment.publicAlpha){
   document.title='Spoiled Milk — Browser Alpha · '+deployment.config.buildId;
   status.textContent='Sign in with your existing account. The first load may take a little longer.';
@@ -41,10 +54,11 @@ window.browserSessionDisplayRequest=(source,action)=>{
   if(action===1||action===2)displayModes.request(action);
   return displayModes.stats;
 };
+window.browserSessionLoadingMode=source=>frame&&source===frame.contentWindow?loadingMode:null;
 function showRecovery(message){
   startup?.close();hideProgress();
   welcome.hidden=false;status.textContent=message;
-  start.hidden=false;start.disabled=false;start.textContent='Restart game';
+  showPlayOptions('Restart game');
   stop.hidden=false;stop.disabled=false;stop.textContent='Close game';
 }
 function end(reason, focusStart = false) {
@@ -71,20 +85,23 @@ function end(reason, focusStart = false) {
   window.browserProof.stopReason = reason;
   welcome.hidden=false;
   status.textContent = 'The game has closed. You can play again when ready.';
-  start.textContent='Play again';start.hidden=false;start.disabled=false;
+  showPlayOptions('Play again');
   stop.hidden=true;stop.disabled=true;
-  if (focusStart && document.hasFocus()) start.focus({preventScroll: true});
+  if (focusStart && document.hasFocus()) selectedButton.focus({preventScroll: true});
 }
-start.addEventListener('click', () => {
+function play(mode, button) {
   if(deployment.publicAlpha){const problem=browserCapabilityProblem(window);if(problem){status.textContent=problem;return;}}
   if(frame)end('Restarting game.');
+  loadingMode=mode;
+  selectedButton=button;
   frame = document.createElement('iframe'); frame.id = 'runtime';
   frame.title = 'Spoiled Milk';
   frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   frame.setAttribute('allow', "fullscreen 'none'; clipboard-read 'none'; clipboard-write 'none'; keyboard-map 'none'");
   frame.src = new URL('./runtime.html',import.meta.url).href + location.search;
-  window.browserProof = {events: [], lifecycle: 'starting', focus: 'runtime',presentation:displayModes.stats};
+  window.browserProof = {events: [], lifecycle: 'starting', focus: 'runtime',presentation:displayModes.stats,loadingMode};
   welcome.hidden=false;start.disabled=true;start.hidden=true;
+  if(deployment.loadingChoices)loadingChoices.hidden=true;
   stop.disabled=false;stop.hidden=false;stop.textContent='Cancel';
   startup=createStartupReceiver({render:renderProgress});
   window.browserProof.startupParent=startup.stats;
@@ -93,7 +110,12 @@ start.addEventListener('click', () => {
   // Start is an explicit user gesture. Transfer its focus into the new frame;
   // disabling the focused Start button otherwise creates a spurious blur.
   frame.focus({preventScroll: true});
-});
+}
+start.addEventListener('click', () => play('chunks', start));
+if(deployment.loadingChoices){
+  playChunks.addEventListener('click', () => play('chunks', playChunks));
+  playStreaming.addEventListener('click', () => play('streaming', playStreaming));
+}
 stop.addEventListener('click', () => end('Game closed.', true));
 window.addEventListener('message', event => {
   if (!frame || event.source !== frame.contentWindow || event.origin !== location.origin) return;

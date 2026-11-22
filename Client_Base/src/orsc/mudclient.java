@@ -139,7 +139,7 @@ public final class mudclient implements Runnable {
 	private int slowestTravelPacketOpcode = -1;
 	static final boolean PREDICTED_SCENERY_PREVIEW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
-	static final boolean ROLLING_SURFACE_WINDOW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+	static final boolean ROLLING_SURFACE_WINDOW = BrowserWorldStreaming.allowsSurfaceFeatures()
 		&& Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow");
 	static final boolean SURFACE_SCENERY_DRAW = ROLLING_SURFACE_WINDOW
 		&& NativeLayeredTerrainSnapshot.EXPANDED_SURFACE_DRAW_BORDER
@@ -973,7 +973,7 @@ public final class mudclient implements Runnable {
 	private SurfaceSceneryWork activeSurfaceSceneryWork;
 	private volatile int detachedSurfaceSceneryMeshes;
 	private volatile int detachedSceneryPlacementMeshes;
-	private static final boolean WORKER_SCENERY_PLACEMENTS = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+	private static final boolean WORKER_SCENERY_PLACEMENTS = BrowserWorldStreaming.allowsSurfaceFeatures()
 		&& Boolean.getBoolean("spoiledmilk.browserWorkerSceneryPlacements");
 	private static final boolean VERIFY_WORKER_SCENERY_PLACEMENTS = WORKER_SCENERY_PLACEMENTS
 		&& Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements");
@@ -25231,7 +25231,13 @@ public final class mudclient implements Runnable {
 						}
 
 						boolean stagedLoginRequested=BrowserStagedLogin.enabled();
-						if(stagedLoginRequested&&!BrowserStagedLogin.support(this.packetHandler.getClientStream())) {
+						if (BrowserWorldStreaming.enabled()
+							&& (!stagedLoginRequested || !BrowserStagedLogin.supportWorldStreaming(this.packetHandler.getClientStream()))) {
+							this.closeClientStreamOnly();
+							this.showLoginScreenStatus("World Streaming is unavailable.", "You can play with World Chunks.");
+							return;
+						}
+						if(stagedLoginRequested&&!BrowserWorldStreaming.enabled()&&!BrowserStagedLogin.support(this.packetHandler.getClientStream())) {
 							this.closeClientStreamOnly();
 							this.showLoginScreenStatus("This server needs an update.","Browser world preparation is not available yet.");
 							return;
