@@ -120,6 +120,25 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
 """
 
 
+def summarize_frame_rate(intervals):
+    """Count new presentations in successive complete seconds of measured travel."""
+    elapsed = 0
+    frames_per_second = {}
+    for interval in intervals:
+        second = int(elapsed // 1000)
+        frames_per_second[second] = frames_per_second.get(second, 0) + 1
+        elapsed += interval
+    rates = sorted(frames_per_second.get(second, 0) for second in range(int(elapsed // 1000)))
+    if not rates:
+        return None
+    return {
+        'seconds': len(rates),
+        'lowestFps': rates[0],
+        'p10Fps': rates[math.ceil(len(rates) * .1) - 1],
+        'secondsBelow50Fps': sum(rate < 50 for rate in rates),
+    }
+
+
 def summarize_walking(result):
     """Measure fresh WebGL submissions over the real walk, including time between the legs."""
     rows = (result.get('travel') or {}).get('rows', [])
@@ -340,6 +359,8 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 completed = len(stages) >= 60 and all(row['minimapRasterMs'] >= 0 for row in stages)
             presentation = result.get('presentation')
             if presentation is not None:
+                if not presentation['unobservedIntervals'] and presentation['frames'] <= len(presentation['intervals']) + 1:
+                    presentation['oneSecondSummary'] = summarize_frame_rate(presentation['intervals'])
                 intervals = sorted(presentation['intervals'])
                 if intervals:
                     presentation['intervalSummary'] = {

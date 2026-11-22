@@ -402,6 +402,27 @@ Large gaps still occur, with the worst Firefox candidate frame spending
 and its cold-worker cost are recorded in the preview notes.
 [Scenery worker results](seamless-world-streaming-preview.md#move-canonical-scenery-preparation-into-the-worker)
 
+### Frame pacing during live streaming
+
+Measure fresh frames per second alongside individual frame intervals. The
+placement preview reaches roughly 60 FPS between bursts and still has short
+stretches well below that. Separate the initial warm-up, forward crossings,
+return crossing and resident stretch in the same 1920×1080 walk.
+
+The next streaming change should move the detached scenery result closer to
+the form the renderer consumes. For one cell, have the existing worker emit
+renderer-ready vertex and material buffers with the small CPU metadata needed
+for lighting and validation. Bind the packed data to the existing renderer
+settings and texture dimensions, color and transparency stamps. Keep the
+current cell revision and source checks.
+Queue the completed cell for a bounded number of upload bytes per frame and
+measure how early the destination cell becomes drawable. Keep simulation,
+collision, actor poses and input on their authoritative path. Compare exact
+geometry and lighting, then count dropped frames and late visible cells in
+both browsers. The existing result can be several MiB of serialized Java
+objects per cell and is decoded and packed again in the client runtime.
+[Scenery bursts](seamless-world-streaming-preview.md#count-fresh-frames-during-scenery-completion-bursts) · [Renderer packing](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L1084) · [Material stamps](../../../PC_Client/src/orsc/BrowserChunkVariant.java)
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet

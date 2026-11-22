@@ -1141,6 +1141,48 @@ or packet packing was measured during that gap. The candidate is
 available through `--worker-scenery-placements` for the private preview.
 [Firefox placement timing](../../../output/tests/browser-gameplay-spike/scenery-handoff-candidate-firefox/firefox-result.json) · [Chrome placement timing](../../../output/tests/browser-gameplay-spike/scenery-handoff-candidate-chrome/chrome-result.json)
 
+#### Count fresh frames during scenery completion bursts
+
+Grouping the placement preview's fresh presentations into complete one-second
+windows shows what the player feels during a walk. Both browsers reached
+59–60 FPS in stretches without scenery jobs. Near four seconds into the
+route Firefox presented 19 frames as 19 scenery results returned 13.8 MiB.
+Chrome presented 16 frames as 14 results returned 16.9 MiB. The same route
+showed a second dip in both browsers near the crossing on the return leg.
+
+| Browser | Median FPS in seconds without a scenery result | Median FPS in seconds with at least 1 MiB returned |
+| --- | ---: | ---: |
+| Firefox | 55 | 34 |
+| Chrome | 60 | 44.5 |
+
+The per-job timings put about 170 ms in Firefox's response decoder during
+its worst second. Chrome's worst second included about 261 ms preparing and
+encoding legacy requests, along with 78 ms decoding responses. These are
+elapsed timings and can contain runtime scheduling. Both traces also have
+isolated gaps above 100 ms with zero geometry uploads and no scenery worker
+request in progress. Streaming bursts and ordinary frame production both
+affect the feel of the walk.
+[Firefox placement timing](../../../output/tests/browser-gameplay-spike/scenery-handoff-candidate-firefox/firefox-result.json) · [Chrome placement timing](../../../output/tests/browser-gameplay-spike/scenery-handoff-candidate-chrome/chrome-result.json)
+
+The actor sprite trial sent new exact image pixels and current quads in one
+call. It used a second call when atlas compaction needed pixels from the
+preceding frame. Firefox combined 3,801 submissions with four retries.
+Chrome combined 4,102 with five retries. Both passed the walking route.
+Tests of atlas state covered exact pixels, draw order, shared image IDs, and
+the compaction retry. The table compares one matched pair per browser.
+
+| Browser | p95 frame interval | p99 frame interval | Seconds below 50 FPS | Lowest one-second FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 31 → 29 ms | 51 → 48 ms | 33 → 25 | 18 → 16 |
+| Chrome | 23.1 → 23.9 ms | 43.3 → 43.2 ms | 9 → 11 | 23 → 21 |
+
+The combined call moved more than 40 MiB of sprite pixels into JavaScript
+per run due to sending images that could still be resident after leaving
+the preceding frame. The lowest one-second rates stayed in the teens and
+twenties. The trial was removed, and the one-second pacing measurement is
+now part of the sustained route runner.
+[Firefox control](../../../output/tests/browser-gameplay-spike/sprite-submit-control-firefox-retry/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/sprite-submit-trial-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/sprite-submit-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/sprite-submit-trial-chrome/chrome-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
