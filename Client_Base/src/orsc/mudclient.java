@@ -146,6 +146,10 @@ public final class mudclient implements Runnable {
 		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
 	static final boolean LIVE_SURFACE_HANDOFF = SURFACE_SCENERY_DRAW
 		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
+	static final boolean PREPARE_SURFACE_SCENE_MODELS = LIVE_SURFACE_HANDOFF
+		&& Boolean.getBoolean("spoiledmilk.prepareSurfaceSceneModels");
+	private World.PreparedSurfaceScene preparedSurfaceScene;
+	private int preparedSurfaceSceneInstalls;
 	private int rollingSurfaceWindows;
 	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
 		&& Boolean.getBoolean("spoiledmilk.browserPrepareIncomingScenery");
@@ -4033,6 +4037,7 @@ public final class mudclient implements Runnable {
 
 	void clearSurfaceSceneryDraw() {
 		surfaceSceneryTerrain = null;
+		preparedSurfaceScene = null;
 		adoptSurfaceScenery = false;
 		surfaceSceneryWork.clear();
 		surfacePreparedScenery = Collections.emptyList();
@@ -22585,8 +22590,14 @@ public final class mudclient implements Runnable {
 					this.currentRegionMinX = midRegionX * World.SECTION_SIZE
 						- (centeredNativeWindow ? 1 : 32);
 					long phaseStartNanos = System.nanoTime();
+					World.PreparedSurfaceScene preparedModels = rolling ? preparedSurfaceScene : null;
+					preparedSurfaceScene = null;
+					RSModel[] retiredModels = null;
+					int retiredCount = 0;
 					if (rolling) {
-						rollSurfaceScenery(baseDX, baseDZ);
+						retiredModels = new RSModel[getGameObjectInstanceCount() + getWallObjectInstanceCount()];
+						retiredCount = rollSurfaceScenery(baseDX, baseDZ, retiredModels);
+						if (preparedModels == null) scene.removeModels(retiredModels, retiredCount);
 					} else {
 						for (int i = 0; i < this.getGameObjectInstanceCount(); i++) this.dematerializeGameObjectInstance(i);
 						for (int i = 0; i < this.getWallObjectInstanceCount(); i++) this.dematerializeWallObjectInstance(i);
@@ -22597,7 +22608,12 @@ public final class mudclient implements Runnable {
 					long dematerializeNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
-					this.world.loadSections(wantX, wantZ, this.lastHeightOffset, rolling);
+					if (preparedModels != null) {
+						if (world.loadPreparedSurfaceSections(wantX, wantZ, lastHeightOffset, preparedModels,
+							retiredModels, retiredCount)) preparedSurfaceSceneInstalls++;
+					} else {
+						this.world.loadSections(wantX, wantZ, this.lastHeightOffset, rolling);
+					}
 					long worldLoadNanos =
 						System.nanoTime() - phaseStartNanos;
 					this.midRegionBaseX = nextBaseX;
@@ -22760,8 +22776,33 @@ public final class mudclient implements Runnable {
 
 	public int getRollingSurfaceWindows() { return rollingSurfaceWindows; }
 
-	private void rollSurfaceScenery(int dx, int dz) {
-		RSModel[] retired = new RSModel[getGameObjectInstanceCount() + getWallObjectInstanceCount()];
+	public int getPreparedSurfaceSceneInstalls() { return preparedSurfaceSceneInstalls; }
+
+	void prepareSurfaceSceneModels(World.NativeLayeredTerrainHaloPrebuildResult result, int sectionX, int sectionZ) {
+		int targetX = Math.floorDiv(sectionX * World.SECTION_SIZE + worldOffsetX, World.SECTION_SIZE);
+		int targetZ = Math.floorDiv(sectionZ * World.SECTION_SIZE + worldOffsetZ, World.SECTION_SIZE);
+		int dx = World.sectionToLocalBaseTile(targetX) - worldOffsetX - midRegionBaseX;
+		int dz = World.sectionToLocalBaseTile(targetZ) - worldOffsetZ - midRegionBaseZ;
+		RSModel[] departing = new RSModel[getGameObjectInstanceCount() + getWallObjectInstanceCount()];
+		int count = 0;
+		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
+			RSModel model = getGameObjectInstanceModel(i);
+			if (model != null && isGameObjectInstanceMaterialized(i)
+				&& !World.isLocalTile(getGameObjectInstanceX(i) - dx, getGameObjectInstanceZ(i) - dz)) {
+				departing[count++] = model;
+			}
+		}
+		for (int i = 0; i < getWallObjectInstanceCount(); i++) {
+			RSModel model = getWallObjectInstanceModel(i);
+			if (model != null && isWallObjectInstanceMaterialized(i)
+				&& !World.isLocalTile(getWallObjectInstanceX(i) - dx, getWallObjectInstanceZ(i) - dz)) {
+				departing[count++] = model;
+			}
+		}
+		preparedSurfaceScene = world.prepareSurfaceScene(result, departing, count);
+	}
+
+	private int rollSurfaceScenery(int dx, int dz, RSModel[] retired) {
 		int removed = 0, retained = 0;
 		int pixelX = -dx * tileSize, pixelZ = -dz * tileSize;
 		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
@@ -22797,7 +22838,7 @@ public final class mudclient implements Runnable {
 			sceneInstanceStore.moveWallObject(i, retained++, x - dx, z - dz);
 		}
 		setWallObjectInstanceCount(retained);
-		scene.removeModels(retired, removed);
+		return removed;
 	}
 
 	private boolean isInsideLoadedRegion(int worldX, int worldZ) {

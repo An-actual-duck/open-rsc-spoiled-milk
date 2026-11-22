@@ -51,6 +51,7 @@ def main():
     parser.add_argument('--roll-timings', action='store_true', help='Correlate the verified scene rolls with fresh render-worker submissions')
     parser.add_argument('--roll-packet-timings', action='store_true', help='Capture each packet in the verified replay after the walk')
     parser.add_argument('--keep-rebased-models', action='store_true', help='Keep verified resident model transforms across translation-only scene rolls')
+    parser.add_argument('--prepare-surface-scene-models', action='store_true', help='Stage scenery and terrain model membership together before a live roll')
     parser.add_argument('--skip-empty-model-removals', action='store_true', help='Skip legacy scene removal requests for missing models')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
     parser.add_argument('--profile-minimap-walk', action='store_true', help='Keep the minimap open for the profiled walk')
@@ -105,6 +106,8 @@ def main():
         parser.error('Roll timing requires the untraced presentation route and the render worker')
     if args.roll_packet_timings and not (args.roll_timings and args.sustained_walk):
         parser.error('Packet timing requires the sustained scene-roll timing route')
+    if args.prepare_surface_scene_models and not (args.live_surface_handoff and args.surface_mesh_worker):
+        parser.error('Prepared scene models require live surface handoff and detached terrain preparation')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -203,6 +206,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserResidentCameraCull", "{str(args.resident_camera_cull).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserIntegerCameraBounds", "{str(args.integer_camera_bounds).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserKeepRebasedModels", "{str(args.keep_rebased_models).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.prepareSurfaceSceneModels", "{str(args.prepare_surface_scene_models).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSkipEmptyModelRemovals", "{str(args.skip_empty_model_removals).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfilePanels", "{str(args.profile_panels).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfileMinimapWalk", "{str(args.profile_minimap_walk).lower()}");\n'
@@ -331,6 +335,7 @@ def main():
         'rollTimings': args.roll_timings,
         'rollPacketTimings': args.roll_packet_timings,
         'keepRebasedModels': args.keep_rebased_models,
+        'prepareSurfaceSceneModels': args.prepare_surface_scene_models,
         'skipEmptyModelRemovals': args.skip_empty_model_removals,
         'profilePanels': args.profile_panels,
         'profileMinimapWalk': args.profile_minimap_walk,
