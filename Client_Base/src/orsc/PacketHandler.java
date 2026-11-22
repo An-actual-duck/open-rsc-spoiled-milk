@@ -65,8 +65,16 @@ public class PacketHandler {
 	private int pendingLiveSurfaceContext, pendingSurfaceRolls, verifiedLiveSurfaceContext;
 	private PredictedTerrainDecode pendingPredictedTerrainDecode;
 	private SurfaceHandoffPackets surfaceHandoffPackets;
+	private final long[] surfaceRollTiming = PERSISTENT_MOVEMENT_PREVIEW
+		&& Boolean.getBoolean("spoiledmilk.browserPresentationOnly")
+		&& Boolean.getBoolean("spoiledmilk.browserPresentationRollTimings") ? new long[32 * 3] : null;
+	private volatile int surfaceRollTimingWords;
 
 	int getVerifiedLiveSurfaceContext() { return verifiedLiveSurfaceContext; }
+
+	public long[] getSurfaceRollTiming() {
+		return surfaceRollTiming == null ? new long[0] : Arrays.copyOf(surfaceRollTiming, surfaceRollTimingWords);
+	}
 
 	private RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 	private RSBuffer_Bits surfaceHandoffReplay;
@@ -286,6 +294,7 @@ public class PacketHandler {
 
 	public void resetLayeredSceneProtocolState() {
 		surfaceHandoffPackets = null;
+		surfaceRollTimingWords = 0;
 		cancelPredictedTerrainDecode();
 		pendingLiveSurfaceContext = verifiedLiveSurfaceContext = 0;
 		if (pendingLayeredTerrainPrebuild != null) {
@@ -610,6 +619,10 @@ public class PacketHandler {
 	private void publishSurfaceHandoffPackets() {
 		SurfaceHandoffPackets pending = surfaceHandoffPackets;
 		surfaceHandoffPackets = null;
+		int previousContext = verifiedLiveSurfaceContext;
+		int timingOffset = surfaceRollTiming == null ? -1 : surfaceRollTimingWords;
+		boolean capture = timingOffset >= 0 && timingOffset < surfaceRollTiming.length;
+		long startedAt = capture ? System.currentTimeMillis() : 0;
 		// A receive may have left an incomplete wire packet in the socket parser's buffer.
 		RSBuffer_Bits wire = packetsIncoming;
 		if (surfaceHandoffReplay == null) surfaceHandoffReplay = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
@@ -623,6 +636,12 @@ public class PacketHandler {
 			}
 		} finally {
 			packetsIncoming = wire;
+		}
+		if (capture && verifiedLiveSurfaceContext != previousContext && verifiedLiveSurfaceContext > 0) {
+			surfaceRollTiming[timingOffset] = verifiedLiveSurfaceContext;
+			surfaceRollTiming[timingOffset + 1] = startedAt;
+			surfaceRollTiming[timingOffset + 2] = System.currentTimeMillis();
+			surfaceRollTimingWords = timingOffset + 3;
 		}
 	}
 

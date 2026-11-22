@@ -523,14 +523,20 @@ movement authority in every candidate.
 [Current player preview and renderer measurements](seamless-world-streaming-preview.md#webgl-worker-at-full-hd)
 
 CheerpJ schedules Java threads on the browser thread that owns their VM.
-The resident scenery executor can defer Java work, but only the explicit
-browser workers run it on another core. For an authority preparation trial,
+The resident scenery executor can defer Java work. An explicit browser worker
+allows preparation to run in parallel on a separate browser thread. For an
+authority preparation trial,
 build the next scenery and wall revision before the existing fence. Keep
 live edits on the current ordered gameplay path. Publish a staged result
 only when the fence confirms its scope, records and movement generation.
 Measure detached preparation, transfer and publication on their respective
 threads. A new Java executor alone shares the frame budget with the game loop.
 [CheerpJ threading](https://cheerpj.com/how-cheerpj-works/) · [Server activation fence](../../../server/src/com/openrsc/server/GameStateUpdater.java#L1795)
+
+For the next boundary trial, record the start and completion timestamps of
+each verified roll in memory and report them after the walk. This lets the
+fresh-frame sequence distinguish misses at a roll from misses in already
+resident terrain without enabling a per-frame Java trace.
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.

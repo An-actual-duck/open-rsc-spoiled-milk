@@ -1944,6 +1944,18 @@ UI.
 
 [Firefox control](../../../output/tests/browser-gameplay-spike/complete-at-present-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/complete-at-present-trial-firefox-run2/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/complete-at-present-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/complete-at-present-trial-chrome/chrome-result.json)
 
+The repeat reversed test order in both browsers and passed the same gameplay
+and output checks. Chrome held the improvement in seconds below 60 FPS.
+Firefox spent nine additional seconds below 60 FPS with the trial enabled.
+The player preview keeps its established submission path.
+
+| Browser | 99th-percentile interval | Longest interval | Lowest one-second FPS | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 28 → 29 ms | 146 → 155 ms | 41 → 40 FPS | 15 → 24 |
+| Chrome | 25.6 → 25.7 ms | 120.7 → 121 ms | 48 → 49 FPS | 14 → 11 |
+
+[Firefox repeat control](../../../output/tests/browser-gameplay-spike/complete-at-present-repeat-control-firefox/firefox-result.json) · [Firefox repeat trial](../../../output/tests/browser-gameplay-spike/complete-at-present-repeat-trial-firefox/firefox-result.json) · [Chrome repeat control](../../../output/tests/browser-gameplay-spike/complete-at-present-repeat-control-chrome/chrome-result.json) · [Chrome repeat trial](../../../output/tests/browser-gameplay-spike/complete-at-present-repeat-trial-chrome/chrome-result.json)
+
 #### Exact integer scenery signatures
 
 The Chrome allocation capture attributed about 383 MB of sampled transient
@@ -1955,6 +1967,20 @@ disabled and with public mode selected. The three raw outputs matched
 byte for byte. The trial exercised 50 scenery signatures and the other
 two runs reported zero.
 [Sampled allocation sites](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-allocations-chrome/allocation-summary.json) · [Native trial](../../../output/tests/seamless-world-streaming/scenery-signature-limbs-build/trial.log) · [Native control](../../../output/tests/seamless-world-streaming/scenery-signature-limbs-build/control.log)
+
+The live route built 1,131 signatures in Firefox and 1,121 in Chrome with
+the integer path. Every walk confirmed the server endpoint and all three
+rolls, with one load epoch, zero holds and zero sampled input closures.
+The trial improved the lowest second in both browsers. Firefox spent more
+seconds below 60 FPS and Chrome's 99th percentile rose. The trial was
+retired after the mixed frame pacing results.
+
+| Browser | 99th-percentile interval | Longest interval | Lowest one-second FPS | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 28 → 26 ms | 155 → 151 ms | 36 → 40 FPS | 15 → 18 |
+| Chrome | 25.1 → 26.2 ms | 138.2 → 118.6 ms | 46 → 50 FPS | 14 → 13 |
+
+[Firefox control](../../../output/tests/browser-gameplay-spike/scenery-signature-limbs-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/scenery-signature-limbs-trial-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/scenery-signature-limbs-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/scenery-signature-limbs-trial-chrome/chrome-result.json)
 
 #### Java client worker feasibility
 

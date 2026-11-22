@@ -48,8 +48,7 @@ def main():
     parser.add_argument('--projection-demand', action='store_true', help='Count resident model vertices whose faces all fail the existing early CPU cull')
     parser.add_argument('--resident-camera-cull', action='store_true', help='Omit projection for certified resident models outside the pointer bounds')
     parser.add_argument('--integer-camera-bounds', action='store_true', help='Use checked fixed-point shifts and integer rounding for camera bounds')
-    parser.add_argument('--scenery-signature-limbs', action='store_true', help='Build exact scenery mesh signatures with primitive integer arithmetic')
-    parser.add_argument('--finish-at-present', action='store_true', help='Dispatch complete live frames before Java per-frame diagnostics')
+    parser.add_argument('--roll-timings', action='store_true', help='Correlate the verified scene rolls with fresh render-worker submissions')
     parser.add_argument('--keep-rebased-models', action='store_true', help='Keep verified resident model transforms across translation-only scene rolls')
     parser.add_argument('--skip-empty-model-removals', action='store_true', help='Skip legacy scene removal requests for missing models')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
@@ -101,10 +100,8 @@ def main():
         parser.error('Cached rebasing requires certified resident projection models')
     if args.integer_camera_bounds and not args.resident_camera_cull:
         parser.error('Integer camera bounds require certified resident projection models')
-    if args.scenery_signature_limbs and not args.live_surface_handoff:
-        parser.error('Scenery signature limbs require a live surface route')
-    if args.finish_at_present and (not args.surface_draw_worker or args.travel_trace or args.frame_stages or args.trace):
-        parser.error('Completing at presentation requires the untraced live render worker')
+    if args.roll_timings and (not args.presentation_only or not args.surface_draw_worker or args.frame_stages):
+        parser.error('Roll timing requires the untraced presentation route and the render worker')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -196,12 +193,11 @@ def main():
            f'        System.setProperty("spoiledmilk.browserPrepareIncomingScenery", "{str(args.prepare_incoming_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserTravelTrace", "{str(args.travel_trace).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPresentationOnly", "{str(args.presentation_only).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserPresentationRollTimings", "{str(args.roll_timings).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserFrameStageTrace", "{str(args.frame_stages).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProjectionDemand", "{str(args.projection_demand).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserResidentCameraCull", "{str(args.resident_camera_cull).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserIntegerCameraBounds", "{str(args.integer_camera_bounds).lower()}");\n'
-           f'        System.setProperty("spoiledmilk.browserLiveScenerySignatureLimbs", "{str(args.scenery_signature_limbs).lower()}");\n'
-           f'        System.setProperty("spoiledmilk.browserFinishLiveFrameAtPresent", "{str(args.finish_at_present).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserKeepRebasedModels", "{str(args.keep_rebased_models).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSkipEmptyModelRemovals", "{str(args.skip_empty_model_removals).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfilePanels", "{str(args.profile_panels).lower()}");\n'
@@ -328,8 +324,7 @@ def main():
         'projectionDemand': args.projection_demand,
         'residentCameraCull': args.resident_camera_cull,
         'integerCameraBounds': args.integer_camera_bounds,
-        'scenerySignatureLimbs': args.scenery_signature_limbs,
-        'finishAtPresent': args.finish_at_present,
+        'rollTimings': args.roll_timings,
         'keepRebasedModels': args.keep_rebased_models,
         'skipEmptyModelRemovals': args.skip_empty_model_removals,
         'profilePanels': args.profile_panels,

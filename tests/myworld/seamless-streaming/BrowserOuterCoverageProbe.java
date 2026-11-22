@@ -349,6 +349,16 @@ public final class BrowserOuterCoverageProbe {
 				+ Arrays.toString(before) + " to " + Arrays.toString(after));
 		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":rolled=3");
+		if (Boolean.getBoolean("spoiledmilk.browserPresentationRollTimings")) {
+			long[] timing = (long[]) PacketHandler.class.getMethod("getSurfaceRollTiming").invoke(client.packetHandler);
+			if (timing.length != 9) throw new IllegalStateException("Expected timestamps for three verified scene rolls");
+			for (int word = 0; word < timing.length; word += 3) {
+				if (timing[word] != before[3] + word / 3 + 1 || timing[word + 2] < timing[word + 1]) {
+					throw new IllegalStateException("Invalid scene roll timing " + Arrays.toString(timing));
+				}
+				BrowserBootstrap.report("outer-coverage:roll-timing:" + timing[word] + "," + timing[word + 1] + "," + timing[word + 2]);
+			}
+		}
 		verifyDetachedGameplayInstalls(client, 3);
 		if (projectionStart != null) {
 			int[] demand = projectionDemand(client);
@@ -421,16 +431,6 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
-		if (Boolean.getBoolean("spoiledmilk.browserLiveScenerySignatureLimbs")) {
-			int builds;
-			try {
-				builds = (int) RSModel.class.getMethod("getLiveScenerySignatureBuilds").invoke(null);
-			} catch (ReflectiveOperationException error) {
-				throw new IllegalStateException("Scenery signature counts are unavailable", error);
-			}
-			if (builds <= 0) throw new IllegalStateException("No scenery signature used primitive integer arithmetic");
-			BrowserBootstrap.report("outer-coverage:scenery-signature-limbs:" + builds);
-		}
 		if (Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels")) {
 			long[] work;
 			try {

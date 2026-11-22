@@ -114,7 +114,7 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
                         bridgeSampleCurrent: gpu.javaWorldFrames === gpu.javaBridgeReportedWorldFrames});
                     if (samples.gaps.length > 256) samples.gaps.shift();
                 }
-                last = gpu.lastFrame;
+                samples.lastFrameAt = last = gpu.lastFrame;
                 lastUploadBytes = gpu.uploadedBytes;
             }
         }
@@ -143,6 +143,36 @@ def summarize_frame_rate(intervals):
         'secondsBelow50Fps': sum(rate < 50 for rate in rates),
         'secondsBelow60Fps': sum(rate < 60 for rate in rates),
     }
+
+
+def summarize_roll_pacing(presentation, events, time_origin):
+    """Match each replay window to fresh worker submission intervals."""
+    prefix = 'outer-coverage:roll-timing:'
+    rolls = [tuple(map(int, event['message'][len(prefix):].split(',')))
+             for event in events if event['message'].startswith(prefix)]
+    intervals = presentation['intervals']
+    if (len(rolls) != 3 or presentation['unobservedIntervals']
+            or len(intervals) + 1 != presentation['frames']):
+        raise ValueError('Expected three verified rolls and a complete submission sequence')
+    last_frame = presentation['lastFrameAt']
+    first_frame = last_frame
+    submissions = []
+    for interval in reversed(intervals):
+        preceding = first_frame - interval
+        submissions.append((preceding, first_frame, interval))
+        first_frame = preceding
+
+    windows = [(context, started - time_origin, finished - time_origin) for context, started, finished in rolls]
+    measurements = []
+    for context, started, finished in windows:
+        if not first_frame <= started <= finished <= last_frame:
+            raise ValueError(f'Scene roll {context} falls outside the submission sequence')
+        overlapping = [interval for begin, finish, interval in submissions if begin <= finished and finish >= started]
+        measurements.append({'context': context, 'replayMs': round(finished - started, 1),
+                             'longestIntervalMs': round(max(overlapping), 1), 'intervalCount': len(overlapping)})
+    between_rolls = [interval for begin, finish, interval in submissions
+                     if all(finish < started or begin > finished for _, started, finished in windows)]
+    return {'rolls': measurements, 'longestOutsideRollMs': round(max(between_rolls), 1)}
 
 
 def summarize_walking(result):
@@ -388,7 +418,6 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 compactPackWork:p.compactPackWork,
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
-                presentFinalizedFrames:p.gpu?.presentFinalizedFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
                 javaRuntime:{version:p.javaVersion,release:p.runtimeVersion,wasmGC:p.wasmGC},
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
@@ -433,8 +462,6 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                     raise RuntimeError('The walk did not exercise batched compact scenery packing')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
-            if fixture.get('finishAtPresent'):
-                completed = completed and (result.get('presentFinalizedFrames') or 0) >= 1000
             server_status = json.loads((run / 'status.json').read_text())
             if completed and fixture.get('persistentMovement'):
                 arrival = next(event['message'] for event in reversed(result['events'])
@@ -522,6 +549,12 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                         'maxMs': round(intervals[-1], 1),
                         'over100Ms': sum(interval >= 100 for interval in intervals),
                     }
+                if fixture.get('rollTimings') and completed:
+                    try:
+                        presentation['rollPacing'] = summarize_roll_pacing(presentation, result['events'], result['timeOrigin'])
+                    except (KeyError, ValueError) as error:
+                        presentation['rollTimingError'] = str(error)
+                        completed = False
                 printable = {key: value for key, value in presentation.items()
                              if key not in ('gaps', 'intervals', 'callbackGaps', 'panelProfiles')}
                 if fixture.get('profilePanels'):
