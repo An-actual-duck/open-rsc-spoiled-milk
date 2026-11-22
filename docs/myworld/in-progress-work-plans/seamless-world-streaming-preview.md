@@ -2048,6 +2048,49 @@ bytes and a 5 ms WebGL submission. A first-leg interval overlapped a
 untraced walks remain the pacing control.
 [Fresh Chrome diagnostic](../../../output/tests/browser-gameplay-spike/off-roll-producer-profile-chrome/chrome-result.json) · [Aligned CPU and reply timings](../../../output/tests/browser-gameplay-spike/off-roll-producer-profile-chrome/producer-gap-summary.json)
 
+#### Packed gameplay terrain tiles
+
+The private trial keeps an owned packed plane for the nine gameplay
+sectors received from the terrain worker. Elevation, texture, overlay
+and wall queries read that plane directly. A caller that needs a mutable
+tile receives the same editable tile interface, and copies own their
+changes. Envelope checks and the worker's wire format stay in place.
+
+The native test matched 20,736 tile queries without expanding any of
+those tiles. Mutable copies stayed isolated. The entire signed gameplay
+product and pick geometry matched the existing worker transport byte
+for byte, including collision, minimap and roof data.
+[Signed terrain proof](../../../output/tests/seamless-world-streaming/packed-surface-tiles-build/native-packed-signed.log)
+
+Both first walking comparisons used the same client JAR. The server
+confirmed the full route, including three scene rolls and the return
+to `(252,609)`. Both packed trials installed all 27 sectors. Every run
+retained one load epoch with zero holds and input closures at 1920×1080
+with the 960×540 logical surface.
+
+| Browser | 99th-percentile interval | Longest frame interval | Longest interval away from replay | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 28.6 → 24.3 ms | 117.5 → 116.7 ms | 111 → 115.4 ms | 15 → 14 |
+| Firefox | 26 → 30 ms | 155 → 143 ms | 155 → 143 ms | 19 → 15 |
+
+[Chrome control](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-control-chrome/chrome-result.json) · [Chrome packed](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-control-firefox/firefox-result.json) · [Firefox packed](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-trial-firefox/firefox-result.json)
+
+#### Packed gameplay terrain mesh vertices
+
+The Chrome diagnostic recorded three gameplay terrain replies of
+8.19–8.23 MB each. Their checked vertex planes include the full
+compatibility mesh. The browser normally draws the installed fixed
+cells and uses the captured frame for material, lighting and coverage
+metadata. The private trial keeps coordinates, texture coordinates,
+light, normals and implicit triangle indices in the immutable reply.
+Queries still read the same values. A bulk copy or serialization can
+expand the vertex planes on demand using the existing array layout.
+
+The signed native fixture matched all 136,797 vertex records by field
+and verified that those reads left the reply packed. Serialized mesh
+bytes, gameplay collision, minimap and roof data also matched.
+[Signed mesh proof](../../../output/tests/seamless-world-streaming/packed-gameplay-mesh-build/native-packed-mesh.log)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

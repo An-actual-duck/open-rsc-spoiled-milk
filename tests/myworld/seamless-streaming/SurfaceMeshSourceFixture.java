@@ -199,6 +199,10 @@ public final class SurfaceMeshSourceFixture {
 			World.installSurfaceGameplayWordWorker((source, offsetX, offsetZ, roofs, sprites) -> words);
 			Object primitive = receive.invoke(world, terrain, 0, 0, 1L, true, null);
 			if (Boolean.getBoolean("spoiledmilk.browserPackedSurfaceTiles")) verifyPackedTileQueries(direct, primitive);
+			if (Boolean.getBoolean("spoiledmilk.browserPackedGameplayVertices")) {
+				verifyPackedGameplayVertices((Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(detached),
+					(Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(primitive));
+			}
 			if (world.getAcceptedSurfaceGameplayWordReplies() != 1 || primitive == null
 				|| !Arrays.equals(gameplayProduct(direct), gameplayProduct(primitive))
 				|| !Arrays.equals(meshBytes((Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(detached)),
@@ -212,6 +216,31 @@ public final class SurfaceMeshSourceFixture {
 			World.installSurfaceMeshWorker(null);
 			World.installSurfaceGameplayWordWorker(null);
 		}
+	}
+
+	private static void verifyPackedGameplayVertices(Renderer3DWorldChunkFrame.ChunkMesh direct,
+		Renderer3DWorldChunkFrame.ChunkMesh packed) {
+		int count = direct.getVertexCount();
+		if (count != packed.getVertexCount() || count != packed.getIndexCount() || !packed.hasPackedTerrainVertices()) {
+			throw new AssertionError("Gameplay worker reply did not keep the literal vertex planes");
+		}
+		for (int i = 0; i < count; i++) {
+			int coord = i * 3;
+			if (direct.getVertexCoord(coord) != packed.getVertexCoord(coord)
+				|| direct.getVertexCoord(coord + 1) != packed.getVertexCoord(coord + 1)
+				|| direct.getVertexCoord(coord + 2) != packed.getVertexCoord(coord + 2)
+				|| direct.getVertexLight(i) != packed.getVertexLight(i)
+				|| direct.getVertexNormalX(i) != packed.getVertexNormalX(i)
+				|| direct.getVertexNormalY(i) != packed.getVertexNormalY(i)
+				|| direct.getVertexNormalZ(i) != packed.getVertexNormalZ(i)
+				|| Float.floatToRawIntBits(direct.getVertexTextureU(i)) != Float.floatToRawIntBits(packed.getVertexTextureU(i))
+				|| Float.floatToRawIntBits(direct.getVertexTextureV(i)) != Float.floatToRawIntBits(packed.getVertexTextureV(i))
+				|| direct.getIndex(i) != packed.getIndex(i)) {
+				throw new AssertionError("Gameplay worker vertex differs at " + i);
+			}
+		}
+		if (!packed.hasPackedTerrainVertices()) throw new AssertionError("Gameplay vertex access expanded the packed reply");
+		System.out.println("PASS " + count + " gameplay mesh vertices matched directly from the worker reply");
 	}
 
 	private static void verifyPackedTileQueries(Object direct, Object primitive) throws ReflectiveOperationException {

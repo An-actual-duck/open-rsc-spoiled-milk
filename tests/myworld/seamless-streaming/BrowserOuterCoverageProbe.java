@@ -420,6 +420,20 @@ public final class BrowserOuterCoverageProbe {
 			}
 			BrowserBootstrap.report("outer-coverage:packed-surface-sectors:" + packed);
 		}
+		if (Boolean.getBoolean("spoiledmilk.browserPackedGameplayVertices")) {
+			int packed;
+			boolean current;
+			try {
+				packed = (int) World.class.getMethod("getInstalledPackedGameplayMeshes").invoke(client.getWorld());
+				current = (boolean) World.class.getMethod("hasCurrentPackedGameplayMesh").invoke(client.getWorld());
+			} catch (ReflectiveOperationException error) {
+				throw new IllegalStateException("Packed gameplay mesh state is unavailable", error);
+			}
+			if (packed < expected || !current) {
+				throw new IllegalStateException("Gameplay mesh did not stay packed through publication " + packed);
+			}
+			BrowserBootstrap.report("outer-coverage:packed-gameplay-meshes:" + packed + ":current=true");
+		}
 		if (Boolean.getBoolean("spoiledmilk.browserSurfaceTerrainWords")) {
 			int preparedTerrain = client.getWorld().getAcceptedSurfaceTerrainWordReplies();
 			if (preparedTerrain == 0) throw new IllegalStateException("No primitive terrain reply was accepted");
