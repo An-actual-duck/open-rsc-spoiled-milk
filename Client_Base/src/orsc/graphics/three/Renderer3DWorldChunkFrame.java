@@ -8,9 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class Renderer3DWorldChunkFrame {
-	private static final boolean BROWSER_LAZY_SIGNATURES = Boolean.getBoolean("spoiledmilk.browserLazyFrameSignatures");
-	private static final long SIGNATURE_SEED = 1469598103934665603L;
-	private static volatile int browserDeferredFrames, browserStaticSignatureBuilds, browserTextureSignatureBuilds;
 	public static final Renderer3DWorldChunkFrame EMPTY =
 		new Renderer3DWorldChunkFrame(Collections.<ChunkMesh>emptyList(), 0, 0, 0);
 	public static final int CHUNK_ROLE_WORLD = 0;
@@ -25,7 +22,6 @@ public final class Renderer3DWorldChunkFrame {
 	private final int totalTriangleCount;
 	private final int staticPresentationChunkCount;
 	private final long staticPresentationSignature;
-	private volatile Long deferredStaticPresentationSignature;
 	private final int[] materialFamilyTriangleCounts;
 	private final boolean hasVertexBounds;
 	private final int minVertexX;
@@ -34,7 +30,6 @@ public final class Renderer3DWorldChunkFrame {
 	private final int maxVertexZ;
 	private final int[] referencedTextureIds;
 	private final long textureReferenceSignature;
-	private volatile Long deferredTextureReferenceSignature;
 	private long objectShadowCasterSignature;
 	private boolean objectShadowCasterSignatureKnown;
 
@@ -54,15 +49,45 @@ public final class Renderer3DWorldChunkFrame {
 		int minimumVertexZ = Integer.MAX_VALUE;
 		int maximumVertexZ = Integer.MIN_VALUE;
 		TextureReferenceSet textureReferences = new TextureReferenceSet();
-		long referenceSignature = SIGNATURE_SEED;
-		long staticSignature = SIGNATURE_SEED;
+		long referenceSignature = 1469598103934665603L;
+		long staticSignature = 1469598103934665603L;
 		int staticChunkCount = 0;
-		if (!BROWSER_LAZY_SIGNATURES) referenceSignature = mixSignature(referenceSignature, chunks.size());
+		referenceSignature = mixSignature(referenceSignature, chunks.size());
 		for (ChunkMesh chunk : chunks) {
-			if (!BROWSER_LAZY_SIGNATURES) referenceSignature = appendTextureReferenceChunk(referenceSignature, chunk);
+			referenceSignature = mixSignature(referenceSignature, chunk.getSignature());
+			referenceSignature = mixSignature(referenceSignature, chunk.getTriangleCount());
 			if (chunk.getChunkRole() != CHUNK_ROLE_ANIMATED_OBJECTS) {
 				staticChunkCount++;
-				if (!BROWSER_LAZY_SIGNATURES) staticSignature = appendStaticSignatureChunk(staticSignature, chunk);
+				staticSignature =
+					mixSignature(staticSignature, chunk.getPlane());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getCenterSectionX());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getCenterSectionY());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getOriginWorldX());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getOriginWorldZ());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getChunkRole());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getSignature());
+				staticSignature =
+					mixSignature(
+						staticSignature,
+						chunk.getTriangleCount());
 			}
 			for (Renderer3DMaterialFamily family : Renderer3DMaterialFamily.values()) {
 				this.materialFamilyTriangleCounts[family.ordinal()] +=
@@ -80,36 +105,19 @@ public final class Renderer3DWorldChunkFrame {
 			}
 		}
 		this.staticPresentationChunkCount = staticChunkCount;
-		this.staticPresentationSignature = BROWSER_LAZY_SIGNATURES ? 0 : mixSignature(staticSignature, staticChunkCount);
+		this.staticPresentationSignature =
+			mixSignature(staticSignature, staticChunkCount);
 		this.hasVertexBounds = foundVertexBounds;
 		this.minVertexX = foundVertexBounds ? minimumVertexX : 0;
 		this.maxVertexX = foundVertexBounds ? maximumVertexX : 0;
 		this.minVertexZ = foundVertexBounds ? minimumVertexZ : 0;
 		this.maxVertexZ = foundVertexBounds ? maximumVertexZ : 0;
 		this.referencedTextureIds = textureReferences.toSortedArray();
-		this.textureReferenceSignature = BROWSER_LAZY_SIGNATURES ? 0 : finishTextureReferenceSignature(referenceSignature);
-		if (BROWSER_LAZY_SIGNATURES) browserDeferredFrames++;
-	}
-
-	private static long appendStaticSignatureChunk(long hash, ChunkMesh chunk) {
-		hash = mixSignature(hash, chunk.getPlane());
-		hash = mixSignature(hash, chunk.getCenterSectionX());
-		hash = mixSignature(hash, chunk.getCenterSectionY());
-		hash = mixSignature(hash, chunk.getOriginWorldX());
-		hash = mixSignature(hash, chunk.getOriginWorldZ());
-		hash = mixSignature(hash, chunk.getChunkRole());
-		hash = mixSignature(hash, chunk.getSignature());
-		return mixSignature(hash, chunk.getTriangleCount());
-	}
-
-	private static long appendTextureReferenceChunk(long hash, ChunkMesh chunk) {
-		return mixSignature(mixSignature(hash, chunk.getSignature()), chunk.getTriangleCount());
-	}
-
-	private long finishTextureReferenceSignature(long hash) {
-		hash = mixSignature(hash, referencedTextureIds.length);
-		for (int textureId : referencedTextureIds) hash = mixSignature(hash, textureId);
-		return hash;
+		referenceSignature = mixSignature(referenceSignature, this.referencedTextureIds.length);
+		for (int textureId : this.referencedTextureIds) {
+			referenceSignature = mixSignature(referenceSignature, textureId);
+		}
+		this.textureReferenceSignature = referenceSignature;
 	}
 
 	public static Renderer3DWorldChunkFrame fromChunks(List<ChunkMesh> chunks) {
@@ -163,17 +171,7 @@ public final class Renderer3DWorldChunkFrame {
 	}
 
 	public long getStaticPresentationSignature() {
-		if (!BROWSER_LAZY_SIGNATURES) return staticPresentationSignature;
-		Long cached = deferredStaticPresentationSignature;
-		if (cached == null) {
-			long hash = SIGNATURE_SEED;
-			for (ChunkMesh chunk : chunks)
-				if (chunk.getChunkRole() != CHUNK_ROLE_ANIMATED_OBJECTS) hash = appendStaticSignatureChunk(hash, chunk);
-			cached = mixSignature(hash, staticPresentationChunkCount);
-			deferredStaticPresentationSignature = cached;
-			browserStaticSignatureBuilds++;
-		}
-		return cached;
+		return staticPresentationSignature;
 	}
 
 	public boolean hasVertexBounds() {
@@ -205,24 +203,7 @@ public final class Renderer3DWorldChunkFrame {
 	}
 
 	public long getTextureReferenceSignature() {
-		if (!BROWSER_LAZY_SIGNATURES) return textureReferenceSignature;
-		Long cached = deferredTextureReferenceSignature;
-		if (cached == null) {
-			long hash = mixSignature(SIGNATURE_SEED, chunks.size());
-			for (ChunkMesh chunk : chunks) hash = appendTextureReferenceChunk(hash, chunk);
-			cached = finishTextureReferenceSignature(hash);
-			deferredTextureReferenceSignature = cached;
-			browserTextureSignatureBuilds++;
-		}
-		return cached;
-	}
-
-	public static boolean isBrowserFrameSignatureDeferred() {
-		return BROWSER_LAZY_SIGNATURES;
-	}
-
-	public static int[] getBrowserFrameSignatureWork() {
-		return new int[]{browserDeferredFrames, browserStaticSignatureBuilds, browserTextureSignatureBuilds};
+		return textureReferenceSignature;
 	}
 
 	public long getObjectShadowCasterSignature() {

@@ -48,7 +48,6 @@ def main():
     parser.add_argument('--projection-demand', action='store_true', help='Count resident model vertices whose faces all fail the existing early CPU cull')
     parser.add_argument('--resident-camera-cull', action='store_true', help='Omit projection for certified resident models outside the pointer bounds')
     parser.add_argument('--keep-rebased-models', action='store_true', help='Keep verified resident model transforms across translation-only scene rolls')
-    parser.add_argument('--defer-frame-signatures', action='store_true', help='Compute world frame signatures only when an exact reader needs them')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
     parser.add_argument('--profile-minimap-walk', action='store_true', help='Keep the minimap open for the profiled walk')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
@@ -191,7 +190,6 @@ def main():
            f'        System.setProperty("spoiledmilk.browserProjectionDemand", "{str(args.projection_demand).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserResidentCameraCull", "{str(args.resident_camera_cull).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserKeepRebasedModels", "{str(args.keep_rebased_models).lower()}");\n'
-           f'        System.setProperty("spoiledmilk.browserLazyFrameSignatures", "{str(args.defer_frame_signatures).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfilePanels", "{str(args.profile_panels).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfileMinimapWalk", "{str(args.profile_minimap_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSlicePreupload", "{str(args.slice_preupload).lower()}");\n'
@@ -316,7 +314,6 @@ def main():
         'projectionDemand': args.projection_demand,
         'residentCameraCull': args.resident_camera_cull,
         'keepRebasedModels': args.keep_rebased_models,
-        'deferFrameSignatures': args.defer_frame_signatures,
         'profilePanels': args.profile_panels,
         'profileMinimapWalk': args.profile_minimap_walk,
         'slicePreupload': args.slice_preupload,

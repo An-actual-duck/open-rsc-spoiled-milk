@@ -8,6 +8,4 @@ classes=suite/'variant-classes';classes.mkdir(exist_ok=True)
 jar=root/'Client_Base/Open_RSC_Client.jar'
 subprocess.run(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(classes),str(root/'tests/myworld/BrowserChunkVariantFixture.java')],check=True)
 subprocess.run(['java','-Djava.awt.headless=true','-cp',str(classes)+':'+str(jar),'orsc.BrowserChunkVariantFixture',str(suite/'native-uv-reference.tsv')],check=True)
-subprocess.run(['java','-Djava.awt.headless=true','-Dspoiledmilk.browserLazyFrameSignatures=true',
-                '-cp',str(classes)+':'+str(jar),'orsc.BrowserChunkVariantFixture'],check=True)
 subprocess.run(['node',str(root/'tests/myworld/test-browser-gpu-cache.mjs'),str(suite/'native-uv-reference.tsv')],check=True)
