@@ -2037,6 +2037,17 @@ pacing across the whole walk. The trial was retired. The exact collision
 proof and private captures remain available.
 [Firefox control](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-trial-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-trial-chrome/chrome-result.json)
 
+#### CPU capture between scene rolls
+
+A separate Chrome diagnostic matched frame-stage timings and main-thread
+CPU samples within 1.4 ms. Near the return from `(291,597)`, a 91.9 ms
+frame interval overlapped a 21.8 ms gameplay terrain reply decode and
+contained twelve collector samples. That interval had zero geometry upload
+bytes and a 5 ms WebGL submission. A first-leg interval overlapped a
+24.5 ms scenery reply decode. The capture was instrumented, so the
+untraced walks remain the pacing control.
+[Fresh Chrome diagnostic](../../../output/tests/browser-gameplay-spike/off-roll-producer-profile-chrome/chrome-result.json) · [Aligned CPU and reply timings](../../../output/tests/browser-gameplay-spike/off-roll-producer-profile-chrome/producer-gap-summary.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

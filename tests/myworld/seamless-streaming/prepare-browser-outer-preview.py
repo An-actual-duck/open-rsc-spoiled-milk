@@ -75,6 +75,7 @@ def main():
     parser.add_argument('--scenery-words', action='store_true', help='Transfer exact scenery triangles as a bounded primitive array')
     parser.add_argument('--terrain-words', action='store_true', help='Transfer exact terrain draw geometry as bounded primitive arrays')
     parser.add_argument('--terrain-gameplay-words', action='store_true', help='Transfer exact gameplay terrain as bounded primitive arrays')
+    parser.add_argument('--packed-surface-tiles', action='store_true', help='Keep validated gameplay tiles packed through local terrain access')
     parser.add_argument('--reuse-detached-scenery', action='store_true', help='Keep exact worker meshes for verified revisits')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
@@ -102,6 +103,8 @@ def main():
         parser.error('Integer camera bounds require certified resident projection models')
     if args.roll_timings and (not args.presentation_only or not args.surface_draw_worker or args.frame_stages):
         parser.error('Roll timing requires the untraced presentation route and the render worker')
+    if args.packed_surface_tiles and not args.terrain_gameplay_words:
+        parser.error('Packed surface tiles require primitive gameplay terrain')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -220,6 +223,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserSurfaceSceneryWords", "{str(args.scenery_words).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceTerrainWords", "{str(args.terrain_words).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceGameplayWords", "{str(args.terrain_gameplay_words).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserPackedSurfaceTiles", "{str(args.packed_surface_tiles).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserReuseDetachedScenery", "{str(args.reuse_detached_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
@@ -345,6 +349,7 @@ def main():
         'sceneryWords': args.scenery_words,
         'terrainWords': args.terrain_words,
         'terrainGameplayWords': args.terrain_gameplay_words,
+        'packedSurfaceTiles': args.packed_surface_tiles,
         'reuseDetachedScenery': args.reuse_detached_scenery,
         'surfaceDrawWorker': args.surface_draw_worker,
         'localSpritePlan': args.local_sprite_plan,

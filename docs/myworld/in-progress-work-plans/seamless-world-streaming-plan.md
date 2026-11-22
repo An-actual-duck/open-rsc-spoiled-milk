@@ -557,6 +557,14 @@ Use those first-pass and diagonal legs for a separate CPU capture. Match
 packet processing, terrain and scenery reply processing, scene capture
 and submission to the same clock before choosing the next change.
 
+The fresh Chrome capture linked one return-leg gap to gameplay terrain
+reply decoding and collector work. The Java receiver currently expands
+all nine sectors into mutable tile objects despite the checked packed
+source. Keep an owned copy of the packed tile plane and read the fields
+directly for terrain queries. Preserve the mutable tile path for actual
+edits and compare the full terrain and pick product byte for byte.
+[CPU capture between rolls](seamless-world-streaming-preview.md#cpu-capture-between-scene-rolls)
+
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
 TeaVM can ahead-of-time compile a detached Java library, with limited

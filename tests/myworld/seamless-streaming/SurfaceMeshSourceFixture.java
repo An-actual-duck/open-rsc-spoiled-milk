@@ -1,6 +1,8 @@
 package orsc.graphics.three;
 
 import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.model.Sector;
+import com.openrsc.client.model.Tile;
 import org.json.JSONObject;
 import orsc.BrowserWebGLBridge;
 import orsc.Config;
@@ -196,6 +198,7 @@ public final class SurfaceMeshSourceFixture {
 			if (words.length == 0) throw new AssertionError("Signed gameplay product rejected by primitive encoding");
 			World.installSurfaceGameplayWordWorker((source, offsetX, offsetZ, roofs, sprites) -> words);
 			Object primitive = receive.invoke(world, terrain, 0, 0, 1L, true, null);
+			if (Boolean.getBoolean("spoiledmilk.browserPackedSurfaceTiles")) verifyPackedTileQueries(direct, primitive);
 			if (world.getAcceptedSurfaceGameplayWordReplies() != 1 || primitive == null
 				|| !Arrays.equals(gameplayProduct(direct), gameplayProduct(primitive))
 				|| !Arrays.equals(meshBytes((Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(detached)),
@@ -209,6 +212,43 @@ public final class SurfaceMeshSourceFixture {
 			World.installSurfaceMeshWorker(null);
 			World.installSurfaceGameplayWordWorker(null);
 		}
+	}
+
+	private static void verifyPackedTileQueries(Object direct, Object primitive) throws ReflectiveOperationException {
+		Field product = direct.getClass().getDeclaredField("localTerrain");
+		product.setAccessible(true);
+		Object directTerrain = product.get(direct);
+		Field sectors = directTerrain.getClass().getDeclaredField("tiles");
+		sectors.setAccessible(true);
+		Sector[] expected = (Sector[]) sectors.get(directTerrain), packed = (Sector[]) sectors.get(product.get(primitive));
+		Field tileArray = Sector.class.getDeclaredField("tiles");
+		tileArray.setAccessible(true);
+		int checked = 0;
+		for (int n = 0; n < expected.length; n++) {
+			Sector sector = packed[n];
+			Tile[] storage = (Tile[]) tileArray.get(sector);
+			Tile untouched = storage[0];
+			if (!sector.hasPackedTiles() || sector.isLoaded() != expected[n].isLoaded()) throw new AssertionError("Packed sector state");
+			for (int x = 0; x < World.SECTION_SIZE; x++) {
+				for (int z = 0; z < World.SECTION_SIZE; z++) {
+					Tile tile = expected[n].getTile(x, z);
+					if (sector.groundElevation(x, z) != tile.groundElevation || sector.diagonalWalls(x, z) != tile.diagonalWalls
+						|| sector.groundTexture(x, z) != tile.groundTexture || sector.groundOverlay(x, z) != tile.groundOverlay
+						|| sector.roofTexture(x, z) != tile.roofTexture || sector.horizontalWall(x, z) != tile.horizontalWall
+						|| sector.verticalWall(x, z) != tile.verticalWall || sector.isEditorPaintedOverlay(x, z) != tile.editorPaintedOverlay
+						|| storage[x * World.SECTION_SIZE + z] != untouched) throw new AssertionError("Packed sector tile mismatch");
+					checked++;
+				}
+			}
+			Sector copy = sector.copy();
+			Tile changed = copy.getTile(3, 4);
+			int oldElevation = sector.groundElevation(3, 4);
+			changed.groundElevation++;
+			changed.editorPaintedOverlay = true;
+			if (copy.groundElevation(3, 4) != oldElevation + 1 || sector.groundElevation(3, 4) != oldElevation
+				|| !copy.isEditorPaintedOverlay(3, 4) || copy.getTile(3, 4) != changed) throw new AssertionError("Packed tile mutation or alias");
+		}
+		System.out.println("PASS " + checked + " packed tile queries matched without unpacking and mutable copies remained isolated");
 	}
 
 	private static void rejectGameplayWords(int[] words, String scope, int x, int z) throws Exception {
