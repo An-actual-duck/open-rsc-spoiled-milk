@@ -43,6 +43,7 @@ def main():
     parser.add_argument('--travel-trace', action='store_true', help='Record real submitted frames and server positions through extended travel')
     parser.add_argument('--presentation-only', action='store_true', help='Check sustained travel without detailed Java or server tracing')
     parser.add_argument('--frame-stages', action='store_true', help='Sample individual renderer stages during the presentation control')
+    parser.add_argument('--sync-sprite-calls', action='store_true', help='Use synchronous atlas plan and commit on the direct renderer')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
     parser.add_argument('--profile-minimap-walk', action='store_true', help='Keep the minimap open for the profiled walk')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
@@ -64,7 +65,8 @@ def main():
     parser.add_argument('--worker-scenery-placements', action='store_true', help='Build canonical scenery inputs from placements in the detached worker')
     parser.add_argument('--verify-worker-scenery-placements', action='store_true', help='Compare detached placement meshes byte for byte with the installed builder')
     parser.add_argument('--scenery-words', action='store_true', help='Transfer exact scenery triangles as a bounded primitive array')
-    parser.add_argument('--packed-scenery', action='store_true', help='Stage worker-generated compact geometry directly for WebGL upload')
+    parser.add_argument('--terrain-words', action='store_true', help='Transfer exact terrain draw geometry as bounded primitive arrays')
+    parser.add_argument('--terrain-gameplay-words', action='store_true', help='Transfer exact gameplay terrain as bounded primitive arrays')
     parser.add_argument('--reuse-detached-scenery', action='store_true', help='Keep exact worker meshes for verified revisits')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
@@ -80,6 +82,8 @@ def main():
         parser.error('Presentation-only sampling requires untraced sustained live-surface travel')
     if args.frame_stages and not args.presentation_only:
         parser.error('Frame stage timing requires the presentation control')
+    if args.sync_sprite_calls and (args.surface_draw_worker or not (args.presentation_only or args.manual)):
+        parser.error('Synchronous sprite calls require the direct renderer')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -120,8 +124,8 @@ def main():
         parser.error('Scenery parity requires the automated scenery placement route')
     if args.scenery_words and not args.worker_scenery_placements:
         parser.error('Primitive scenery replies require worker scenery placements')
-    if args.packed_scenery and not (args.scenery_words and args.compact_scenery and not args.surface_draw_worker):
-        parser.error('Prepared scenery requires primitive replies and the direct compact WebGL renderer')
+    if (args.terrain_words or args.terrain_gameplay_words) and not args.surface_mesh_worker:
+        parser.error('Primitive terrain replies require the terrain worker')
     if args.reuse_detached_scenery and not args.scenery_words:
         parser.error('Detached scenery reuse requires primitive replies')
     if args.retarget_walk and (args.manual or not args.live_surface_handoff or args.sustained_walk):
@@ -181,7 +185,8 @@ def main():
            f'        System.setProperty("spoiledmilk.browserWorkerSceneryPlacements", "{str(args.worker_scenery_placements).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserVerifyWorkerSceneryPlacements", "{str(args.verify_worker_scenery_placements).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceSceneryWords", "{str(args.scenery_words).lower()}");\n'
-           f'        System.setProperty("spoiledmilk.browserSurfacePackedScenery", "{str(args.packed_scenery).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSurfaceTerrainWords", "{str(args.terrain_words).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSurfaceGameplayWords", "{str(args.terrain_gameplay_words).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserReuseDetachedScenery", "{str(args.reuse_detached_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
@@ -193,7 +198,7 @@ def main():
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/', "
            f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}, "
-           f"packedSurfaceScenery:{str(args.packed_scenery).lower()}}};")
+           f"syncSpriteCalls:{str(args.sync_sprite_calls).lower()}}};")
     if args.manual and args.travel_trace:
         (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
         insert(web / 'runtime.html', "    await import('./browser.js');",
@@ -231,6 +236,8 @@ def main():
                '  },')
         insert(web / 'browser.js', '    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay]);',
                '    if (window.fixtureFringeGate && !gameplay) await window.fixtureFringeGate.promise;')
+        insert(web / 'browser.js', '    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, false], true);',
+               '    if (window.fixtureFringeGate) await window.fixtureFringeGate.promise;')
     subprocess.run([
         'javac', '-source', '8', '-target', '8', '-cp', f'{web / "client.jar"}:{classes}',
         '-d', str(classes), *java_sources,
@@ -278,6 +285,7 @@ def main():
         'travelTrace': args.travel_trace,
         'presentationOnly': args.presentation_only,
         'frameStages': args.frame_stages,
+        'syncSpriteCalls': args.sync_sprite_calls,
         'profilePanels': args.profile_panels,
         'profileMinimapWalk': args.profile_minimap_walk,
         'slicePreupload': args.slice_preupload,
@@ -294,7 +302,8 @@ def main():
         'workerSceneryPlacements': args.worker_scenery_placements,
         'verifyWorkerSceneryPlacements': args.verify_worker_scenery_placements,
         'sceneryWords': args.scenery_words,
-        'packedScenery': args.packed_scenery,
+        'terrainWords': args.terrain_words,
+        'terrainGameplayWords': args.terrain_gameplay_words,
         'reuseDetachedScenery': args.reuse_detached_scenery,
         'surfaceDrawWorker': args.surface_draw_worker,
         'sustainedWalk': args.sustained_walk,

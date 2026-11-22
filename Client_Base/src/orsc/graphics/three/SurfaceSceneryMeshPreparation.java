@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.ToIntFunction;
 
 /** Sends frozen models or canonical placements to the isolated browser scenery mesher. */
 public final class SurfaceSceneryMeshPreparation {
@@ -31,7 +30,6 @@ public final class SurfaceSceneryMeshPreparation {
 	private static final int PLACEMENT_WORDS = 7;
 	private static volatile Worker browserWorker;
 	private static volatile WordWorker wordWorker;
-	private static volatile int[] packingContext = new int[0];
 	private static final boolean TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.browserFrameStageTrace");
 	private static final ArrayDeque<String> trace = new ArrayDeque<>();
@@ -45,14 +43,12 @@ public final class SurfaceSceneryMeshPreparation {
 
 	@FunctionalInterface
 	public interface WordWorker {
-		int[] build(byte[] source, int[] packingContext);
+		int[] build(byte[] source);
 	}
 
 	public static void install(Worker worker) { browserWorker = worker; }
 	public static void installWords(WordWorker worker) { wordWorker = worker; }
 	public static boolean isWordWorkerAvailable() { return wordWorker != null; }
-
-	public static void publishPackingContext(int[] context) { packingContext = context; }
 
 	public static int definitionFlags() {
 		return (Config.S_IMPROVED_ITEM_OBJECT_NAMES ? 1 : 0) | (Config.S_BATCH_PROGRESSION ? 2 : 0)
@@ -84,6 +80,12 @@ public final class SurfaceSceneryMeshPreparation {
 
 	public static void tracePlacementRefusal(long at, long cell, int objectId) {
 		if (TRACE) trace("placement-refused," + at + "," + cell + "," + objectId);
+	}
+
+	static void traceTerrainReply(String kind, long at, int x, int z, int bytes, long waitNanos, long decodeNanos,
+		boolean compatibility) {
+		if (TRACE) trace(kind + "," + at + "," + x + "," + z + "," + bytes + "," + waitNanos + ","
+			+ decodeNanos + "," + compatibility);
 	}
 
 	public static Renderer3DWorldChunkFrame.ChunkMesh prepare(int sectionX, int sectionZ, int originX, int originZ,
@@ -175,7 +177,7 @@ public final class SurfaceSceneryMeshPreparation {
 			sent = request.length;
 			if (TRACE) beforeBridge = System.nanoTime();
 			if (words != null) {
-				int[] response = words.build(request, packingContext);
+				int[] response = words.build(request);
 				if (TRACE) afterBridge = System.nanoTime();
 				if (response == null || response.length == 0) return null;
 				received = response.length * Integer.BYTES;
@@ -226,11 +228,11 @@ public final class SurfaceSceneryMeshPreparation {
 			}
 		}
 
-		public int[] buildWords(byte[] source, String modelPath, ToIntFunction<Renderer3DWorldChunkFrame.ChunkMesh> pack) {
+		public int[] buildWords(byte[] source, String modelPath) {
 			try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(source))) {
 				if (input.readInt() != PLACEMENTS) return new int[0];
 				PlacementProduct result = buildPlacements(input, modelPath);
-				return result.mesh.writeDetachedSceneryWords(result.revision, pack.applyAsInt(result.mesh));
+				return result.mesh.writeDetachedSceneryWords(result.revision);
 			} catch (IOException | RuntimeException unavailable) {
 				return new int[0];
 			}

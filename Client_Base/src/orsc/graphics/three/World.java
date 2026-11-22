@@ -146,8 +146,12 @@ public final class World {
 	private PreparedLocalTerrain pendingLocalTerrain;
 	private PreparedLocalTerrain installedDetachedTerrain;
 	private int detachedSurfaceGameplayInstalls;
+	private volatile int acceptedSurfaceTerrainWordReplies;
+	private volatile int acceptedSurfaceGameplayWordReplies;
 
 	public int getDetachedSurfaceGameplayInstalls() { return detachedSurfaceGameplayInstalls; }
+	public int getAcceptedSurfaceTerrainWordReplies() { return acceptedSurfaceTerrainWordReplies; }
+	public int getAcceptedSurfaceGameplayWordReplies() { return acceptedSurfaceGameplayWordReplies; }
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -1082,6 +1086,26 @@ public final class World {
 	}
 
 	private static volatile SurfaceMeshWorker browserSurfaceMeshWorker;
+	private static volatile SurfaceDrawWordWorker browserSurfaceDrawWordWorker;
+	private static volatile SurfaceGameplayWordWorker browserSurfaceGameplayWordWorker;
+	private static final int SURFACE_GAMEPLAY_WORD_MAGIC = 0x52534701;
+	private static final int SURFACE_GAMEPLAY_MAX_BYTES = 24 * 1024 * 1024;
+
+	@FunctionalInterface
+	public interface SurfaceDrawWordWorker {
+		int[] build(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs, boolean customSprites);
+	}
+
+	@FunctionalInterface
+	public interface SurfaceGameplayWordWorker {
+		int[] build(byte[] source, int offsetX, int offsetZ, boolean includeRoofs, boolean customSprites);
+	}
+
+	public static void installSurfaceGameplayWordWorker(SurfaceGameplayWordWorker worker) {
+		browserSurfaceGameplayWordWorker = worker;
+	}
+
+	public static void installSurfaceDrawWordWorker(SurfaceDrawWordWorker worker) { browserSurfaceDrawWordWorker = worker; }
 
 	public static void installSurfaceMeshWorker(SurfaceMeshWorker worker) {
 		browserSurfaceMeshWorker = worker;
@@ -1095,18 +1119,48 @@ public final class World {
 
 	public byte[] buildSurfaceMeshPacket(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs,
 		java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
+		Renderer3DWorldChunkFrame.ChunkMesh[] meshes = buildSurfaceDrawProducts(source, offsetX, offsetZ, dx, dz, includeRoofs, prepareDrawInputs);
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+			output.writeObject(meshes[0]);
+			output.writeObject(meshes[1]);
+		}
+		return bytes.toByteArray();
+	}
+
+	public int[] buildSurfaceDrawWordPacket(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs,
+		java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
+		Renderer3DWorldChunkFrame.ChunkMesh[] meshes = buildSurfaceDrawProducts(source, offsetX, offsetZ, dx, dz, includeRoofs, prepareDrawInputs);
+		int[] fixed = meshes[0] == null ? new int[0] : meshes[0].writeDetachedTerrainWords();
+		int[] compatibility = meshes[1] == null ? new int[0] : meshes[1].writeDetachedTerrainWords();
+		if ((meshes[0] != null && fixed.length == 0) || (meshes[1] != null && compatibility.length == 0)) return new int[0];
+		int[] words = new int[2 + fixed.length + compatibility.length];
+		words[0] = fixed.length;
+		words[1] = compatibility.length;
+		System.arraycopy(fixed, 0, words, 2, fixed.length);
+		System.arraycopy(compatibility, 0, words, 2 + fixed.length, compatibility.length);
+		return words;
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh[] buildSurfaceDrawProducts(byte[] source, int offsetX, int offsetZ, int dx,
+		int dz, boolean includeRoofs, java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
 		NativeLayeredTerrainSnapshot terrain = NativeLayeredTerrainSnapshot.readSurfaceWorkerSource(source);
 		int x = worldTileToSection(Math.addExact(Math.multiplyExact(terrain.getCurrentChunkX(), SECTION_SIZE), offsetX));
 		int z = worldTileToSection(Math.addExact(Math.multiplyExact(terrain.getCurrentChunkY(), SECTION_SIZE), offsetZ));
 		WorldGpuChunkMesh geometry = buildPresentationGeometry(0, x, z, terrain, offsetX, offsetZ, includeRoofs, false, null);
-		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
-			Renderer3DWorldChunkFrame.ChunkMesh fixed = geometry.toRenderer3DFixedSurfaceCell();
-			if (fixed != null && prepareDrawInputs != null) prepareDrawInputs.accept(fixed);
-			output.writeObject(fixed);
-			output.writeObject(geometry.toRenderer3DWorldPresentationCell(dx, dz));
+		Renderer3DWorldChunkFrame.ChunkMesh fixed = geometry.toRenderer3DFixedSurfaceCell();
+		if (fixed != null && prepareDrawInputs != null) prepareDrawInputs.accept(fixed);
+		return new Renderer3DWorldChunkFrame.ChunkMesh[]{fixed, geometry.toRenderer3DWorldPresentationCell(dx, dz)};
+	}
+
+	static Renderer3DWorldChunkFrame.ChunkMesh[] readSurfaceDrawWords(int[] words, int x, int z) {
+		if (words.length < 2 || words[0] < 0 || words[1] < 0 || words.length != 2L + words[0] + words[1]) {
+			throw new IllegalStateException("Detached terrain draw packet lengths");
 		}
-		return bytes.toByteArray();
+		return new Renderer3DWorldChunkFrame.ChunkMesh[]{
+			words[0] == 0 ? null : Renderer3DWorldChunkFrame.ChunkMesh.readDetachedTerrainWords(words, 2, words[0], x, z),
+			words[1] == 0 ? null : Renderer3DWorldChunkFrame.ChunkMesh.readDetachedTerrainWords(words, 2 + words[0], words[1], x, z)
+		};
 	}
 
 	/** The detached browser VM prepares the exact same collision, minimap and pick models as native play. */
@@ -1124,19 +1178,82 @@ public final class World {
 		return bytes.toByteArray();
 	}
 
+	public int[] buildSurfaceGameplayWordPacket(byte[] source, int offsetX, int offsetZ, boolean includeRoofs) throws IOException {
+		NativeLayeredTerrainSnapshot terrain = NativeLayeredTerrainSnapshot.readSurfaceWorkerSource(source);
+		NativeWorldModelPrebuild product = prebuildNativeWorldModelProduct(terrain, offsetX, offsetZ,
+			0L, includeRoofs, null, true, null);
+		if (product.drawMesh == null || product.localTerrain == null) return new int[0];
+		int[] mesh = product.drawMesh.writeDetachedTerrainWords();
+		if (mesh.length == 0) return new int[0];
+		int[] local = product.localTerrain.writeWordProduct();
+		String scope = terrain.scopeIdentity();
+		long size = 5L + scope.length() + mesh.length + local.length;
+		if (size > SURFACE_GAMEPLAY_MAX_BYTES / Integer.BYTES) return new int[0];
+		int[] words = new int[(int) size];
+		words[0] = SURFACE_GAMEPLAY_WORD_MAGIC;
+		words[1] = scope.length();
+		words[2] = includeRoofs ? 1 : 0;
+		words[3] = mesh.length;
+		words[4] = local.length;
+		for (int i = 0; i < scope.length(); i++) words[5 + i] = scope.charAt(i);
+		int at = 5 + scope.length();
+		System.arraycopy(mesh, 0, words, at, mesh.length);
+		System.arraycopy(local, 0, words, at + mesh.length, local.length);
+		return words;
+	}
+
+	static PreparedLocalTerrain readSurfaceGameplayWords(int[] words, String scope, long revision,
+		int x, int z, boolean includeRoofs) throws IOException {
+		if (words.length < 5 || words.length > SURFACE_GAMEPLAY_MAX_BYTES / Integer.BYTES
+			|| words[0] != SURFACE_GAMEPLAY_WORD_MAGIC || words[1] != scope.length() || words[2] != (includeRoofs ? 1 : 0)
+			|| words[3] <= 0 || words[4] <= 0 || words.length != 5L + words[1] + words[3] + words[4]) {
+			throw new IOException("Surface gameplay word envelope");
+		}
+		for (int i = 0; i < scope.length(); i++) {
+			if (words[5 + i] != scope.charAt(i)) throw new IOException("Surface gameplay product source changed");
+		}
+		int meshStart = 5 + words[1];
+		Renderer3DWorldChunkFrame.ChunkMesh mesh = Renderer3DWorldChunkFrame.ChunkMesh.readDetachedTerrainWords(
+			words, meshStart, words[3], x, z);
+		PreparedLocalTerrain ready = PreparedLocalTerrain.readWordProduct(words, meshStart + words[3], words.length,
+			scope, revision, x, z, includeRoofs);
+		ready.detachedDrawMesh = mesh;
+		return ready;
+	}
+
 	private NativeWorldModelPrebuild prepareDetachedSurfaceGameplay(NativeLayeredTerrainSnapshot terrain,
 		int offsetX, int offsetZ, long revision, boolean includeRoofs, IncomingSurfaceCollision incoming) {
 		SurfaceMeshWorker worker = browserSurfaceMeshWorker;
 		if (worker == null) return null;
+		boolean traceReply = SurfaceSceneryMeshPreparation.isTracing();
+		long startedAt = traceReply ? System.currentTimeMillis() : 0L;
 		long started = System.nanoTime();
 		int logicalX = terrain.getCurrentChunkX(), logicalZ = terrain.getCurrentChunkY();
 		int x = worldTileToSection(Math.addExact(Math.multiplyExact(logicalX, SECTION_SIZE), offsetX));
 		int z = worldTileToSection(Math.addExact(Math.multiplyExact(logicalZ, SECTION_SIZE), offsetZ));
 		try {
 			byte[] source = terrain.surfaceWorkerSource(logicalX, logicalZ);
+			SurfaceGameplayWordWorker wordWorker = browserSurfaceGameplayWordWorker;
+			if (wordWorker != null) {
+				int[] words = wordWorker.build(source, offsetX, offsetZ, includeRoofs, Config.S_WANT_CUSTOM_SPRITES);
+				long receivedAt = traceReply ? System.nanoTime() : 0L;
+				if (words != null && words.length != 0) {
+					try {
+						PreparedLocalTerrain ready = readSurfaceGameplayWords(words, terrain.scopeIdentity(), revision, x, z, includeRoofs);
+						acceptedSurfaceGameplayWordReplies++;
+						if (incoming != null) offerIncomingCollision(incoming, x, z, ready.collision);
+						if (traceReply) SurfaceSceneryMeshPreparation.traceTerrainReply("terrain-gameplay-words", startedAt, x, z,
+							words.length * Integer.BYTES, receivedAt - started, System.nanoTime() - receivedAt, false);
+						return new NativeWorldModelPrebuild(false, System.nanoTime() - started, ready.detachedDrawMesh, ready);
+					} catch (IOException | IllegalStateException invalid) {
+						System.err.println("Could not accept detached surface gameplay words: " + invalid);
+					}
+				}
+			}
 			byte[] bytes = worker.build(source, offsetX, offsetZ, 0, 0, includeRoofs, Config.S_WANT_CUSTOM_SPRITES, true);
+			long receivedAt = traceReply ? System.nanoTime() : 0L;
 			if (bytes == null) return null;
-			try (ObjectInputStream input = openSurfaceProduct(bytes, 24 * 1024 * 1024)) {
+			try (ObjectInputStream input = openSurfaceProduct(bytes, SURFACE_GAMEPLAY_MAX_BYTES)) {
 				if (!terrain.scopeIdentity().equals(input.readUTF()) || includeRoofs != input.readBoolean()) {
 					throw new IOException("Surface gameplay product source changed");
 				}
@@ -1146,6 +1263,8 @@ public final class World {
 				if (input.read() != -1) throw new IOException("Trailing surface gameplay product");
 				ready.detachedDrawMesh = mesh;
 				if (incoming != null) offerIncomingCollision(incoming, x, z, ready.collision);
+				if (traceReply) SurfaceSceneryMeshPreparation.traceTerrainReply("terrain-gameplay", startedAt, x, z,
+					bytes.length, receivedAt - started, System.nanoTime() - receivedAt, false);
 				return new NativeWorldModelPrebuild(false, System.nanoTime() - started, mesh, ready);
 			}
 		} catch (IOException | ClassNotFoundException | IllegalStateException invalid) {
@@ -1363,11 +1482,36 @@ public final class World {
 						SurfaceMeshWorker worker = browserSurfaceMeshWorker;
 						if (worker != null && predicted && fixedDraw != null && fixedCell == null) {
 							try {
+								boolean traceReply = SurfaceSceneryMeshPreparation.isTracing();
+								long startedAt = traceReply ? System.currentTimeMillis() : 0L;
+								long began = traceReply ? System.nanoTime() : 0L;
 								byte[] source = haloTerrain.surfaceWorkerSource(haloTerrain.getCurrentChunkX() + deltaX,
 									haloTerrain.getCurrentChunkY() + deltaY);
-								byte[] result = worker.build(source, worldOffsetX, worldOffsetZ, deltaX, deltaY, includeRoofGeometry,
-									Config.S_WANT_CUSTOM_SPRITES, false);
-								if (result != null) detached = readSurfaceMeshPacket(result, sectionX, sectionY);
+								boolean compatibility = radius != 0 && !reused;
+								SurfaceDrawWordWorker drawWorker = browserSurfaceDrawWordWorker;
+								if (drawWorker != null) {
+									int[] words = drawWorker.build(source, worldOffsetX, worldOffsetZ, compatibility ? deltaX : 0,
+										compatibility ? deltaY : 0, includeRoofGeometry, Config.S_WANT_CUSTOM_SPRITES);
+									if (words != null && words.length != 0) {
+										long receivedAt = traceReply ? System.nanoTime() : 0L;
+										try {
+											detached = readSurfaceDrawWords(words, sectionX, sectionY);
+										} catch (IllegalStateException invalidWords) {
+											detached = null;
+										}
+										if (detached != null) acceptedSurfaceTerrainWordReplies++;
+										if (traceReply) SurfaceSceneryMeshPreparation.traceTerrainReply("terrain-words", startedAt, sectionX,
+											sectionY, words.length * 4, receivedAt - began, System.nanoTime() - receivedAt, compatibility);
+									}
+								}
+								byte[] result = detached == null ? worker.build(source, worldOffsetX, worldOffsetZ, deltaX, deltaY,
+									includeRoofGeometry, Config.S_WANT_CUSTOM_SPRITES, false) : null;
+								if (result != null) {
+									long receivedAt = traceReply ? System.nanoTime() : 0L;
+									detached = readSurfaceMeshPacket(result, sectionX, sectionY);
+									if (traceReply) SurfaceSceneryMeshPreparation.traceTerrainReply("terrain-draw", startedAt, sectionX,
+										sectionY, result.length, receivedAt - began, System.nanoTime() - receivedAt, compatibility);
+								}
 							} catch (IOException invalid) {
 								throw new IllegalStateException("Invalid detached surface mesh", invalid);
 							}
@@ -1833,6 +1977,10 @@ public final class World {
 
 	private static final class PreparedLocalTerrain {
 		private static final int WALL_PIXEL = 1, PALETTE_START = 2;
+		private static final long MODEL_PRODUCT_BUDGET = 8L * 1024 * 1024;
+		private static final int WORD_TILE_COUNT = ACTIVE_SECTION_COUNT * (1 + 4 * SECTION_SIZE * SECTION_SIZE);
+		private static final int WORD_GRID_COUNT = LOCAL_TILE_COUNT * LOCAL_TILE_COUNT;
+		private static final int WORD_MINIMAP_COUNT = NATIVE_MINIMAP_PIXEL_SIZE * NATIVE_MINIMAP_PIXEL_SIZE;
 		private final String scope;
 		private final long revision;
 		private final int sectionX, sectionY;
@@ -1885,10 +2033,97 @@ public final class World {
 			output.writeInt(resources.length);
 			for (int value : resources) output.writeInt(value);
 			for (int value : minimap) output.writeInt(value);
-			WholeRamData.Pool pool = new WholeRamData.Pool(8L * 1024 * 1024);
+			WholeRamData.Pool pool = new WholeRamData.Pool(MODEL_PRODUCT_BUDGET);
 			for (RSModel model : walls) output.writeInt(RSModel.capturePreparedState(model, pool));
 			for (RSModel model : roofs) output.writeInt(RSModel.capturePreparedState(model, pool));
 			pool.write(output);
+		}
+
+		private int[] writeWordProduct() {
+			WholeRamData.Pool pool = new WholeRamData.Pool(MODEL_PRODUCT_BUDGET);
+			int[] modelRefs = new int[MODEL_GRID_COUNT * 2];
+			for (int i = 0; i < MODEL_GRID_COUNT; i++) {
+				modelRefs[i] = RSModel.capturePreparedState(walls[i], pool);
+				modelRefs[i + MODEL_GRID_COUNT] = RSModel.capturePreparedState(roofs[i], pool);
+			}
+			int poolSize = pool.wordCount();
+			int[] words = new int[4 + WORD_TILE_COUNT + 2 * WORD_GRID_COUNT + WORD_MINIMAP_COUNT + resources.length + modelRefs.length + poolSize];
+			words[0] = appliedTiles;
+			words[1] = nonVoidTiles;
+			words[2] = resources.length;
+			words[3] = poolSize;
+			int at = 4;
+			for (Sector sector : tiles) {
+				words[at++] = sector.isLoaded() ? 1 : 0;
+				for (int i = 0; i < SECTION_SIZE * SECTION_SIZE; i++) {
+					Tile tile = sector.getTile(i);
+					words[at++] = tile.groundElevation;
+					words[at++] = tile.diagonalWalls;
+					words[at++] = (tile.groundTexture & 255) | ((tile.groundOverlay & 255) << 8)
+						| ((tile.roofTexture & 255) << 16) | ((tile.horizontalWall & 255) << 24);
+					words[at++] = tile.verticalWall & 255;
+				}
+			}
+			for (int[][] grid : new int[][][]{collision, roofInput.finalElevations}) {
+				for (int[] row : grid) {
+					System.arraycopy(row, 0, words, at, row.length);
+					at += row.length;
+				}
+			}
+			for (int[] array : new int[][]{resources, minimap, modelRefs}) {
+				System.arraycopy(array, 0, words, at, array.length);
+				at += array.length;
+			}
+			pool.writeWords(words, at);
+			return words;
+		}
+
+		private static PreparedLocalTerrain readWordProduct(int[] words, int start, int end, String scope, long revision,
+			int sectionX, int sectionZ, boolean includeRoofs) throws IOException {
+			if (start < 0 || end > words.length || end - start < 4) throw new IOException("Surface gameplay word bounds");
+			int at = start;
+			int applied = words[at++], nonVoid = words[at++], resourceCount = words[at++], poolSize = words[at++];
+			long expected = 4L + WORD_TILE_COUNT + 2 * WORD_GRID_COUNT + WORD_MINIMAP_COUNT + resourceCount + 2 * MODEL_GRID_COUNT + poolSize;
+			if (applied < 0 || applied > WORD_GRID_COUNT || nonVoid < 0 || nonVoid > applied || resourceCount < 0
+				|| resourceCount > WORD_GRID_COUNT * 2 || poolSize <= 0 || expected != end - start) {
+				throw new IOException("Surface gameplay word shape");
+			}
+			Sector[] tiles = new Sector[ACTIVE_SECTION_COUNT];
+			for (int n = 0; n < tiles.length; n++) {
+				int loaded = words[at++];
+				if (loaded != 0 && loaded != 1) throw new IOException("Surface gameplay sector status");
+				Sector sector = loaded != 0 ? Sector.blankLoaded() : new Sector();
+				for (int i = 0; i < SECTION_SIZE * SECTION_SIZE; i++) {
+					Tile tile = sector.getTile(i);
+					tile.groundElevation = words[at++];
+					tile.diagonalWalls = words[at++];
+					int packed = words[at++];
+					tile.groundTexture = (byte) packed;
+					tile.groundOverlay = (byte) (packed >>> 8);
+					tile.roofTexture = (byte) (packed >>> 16);
+					tile.horizontalWall = (byte) (packed >>> 24);
+					tile.verticalWall = (byte) words[at++];
+				}
+				tiles[n] = sector;
+			}
+			int[][] collision = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT], heights = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
+			for (int[][] grid : new int[][][]{collision, heights}) {
+				for (int[] row : grid) {
+					System.arraycopy(words, at, row, 0, row.length);
+					at += row.length;
+				}
+			}
+			int[] resources = Arrays.copyOfRange(words, at, at + resourceCount);
+			at += resourceCount;
+			int[] pixels = Arrays.copyOfRange(words, at, at + WORD_MINIMAP_COUNT);
+			at += WORD_MINIMAP_COUNT;
+			for (int value : pixels) {
+				if (value < 0 || value >= PALETTE_START + resourceCount * 2) throw new IOException("Surface gameplay minimap palette");
+			}
+			int[] models = Arrays.copyOfRange(words, at, at + MODEL_GRID_COUNT * 2);
+			at += models.length;
+			WholeRamData.Pool pool = WholeRamData.Pool.readWords(words, at, end, MODEL_PRODUCT_BUDGET);
+			return recreate(scope, revision, sectionX, sectionZ, includeRoofs, tiles, applied, nonVoid, collision, heights, pixels, resources, models, pool);
 		}
 
 		private static PreparedLocalTerrain readProduct(DataInput input, String scope, long revision,
@@ -1928,6 +2163,12 @@ public final class World {
 			int[] models = new int[MODEL_GRID_COUNT * 2];
 			for (int i = 0; i < models.length; i++) models[i] = input.readInt();
 			WholeRamData.Pool pool = WholeRamData.Pool.read(input);
+			return recreate(scope, revision, sectionX, sectionZ, includeRoofs, tiles, applied, nonVoid, collision, heights, pixels, resources, models, pool);
+		}
+
+		private static PreparedLocalTerrain recreate(String scope, long revision, int sectionX, int sectionZ, boolean includeRoofs,
+			Sector[] tiles, int applied, int nonVoid, int[][] collision, int[][] heights, int[] pixels, int[] resources, int[] models,
+			WholeRamData.Pool pool) {
 			RSModel[] walls = new RSModel[MODEL_GRID_COUNT], roofs = new RSModel[MODEL_GRID_COUNT];
 			for (int i = 0; i < MODEL_GRID_COUNT; i++) {
 				walls[i] = RSModel.instantiatePreparedState(models[i], pool);

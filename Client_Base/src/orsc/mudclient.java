@@ -985,6 +985,7 @@ public final class mudclient implements Runnable {
 	private volatile int verifiedWorkerSceneryMeshes;
 	private volatile int mismatchedWorkerSceneryMeshes;
 	private volatile int verifiedSceneryReuses;
+	private volatile String firstSceneryReuseMismatch;
 	private int lateSurfaceSceneryMeshes;
 	private int retainedSurfaceSceneryMeshes;
 	private Future<PreparedSurfaceScenery> activeSurfaceSceneryBuild;
@@ -4055,6 +4056,7 @@ public final class mudclient implements Runnable {
 	public int getVerifiedWorkerSceneryMeshes() { return verifiedWorkerSceneryMeshes; }
 	public int getMismatchedWorkerSceneryMeshes() { return mismatchedWorkerSceneryMeshes; }
 	public int getVerifiedSceneryReuses() { return verifiedSceneryReuses; }
+	public String getFirstSceneryReuseMismatch() { return firstSceneryReuseMismatch; }
 	public int getResidentPlacementPublicationsReused() { return residentPlacementPublicationsReused; }
 
 	public int getResidentFishingPoseRebases() { return residentFishingPoseRebases; }
@@ -4139,14 +4141,15 @@ public final class mudclient implements Runnable {
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = frame.getChunks().get(0);
 		Map<Long, ResidentObjectChunkCacheEntry> resident = work.band == SurfaceSceneryCells.Band.RETAINED_PLAY
 			? new HashMap<>(cachedResidentObjectChunks) : Collections.emptyMap();
+		SurfaceSceneryReuse reuse = surfaceSceneryReuse;
 		activeSurfaceSceneryWork = work;
 		activeSurfaceSceneryBuild = residentObjectBuildExecutor.submit(
-			() -> prepareSurfaceSceneryDraws(work, terrain, anchor, baseX, baseZ, scale, resident));
+			() -> prepareSurfaceSceneryDraws(work, terrain, anchor, baseX, baseZ, scale, resident, reuse));
 	}
 
 	private PreparedSurfaceScenery prepareSurfaceSceneryDraws(SurfaceSceneryWork work,
 		NativeLayeredTerrainSnapshot terrain, Renderer3DWorldChunkFrame.ChunkMesh anchor, int baseX, int baseZ, int scale,
-		Map<Long, ResidentObjectChunkCacheEntry> resident) {
+		Map<Long, ResidentObjectChunkCacheEntry> resident, SurfaceSceneryReuse reuse) {
 		int role = Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
 		int size = residentObjectChunkTileSize(role);
 		Map<Long, ResidentObjectChunkInputBuilder> cells = new LinkedHashMap<>();
@@ -4166,7 +4169,6 @@ public final class mudclient implements Runnable {
 				record.direction, baseX, baseZ, scale, terrain));
 		}
 		List<PreparedSceneryDraw> ready = new ArrayList<>(cells.size());
-		SurfaceSceneryReuse reuse = surfaceSceneryReuse;
 		if (reuse != null) reuse.scope(terrain, sceneryModelArchiveDigest);
 		for (ResidentObjectChunkInputBuilder builder : cells.values()) {
 			ResidentObjectChunkInput input = builder.build();
@@ -5484,6 +5486,9 @@ public final class mudclient implements Runnable {
 						buildCanonicalResidentObjectModels(input), input.modelCount, input.chunkRole);
 					if (!ResidentObjectChunkGeometryComparison.sameExactDraw(cached, rebuilt)) {
 						mismatchedWorkerSceneryMeshes++;
+						if (firstSceneryReuseMismatch == null) {
+							firstSceneryReuseMismatch = ResidentObjectChunkGeometryComparison.compare(cached, rebuilt).summary();
+						}
 						return rebuilt;
 					}
 					verifiedSceneryReuses++;
@@ -5554,9 +5559,10 @@ public final class mudclient implements Runnable {
 				|| definitionFlags != SurfaceSceneryMeshPreparation.definitionFlags()
 				|| cached.mesh.getOriginWorldX() != x || cached.mesh.getOriginWorldZ() != z
 				|| !matchingStaticPlacements(cached.placements, input.canonicalIdentities)) return null;
-			hits++;
-			return cached.mesh.rebaseStaticObjectPresentation(input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(),
+			Renderer3DWorldChunkFrame.ChunkMesh reused = cached.mesh.reuseStaticObjectPresentation(input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(),
 				(cached.baseX - input.baseX) * input.tileSize, (cached.baseZ - input.baseZ) * input.tileSize);
+			if (reused != null) hits++;
+			return reused;
 		}
 
 		void remember(ResidentObjectChunkInput input, Renderer3DWorldChunkFrame.ChunkMesh mesh) {

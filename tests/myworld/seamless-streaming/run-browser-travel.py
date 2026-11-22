@@ -286,10 +286,10 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
-                atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
+                atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes,
+                    synchronousCalls:p.gpu?.synchronousSpriteCalls},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
-                preparedScenery:p.gpu?.preparedScenery,
                 javaRuntime:{version:p.javaVersion,release:p.runtimeVersion,wasmGC:p.wasmGC},
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
                 physicalOutput:p.gpu?.physicalOutput,
@@ -338,19 +338,24 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             if completed and fixture.get('surfaceMeshWorker'):
                 detached = result.get('surfaceMeshWorker') or {}
                 completed = detached.get('completed', 0) > 0 and detached.get('error') is None
+            if completed and fixture.get('terrainWords'):
+                detached = result.get('surfaceMeshWorker') or {}
+                completed = detached.get('wordReplies', 0) > detached.get('gameplayWordReplies', 0)
+            if completed and fixture.get('terrainGameplayWords'):
+                expected_gameplay = 3 if fixture['sustainedWalk'] else 1 if fixture['retargetWalk'] else 2
+                completed = (result.get('surfaceMeshWorker') or {}).get('gameplayWordReplies', 0) >= expected_gameplay
             if completed and fixture.get('workerSceneryPlacements'):
                 worker = result.get('sceneryWorker') or {}
                 completed = (worker.get('completed', 0) > 0 and worker.get('error') is None
                              and any(event['message'].startswith('outer-coverage:placement-scenery-meshes:')
                                      or (event['message'].startswith('scenery-meshing:placements,')
                                          and event['message'].endswith(',true')) for event in result['browserEvents']))
+            if completed and fixture.get('syncSpriteCalls'):
+                atlas = result.get('atlas') or {}
+                completed = (atlas.get('synchronousCalls', 0) > 0
+                             and atlas['synchronousCalls'] == atlas.get('plans', 0) + atlas.get('commits', 0))
             if completed and fixture.get('sceneryWords'):
                 completed = (result.get('sceneryWorker') or {}).get('wordReplies', 0) > 0
-            if completed and fixture.get('packedScenery'):
-                prepared = result.get('preparedScenery') or {}
-                completed = prepared.get('uploaded', 0) > 0
-                if fixture.get('verifyWorkerSceneryPlacements'):
-                    completed = completed and prepared.get('verified') == prepared.get('uploaded')
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
             if completed and output != 'default':

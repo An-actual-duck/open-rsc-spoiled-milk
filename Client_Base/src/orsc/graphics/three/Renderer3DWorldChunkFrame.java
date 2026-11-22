@@ -249,8 +249,10 @@ public final class Renderer3DWorldChunkFrame {
 	public static final class ChunkMesh implements java.io.Serializable {
 		private static final long serialVersionUID = 1L;
 		private static final int SCENERY_WORD_MAGIC = 0x53434e57;
-		private static final int SCENERY_WORD_HEADER = 19;
-		private static final int MAX_SCENERY_WORDS = 2 * 1024 * 1024;
+		private static final int TERRAIN_WORD_MAGIC = 0x54455257;
+		private static final int SURFACE_WORD_HEADER = 18;
+		private static final int MAX_SURFACE_WORDS = 2 * 1024 * 1024;
+		private static final int SURFACE_OCCLUSION_WORDS = World.SECTION_SIZE * World.SECTION_SIZE;
 		private final int plane;
 		private final int centerSectionX;
 		private final int centerSectionY;
@@ -261,6 +263,7 @@ public final class Renderer3DWorldChunkFrame {
 		private final int[] vertexCoords;
 		private final int vertexOffsetX;
 		private final int vertexOffsetZ;
+		private transient int cachedSceneryOffsetX, cachedSceneryOffsetZ;
 		private boolean hasVertexBounds;
 		private int minVertexX;
 		private int maxVertexX;
@@ -297,9 +300,6 @@ public final class Renderer3DWorldChunkFrame {
 		private final long storageSignature;
 		private final long signature;
 		private int[] preparedSmoothDiffuse, preparedFlatDiffuse;
-		private transient int sceneryPackingContext;
-
-		public int getSceneryPackingContext() { return sceneryPackingContext; }
 
 		/** Prepared by the detached renderer before it publishes this mesh. */
 		public void setPreparedDiffuseLighting(int[] smooth, int[] flat) {
@@ -321,23 +321,42 @@ public final class Renderer3DWorldChunkFrame {
 		private int worldEditorTerrainGridSignature;
 
 		/** Flat transport for the static-object builder's exact, unrebased triangle soup. */
-		int[] writeDetachedSceneryWords(long revision, int packingContext) {
+		int[] writeDetachedSceneryWords(long revision) {
+			return writeDetachedSurfaceWords(revision, false);
+		}
+
+		int[] writeDetachedTerrainWords() {
+			int flags = (preparedSmoothDiffuse == null ? 0 : 1) | (surfaceOcclusion == null ? 0 : 2);
+			if (roofCoverageAxis > 0) {
+				int tiles = roofCoverageAxis * roofCoverageAxis;
+				if (!RoofTileCoverage.validStorage(roofCoverageBits.length, tiles)) return new int[0];
+				if (roofCoverageBits.length != RoofTileCoverage.presenceWords(tiles)) flags |= 4;
+			}
+			return writeDetachedSurfaceWords(flags, true);
+		}
+
+		private int[] writeDetachedSurfaceWords(long revision, boolean terrain) {
 			int vertices = getVertexCount(), triangles = getTriangleCount();
-			if (plane != 0 || chunkRole != CHUNK_ROLE_STATIC_OBJECTS || vertexOffsetX != 0 || vertexOffsetZ != 0
-				|| vertices != triangles * 3 || indices.length != vertices || roofCoverageAxis != 0 || worldEditorTerrainGridAxis != 0
-				|| roofCoveredTileCount != 0 || terrainTriangles != 0 || wallTriangles != 0 || roofTriangles != 0
-				|| preparedSmoothDiffuse != null || preparedFlatDiffuse != null || surfaceOcclusion != null
+			int role = terrain ? CHUNK_ROLE_WORLD : CHUNK_ROLE_STATIC_OBJECTS;
+			if (plane != 0 || chunkRole != role || vertexOffsetX != 0 || vertexOffsetZ != 0
+				|| vertices != triangles * 3 || indices.length != vertices || residentFishingPose
 				|| signature != storageSignature || shadowCasterInventorySignatureKnown) return new int[0];
-			int words = sceneryWordCount(vertices, triangles, referencedTextureIds.length, shadowCasters.length, glowEmitters.length);
+			if (!terrain && (terrainTriangles != 0 || wallTriangles != 0 || roofTriangles != 0
+				|| preparedSmoothDiffuse != null || preparedFlatDiffuse != null || surfaceOcclusion != null
+				|| roofCoverageAxis != 0 || roofCoveredTileCount != 0 || worldEditorTerrainGridAxis != 0)) return new int[0];
+			int flags = terrain ? (int) revision : 0;
+			int axes = terrain ? (worldEditorTerrainGridAxis << 16) | roofCoverageAxis : 0;
+			int words = surfaceWordCount(vertices, triangles, referencedTextureIds.length, shadowCasters.length,
+				glowEmitters.length, terrain, flags, axes);
 			if (words == 0) return new int[0];
 			for (int i = 0; i < vertices; i++) {
-				if (indices[i] != i || vertexTerrainBlendColors[i] != 0 || vertexTerrainBlendStrengths[i] != 0) return new int[0];
+				if (indices[i] != i || (!terrain && (vertexTerrainBlendColors[i] != 0 || vertexTerrainBlendStrengths[i] != 0))) return new int[0];
 			}
-			for (int mask : triangleTerrainVariationMasks) if (mask != 0) return new int[0];
+			if (!terrain) for (int mask : triangleTerrainVariationMasks) if (mask != 0) return new int[0];
 			int[] output = new int[words];
-			int[] header = {SCENERY_WORD_MAGIC, (int) revision, (int) (revision >>> 32), centerSectionX, centerSectionY,
+			int[] header = {terrain ? TERRAIN_WORD_MAGIC : SCENERY_WORD_MAGIC, (int) revision, terrain ? axes : (int) (revision >>> 32), centerSectionX, centerSectionY,
 				originWorldX, originWorldZ, vertices, triangles, referencedTextureIds.length, shadowCasters.length, glowEmitters.length,
-				(int) signature, (int) (signature >>> 32), minVertexX, maxVertexX, minVertexZ, maxVertexZ, packingContext};
+				(int) signature, (int) (signature >>> 32), minVertexX, maxVertexX, minVertexZ, maxVertexZ};
 			int offset = 0;
 			for (int[] plane : new int[][] {header, vertexCoords, vertexLights, vertexNormalX, vertexNormalY, vertexNormalZ,
 				triangleTextures, triangleFallbackColors, referencedTextureIds}) {
@@ -361,40 +380,93 @@ public final class Renderer3DWorldChunkFrame {
 				System.arraycopy(row, 0, output, offset, row.length);
 				offset += row.length;
 			}
+			if (terrain) {
+				output[offset++] = terrainTriangles;
+				output[offset++] = wallTriangles;
+				output[offset++] = roofTriangles;
+				for (int[] channel : new int[][] {vertexTerrainBlendColors, vertexTerrainBlendStrengths, triangleTerrainVariationMasks}) {
+					System.arraycopy(channel, 0, output, offset, channel.length);
+					offset += channel.length;
+				}
+				if ((flags & 1) != 0) {
+					System.arraycopy(preparedSmoothDiffuse, 0, output, offset, vertices);
+					offset += vertices;
+					System.arraycopy(preparedFlatDiffuse, 0, output, offset, vertices);
+					offset += vertices;
+				}
+				if ((flags & 2) != 0) {
+					for (int i = 0; i < surfaceOcclusion.length; i += 4) {
+						output[offset++] = (surfaceOcclusion[i] & 255) | ((surfaceOcclusion[i + 1] & 255) << 8)
+							| ((surfaceOcclusion[i + 2] & 255) << 16) | (surfaceOcclusion[i + 3] << 24);
+					}
+				}
+				if (roofCoverageAxis > 0) {
+					output[offset++] = roofCoveredTileCount;
+					for (long word : roofCoverageBits) {
+						output[offset++] = (int) word;
+						output[offset++] = (int) (word >>> 32);
+					}
+				}
+				if (worldEditorTerrainGridAxis > 0) {
+					output[offset++] = worldEditorTerrainGridSignature;
+					System.arraycopy(worldEditorTerrainGridHeights, 0, output, offset, worldEditorTerrainGridHeights.length);
+				}
+			}
 			return output;
 		}
 
 		static ChunkMesh readDetachedSceneryWords(int[] words, int sx, int sz, int x, int z, long revision) {
-			if (words.length < SCENERY_WORD_HEADER || words[0] != SCENERY_WORD_MAGIC || readLong(words, 1) != revision
+			if (words.length < SURFACE_WORD_HEADER || words[0] != SCENERY_WORD_MAGIC || readLong(words, 1) != revision
 				|| words[3] != sx || words[4] != sz || words[5] != x || words[6] != z
-				|| words.length != sceneryWordCount(words[7], words[8], words[9], words[10], words[11])) {
+				|| words.length != surfaceWordCount(words[7], words[8], words[9], words[10], words[11], false, 0, 0)) {
 				throw new IllegalStateException("Detached scenery word identity or size");
 			}
-			return new ChunkMesh(words);
+			return new ChunkMesh(words, 0, false);
 		}
 
-		private static int sceneryWordCount(int vertices, int triangles, int textures, int shadows, int glows) {
+		static ChunkMesh readDetachedTerrainWords(int[] words, int start, int length, int x, int z) {
+			if (length < SURFACE_WORD_HEADER || start < 0 || start > words.length - length || words[start] != TERRAIN_WORD_MAGIC
+				|| words[start + 3] != x || words[start + 4] != z
+				|| length != surfaceWordCount(words[start + 7], words[start + 8], words[start + 9], words[start + 10],
+					words[start + 11], true, words[start + 1], words[start + 2])) throw new IllegalStateException("Detached terrain word identity or size");
+			return new ChunkMesh(words, start, true);
+		}
+
+		private static int surfaceWordCount(int vertices, int triangles, int textures, int shadows, int glows, boolean terrain, int flags, int axes) {
 			if (vertices < 0 || triangles < 0 || vertices != 3L * triangles || textures < 0 || textures > 4096
-				|| shadows < 0 || shadows > 4096 || glows < 0 || glows > 512) return 0;
-			long words = SCENERY_WORD_HEADER + vertices * 9L + triangles * 3L + textures + shadows * 14L + glows * 7L;
-			return words <= MAX_SCENERY_WORDS ? (int) words : 0;
+				|| shadows < 0 || shadows > 4096 || glows < 0 || glows > 512 || (flags & ~7) != 0) return 0;
+			long words = SURFACE_WORD_HEADER + vertices * 9L + triangles * 3L + textures + shadows * 14L + glows * 7L;
+			if (terrain) {
+				int roofAxis = axes & 65535, gridAxis = axes >>> 16;
+				if (roofAxis > World.LOCAL_TILE_COUNT || gridAxis > World.LOCAL_TILE_COUNT || gridAxis == 1
+					|| (roofAxis == 0 && (flags & 4) != 0)) return 0;
+				words += 3 + vertices * 2L + triangles;
+				if ((flags & 1) != 0) words += vertices * 2L;
+				if ((flags & 2) != 0) words += SURFACE_OCCLUSION_WORDS;
+				if (roofAxis != 0) words += 1 + 2L * roofWordCount(roofAxis, flags);
+				if (gridAxis != 0) words += 1 + gridAxis * gridAxis;
+			}
+			return words <= (terrain ? 2L * MAX_SURFACE_WORDS : MAX_SURFACE_WORDS) ? (int) words : 0;
+		}
+
+		private static int roofWordCount(int axis, int flags) {
+			return (flags & 4) == 0 ? RoofTileCoverage.presenceWords(axis * axis) : RoofTileCoverage.shapedWords(axis * axis);
 		}
 
 		private static long readLong(int[] words, int offset) {
 			return (words[offset] & 0xffffffffL) | (long) words[offset + 1] << 32;
 		}
 
-		private ChunkMesh(int[] words) {
+		private ChunkMesh(int[] words, int start, boolean terrain) {
 			plane = 0;
-			centerSectionX = words[3]; centerSectionY = words[4];
-			originWorldX = words[5]; originWorldZ = words[6];
-			int vertices = words[7], triangles = words[8];
-			storageSignature = signature = readLong(words, 12);
-			sceneryPackingContext = words[18];
-			minVertexX = words[14]; maxVertexX = words[15]; minVertexZ = words[16]; maxVertexZ = words[17];
+			centerSectionX = words[start + 3]; centerSectionY = words[start + 4];
+			originWorldX = words[start + 5]; originWorldZ = words[start + 6];
+			int vertices = words[start + 7], triangles = words[start + 8];
+			storageSignature = signature = readLong(words, start + 12);
+			minVertexX = words[start + 14]; maxVertexX = words[start + 15]; minVertexZ = words[start + 16]; maxVertexZ = words[start + 17];
 			hasVertexBounds = vertices != 0;
 			vertexOffsetX = vertexOffsetZ = 0;
-			SceneryWordInput input = new SceneryWordInput(words);
+			SurfaceWordInput input = new SurfaceWordInput(words, start + SURFACE_WORD_HEADER);
 			vertexCoords = input.ints(vertices * 3);
 			vertexLights = input.ints(vertices);
 			vertexNormalX = input.ints(vertices);
@@ -402,14 +474,11 @@ public final class Renderer3DWorldChunkFrame {
 			vertexNormalZ = input.ints(vertices);
 			triangleTextures = input.ints(triangles);
 			triangleFallbackColors = input.ints(triangles);
-			referencedTextureIds = input.ints(words[9]);
+			referencedTextureIds = input.ints(words[start + 9]);
 			vertexTextureU = input.floats(vertices);
 			vertexTextureV = input.floats(vertices);
 			indices = new int[vertices];
 			for (int i = 0; i < vertices; i++) indices[i] = i;
-			vertexTerrainBlendColors = new int[vertices];
-			vertexTerrainBlendStrengths = new int[vertices];
-			triangleTerrainVariationMasks = new int[triangles];
 			triangleModelKinds = new Renderer3DModelKind[triangles];
 			triangleMaterialFamilies = new Renderer3DMaterialFamily[triangles];
 			Renderer3DModelKind[] kinds = Renderer3DModelKind.values();
@@ -423,27 +492,68 @@ public final class Renderer3DWorldChunkFrame {
 				triangleMaterialFamilies[i] = families[family];
 				materialFamilyTriangleCounts[family]++;
 			}
-			shadowCasters = new ShadowCaster[words[10]];
+			shadowCasters = new ShadowCaster[words[start + 10]];
 			for (int i = 0; i < shadowCasters.length; i++) {
 				shadowCasters[i] = new ShadowCaster(input.kind(kinds), input.next(), input.next(), input.next(), input.next(),
 					input.next(), input.next(), input.next(), input.next(), input.next() != 0, input.next(), input.next(), input.next(), input.next());
 			}
-			glowEmitters = new GlowEmitter[words[11]];
+			glowEmitters = new GlowEmitter[words[start + 11]];
 			for (int i = 0; i < glowEmitters.length; i++) {
 				glowEmitters[i] = new GlowEmitter(input.kind(kinds), input.next(), input.next(), input.next(), input.next(), input.next(), input.next());
 			}
-			objectChunk = true;
-			chunkRole = CHUNK_ROLE_STATIC_OBJECTS;
-			roofCoverageBits = new long[0];
-			roofCoverageAxis = roofCoveredTileCount = terrainTriangles = wallTriangles = roofTriangles = 0;
+			objectChunk = !terrain;
+			chunkRole = terrain ? CHUNK_ROLE_WORLD : CHUNK_ROLE_STATIC_OBJECTS;
+			if (terrain) {
+				terrainTriangles = input.next();
+				wallTriangles = input.next();
+				roofTriangles = input.next();
+				if (terrainTriangles < 0 || wallTriangles < 0 || roofTriangles < 0
+					|| terrainTriangles + (long) wallTriangles + roofTriangles > triangles) throw new IllegalStateException("Detached terrain triangle counts");
+				vertexTerrainBlendColors = input.ints(vertices);
+				vertexTerrainBlendStrengths = input.ints(vertices);
+				triangleTerrainVariationMasks = input.ints(triangles);
+				int flags = words[start + 1];
+				if ((flags & 1) != 0) {
+					preparedSmoothDiffuse = input.ints(vertices);
+					preparedFlatDiffuse = input.ints(vertices);
+				}
+				if ((flags & 2) != 0) {
+					surfaceOcclusion = new byte[SURFACE_OCCLUSION_WORDS * 4];
+					for (int i = 0; i < surfaceOcclusion.length; i += 4) {
+						int word = input.next();
+						for (int channel = 0; channel < 4; channel++) surfaceOcclusion[i + channel] = (byte) (word >>> (channel * 8));
+					}
+				}
+				int axes = words[start + 2];
+				roofCoverageAxis = axes & 65535;
+				roofCoveredTileCount = roofCoverageAxis == 0 ? 0 : input.next();
+				if (roofCoveredTileCount < 0 || roofCoveredTileCount > roofCoverageAxis * roofCoverageAxis) {
+					throw new IllegalStateException("Detached terrain roof coverage count");
+				}
+				roofCoverageBits = new long[roofWordCount(roofCoverageAxis, flags)];
+				for (int i = 0; i < roofCoverageBits.length; i++) roofCoverageBits[i] = input.nextLong();
+				worldEditorTerrainGridAxis = axes >>> 16;
+				if (worldEditorTerrainGridAxis != 0) {
+					worldEditorTerrainGridSignature = input.next();
+					worldEditorTerrainGridHeights = input.ints(worldEditorTerrainGridAxis * worldEditorTerrainGridAxis);
+				}
+			} else {
+				roofCoverageAxis = roofCoveredTileCount = 0;
+				roofCoverageBits = new long[0];
+				terrainTriangles = wallTriangles = roofTriangles = 0;
+				vertexTerrainBlendColors = new int[vertices];
+				vertexTerrainBlendStrengths = new int[vertices];
+				triangleTerrainVariationMasks = new int[triangles];
+			}
 		}
 
-		private static final class SceneryWordInput {
+		private static final class SurfaceWordInput {
 			private final int[] words;
-			private int offset = SCENERY_WORD_HEADER;
+			private int offset;
 
-			private SceneryWordInput(int[] words) { this.words = words; }
+			private SurfaceWordInput(int[] words, int offset) { this.words = words; this.offset = offset; }
 			private int next() { return words[offset++]; }
+			private long nextLong() { return (next() & 0xffffffffL) | (long) next() << 32; }
 			private int[] ints(int count) {
 				int[] result = Arrays.copyOfRange(words, offset, offset + count);
 				offset += count;
@@ -1125,17 +1235,25 @@ public final class Renderer3DWorldChunkFrame {
             this(source,nextCenterSectionX,nextCenterSectionY,additionalOffsetX,additionalOffsetZ,translateObjectEffects,preparedRoof,preparedAxis,preparedCount,0,0);
         }
         private ChunkMesh(ChunkMesh source,int nextCenterSectionX,int nextCenterSectionY,int additionalOffsetX,int additionalOffsetZ,boolean translateObjectEffects,long[] preparedRoof,int preparedAxis,int preparedCount,int carrierUnitsX,int carrierUnitsZ) {
+			this(source, nextCenterSectionX, nextCenterSectionY, additionalOffsetX, additionalOffsetZ,
+				translateObjectEffects, preparedRoof, preparedAxis, preparedCount, carrierUnitsX, carrierUnitsZ, false);
+		}
+
+		private ChunkMesh(ChunkMesh source, int nextCenterSectionX, int nextCenterSectionY, int additionalOffsetX, int additionalOffsetZ,
+			boolean translateObjectEffects, long[] preparedRoof, int preparedAxis, int preparedCount, int carrierUnitsX, int carrierUnitsZ,
+			boolean freshSceneryBasis) {
 			this.plane = source.plane;
 			this.centerSectionX = nextCenterSectionX;
 			this.centerSectionY = nextCenterSectionY;
 			this.originWorldX = Math.addExact(source.originWorldX,carrierUnitsX);
 			this.originWorldZ = Math.addExact(source.originWorldZ,carrierUnitsZ);
 			this.vertexCoords = source.vertexCoords;
-			this.sceneryPackingContext = source.sceneryPackingContext;
 			this.vertexOffsetX = Math.addExact(
 				source.vertexOffsetX, additionalOffsetX);
 			this.vertexOffsetZ = Math.addExact(
 				source.vertexOffsetZ, additionalOffsetZ);
+			this.cachedSceneryOffsetX = freshSceneryBasis ? this.vertexOffsetX : source.cachedSceneryOffsetX;
+			this.cachedSceneryOffsetZ = freshSceneryBasis ? this.vertexOffsetZ : source.cachedSceneryOffsetZ;
 			this.hasVertexBounds = source.hasVertexBounds;
 			this.minVertexX = source.hasVertexBounds
 				? Math.addExact(source.minVertexX, additionalOffsetX)
@@ -1176,7 +1294,8 @@ public final class Renderer3DWorldChunkFrame {
 				? translateShadowCasters(
 					source.shadowCasters,
 					additionalOffsetX,
-					additionalOffsetZ)
+					additionalOffsetZ,
+					freshSceneryBasis)
 				: source.shadowCasters;
 			this.shadowCasterInventorySignature =
 				translateObjectEffects
@@ -1223,11 +1342,19 @@ public final class Renderer3DWorldChunkFrame {
 		private static ShadowCaster[] translateShadowCasters(
 			ShadowCaster[] source,
 			int offsetX,
-			int offsetZ) {
+			int offsetZ,
+			boolean freshSceneryBasis) {
 			ShadowCaster[] translated =
 				new ShadowCaster[source == null ? 0 : source.length];
 			for (int index = 0; index < translated.length; index++) {
 				ShadowCaster caster = source[index];
+				int minX = Math.addExact(caster.getFootprintMinX(), offsetX), maxX = Math.addExact(caster.getFootprintMaxX(), offsetX);
+				int minZ = Math.addExact(caster.getFootprintMinZ(), offsetZ), maxZ = Math.addExact(caster.getFootprintMaxZ(), offsetZ);
+				if (freshSceneryBasis) {
+					translated[index] = ShadowCaster.fromObjectFootprint(caster.getModelKind(), minX, maxX, caster.getBaseY(),
+						caster.getHeight(), minZ, maxZ);
+					continue;
+				}
 				translated[index] = new ShadowCaster(
 					caster.getModelKind(),
 					Math.addExact(caster.getBaseX0(), offsetX),
@@ -1239,10 +1366,7 @@ public final class Renderer3DWorldChunkFrame {
 					caster.getWidth(),
 					caster.getOpacity(),
 					caster.isOutdoorOnly(),
-					Math.addExact(caster.getFootprintMinX(), offsetX),
-					Math.addExact(caster.getFootprintMaxX(), offsetX),
-					Math.addExact(caster.getFootprintMinZ(), offsetZ),
-					Math.addExact(caster.getFootprintMaxZ(), offsetZ));
+					minX, maxX, minZ, maxZ);
 			}
 			return translated;
 		}
@@ -1317,6 +1441,13 @@ public final class Renderer3DWorldChunkFrame {
 				additionalOffsetX,
 				additionalOffsetZ,
 				true);
+		}
+
+		/** Replays stored vertices with the logical lighting origin of a fresh cell in this basis. */
+		public ChunkMesh reuseStaticObjectPresentation(int sectionX, int sectionZ, int offsetX, int offsetZ) {
+			if (offsetX == 0 && offsetZ == 0) return rebaseStaticObjectPresentation(sectionX, sectionZ, 0, 0);
+			if (chunkRole != CHUNK_ROLE_STATIC_OBJECTS || glowEmitters.length != 0) return null;
+			return new ChunkMesh(this, sectionX, sectionZ, offsetX, offsetZ, true, null, 0, 0, 0, 0, true);
 		}
 
 		private static int normalizeChunkRole(boolean objectChunk, int chunkRole) {
@@ -1888,7 +2019,7 @@ public final class Renderer3DWorldChunkFrame {
 		 * variation.
 		 */
 		public int getLogicalWorldOffsetX() {
-			return Math.subtractExact(originWorldX, vertexOffsetX);
+			return Math.subtractExact(originWorldX, Math.subtractExact(vertexOffsetX, cachedSceneryOffsetX));
 		}
 
 		/**
@@ -1896,7 +2027,7 @@ public final class Renderer3DWorldChunkFrame {
 		 * logical-world coordinate.
 		 */
 		public int getLogicalWorldOffsetZ() {
-			return Math.subtractExact(originWorldZ, vertexOffsetZ);
+			return Math.subtractExact(originWorldZ, Math.subtractExact(vertexOffsetZ, cachedSceneryOffsetZ));
 		}
 
 		public int getVertexCoord(int coordIndex) {
@@ -2131,6 +2262,15 @@ public final class Renderer3DWorldChunkFrame {
 			private final int footprintMaxX;
 			private final int footprintMinZ;
 			private final int footprintMaxZ;
+
+		static ShadowCaster fromObjectFootprint(Renderer3DModelKind kind, int minX, int maxX, int minY, int height, int minZ, int maxZ) {
+			int spanX = maxX - minX, spanZ = maxZ - minZ;
+			boolean alongX = spanX >= spanZ;
+			int centerX = (minX + maxX) / 2, centerZ = (minZ + maxZ) / 2;
+			return new ShadowCaster(kind, alongX ? minX : centerX, minY, alongX ? centerZ : minZ,
+				alongX ? maxX : centerX, alongX ? centerZ : maxZ, height, Math.max(1, Math.max(spanX, spanZ)),
+				kind == Renderer3DModelKind.WALL_OBJECT ? 176 : 144, true, minX, maxX, minZ, maxZ);
+		}
 
 			public ShadowCaster(
 				Renderer3DModelKind modelKind,

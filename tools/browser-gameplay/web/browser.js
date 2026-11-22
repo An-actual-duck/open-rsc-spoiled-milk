@@ -335,8 +335,7 @@ const natives = {
     const {createBrowserSurfaceMeshWorker} = await import('./browser-surface-mesh-worker-client.js');
     if (stopped) return false;
     surfaceMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion);
-    surfaceSceneryMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion, true,
-      draw => gpu?.queueSceneryDraw?.(draw));
+    surfaceSceneryMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion, true);
     window.browserProof.surfaceMeshWorker = surfaceMeshWorker.stats;
     window.browserProof.surfaceSceneryMeshWorker = surfaceSceneryMeshWorker.stats;
     return true;
@@ -345,13 +344,21 @@ const natives = {
     if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
     return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay]);
   },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceDrawWords(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites) {
+    if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, false], true);
+  },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceGameplayWords(lib, source, offsetX, offsetZ, withRoofs, customSprites) {
+    if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, 0, 0, withRoofs, customSprites, true], true);
+  },
   async Java_orsc_browser_BrowserBootstrap_buildSurfaceSceneryMesh(lib, source) {
     if (deployment.publicAlpha || stopped || !surfaceSceneryMeshWorker) return null;
     return surfaceSceneryMeshWorker.build(source, []);
   },
-  async Java_orsc_browser_BrowserBootstrap_buildSurfaceSceneryWords(lib, source, packing) {
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceSceneryWords(lib, source) {
     if (deployment.publicAlpha || stopped || !surfaceSceneryMeshWorker) return null;
-    return surfaceSceneryMeshWorker.build(source, [], packing);
+    return surfaceSceneryMeshWorker.build(source, [], true);
   },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },
@@ -406,7 +413,8 @@ try {
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
     const gpuOptions={wholeZone:wholeZone.enabled,liveCells:wholeZone.liveCells,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
     gpuOptions.measureFrameStages=!deployment.publicAlpha&&window.browserPrivateTestRoute?.frameStages===true;
-    gpuOptions.packedSurfaceScenery=!deployment.publicAlpha&&window.browserPrivateTestRoute?.packedSurfaceScenery===true;
+    gpuOptions.syncSpriteCalls=!deployment.publicAlpha&&!renderWorker.enabled&&nativeCallDispatch==='async'
+      &&window.browserPrivateTestRoute?.syncSpriteCalls===true;
     ensureStarting();
     if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;ensureStarting();gpu=await factory(canvas,report,{...gpuOptions,worldInputAllowed:()=>window.browserWorldInputAllowed(),onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(stopped)return;boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});if(stopped)gpu.dispose();ensureStarting();}
     else gpu=createBrowserWebGL(canvas,report,gpuOptions);

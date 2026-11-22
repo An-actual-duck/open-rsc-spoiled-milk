@@ -2,7 +2,6 @@ package orsc.browser;
 
 import com.openrsc.client.entityhandling.EntityHandler;
 import orsc.BrowserWebGLBridge;
-import orsc.BrowserSceneryDrawPreparation;
 import orsc.Config;
 import orsc.WorldBuilderTerrainBootstrap;
 import orsc.graphics.three.World;
@@ -15,31 +14,34 @@ public final class BrowserSurfaceMeshWorker {
     private static World world;
     private static boolean custom;
     private static final SurfaceSceneryMeshPreparation.PlacementMesher scenery = new SurfaceSceneryMeshPreparation.PlacementMesher();
-    private static BrowserSceneryDrawPreparation drawPreparation;
-    private static int[] sceneryDraw;
 
     public static byte[] buildScenery(String cacheDir, byte[] source) throws IOException {
         return scenery.build(source, cacheDir + "/video/models.orsc");
     }
 
-    public static int[] buildSceneryWords(String cacheDir, byte[] source, int[] packing) {
-        sceneryDraw = null;
-        return scenery.buildWords(source, cacheDir + "/video/models.orsc", mesh -> {
-            if (packing.length == 0) return 0;
-            if (drawPreparation == null) drawPreparation = new BrowserSceneryDrawPreparation();
-            sceneryDraw = drawPreparation.prepare(mesh, packing);
-            return sceneryDraw == null ? 0 : packing[0];
-        });
-    }
-
-    public static int[] takeSceneryDraw() {
-        int[] draw = sceneryDraw;
-        sceneryDraw = null;
-        return draw == null ? new int[0] : draw;
+    public static int[] buildSceneryWords(String cacheDir, byte[] source) {
+        return scenery.buildWords(source, cacheDir + "/video/models.orsc");
     }
 
     public static byte[] build(String cacheDir, byte[] source, int offsetX, int offsetZ,
                                int dx, int dz, boolean withRoofs, boolean customSprites, boolean gameplay) throws IOException {
+        World terrain = terrain(cacheDir, customSprites);
+        if (gameplay) return terrain.buildSurfaceGameplayPacket(source, offsetX, offsetZ, withRoofs);
+        return terrain.buildSurfaceMeshPacket(source, offsetX, offsetZ, dx, dz, withRoofs, BrowserWebGLBridge::prepareWorkerSurfaceLighting);
+    }
+
+    public static int[] buildDrawWords(String cacheDir, byte[] source, int offsetX, int offsetZ,
+                                       int dx, int dz, boolean withRoofs, boolean customSprites) throws IOException {
+        return terrain(cacheDir, customSprites).buildSurfaceDrawWordPacket(source, offsetX, offsetZ, dx, dz, withRoofs,
+            BrowserWebGLBridge::prepareWorkerSurfaceLighting);
+    }
+
+    public static int[] buildGameplayWords(String cacheDir, byte[] source, int offsetX, int offsetZ,
+                                           boolean withRoofs, boolean customSprites) throws IOException {
+        return terrain(cacheDir, customSprites).buildSurfaceGameplayWordPacket(source, offsetX, offsetZ, withRoofs);
+    }
+
+    private static World terrain(String cacheDir, boolean customSprites) {
         if (world == null) {
             Config.F_CACHE_DIR = cacheDir;
             Config.S_WANT_CUSTOM_SPRITES = customSprites;
@@ -49,7 +51,6 @@ public final class BrowserSurfaceMeshWorker {
             custom = customSprites;
         }
         if (custom != customSprites) throw new IllegalStateException("Surface worker definitions changed");
-        if (gameplay) return world.buildSurfaceGameplayPacket(source, offsetX, offsetZ, withRoofs);
-        return world.buildSurfaceMeshPacket(source, offsetX, offsetZ, dx, dz, withRoofs, BrowserWebGLBridge::prepareWorkerSurfaceLighting);
+        return world;
     }
 }

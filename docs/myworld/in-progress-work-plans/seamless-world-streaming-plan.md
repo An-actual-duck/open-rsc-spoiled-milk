@@ -404,24 +404,29 @@ and its cold-worker cost are recorded in the preview notes.
 
 ### Frame pacing during live streaming
 
-Measure fresh frames per second alongside individual frame intervals. The
-placement preview reaches roughly 60 FPS between bursts and still has short
-stretches well below that. Separate the initial warm-up, forward crossings,
-return crossing and resident stretch in the same 1920×1080 walk.
+Measure fresh frames per second alongside individual frame intervals.
+Separate the initial warm-up, forward crossings, return crossing and
+resident stretch in the same 1920×1080 walk. Run frame-stage tracing and
+parity checks separately from the uninstrumented timing controls.
 
-The next streaming change should move the detached scenery result closer to
-the form the renderer consumes. For one cell, have the existing worker emit
-renderer-ready vertex and material buffers with the small CPU metadata needed
-for lighting and validation. Bind the packed data to the existing renderer
-settings and texture dimensions, color and transparency stamps. Keep the
-current cell revision and source checks.
-Queue the completed cell for a bounded number of upload bytes per frame and
-measure how early the destination cell becomes drawable. Keep simulation,
-collision, actor poses and input on their authoritative path. Compare exact
-geometry and lighting, then count dropped frames and late visible cells in
-both browsers. The existing result can be several MiB of serialized Java
-objects per cell and is decoded and packed again in the client runtime.
-[Scenery bursts](seamless-world-streaming-preview.md#count-fresh-frames-during-scenery-completion-bursts) · [Renderer packing](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L1084) · [Material stamps](../../../PC_Client/src/orsc/BrowserChunkVariant.java)
+The private browser worker now has bounded primitive transports for
+scenery, terrain draw cells and gameplay terrain. Each path keeps source and
+shape checks and its existing fallback. The duplicate renderer-packed
+scenery packet matched local packing and regressed the worst seconds in
+both browsers. Pursue GPU-ready transport again only if its payload can
+replace the corresponding CPU draw data. Exact retained scenery can avoid
+repeat builds, with modest pacing benefit in the matched route.
+
+After terrain decode, measure where the remaining long gaps occur. The
+client and browser renderer share a browser thread. Compare useful work
+inside native calls with the time the Java caller is suspended. The sprite
+atlas uses separate plan and commit calls to send only missing pixels.
+The direct renderer can test synchronous dispatch for these two existing
+call bodies. Keep the exact atlas plan, commit, pixel data and draw order.
+Move on if it only changes elapsed time attribution or helps one browser at
+the expense of the other. Per-frame results must still verify ordinary
+authoritative movement and one continuous world presentation.
+[Scenery and terrain captures](seamless-world-streaming-preview.md#flat-scenery-replies-and-worker-packed-draws)
 
 ## Stop conditions and follow-up decisions
 

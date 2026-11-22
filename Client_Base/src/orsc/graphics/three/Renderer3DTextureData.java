@@ -19,11 +19,6 @@ public final class Renderer3DTextureData {
 	private final long signature;
 	private final boolean animationIntent;
 
-	static Renderer3DTextureData forPacking(int id, int width, int height, int rgb, int flags) {
-		return new Renderer3DTextureData(id, width, height, 0, new int[0], new byte[0], new int[0],
-			(flags & 1) != 0, (flags & 2) != 0 ? 1 : 0, 0, rgb, 0, false);
-	}
-
 	private Renderer3DTextureData(
 		int textureId,
 		int width,

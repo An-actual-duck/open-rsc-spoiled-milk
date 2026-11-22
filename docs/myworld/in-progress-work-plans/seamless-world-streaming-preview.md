@@ -1220,10 +1220,10 @@ each packed packet for the existing lighting metadata and CPU consumers.
 | Firefox | 28 → 27 ms | 42 → 44 ms | 163 → 245 ms | 19 → 16 |
 | Chrome | 21.7 → 21.6 ms | 38 → 37 ms | 176.9 → 264.3 ms | 28 → 20 |
 
-The worker packing proof is behind a separate private flag. Carrying two
-complete representations consumed additional transfer capacity and the
-worst seconds regressed in both controls. The flat reply and exact cell
-reuse are the pacing candidates under test.
+The worker packing proof is recorded at `99dd73dab`. Carrying two complete
+representations consumed additional transfer capacity and the worst seconds
+regressed in both controls, so the duplicate-packed path was removed. The
+flat reply and exact cell reuse are the pacing candidates under test.
 [Firefox packed trial](../../../output/tests/browser-gameplay-spike/scenery-packed-firefox/firefox-result.json) · [Chrome packed trial](../../../output/tests/browser-gameplay-spike/scenery-packed-chrome/chrome-result.json)
 
 Two dense distant jobs previously selected the serialized fallback because
@@ -1238,11 +1238,53 @@ and sent 114.60 KiB of input data over the entire session.
 [Dense cell parity](../../../output/tests/browser-gameplay-spike/scenery-dense-parity/chrome-result.json) · [All placement sources](../../../output/tests/browser-gameplay-spike/scenery-all-placement-parity/firefox-result.json)
 
 Repeated cell keys accounted for 53 of 133 jobs in the flat-reply route.
-The next control tests retaining exact signed-world and model-scope meshes
-across revisits within a 64 MiB and 96-cell bound. Reuse checks the full
-sorted placement list and elevations, then rebases the retained mesh to the
-current view. Fresh authoritative placements still determine what can be
-drawn. The parity route also rebuilds hits to compare actual draws.
+The private reuse trial retains signed-world and model-scope meshes within
+a 64 MiB and 96-cell bound. It checks sorted placements and elevations,
+then rebases geometry and shadow footprints to the current view. Fresh
+authoritative placements still determine what can be drawn. The parity
+run independently rebuilt all 38 reused meshes and matched the geometry,
+lighting coordinates and shadows. The trial skipped 38 jobs and cut
+scenery replies from 69.81 to 54.05 MiB. Firefox's 99th-percentile interval
+moved from 41 to 38 ms and Chrome's moved from 33 to 32.3 ms. The lowest
+one-second rates were 23 and 33 FPS, compared with 24 and 29 FPS in the
+flat-reply controls. The reuse option remains separate from the terrain
+comparison.
+[Reuse parity](../../../output/tests/browser-gameplay-spike/scenery-shadow-reuse-parity/chrome-result.json) · [Firefox reuse trial](../../../output/tests/browser-gameplay-spike/scenery-shadow-reuse-firefox/firefox-result.json) · [Chrome reuse trial](../../../output/tests/browser-gameplay-spike/scenery-shadow-reuse-chrome/chrome-result.json)
+
+#### Terrain delivery and gameplay preparation
+
+The terrain worker returns two independent products. One installs the
+collision, minimap, structures and query mesh for a gameplay context.
+The other prepares entering terrain draw cells and their compatibility
+meshes. The signed-source fixture compared both draw meshes byte for byte,
+including prepared lighting. The browser fixture consumed 15 primitive
+draw replies. Their median decode was 2 ms and the longest was 3.8 ms in
+the detailed Chrome capture. The three serialized gameplay replies took
+48–177 ms each in that capture. The worker's asynchronous build and
+transfer wait are recorded separately.
+[Terrain receipt capture](../../../output/tests/browser-gameplay-spike/scenery-shadow-reuse-parity/chrome-result.json)
+
+In separate untraced draw-only trials the Firefox 99th-percentile frame
+interval moved from 41 to 39 ms, with the lowest second moving from 24 to
+23 FPS. Chrome's 99th percentile moved from 33 to 33.5 ms, with the lowest
+second moving from 29 to 33 FPS. The larger gameplay reply remains the
+priority. Its separate primitive reply carries exact terrain tiles, both
+grids, minimap palette data, model arrays and the complete query mesh.
+The signed-source fixture compares these products against the prior
+serializer and rejects stale or truncated reply envelopes.
+[Firefox draw trial](../../../output/tests/browser-gameplay-spike/terrain-reply-words-firefox/firefox-result.json) · [Chrome draw trial](../../../output/tests/browser-gameplay-spike/terrain-reply-words-chrome/chrome-result.json) · [Signed-source parity](../../../tests/myworld/seamless-streaming/SurfaceMeshSourceFixture.java)
+
+Firefox accepted all three gameplay replies on both runs. In the matched
+diagnostic, gameplay decode intervals changed from 127, 60 and 58 ms to
+36, 16 and 15 ms. Total gameplay replies fell from 25.66 to 23.51 MiB.
+The largest measured frame interval overlapping a gameplay decode fell
+from 161 to 72 ms. The traced route's largest overall interval was 154 ms
+and occurred after the second decode, with zero geometry upload bytes.
+The sprite commit accounted for most of the measured Java bridge time
+in that interval. That timing includes time while CheerpJ can run other
+Java work. The untraced Firefox route reported a 37 ms 99th-percentile
+interval, a 141 ms longest interval and a 29 FPS lowest full second.
+[Firefox serialized trace](../../../output/tests/browser-gameplay-spike/terrain-reply-control-trace/firefox-result.json) · [Firefox primitive trace](../../../output/tests/browser-gameplay-spike/terrain-gameplay-words-trace/firefox-result.json) · [Firefox untraced walk](../../../output/tests/browser-gameplay-spike/terrain-gameplay-words-firefox/firefox-result.json)
 
 ## Reproduce the private preview
 

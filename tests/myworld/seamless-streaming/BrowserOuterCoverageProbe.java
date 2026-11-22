@@ -339,7 +339,8 @@ public final class BrowserOuterCoverageProbe {
 		verifyDetachedGameplayInstalls(client, 3);
 		if (Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements")) {
 			int verified = client.getVerifiedWorkerSceneryMeshes(), mismatched = client.getMismatchedWorkerSceneryMeshes();
-			if (verified == 0 || mismatched != 0) throw new IllegalStateException("Scenery mesh parity " + verified + "/" + mismatched);
+			if (verified == 0 || mismatched != 0) throw new IllegalStateException("Scenery mesh parity " + verified + "/" + mismatched
+				+ " " + client.getFirstSceneryReuseMismatch());
 			BrowserBootstrap.report("outer-coverage:placement-mesh-parity:" + verified);
 			if (Boolean.getBoolean("spoiledmilk.browserReuseDetachedScenery")) {
 				int reused = client.getVerifiedSceneryReuses();
@@ -360,6 +361,16 @@ public final class BrowserOuterCoverageProbe {
 			throw new IllegalStateException("Expected " + expected + " gameplay products from the detached worker, installed " + installed);
 		}
 		BrowserBootstrap.report("outer-coverage:detached-gameplay-installs:" + installed);
+		if (Boolean.getBoolean("spoiledmilk.browserSurfaceGameplayWords")) {
+			int accepted = client.getWorld().getAcceptedSurfaceGameplayWordReplies();
+			if (accepted < expected) throw new IllegalStateException("Expected " + expected + " primitive gameplay replies, accepted " + accepted);
+			BrowserBootstrap.report("outer-coverage:terrain-gameplay-word-replies:" + accepted);
+		}
+		if (Boolean.getBoolean("spoiledmilk.browserSurfaceTerrainWords")) {
+			int preparedTerrain = client.getWorld().getAcceptedSurfaceTerrainWordReplies();
+			if (preparedTerrain == 0) throw new IllegalStateException("No primitive terrain reply was accepted");
+			BrowserBootstrap.report("outer-coverage:terrain-word-replies:" + preparedTerrain);
+		}
 		int scenery = client.getDetachedSurfaceSceneryMeshes();
 		if (scenery <= 0) throw new IllegalStateException("No scenery mesh came back from the detached worker");
 		BrowserBootstrap.report("outer-coverage:detached-scenery-meshes:" + scenery);

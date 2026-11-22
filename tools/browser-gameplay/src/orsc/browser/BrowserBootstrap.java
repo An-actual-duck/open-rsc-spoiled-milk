@@ -11,8 +11,12 @@ public final class BrowserBootstrap {
     private static native boolean startSurfaceMeshWorker();
     private static native byte[] buildSurfaceMesh(byte[] source, int offsetX, int offsetZ, int dx, int dz,
         boolean withRoofs, boolean customSprites, boolean gameplay);
+    private static native int[] buildSurfaceDrawWords(byte[] source, int offsetX, int offsetZ, int dx, int dz,
+        boolean withRoofs, boolean customSprites);
+    private static native int[] buildSurfaceGameplayWords(byte[] source, int offsetX, int offsetZ,
+        boolean withRoofs, boolean customSprites);
     private static native byte[] buildSurfaceSceneryMesh(byte[] source);
-    private static native int[] buildSurfaceSceneryWords(byte[] source, int[] packing);
+    private static native int[] buildSurfaceSceneryWords(byte[] source);
 
     private BrowserBootstrap() { }
     public static native void report(String message);
@@ -104,6 +108,12 @@ public final class BrowserBootstrap {
         }
         if (!publicAlpha && webgl && Boolean.getBoolean("spoiledmilk.browserSurfaceMeshWorker") && startSurfaceMeshWorker()) {
             orsc.graphics.three.World.installSurfaceMeshWorker(BrowserBootstrap::buildSurfaceMesh);
+            if (Boolean.getBoolean("spoiledmilk.browserSurfaceTerrainWords")) {
+                orsc.graphics.three.World.installSurfaceDrawWordWorker(BrowserBootstrap::buildSurfaceDrawWords);
+            }
+            if (Boolean.getBoolean("spoiledmilk.browserSurfaceGameplayWords")) {
+                orsc.graphics.three.World.installSurfaceGameplayWordWorker(BrowserBootstrap::buildSurfaceGameplayWords);
+            }
             orsc.graphics.three.SurfaceSceneryMeshPreparation.install(BrowserBootstrap::buildSurfaceSceneryMesh);
             if (Boolean.getBoolean("spoiledmilk.browserSurfaceSceneryWords")) {
                 orsc.graphics.three.SurfaceSceneryMeshPreparation.installWords(BrowserBootstrap::buildSurfaceSceneryWords);

@@ -1,8 +1,12 @@
-export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = false, queueSceneryDraw) {
+export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = false) {
   const worker = new Worker(new URL('./browser-surface-mesh-worker.js', import.meta.url),
     {name: scenery ? 'Spoiled Milk scenery mesher' : 'Spoiled Milk terrain mesher'});
   const stats = {ready: false, completed: 0, gameplay: 0, bytes: 0, inputBytes: 0, busy: 0, refused: 0, error: null};
-  if (scenery) stats.wordReplies = 0;
+  stats.wordReplies = 0;
+  if (!scenery) {
+    stats.gameplayBytes = 0;
+    stats.gameplayWordReplies = 0;
+  }
   let pending;
   let closed = false;
 
@@ -22,15 +26,14 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = f
       stats.ready = true;
     } else if (pending) {
       const result = pending.words ? new Int32Array(data.result) : new Int8Array(data.result);
-      if (pending.words && result.length >= 19 && result[18] > 0) {
-        const draw = data.draw && new Int32Array(data.draw);
-        if (!draw || draw[0] !== result[18] || draw[1] !== result[5] || draw[2] !== result[6]
-            || draw[3] !== result[12] || draw[4] !== result[13] || !queueSceneryDraw?.(draw)) result[18] = 0;
-      }
       if (result.byteLength === 0) stats.refused++;
       else {
         stats.completed++;
-        if (pending.gameplay) stats.gameplay++;
+        if (pending.gameplay) {
+          stats.gameplay++;
+          stats.gameplayBytes += result.byteLength;
+          if (pending.words) stats.gameplayWordReplies++;
+        }
         if (pending.words) stats.wordReplies++;
       }
       stats.bytes += result.byteLength;
@@ -44,19 +47,18 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = f
 
   return {
     stats,
-    build(source, args, packing) {
+    build(source, args, words = false) {
       if (closed) return Promise.resolve(null);
       if (pending) {
         stats.busy++;
         return Promise.resolve(null);
       }
       const bytes = new Int8Array(source);
-      const context = packing === undefined ? null : new Int32Array(packing);
       return new Promise(resolve => {
         stats.inputBytes += bytes.byteLength;
-        pending = {resolve, gameplay: args[args.length - 1], words: context !== null};
+        pending = {resolve, gameplay: args[args.length - 1] === true, words};
         try {
-          worker.postMessage({bytes, args, words: pending.words, packing: context}, context ? [bytes.buffer, context.buffer] : [bytes.buffer]);
+          worker.postMessage({bytes, args, words}, [bytes.buffer]);
         } catch (error) {
           close(String(error));
         }

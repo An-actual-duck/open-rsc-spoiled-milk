@@ -2,6 +2,7 @@ package orsc.graphics.three;
 
 import com.openrsc.client.entityhandling.EntityHandler;
 import org.json.JSONObject;
+import orsc.BrowserWebGLBridge;
 import orsc.Config;
 import orsc.NativeLayeredTerrainChunk;
 import orsc.NativeLayeredTerrainSnapshot;
@@ -83,9 +84,28 @@ public final class SurfaceMeshSourceFixture {
 			if (!Arrays.equals(buffer.toByteArray(), world.buildSurfaceMeshPacket(footprint, 0, 0, cell[0], cell[1], true))) {
 				throw new AssertionError("Worker changed the terrain/wall/roof meshes at " + x + "," + z);
 			}
+			int[] words = world.buildSurfaceDrawWordPacket(footprint, 0, 0, cell[0], cell[1], true,
+				BrowserWebGLBridge::prepareWorkerSurfaceLighting);
+			byte[] serialized = world.buildSurfaceMeshPacket(footprint, 0, 0, cell[0], cell[1], true,
+				BrowserWebGLBridge::prepareWorkerSurfaceLighting);
+			Renderer3DWorldChunkFrame.ChunkMesh[] primitive = World.readSurfaceDrawWords(words, x, z);
+			buffer.reset();
+			try (ObjectOutputStream output = new ObjectOutputStream(buffer)) {
+				output.writeObject(primitive[0]);
+				output.writeObject(primitive[1]);
+			}
+			if (!Arrays.equals(buffer.toByteArray(), serialized)) {
+				throw new AssertionError("Primitive terrain changed the draw meshes or prepared lighting at " + x + "," + z);
+			}
+			try {
+				World.readSurfaceDrawWords(Arrays.copyOf(words, words.length - 1), x, z);
+				throw new AssertionError("Truncated terrain words were accepted");
+			} catch (IllegalStateException rejected) {
+				// A rejected product can be rebuilt through the normal terrain path.
+			}
 			if (fixedCell != null) verifyOcclusionCell(fixedCell, (Renderer3DWorldChunkFrame.ChunkMesh) full.invoke(mesh));
 		}
-		System.out.println("PASS signed fixed and compatibility meshes match across the worker transport");
+		System.out.println("PASS signed fixed and compatibility meshes match across byte and primitive worker transports");
 		verifyGameplayProduct(world, field.toAtomicActivationInnerWindow(), slice);
 		verifySceneryProduct();
 	}
@@ -132,7 +152,7 @@ public final class SurfaceMeshSourceFixture {
 			}
 		});
 		try {
-			Renderer3DWorldChunkFrame.ChunkMesh detached = SurfaceSceneryMeshPreparation.prepare(5, 12, 640, 1216, models);
+			Renderer3DWorldChunkFrame.ChunkMesh detached = SurfaceSceneryMeshPreparation.prepare(5, 12, 640, 1216, models, 0, 0, 0);
 			Renderer3DWorldChunkFrame.ChunkMesh direct = RSModel.buildRenderer3DObjectChunkMesh(0, 5, 12, 640, 1216,
 				models, 1, Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS);
 			if (detached == null || detached.getTriangleCount() == 0 || detached.getStorageSignature() != direct.getStorageSignature()) {
@@ -171,9 +191,39 @@ public final class SurfaceMeshSourceFixture {
 				throw new AssertionError("Worker changed gameplay collision, minimap or pick geometry");
 			}
 			System.out.println("PASS signed gameplay product matches across the worker transport");
+			int x = terrain.getCurrentChunkX(), z = terrain.getCurrentChunkY();
+			int[] words = worker.buildSurfaceGameplayWordPacket(terrain.surfaceWorkerSource(x, z), 0, 0, true);
+			if (words.length == 0) throw new AssertionError("Signed gameplay product rejected by primitive encoding");
+			World.installSurfaceGameplayWordWorker((source, offsetX, offsetZ, roofs, sprites) -> words);
+			Object primitive = receive.invoke(world, terrain, 0, 0, 1L, true, null);
+			if (world.getAcceptedSurfaceGameplayWordReplies() != 1 || primitive == null
+				|| !Arrays.equals(gameplayProduct(direct), gameplayProduct(primitive))
+				|| !Arrays.equals(meshBytes((Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(detached)),
+					meshBytes((Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(primitive)))) {
+				throw new AssertionError("Primitive reply changed collision, minimap, roof or pick geometry");
+			}
+			rejectGameplayWords(Arrays.copyOf(words, words.length - 1), terrain.scopeIdentity(), x, z);
+			rejectGameplayWords(words, terrain.scopeIdentity().replaceFirst(".", "!"), x, z);
+			System.out.println("PASS signed gameplay primitive product matches collision, minimap, roof and pick geometry");
 		} finally {
 			World.installSurfaceMeshWorker(null);
+			World.installSurfaceGameplayWordWorker(null);
 		}
+	}
+
+	private static void rejectGameplayWords(int[] words, String scope, int x, int z) throws Exception {
+		try {
+			World.readSurfaceGameplayWords(words, scope, 1L, x, z, true);
+			throw new AssertionError("Invalid primitive gameplay envelope accepted");
+		} catch (java.io.IOException expected) { }
+	}
+
+	private static byte[] meshBytes(Renderer3DWorldChunkFrame.ChunkMesh mesh) throws Exception {
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+			output.writeObject(mesh);
+		}
+		return bytes.toByteArray();
 	}
 
 	private static byte[] gameplayProduct(Object result) throws Exception {

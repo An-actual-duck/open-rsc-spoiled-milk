@@ -2212,41 +2212,9 @@ public final class RSModel {
 			if (!isPlausibleModelShadowCaster(kind, spanX, spanZ)) {
 				return;
 			}
-			int centerX = (minX + maxX) / 2;
-			int centerZ = (minZ + maxZ) / 2;
-			int baseX0;
-			int baseZ0;
-			int baseX1;
-			int baseZ1;
-			if (spanX >= spanZ) {
-				baseX0 = minX;
-				baseZ0 = centerZ;
-				baseX1 = maxX;
-				baseZ1 = centerZ;
-			} else {
-				baseX0 = centerX;
-				baseZ0 = minZ;
-				baseX1 = centerX;
-				baseZ1 = maxZ;
-			}
-			int width = Math.max(1, Math.max(spanX, spanZ));
-			int opacity = kind == Renderer3DModelKind.WALL_OBJECT ? 176 : 144;
-			shadowCasters.add(new Renderer3DWorldChunkFrame.ShadowCaster(
-				kind,
-				baseX0,
-				minY,
-				baseZ0,
-				baseX1,
-				baseZ1,
-					height,
-					width,
-					opacity,
-					true,
-					minX,
-					maxX,
-					minZ,
-					maxZ));
-			}
+			shadowCasters.add(Renderer3DWorldChunkFrame.ShadowCaster.fromObjectFootprint(
+				kind, minX, maxX, minY, height, minZ, maxZ));
+		}
 
 		private boolean isPlausibleModelShadowCaster(Renderer3DModelKind kind, int spanX, int spanZ) {
 			int maxSpan = kind == Renderer3DModelKind.WALL_OBJECT
