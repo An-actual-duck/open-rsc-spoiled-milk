@@ -4042,46 +4042,6 @@ public final class mudclient implements Runnable {
 		return adoptSurfaceScenery ? Collections.emptyList() : surfacePreparedScenery;
 	}
 
-	void appendPredictedGlowScenery(int sectionX, int sectionZ, List<BrowserGlowPreparation.Source> full,
-			List<BrowserGlowPreparation.Source> retained) {
-		int nextBaseX = World.sectionToLocalBaseTile(sectionX) - worldOffsetX;
-		int nextBaseZ = World.sectionToLocalBaseTile(sectionZ) - worldOffsetZ;
-		int centerX = Math.floorDiv(nextBaseX, World.SECTION_SIZE) + 1;
-		int centerZ = Math.floorDiv(nextBaseZ, World.SECTION_SIZE) + 1;
-		// The ordinary resident capture sorts its static and animated inputs by the same keys.
-		Map<Long, BrowserGlowPreparation.Source> cells = new TreeMap<>();
-		for (Map.Entry<Long, ResidentObjectChunkCacheEntry> entry : cachedResidentObjectChunks.entrySet()) {
-			if (!cachedResidentObjectChunkCurrentViewCells.contains(entry.getKey())) continue;
-			ResidentObjectChunkCacheEntry item = entry.getValue();
-			Renderer3DWorldChunkFrame.ChunkMesh mesh = item.chunk;
-			int cellX = Math.floorDiv(Math.floorDiv(mesh.getOriginWorldX(), tileSize) - worldOffsetX, World.SECTION_SIZE);
-			int cellZ = Math.floorDiv(Math.floorDiv(mesh.getOriginWorldZ(), tileSize) - worldOffsetZ, World.SECTION_SIZE);
-			int radius = mesh.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS ? 1 : 2;
-			if (Math.max(Math.abs(cellX - centerX), Math.abs(cellZ - centerZ)) <= radius) {
-				cells.put(entry.getKey(), new BrowserGlowPreparation.Source(mesh,
-					(item.presentationBaseX - nextBaseX) * tileSize, (item.presentationBaseZ - nextBaseZ) * tileSize));
-			}
-		}
-		for (SurfaceSceneryWork work : surfaceSceneryWork.values()) {
-			if (work.prepared == null || work.band == SurfaceSceneryCells.Band.ENTERING_DRAW) continue;
-			addPreparedGlowScenery(cells, work, nextBaseX, nextBaseZ);
-		}
-		retained.addAll(cells.values());
-		for (SurfaceSceneryWork work : surfaceSceneryWork.values()) {
-			if (work.prepared != null && work.band == SurfaceSceneryCells.Band.ENTERING_DRAW)
-				addPreparedGlowScenery(cells, work, nextBaseX, nextBaseZ);
-		}
-		full.addAll(cells.values());
-	}
-
-	private void addPreparedGlowScenery(Map<Long, BrowserGlowPreparation.Source> cells, SurfaceSceneryWork work,
-			int nextBaseX, int nextBaseZ) {
-		for (PreparedSceneryDraw draw : work.prepared.draws) {
-			cells.put(draw.input.cellKey, new BrowserGlowPreparation.Source(draw.mesh,
-				(draw.input.baseX - nextBaseX) * tileSize, (draw.input.baseZ - nextBaseZ) * tileSize));
-		}
-	}
-
 	public int getAdoptedSurfaceSceneryDraws() { return adoptedSurfaceScenery; }
 	public int getDetachedSurfaceSceneryMeshes() { return detachedSurfaceSceneryMeshes; }
 	public int getDetachedSceneryPlacementMeshes() { return detachedSceneryPlacementMeshes; }

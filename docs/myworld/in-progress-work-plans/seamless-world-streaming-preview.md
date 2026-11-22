@@ -2476,6 +2476,43 @@ the rest of the first-frame work still run after replay. The player
 preview remains the compatibility mesh worker build.
 [Chrome control](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-chrome-control/chrome-result.json) · [Chrome reuse](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-chrome-prepared/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-firefox-control/firefox-result.json) · [Firefox reuse](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-firefox-prepared/firefox-result.json)
 
+#### Preparing the glow mask before the scene switch
+
+The trial assembled candidate glow recipes from the next terrain
+window, the retained resident chunks, and detached scenery. A separate
+browser worker rasterized each candidate before the next scene was
+installed. The live Java builder compared the texture dimensions,
+ordered emitters, and all four bounds before consuming a prepared
+mask. A different recipe used the literal raster in that frame.
+
+Fresh native fixtures checked 128 translated input lists and matched
+128 worker masks with the Java builder's bounds, visible pixel count,
+and RGBA digest at four texture sizes. Firefox also compared one adopted
+256×256 mask with the native raster in the actual first frame. The
+worker had completed it 13.1 seconds before use. The other cold mask
+had identical emitters but its eastern bound was 24,960 scene units
+for the live frame and 24,957 in the candidate. The bounds check
+selected the literal raster.
+[Translated input parity](../../../output/tests/seamless-world-streaming/prepared-next-glow-build/offset-glow-parity.log) · [Worker pixel parity](../../../output/tests/seamless-world-streaming/prepared-next-glow-build/worker-glow-parity.log) · [Live Firefox pixel comparison](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-firefox-verify/firefox-result.json)
+
+Both timed candidates used one exact mask at the second switch with
+13.3–13.4 seconds of lead time. All four timing walks completed three
+verified switches and the server-confirmed return to `(252,609,0)`
+at 1920×1080 with a 960×540 logical surface, one load epoch, zero
+holds, and zero input closures. All four used the same `17bac9589` JAR
+with SHA-256 `eb95350c3a818161df0927a1114ac72f380de23a78b38886ef705951ecc5a066`.
+
+| Browser | Three switch intervals, control → prepared | Longest interval between switches | 99th percentile | Lowest one-second FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 111.1, 83.8, 77.2 → 118.1, 69, 80.7 ms | 49 → 56.6 ms | 23.3 → 23.2 ms | 55 → 54 |
+| Firefox | 107, 114, 127 → 117, 62, 113 ms | 70 → 50 ms | 24 → 24 ms | 54 → 54 |
+
+The exact mask shortened the second switch in both matched pairs.
+The first switch grew in both and Chrome's longest interval between
+switches grew. Retire the trial and keep its lead-time and exactness
+proof for future work that can prepare the complete destination frame.
+[Chrome control](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-chrome-control/chrome-result.json) · [Chrome preparation](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-chrome-prepared/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-firefox-control/firefox-result.json) · [Firefox preparation](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-firefox-prepared/firefox-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

@@ -17,7 +17,6 @@ public final class BrowserLightingData {
     public static final int HEADER_FLOATS = 81;
     private final TerrainDefinitionField terrain = new TerrainDefinitionField();
     private final RemasterGlowMaskBuilder glow = new RemasterGlowMaskBuilder();
-    private final BrowserGlowPreparation preparedGlow;
     private final GeometryShadowRoofMask.Cache roofs = new GeometryShadowRoofMask.Cache();
     private long terrainRevision = Long.MIN_VALUE, glowSignature = Long.MIN_VALUE, roofSignature = Long.MIN_VALUE;
     private DirectionalShadowProjection near, far, previousFar;
@@ -27,10 +26,6 @@ public final class BrowserLightingData {
     private int residentTerrainFields;
 
     public int getResidentTerrainFields() { return residentTerrainFields; }
-
-    public BrowserLightingData() { this(null); }
-
-    BrowserLightingData(BrowserGlowPreparation preparedGlow) { this.preparedGlow = preparedGlow; }
 
     public static final class Mask {
         public final int unit, width, height;
@@ -95,7 +90,7 @@ public final class BrowserLightingData {
             }
         }
         started = recordPhase(timings, timingOffset + 1, started);
-        RemasterGlowMaskBuild built=directional?glow.build(world,preparedGlow):null;
+        RemasterGlowMaskBuild built=directional?glow.build(world):null;
         if(built!=null&&built.mask!=null) {
             RemasterGlowMask mask=built.mask;values[14]=1;putBounds(values,28,mask.minX,mask.minZ,mask.invSpanX,mask.invSpanZ);
             if(glowSignature!=mask.signature){changes.add(new Mask(2,mask.width,mask.height,mask.pixels(),bounds(values,28)));glowSignature=mask.signature;}

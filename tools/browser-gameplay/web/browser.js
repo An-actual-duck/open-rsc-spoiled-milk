@@ -107,7 +107,7 @@ function publish(finalReceipt=false) {
 function dispose() {
   if (stopped) return;
   bulkStaging?.dispose();startupProgress.close();stagedLogin.dispose();
-  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); terrainWorker?.dispose(); surfaceMeshWorker?.dispose(); surfaceSceneryMeshWorker?.dispose(); glowPreparation?.dispose(); gpu?.dispose();
+  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); terrainWorker?.dispose(); surfaceMeshWorker?.dispose(); surfaceSceneryMeshWorker?.dispose(); gpu?.dispose();
   publish(true);
 }
 function finish(reason) {
@@ -145,7 +145,7 @@ const fixturePolicy=deployment.publicAlpha?{properties:[],requested:null,tcpPort
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
 const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
-let terrainWorker, surfaceMeshWorker, surfaceSceneryMeshWorker, glowPreparation;
+let terrainWorker, surfaceMeshWorker, surfaceSceneryMeshWorker;
 const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseInput(window,document,{logicalExtent:()=>({width:gpu?.stats.physicalOutput?.logicalWidth||gpu?.stats.display?.internalWidth||960,height:gpu?.stats.physicalOutput?.logicalHeight||gpu?.stats.display?.internalHeight||540})}) : undefined;
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
@@ -458,14 +458,6 @@ try {
     window.browserProof.worldLoading=worldCover.stats;
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';
     Object.assign(natives, gpu.natives);
-    if (!deployment.publicAlpha && window.browserPrivateTestRoute?.prepareNextGlow === true) {
-      const {createGlowPreparation} = await import('./browser-glow-preparation.js');
-      ensureStarting();
-      glowPreparation = createGlowPreparation();
-      window.browserProof.glowPreparation = glowPreparation.stats;
-      natives.Java_orsc_BrowserGlowPreparation_prepareGlow = async (lib, words) => glowPreparation.prepare(words);
-      natives.Java_orsc_BrowserGlowPreparation_takeGlow = async (lib, id) => glowPreparation.take(id);
-    }
     function alignWorldSurface(width,height){
       const display=document.querySelector('#display'),target=[...display.querySelectorAll('canvas')].filter(c=>c!==canvas).sort((a,b)=>b.width*b.height-a.width*a.height)[0];
       displayLayout?.setSize(width,height);

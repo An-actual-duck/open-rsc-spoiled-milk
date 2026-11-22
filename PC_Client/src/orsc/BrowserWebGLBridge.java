@@ -102,9 +102,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private final OpenGLPixelWorkspace spriteWorkspace=new OpenGLPixelWorkspace();
     private final BrowserWorldSpriteCache spriteCache=new BrowserWorldSpriteCache();
     private static final boolean SPRITE_CACHE="cached".equals(System.getProperty("spoiledmilk.browserSpriteCache","uncached"));
-    private final BrowserGlowPreparation preparedGlow = Boolean.getBoolean("spoiledmilk.browserPrepareNextGlow")
-        ? new BrowserGlowPreparation() : null;
-    private final BrowserLightingData lightingData = new BrowserLightingData(preparedGlow);
+    private final BrowserLightingData lightingData=new BrowserLightingData();
     private final BrowserSkyData skyData=new BrowserSkyData();
     private final BrowserWorldLoadState loadState=new BrowserWorldLoadState();
     private int maxTextureSize;
@@ -129,11 +127,6 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     public static int getResidentTerrainLightingFields() {
         BrowserWebGLBridge bridge = installedBridge;
         return bridge == null ? 0 : bridge.lightingData.getResidentTerrainFields();
-    }
-
-    public static int[] getPreparedGlowWork() {
-        BrowserWebGLBridge bridge = installedBridge;
-        return bridge == null || bridge.preparedGlow == null ? new int[0] : bridge.preparedGlow.work();
     }
     private volatile int[] surfaceDrawBuffers = new int[0];
     private volatile int[] optionalSurfaceDrawBuffers = new int[0];
@@ -470,7 +463,6 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             acknowledgeOverlay(preparedOverlay);
             loadState.presented(OVERLAY_COVERAGE&&authority,requiredSources,readySources,remainingRepacks);
             if (authority && progress[1] == BrowserWorldLoadState.WORLD) lastPresentedTravelGeneration = travelGeneration;
-            if (preparedGlow != null && authority && progress[1] == BrowserWorldLoadState.WORLD) preparedGlow.offer(client);
             if (FIXED_SURFACE_DRAW && TRAVEL_TRACE) {
                 recordSurfaceDrawBuffers(surfaceDraw);
                 optionalSurfaceDrawBuffers = optional == null ? EMPTY_SURFACE_RECEIPT : optional.receipt;

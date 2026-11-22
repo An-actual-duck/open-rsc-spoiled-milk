@@ -692,6 +692,13 @@ Keep the current raster as the fallback for a new emitter, view, or map
 revision. A desktop worker or a Java executor within the browser runtime
 does not establish browser thread isolation.
 
+The glow worker completed an exact mask over 13 seconds before it was
+needed in both browsers. The second switch shortened in both timing
+pairs. A slightly different live bound left the first cold raster on
+the frame path. Retire the trial after mixed whole-walk pacing and
+carry forward the early worker availability proof.
+[Prepared glow trial](seamless-world-streaming-preview.md#preparing-the-glow-mask-before-the-scene-switch)
+
 The ordered replay itself still exceeds a frame budget. A larger
 follow-up should make walking adoption consume an already verified
 scene revision. The server already provides scoped scenery pages for
@@ -704,6 +711,21 @@ identities and an exact comparison or revision reference covering
 each change. Only a ready destination can use a prebuilt collision,
 picking and scene membership product. Late or invalidated cells use
 the normal authoritative path.
+
+The prepared terrain receipt trial is the first part of moving the
+ordered replay earlier. The server already sends a reference-only v8
+terrain body for a ready walking prediction. Compile the exact expected
+body from the accepted visual stage, resolve all sector references in an
+unpublished cache transaction, and construct the resulting inner window
+before the switch. The live context still validates its location header
+and the full body. Publish by swapping in the prepared cache map only
+when the wire and the cache version both match. A changed payload,
+scope, or cache version uses the existing decoder. Measure opcode 157
+and complete frame pacing before extending this approach to scenery.
+The native comparison matched the literal decoder on 1,244,160 tile
+positions in 60 contexts, including partially resident windows, void
+cells, and exact rejection of stale cache state.
+[Prepared terrain receipt comparison](../../../output/tests/seamless-world-streaming/prepared-surface-receipt-build/native-receipt-parity.log)
 
 ## Stop conditions and follow-up decisions
 
