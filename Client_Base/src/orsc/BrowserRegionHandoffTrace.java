@@ -26,7 +26,7 @@ public final class BrowserRegionHandoffTrace {
         "baseline.page-records", "baseline.page-prune", "baseline.page-apply", "baseline.page-diagnostics",
         "world-section.activation-log", "world-section.collision-view",
         "context.halo-publication", "context.prediction-retire", "context.halo-activation-log",
-        "context.live-window-ready"
+        "context.live-window-ready", "scenery.instance-layout"
     };
     private static long ordinal;
     private static int count, next, context, packetBudget, frameBudget;

@@ -1865,6 +1865,19 @@ boundary interval with 58 ms of packet work and a 106 ms ordinary
 interval with zero packet work. Stable 60 FPS remains open.
 [Follow-up allocation summary](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-allocations-chrome/allocation-summary.json) · [Traced candidate walk](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-allocations-chrome/chrome-result.json)
 
+#### Browser streaming diagnostics
+
+The browser journal trial buffers terrain streaming messages for the
+existing one-second browser observer. It removes synchronous console and
+file writes from the halo activation phase and avoids waking a Java log
+writer for routine streaming notices. The Java queue and browser history
+have bounded retention. The private Firefox trace received all three
+activation messages. The halo log phase dropped from 6, 14, and 13 ms to
+under 1 ms at each roll. The enclosing submission intervals went from
+140, 86, and 123 ms to 117, 134, and 90 ms. The second roll spent more
+time retiring and installing the local scene in the trial.
+[Traced roll comparison](../../../output/tests/seamless-world-streaming/browser-streaming-log-build/roll-comparison.json) · [Browser journal receipt](../../../output/tests/browser-gameplay-spike/browser-streaming-log-trace-firefox/firefox-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

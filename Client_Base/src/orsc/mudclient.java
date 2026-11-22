@@ -4111,8 +4111,7 @@ public final class mudclient implements Runnable {
 		if (preparedSurfaceInstanceRoll != null) {
 			ClientSceneInstanceStore.SurfaceRoll roll = preparedSurfaceInstanceRoll;
 			if (!sceneInstanceStore.matchesSurfaceRoll(roll, roll.dx, roll.dz)) {
-				preparedSurfaceInstanceRoll = sceneInstanceStore.prepareSurfaceRoll(roll.dx, roll.dz,
-					World.LOCAL_TILE_COUNT, World.LOCAL_FACE_TILE_COUNT);
+				captureSurfaceInstanceLayout(roll.dx, roll.dz);
 			}
 		}
 		if (activeSurfaceSceneryBuild != null) {
@@ -22769,10 +22768,16 @@ public final class mudclient implements Runnable {
 
 	void prepareSurfaceInstanceRoll(int sectionDX, int sectionDZ) {
 		if (PREPARE_SURFACE_INSTANCE_ROLL && Math.max(Math.abs((long) sectionDX), Math.abs((long) sectionDZ)) == 1) {
-			preparedSurfaceInstanceRoll = sceneInstanceStore.prepareSurfaceRoll(
-				sectionDX * World.SECTION_SIZE, sectionDZ * World.SECTION_SIZE,
-				World.LOCAL_TILE_COUNT, World.LOCAL_FACE_TILE_COUNT);
+			captureSurfaceInstanceLayout(sectionDX * World.SECTION_SIZE, sectionDZ * World.SECTION_SIZE);
 		}
+	}
+
+	private void captureSurfaceInstanceLayout(int dx, int dz) {
+		long started = BoundaryLoadingDiagnostics.now();
+		preparedSurfaceInstanceRoll = sceneInstanceStore.prepareSurfaceRoll(dx, dz,
+			World.LOCAL_TILE_COUNT, World.LOCAL_FACE_TILE_COUNT);
+		BoundaryLoadingDiagnostics.recordPhase("scenery", "instance-layout", started,
+			started == 0L ? 0L : System.nanoTime() - started);
 	}
 
 	public int getPreparedSurfaceInstanceInstalls() { return preparedSurfaceInstanceInstalls; }
