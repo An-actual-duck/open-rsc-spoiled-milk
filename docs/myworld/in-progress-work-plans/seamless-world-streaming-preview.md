@@ -1396,6 +1396,14 @@ server position. Its largest sampled player step was 0.336 tiles and the
 server confirmed `(252,609)` after the reversal.
 [Full HD packet capture](../../../output/tests/browser-gameplay-spike/atlas-local-packet-trace-firefox/firefox-result.json) · [Packet and frame stage correlation](../../../output/tests/browser-gameplay-spike/atlas-local-packet-trace-firefox/packet-stage-summary.json)
 
+The finer boundary trace captured all three rolling contexts. Individual
+baseline dispatches took at most 3 ms, while the context dispatch took
+16–17 ms and player dispatch took 18–23 ms at those rolls. Publishing the
+prepared prediction and activating its context took 14–15 ms. The
+prepared gameplay terrain install itself took 1–2 ms. This points to
+the bundle of context and player work replayed at the fence.
+[Boundary trace](../../../output/tests/browser-gameplay-spike/atlas-baseline-stage-trace-firefox/firefox-result.json) · [Boundary phase analysis](../../../output/tests/browser-gameplay-spike/atlas-baseline-stage-trace-firefox/region-stage-summary.json)
+
 A separate trial enqueued world readiness and draw data without waiting
 on frontend promises. The worker still owned submission and queue
 backpressure. The candidate ran more than 4,200 local world enqueues per
@@ -1406,13 +1414,13 @@ The trial was removed after the pacing results.
 [Firefox enqueue trial](../../../output/tests/browser-gameplay-spike/worker-frame-queue-firefox/firefox-result.json) · [Chrome enqueue trial](../../../output/tests/browser-gameplay-spike/worker-frame-queue-chrome/chrome-result.json)
 
 The player preview uses the original applet input and the separate
-WebGL worker on loopback port 8469. It stages the same primitive
-terrain and scenery replies as the measured route. A normal mouse and
+WebGL worker on loopback port 8482. It uses the local atlas planner and
+the same primitive terrain and scenery replies as the measured route. A normal mouse and
 keyboard login reached the appearance screen, accepted the character,
 and entered the playable world at 1920×1080. The waiting cover now
 clears when the worker acknowledges a UI frame so the appearance screen
 can receive input before the first world frame arrives.
-[Full HD preview](http://127.0.0.1:8469/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/render-worker-player-preview/manual-login-result.json)
+[Full HD preview](http://127.0.0.1:8482/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/local-atlas-player-preview/manual-login-result.json)
 
 #### Java client worker feasibility
 

@@ -73,6 +73,7 @@ def main():
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
     parser.add_argument('--dependency-jar', type=Path, help='Use an explicit immutable client build for a matched comparison')
+    parser.add_argument('--client-source-commit', help='Record the source commit of the supplied client build')
     args = parser.parse_args()
     sustained_trace = args.sustained_walk and args.travel_trace
     if args.sustained_walk and (args.manual or not (args.travel_trace or args.presentation_only)):
@@ -148,6 +149,7 @@ def main():
         'python3', str(scripts / 'prepare.py'), '--name', args.name,
         '--http-port', str(args.http_port),
         *(['--dependency-jar', str(args.dependency_jar.resolve())] if args.dependency_jar else []),
+        *(['--client-source-commit', args.client_source_commit] if args.client_source_commit else []),
     ], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
 
     run = category / args.name

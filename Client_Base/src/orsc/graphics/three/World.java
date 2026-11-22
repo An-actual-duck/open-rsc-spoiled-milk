@@ -762,10 +762,8 @@ public final class World {
 		int worldOffsetZ) {
 		symmetricNativeLayeredTerrainVisualSnapshot = visualTerrain;
 		presentationHaloMatch = null;
-		symmetricOuterRenderer3DWorldChunkFrame =
-			Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
-		symmetricRetainableRenderer3DWorldChunkFrame =
-			Renderer3DWorldChunkFrame.fromChunks(result.retentionChunks);
+		symmetricOuterRenderer3DWorldChunkFrame = result.outerFrame;
+		symmetricRetainableRenderer3DWorldChunkFrame = result.retentionFrame;
 		fixedSurfaceDraw = result.fixedDraw;
 		symmetricRenderer3DWorldCenterSectionX =
 			worldTileToSection(Math.addExact(
@@ -881,7 +879,7 @@ public final class World {
 			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) {
 			return Collections.emptyList();
 		}
-		return includeCenter ? result.preparedDrawChunks : result.outerChunks;
+		return includeCenter ? result.preparedDrawChunks : result.outerFrame.getChunks();
 	}
 
 	/** Browser geometry is rooted in the same applied origin as the Java pick/query frame. */
@@ -1038,8 +1036,7 @@ public final class World {
 		 * unchanged: the following structure stage must still rebuild newly
 		 * entering cells with walls and roofs.
 		 */
-		symmetricOuterRenderer3DWorldChunkFrame =
-			Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
+		symmetricOuterRenderer3DWorldChunkFrame = result.outerFrame;
 		symmetricRenderer3DWorldCenterSectionX =
 			worldTileToSection(Math.addExact(
 				Math.multiplyExact(
@@ -7229,12 +7226,11 @@ public final class World {
 		private final int sectionX;
 		private final int sectionY;
 		private final boolean includeRoofGeometry;
-		private final List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks;
+		private final Renderer3DWorldChunkFrame outerFrame;
+		private final Renderer3DWorldChunkFrame retentionFrame;
 		private final List<Renderer3DWorldChunkFrame.ChunkMesh> preparedDrawChunks;
 		private final PreparedLocalTerrain localTerrain;
 		private final SurfaceTerrainDrawField fixedDraw;
-		private final List<Renderer3DWorldChunkFrame.ChunkMesh>
-			retentionChunks;
 		private final int triangleCount;
 		private final boolean activeProductCacheHit;
 		private final int reusedCells;
@@ -7281,20 +7277,16 @@ public final class World {
 			this.includeRoofGeometry = includeRoofGeometry;
 			this.localTerrain = localTerrain;
 			this.fixedDraw = fixedDraw;
-			this.outerChunks = Collections.unmodifiableList(
-				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
-					outerChunks));
+			this.outerFrame = Renderer3DWorldChunkFrame.fromChunks(outerChunks);
+			this.retentionFrame = Renderer3DWorldChunkFrame.fromChunks(retentionChunks);
 			if (center == null) {
-				this.preparedDrawChunks = this.outerChunks;
+				this.preparedDrawChunks = outerFrame.getChunks();
 			} else {
 				List<Renderer3DWorldChunkFrame.ChunkMesh> drawMeshes = new ArrayList<>(outerChunks.size() + 1);
 				drawMeshes.add(center);
 				drawMeshes.addAll(outerChunks);
 				this.preparedDrawChunks = Collections.unmodifiableList(drawMeshes);
 			}
-			this.retentionChunks = Collections.unmodifiableList(
-				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
-					retentionChunks));
 			this.triangleCount = triangleCount;
 			this.activeProductCacheHit = activeProductCacheHit;
 			this.reusedCells = reusedCells;
@@ -7335,7 +7327,7 @@ public final class World {
 				+ " plane=" + plane
 				+ " center=" + sectionX + "," + sectionY
 				+ " radius=2"
-				+ " outerSectors=" + outerChunks.size() + "/16"
+				+ " outerSectors=" + outerFrame.getChunkCount() + "/16"
 				+ " triangles=" + triangleCount
 				+ " coverage={" + compactDiagnosticSummary + "}"
 				+ " cells={" + cellDiagnostics + "}"
