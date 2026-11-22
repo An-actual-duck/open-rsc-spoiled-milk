@@ -69,11 +69,18 @@ public class PacketHandler {
 		&& Boolean.getBoolean("spoiledmilk.browserPresentationOnly")
 		&& Boolean.getBoolean("spoiledmilk.browserPresentationRollTimings") ? new long[32 * 3] : null;
 	private volatile int surfaceRollTimingWords;
+	private final long[] surfaceRollPacketTiming = surfaceRollTiming != null
+		&& Boolean.getBoolean("spoiledmilk.browserPresentationRollPacketTimings") ? new long[32 * (2 + 32 * 3)] : null;
+	private volatile int surfaceRollPacketTimingWords;
 
 	int getVerifiedLiveSurfaceContext() { return verifiedLiveSurfaceContext; }
 
 	public long[] getSurfaceRollTiming() {
 		return surfaceRollTiming == null ? new long[0] : Arrays.copyOf(surfaceRollTiming, surfaceRollTimingWords);
+	}
+
+	public long[] getSurfaceRollPacketTiming() {
+		return surfaceRollPacketTiming == null ? new long[0] : Arrays.copyOf(surfaceRollPacketTiming, surfaceRollPacketTimingWords);
 	}
 
 	private RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
@@ -623,16 +630,27 @@ public class PacketHandler {
 		int timingOffset = surfaceRollTiming == null ? -1 : surfaceRollTimingWords;
 		boolean capture = timingOffset >= 0 && timingOffset < surfaceRollTiming.length;
 		long startedAt = capture ? System.currentTimeMillis() : 0;
+		int packetTimingStart = surfaceRollPacketTimingWords;
+		int packetTimingAt = packetTimingStart + 2;
+		boolean capturePackets = capture && surfaceRollPacketTiming != null
+			&& packetTimingAt + pending.packets.size() * 3 <= surfaceRollPacketTiming.length;
 		// A receive may have left an incomplete wire packet in the socket parser's buffer.
 		RSBuffer_Bits wire = packetsIncoming;
 		if (surfaceHandoffReplay == null) surfaceHandoffReplay = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 		packetsIncoming = surfaceHandoffReplay;
 		try {
 			for (byte[] packet : pending.packets) {
+				long packetStarted = capturePackets ? System.nanoTime() : 0;
 				packetsIncoming.ensureCapacity(packet.length);
 				System.arraycopy(packet, 0, packetsIncoming.dataBuffer, 0, packet.length);
 				packetsIncoming.packetEnd = 1;
-				dispatchPacket(packet[0] & 255, packet.length);
+				int opcode = packet[0] & 255;
+				dispatchPacket(opcode, packet.length);
+				if (capturePackets) {
+					surfaceRollPacketTiming[packetTimingAt++] = opcode;
+					surfaceRollPacketTiming[packetTimingAt++] = packet.length;
+					surfaceRollPacketTiming[packetTimingAt++] = System.nanoTime() - packetStarted;
+				}
 			}
 		} finally {
 			packetsIncoming = wire;
@@ -642,6 +660,11 @@ public class PacketHandler {
 			surfaceRollTiming[timingOffset + 1] = startedAt;
 			surfaceRollTiming[timingOffset + 2] = System.currentTimeMillis();
 			surfaceRollTimingWords = timingOffset + 3;
+			if (capturePackets) {
+				surfaceRollPacketTiming[packetTimingStart] = verifiedLiveSurfaceContext;
+				surfaceRollPacketTiming[packetTimingStart + 1] = pending.packets.size();
+				surfaceRollPacketTimingWords = packetTimingAt;
+			}
 		}
 	}
 

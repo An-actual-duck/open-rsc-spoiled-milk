@@ -358,6 +358,9 @@ public final class BrowserOuterCoverageProbe {
 				}
 				BrowserBootstrap.report("outer-coverage:roll-timing:" + timing[word] + "," + timing[word + 1] + "," + timing[word + 2]);
 			}
+			if (Boolean.getBoolean("spoiledmilk.browserPresentationRollPacketTimings")) {
+				reportRollPacketTimings(client, before[3]);
+			}
 		}
 		verifyDetachedGameplayInstalls(client, 3);
 		if (projectionStart != null) {
@@ -394,6 +397,29 @@ public final class BrowserOuterCoverageProbe {
 			BrowserBootstrap.report("scenery-meshing:" + row);
 		}
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static void reportRollPacketTimings(mudclient client, int startContext) throws ReflectiveOperationException {
+		long[] timing = (long[]) PacketHandler.class.getMethod("getSurfaceRollPacketTiming").invoke(client.packetHandler);
+		int word = 0;
+		for (int context = startContext + 1; context <= startContext + 3; context++) {
+			if (word + 2 > timing.length || timing[word++] != context) {
+				throw new IllegalStateException("Missing packet timings for scene roll " + context);
+			}
+			long count = timing[word++];
+			if (count < 2 || count > 32 || word + count * 3 > timing.length
+				|| timing[word] != 157 || timing[word + (int) count * 3 - 3] != 143) {
+				throw new IllegalStateException("Incomplete packet timings for scene roll " + context);
+			}
+			StringBuilder receipt = new StringBuilder("outer-coverage:roll-packets:").append(context);
+			for (int i = 0; i < count; i++) {
+				receipt.append(',').append(timing[word++]);
+				receipt.append('/').append(timing[word++]);
+				receipt.append('/').append(timing[word++]);
+			}
+			BrowserBootstrap.report(receipt.toString());
+		}
+		if (word != timing.length) throw new IllegalStateException("Unexpected additional scene rolls");
 	}
 
 	private static void verifyDetachedGameplayInstalls(mudclient client, int expected) {
