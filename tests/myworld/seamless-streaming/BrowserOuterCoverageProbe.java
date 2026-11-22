@@ -421,6 +421,16 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
+		if (Boolean.getBoolean("spoiledmilk.browserLiveScenerySignatureLimbs")) {
+			int builds;
+			try {
+				builds = (int) RSModel.class.getMethod("getLiveScenerySignatureBuilds").invoke(null);
+			} catch (ReflectiveOperationException error) {
+				throw new IllegalStateException("Scenery signature counts are unavailable", error);
+			}
+			if (builds <= 0) throw new IllegalStateException("No scenery signature used primitive integer arithmetic");
+			BrowserBootstrap.report("outer-coverage:scenery-signature-limbs:" + builds);
+		}
 		if (Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels")) {
 			long[] work;
 			try {

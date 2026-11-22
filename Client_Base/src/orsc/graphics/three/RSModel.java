@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import orsc.MiscFunctions;
 import orsc.buffers.RSBufferUtils;
@@ -15,6 +16,14 @@ import orsc.util.GenUtil;
 public final class RSModel {
 	private static final long FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
 	private static final long FNV_PRIME = 0x100000001b3L;
+	private static final boolean LIVE_SCENERY_SIGNATURE_LIMBS = Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff")
+		&& !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.browserLiveScenerySignatureLimbs");
+	private static final AtomicInteger liveScenerySignatureBuilds = LIVE_SCENERY_SIGNATURE_LIMBS ? new AtomicInteger() : null;
+
+	public static int getLiveScenerySignatureBuilds() {
+		return liveScenerySignatureBuilds == null ? 0 : liveScenerySignatureBuilds.get();
+	}
 	private static final int FISHING_SPOT_RIPPLE_PERIOD = 24;
 	private static final int FISHING_SPOT_RIPPLE_CENTER = 12;
 	private static final int FISHING_SPOT_RIPPLE_PHASE_STEP = 8;
@@ -2552,7 +2561,11 @@ public final class RSModel {
 			Renderer3DMaterialFamily[] familyArray,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
 			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray) {
-			if (BrowserRegionBuild.isEnabled()) return signaturePrimitive(vertexArray, textureUArray, textureVArray, lightArray, indexArray, textureArray, fallbackArray, kindArray, familyArray, shadowCasterArray, glowEmitterArray);
+			if (LIVE_SCENERY_SIGNATURE_LIMBS || BrowserRegionBuild.isEnabled()) {
+				if (LIVE_SCENERY_SIGNATURE_LIMBS) liveScenerySignatureBuilds.incrementAndGet();
+				return signaturePrimitive(vertexArray, textureUArray, textureVArray, lightArray, indexArray, textureArray,
+					fallbackArray, kindArray, familyArray, shadowCasterArray, glowEmitterArray);
+			}
 			long hash = FNV_OFFSET_BASIS;
 			hash = mix(hash, plane);
 			hash = mix(hash, centerSectionX);
