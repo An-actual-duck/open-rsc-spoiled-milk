@@ -1361,10 +1361,26 @@ calculates and checks the same ordered IDs before uploading any sprite
 pixels for that plan.
 [Render worker stage trace](../../../output/tests/browser-gameplay-spike/current-render-worker-profile-firefox/profile-phase-summary.json)
 
+The client-side planner removed 4,232 Firefox and 4,275 Chrome plan
+round trips across startup and travel. The route again finished with
+three scene rolls, one epoch, and zero holds or sampled input closures.
+The Firefox worst second rose from 34 to 39 FPS and the 99th percentile
+improved from 32 to 31 ms. Chrome stayed at 41 FPS and 27.6 ms, with
+three seconds below 50 FPS instead of five. The number of Chrome gaps
+over 100 ms rose from two to five. The Radeon oracle compared 27,915,808
+bytes in each browser across 50 cases, including atlas resets and
+resource retention after reusing the transfer buffers. All RGBA bytes
+matched.
+[Firefox walking capture](../../../output/tests/browser-gameplay-spike/local-atlas-plan-firefox/firefox-result.json) · [Chrome walking capture](../../../output/tests/browser-gameplay-spike/local-atlas-plan-chrome/chrome-result.json) · [Firefox pixel proof](../../../output/tests/browser-render-worker-oracle/local-atlas-plan-parity/firefox-hardware-result.json) · [Chrome pixel proof](../../../output/tests/browser-render-worker-oracle/local-atlas-plan-parity/chrome-hardware-result.json)
+
 The player preview uses the original applet input and the separate
-WebGL worker on loopback port 8460. It stages the same primitive
-terrain and scenery replies as the measured route.
-[Full HD preview](http://127.0.0.1:8460/?mode=webgl&physical=on)
+WebGL worker on loopback port 8469. It stages the same primitive
+terrain and scenery replies as the measured route. A normal mouse and
+keyboard login reached the appearance screen, accepted the character,
+and entered the playable world at 1920×1080. The waiting cover now
+clears when the worker acknowledges a UI frame so the appearance screen
+can receive input before the first world frame arrives.
+[Full HD preview](http://127.0.0.1:8469/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/render-worker-player-preview/manual-login-result.json)
 
 #### Java client worker feasibility
 

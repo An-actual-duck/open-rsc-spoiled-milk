@@ -14,6 +14,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[3]
 PROOF = "const w=document.querySelector('#runtime')?.contentWindow||window;const p=w.browserProof||{};"
 ROUTE_EVENTS = "p.events?.filter(e=>e.message.startsWith('outer-coverage:'))||[]"
+OUTPUT_DIMENSIONS = ('logicalWidth', 'logicalHeight', 'width', 'height')
 
 
 WATCH_BROWSER_FRAMES = """
@@ -208,8 +209,8 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
     if java_version != 8:
         url += f'&java={java_version}'
     if output != 'default':
-        if not fixture.get('presentationOnly'):
-            raise ValueError('Use a presentation control for a resolution comparison')
+        if not (fixture.get('presentationOnly') or fixture.get('travelTrace')):
+            raise ValueError('Use a presentation control or travel trace for an explicit resolution')
         url += '&physical=' + ('on' if output == 'full-hd' else 'off')
 
     def request(path, payload=None, method='POST'):
@@ -364,8 +365,12 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                                 for event in result['events'])
             if completed and output != 'default':
                 width, height = (1920, 1080) if output == 'full-hd' else (960, 540)
-                completed = (result.get('presentation') or {}).get('outputSizes') == [
-                    {'logicalWidth': 960, 'logicalHeight': 540, 'width': width, 'height': height}]
+                expected_size = dict(zip(OUTPUT_DIMENSIONS, (960, 540, width, height)))
+                if fixture.get('presentationOnly'):
+                    completed = (result.get('presentation') or {}).get('outputSizes') == [expected_size]
+                else:
+                    physical = result.get('physicalOutput') or {}
+                    completed = {field: physical.get(field) for field in OUTPUT_DIMENSIONS} == expected_size
             if completed and fixture.get('profilePanels'):
                 profiles = (result.get('presentation') or {}).get('panelProfiles', {})
                 for panel, inventory, minimap in [('closed', False, False), ('inventory', True, False), ('minimap', False, True)]:
