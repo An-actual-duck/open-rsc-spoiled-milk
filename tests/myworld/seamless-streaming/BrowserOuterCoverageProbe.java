@@ -400,11 +400,10 @@ public final class BrowserOuterCoverageProbe {
 			int[] receipts = client.packetHandler.getPreparedSurfaceReceiptWork();
 			BrowserBootstrap.report("outer-coverage:prepared-surface-receipts:" + Arrays.toString(receipts));
 		}
-		if (Boolean.getBoolean("spoiledmilk.browserPrepareIncomingSceneryPose")) {
-			BrowserBootstrap.report("outer-coverage:incoming-scenery-poses:" + client.getInstalledIncomingSceneryPoses());
-		}
-		if (Boolean.getBoolean("spoiledmilk.browserSkipAbsentLandscapeLighting")) {
-			BrowserBootstrap.report("outer-coverage:unused-landscape-lighting:" + client.getWorld().getSkippedLandscapeLightingUpdates());
+		if (Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceSceneImage")) {
+			for (String receipt : client.getPreparedSurfaceSceneReceipts()) {
+				BrowserBootstrap.report("outer-coverage:prepared-scene-image:" + receipt);
+			}
 		}
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
 	}

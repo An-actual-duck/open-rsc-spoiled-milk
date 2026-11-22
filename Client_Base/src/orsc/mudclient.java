@@ -996,8 +996,9 @@ public final class mudclient implements Runnable {
 
 	private volatile List<Renderer3DWorldChunkFrame.ChunkMesh> surfacePreparedScenery = Collections.emptyList();
 	private boolean adoptSurfaceScenery;
-	private static final boolean PREPARE_INCOMING_SCENERY_POSE = Boolean.getBoolean("spoiledmilk.browserPrepareIncomingSceneryPose");
-	private int installedIncomingSceneryPoses;
+	private static final boolean PREPARED_SURFACE_SCENE_IMAGE = Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceSceneImage");
+	private PreparedSurfaceSceneImage preparedSurfaceSceneImage;
+	private final List<String> preparedSurfaceSceneReceipts = PREPARED_SURFACE_SCENE_IMAGE ? new ArrayList<>() : null;
 	private int adoptedSurfaceScenery;
 	private final ExecutorService residentObjectBuildExecutor =
 		Executors.newFixedThreadPool(
@@ -3791,11 +3792,7 @@ public final class mudclient implements Runnable {
 			}
 			applyExpandedGameObjectPickBounds(objectID, model);
 			this.scene.addModel(model);
-			if (PREPARE_INCOMING_SCENERY_POSE && model.consumePreparedIncomingPlacement(x, -elevation, z)) {
-				installedIncomingSceneryPoses++;
-			} else {
-				model.setTranslate(x, -elevation, z);
-			}
+			model.setTranslate(x, -elevation, z);
 		if (!this.world.updateSurfaceObjectCollision(objectID, xTile, zTile, this.getGameObjectInstanceDir(index), true)) {
 			this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
 		}
@@ -4014,15 +4011,38 @@ public final class mudclient implements Runnable {
 
 	void completeSurfaceSceneryTerrain(NativeLayeredTerrainSnapshot terrain) {
 		if (SURFACE_SCENERY_DRAW) surfaceSceneryTerrain = terrain;
+		if (PREPARED_SURFACE_SCENE_IMAGE) prepareSurfaceSceneImage();
 	}
 
 	void invalidateSurfaceSceneryDraw(int x, int z) {
 		SurfaceSceneryWork previous = surfaceSceneryWork.remove(SurfaceSceneryCells.key(x, z));
+		if (PREPARED_SURFACE_SCENE_IMAGE && previous != null && preparesGameplayScene(previous)) preparedSurfaceSceneImage = null;
 		if (previous != null && previous.prepared != null) publishSurfaceSceneryDraws();
 	}
 
 	void stageSurfaceSceneryDraw(int x, int z, SurfaceSceneryCells.Band band, List<World.SurfaceSceneryPlacement> records) {
-		surfaceSceneryWork.put(SurfaceSceneryCells.key(x, z), new SurfaceSceneryWork(x, z, band, records));
+		SurfaceSceneryWork work = new SurfaceSceneryWork(x, z, band, records);
+		surfaceSceneryWork.put(SurfaceSceneryCells.key(x, z), work);
+		if (PREPARED_SURFACE_SCENE_IMAGE && preparesGameplayScene(work)) prepareSurfaceSceneImage();
+	}
+
+	private static boolean preparesGameplayScene(SurfaceSceneryWork work) {
+		return work.band == SurfaceSceneryCells.Band.ENTERING_PLAY || work.band == SurfaceSceneryCells.Band.RETAINED_PLAY;
+	}
+
+	private void prepareSurfaceSceneImage() {
+		preparedSurfaceSceneImage = null;
+		if (surfaceSceneryTerrain == null) return;
+		int centerX = surfaceSceneryTerrain.getCurrentChunkX(), centerZ = surfaceSceneryTerrain.getCurrentChunkY();
+		List<World.SurfaceSceneryPlacement> records = new ArrayList<>();
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dz = -1; dz <= 1; dz++) {
+				SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(centerX + dx, centerZ + dz));
+				if (work == null || !preparesGameplayScene(work)) return;
+				records.addAll(work.records);
+			}
+		}
+		preparedSurfaceSceneImage = PreparedSurfaceSceneImage.from(centerX, centerZ, records);
 	}
 
 	void finishSurfaceSceneryDraw(boolean usePrepared) {
@@ -4039,6 +4059,7 @@ public final class mudclient implements Runnable {
 
 	void clearSurfaceSceneryDraw() {
 		surfaceSceneryTerrain = null;
+		preparedSurfaceSceneImage = null;
 		adoptSurfaceScenery = false;
 		surfaceSceneryWork.clear();
 		surfacePreparedScenery = Collections.emptyList();
@@ -4078,6 +4099,12 @@ public final class mudclient implements Runnable {
 	}
 
 	void publishVerifiedSurfaceWindow(int centerX, int centerZ) {
+		if (PREPARED_SURFACE_SCENE_IMAGE && preparedSurfaceSceneReceipts.size() < 32) {
+			PreparedSurfaceSceneImage prepared = preparedSurfaceSceneImage;
+			String receipt = prepared != null && prepared.centerX == centerX && prepared.centerZ == centerZ
+				? prepared.compareLive(this) : centerX + "," + centerZ + " incomplete";
+			preparedSurfaceSceneReceipts.add(receipt);
+		}
 		List<SceneBaselineState.Record> scenery = new ArrayList<>(), walls = new ArrayList<>();
 		retainSurfacePresentation(staticPresentationSceneryRecords, scenery, centerX, centerZ);
 		retainSurfacePresentation(staticPresentationWallRecords, walls, centerX, centerZ);
@@ -4091,6 +4118,10 @@ public final class mudclient implements Runnable {
 		replaceStaticScenePresentation(scenery, walls);
 		layeredScenePresentationLatch.reset();
 		if (!adoptSurfaceScenery) clearSurfaceSceneryDraw();
+	}
+
+	public List<String> getPreparedSurfaceSceneReceipts() {
+		return preparedSurfaceSceneReceipts == null ? Collections.emptyList() : new ArrayList<>(preparedSurfaceSceneReceipts);
 	}
 
 	private void retainSurfacePresentation(List<SceneBaselineState.Record> previous, List<SceneBaselineState.Record> retained,
@@ -4183,7 +4214,7 @@ public final class mudclient implements Runnable {
 			Renderer3DWorldChunkFrame.ChunkMesh mesh = buildResidentObjectChunkMesh(input, true, reuse);
 			if (mesh != null && mesh.getTriangleCount() != 0) ready.add(new PreparedSceneryDraw(input, mesh));
 		}
-		return new PreparedSurfaceScenery(ready, prepareIncomingSceneryModels(interactive, terrain, scale));
+		return new PreparedSurfaceScenery(ready, prepareIncomingSceneryModels(interactive));
 	}
 
 	private void publishSurfaceSceneryDraws() {
@@ -4243,7 +4274,6 @@ public final class mudclient implements Runnable {
 	}
 
 	public int getAdoptedSurfaceInteractiveModels() { return adoptedSurfaceInteractiveModels; }
-	public int getInstalledIncomingSceneryPoses() { return installedIncomingSceneryPoses; }
 
 	private static final class PreparedSceneryDraw {
 		private final ResidentObjectChunkInput input;
@@ -4352,16 +4382,11 @@ public final class mudclient implements Runnable {
 		ResidentObjectChunkBuildResult mesh = needsMesh ? buildResidentObjectChunkMeshMeasured(input)
 			: new ResidentObjectChunkBuildResult(null, 0L);
 		if (records.isEmpty()) return mesh;
-		return new ResidentObjectChunkBuildResult(mesh.chunk, mesh.durationNanos, prepareIncomingSceneryModels(records, null, 0));
+		return new ResidentObjectChunkBuildResult(mesh.chunk, mesh.durationNanos, prepareIncomingSceneryModels(records));
 	}
 
-	private Map<IncomingSceneryPlacement, IncomingSceneryModel> prepareIncomingSceneryModels(List<SceneBaselineState.Record> records,
-			NativeLayeredTerrainSnapshot terrain, int scale) {
+	private Map<IncomingSceneryPlacement, IncomingSceneryModel> prepareIncomingSceneryModels(List<SceneBaselineState.Record> records) {
 		if (records.isEmpty()) return Collections.emptyMap();
-		boolean preparePose = PREPARE_INCOMING_SCENERY_POSE && terrain != null && scale == 128;
-		int baseX = preparePose ? World.sectionToLocalBaseTile(terrain.getCurrentChunkX()) : 0;
-		int baseZ = preparePose ? World.sectionToLocalBaseTile(terrain.getCurrentChunkY()) : 0;
-		long sliceNanos = preparePose ? 3_000_000L : 8_000_000L;
 		Map<IncomingSceneryPlacement, IncomingSceneryModel> incoming = new HashMap<>();
 		long lastYield = System.nanoTime();
 		for (SceneBaselineState.Record record : records) {
@@ -4371,20 +4396,9 @@ public final class mudclient implements Runnable {
 			RSModel model = cloneBrowserPresentationGameObject(record.id, BrowserPresentationCloneCache.LEGACY_DELTA);
 			model.addRotation(0, record.direction * 32, 0);
 			model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
-			if (preparePose && record.id != 74) {
-				boolean straight = record.direction == 0 || record.direction == 4;
-				int width = straight ? def.getWidth() : def.getHeight();
-				int height = straight ? def.getHeight() : def.getWidth();
-				int x = (2 * record.x + width) * scale / 2;
-				int z = (2 * record.y + height) * scale / 2;
-				int elevation = World.getPredictedPresentationElevation(terrain, x, z);
-				if (elevation != World.PRESENTATION_ELEVATION_UNAVAILABLE) {
-					model.prepareIncomingPlacement(x - baseX * scale, -elevation, z - baseZ * scale);
-				}
-			}
 			incoming.put(new IncomingSceneryPlacement(record.x, record.y, record.id, record.direction),
 				new IncomingSceneryModel(def, source, model));
-			if (System.nanoTime() - lastYield >= sliceNanos) {
+			if (System.nanoTime() - lastYield >= 8_000_000L) {
 				try {
 					Thread.sleep(1L);
 				} catch (InterruptedException interrupted) {

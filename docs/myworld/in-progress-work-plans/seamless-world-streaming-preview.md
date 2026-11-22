@@ -2547,6 +2547,41 @@ receipt code as an opt-in preparation proof on AI-3. The player
 preview uses the verified compatibility mesh worker.
 [Firefox control](../../../output/tests/browser-gameplay-spike/prepared-surface-receipt-firefox-control/firefox-result.json) · [Matched Firefox timings](../../../output/tests/seamless-world-streaming/prepared-surface-receipt-build/firefox-timing-pair.json)
 
+#### Prepare interactive scenery transforms before installation
+
+The trial extends cloned interactive scenery with its predicted world
+placement. The prepared model already contains its transformed
+vertices, bounds, normals, and diffuse lighting. Materialization
+compares the live position and elevation and consumes an exact
+placement once. The current pose and collision rules still decide
+whether a model can enter the scene. Legacy vertex relighting also
+skips a native terrain view with no legacy landscape models.
+
+A native fixture checked 5,921 values across 240 exact and rejected
+poses, including lighting and projection rows. A separate native
+fixture exercised an empty terrain grid, the real legacy terrain
+publication path, and retirement. Both settings lit the same four
+legacy vertices and preserved the collision flag. The enabled trial
+skipped the two calls made with an empty grid.
+[Native placement parity](../../../output/tests/seamless-world-streaming/prepared-interactive-models-build/native-incoming-pose.log) · [Native landscape lighting lifecycle](../../../output/tests/seamless-world-streaming/prepared-interactive-models-build/native-landscape-lighting.log)
+
+The same-build controls and trial each crossed three live switches at
+1920×1080 with a 960×540 logical view, no blocked input or frame holds,
+and server-confirmed arrival. Each enabled run used 890 prepared poses
+and skipped 2,129 empty relighting calls.
+
+| Browser | Control switch gaps | Trial switch gaps | Slowest second, control → trial |
+| --- | --- | --- | --- |
+| Chrome | 121.7, 87.8, 78.7 ms | 112, 74.3, 65.2 ms | 55 → 56 FPS |
+| Firefox | 146, 80, 129 ms | 120, 126, 117 ms | 54 → 54 FPS |
+
+The Firefox route worsened at its second switch, and both browsers
+still had gaps beyond 100 ms. Keep the playable preview at its
+verified build and retire the candidate flags. The experiment is
+preserved at `b816dd368`. Shift the investigation to preparing an
+authoritative scenery state for the whole accepted switch.
+[Matched travel results](../../../output/tests/seamless-world-streaming/prepared-interactive-models-build/travel-summary.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
