@@ -1732,6 +1732,13 @@ at 34–58 ms across the three rolls. The new preview includes the
 cached rebase based on the reduction in scene capture at every roll.
 [Exact native proof](../../../output/tests/seamless-world-streaming/cached-origin-rebase-build/native-picking.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-chrome/chrome-result.json) · [Scene-roll phase comparison](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-phase-trial/roll-comparison.json)
 
+The next private trial delays the static world and texture reference
+signatures until a reader requests them. Ordinary resident frames
+currently compute both signatures as they assemble their draw lists.
+The retained-frame latch reads the original static signature when it
+is waiting to release a scene. The native texture cache reads the
+original texture signature through its existing getter.
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

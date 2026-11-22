@@ -13,11 +13,53 @@ public final class BrowserChunkVariantFixture {
     static int checks;
     static void require(boolean ok,String why){checks++;if(!ok)throw new AssertionError(why);}
     static Renderer3DFrame frame(Scene scene){scene.endScene(0);return scene.getRenderer3DFrame();}
-    static Renderer3DWorldChunkFrame.ChunkMesh mesh(){return new Renderer3DWorldChunkFrame.ChunkMesh(0,0,0,0,0,new int[]{0,0,0,128,0,0,0,0,128},new float[]{0,.5f,1},new float[]{1,.5f,0},new int[3],new int[]{0,1,2},new int[]{0},new int[]{0},new Renderer3DModelKind[]{Renderer3DModelKind.TERRAIN},null,null,1,0,0,false,0,31);}
+    static Renderer3DWorldChunkFrame.ChunkMesh mesh(){return mesh(0,0,31);}
+    static Renderer3DWorldChunkFrame.ChunkMesh mesh(int role,int texture,long signature){return new Renderer3DWorldChunkFrame.ChunkMesh(0,0,0,0,0,new int[]{0,0,0,128,0,0,0,0,128},new float[]{0,.5f,1},new float[]{1,.5f,0},new int[3],new int[]{0,1,2},new int[]{texture},new int[]{0},new Renderer3DModelKind[]{Renderer3DModelKind.TERRAIN},null,null,1,0,0,false,role,signature);}
+    private static long mix(long hash, long word) { return (hash ^ word) * 1099511628211L; }
+    private static void worldFrameSignatures(List<Renderer3DWorldChunkFrame.ChunkMesh> chunks) {
+        int[] start = Renderer3DWorldChunkFrame.getBrowserFrameSignatureWork();
+        Renderer3DWorldChunkFrame frame = Renderer3DWorldChunkFrame.fromChunks(chunks);
+        boolean deferred = Renderer3DWorldChunkFrame.isBrowserFrameSignatureDeferred();
+        if (deferred && !chunks.isEmpty()) {
+            int[] built = Renderer3DWorldChunkFrame.getBrowserFrameSignatureWork();
+            require(built[0] == start[0] + 1 && built[1] == start[1] && built[2] == start[2],
+                "Frame computed a deferred signature while it was constructed");
+        }
+        int staticCount = 0;
+        long staticHash = 1469598103934665603L;
+        long textureHash = mix(staticHash, chunks.size());
+        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunks) {
+            textureHash = mix(mix(textureHash, chunk.getSignature()), chunk.getTriangleCount());
+            if (chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) {
+                for (long word : new long[]{chunk.getPlane(), chunk.getCenterSectionX(), chunk.getCenterSectionY(),
+                        chunk.getOriginWorldX(), chunk.getOriginWorldZ(), chunk.getChunkRole(), chunk.getSignature(),
+                        chunk.getTriangleCount()}) staticHash = mix(staticHash, word);
+                staticCount++;
+            }
+        }
+        staticHash = mix(staticHash, staticCount);
+        textureHash = mix(textureHash, frame.getReferencedTextureCount());
+        for (int i = 0; i < frame.getReferencedTextureCount(); i++) textureHash = mix(textureHash, frame.getReferencedTextureId(i));
+        for (int i = 0; i < 3; i++) {
+            require(frame.getStaticPresentationSignature() == staticHash && frame.getStaticPresentationChunkCount() == staticCount,
+                "Static signature changed");
+            require(frame.getTextureReferenceSignature() == textureHash, "Texture reference signature changed");
+        }
+        if (deferred) {
+            int[] finished = Renderer3DWorldChunkFrame.getBrowserFrameSignatureWork();
+            require(finished[1] == start[1] + 1 && finished[2] == start[2] + 1, "Frame did not reuse computed signatures");
+        }
+    }
     static WorldChunkBuffer nativeBuffer(int[] state){WorldChunkBuffer b=new WorldChunkBuffer(0,0,0);b.signature=31;b.vertexCount=3;b.indexCount=3;b.triangleCount=1;b.brightnessBits=state[0];b.fogModeBits=state[1];b.lightingModeBits=state[2];b.geometryModeBits=state[3];b.replacementCompositeDrawOnly=true;return b;}
     static boolean matches(WorldChunkBuffer b,int[] s){return b.matches(31,3,3,1,false,s[0],s[1],s[2],s[3],true,0);}
     public static void main(String[] args)throws Exception {
         System.setProperty("spoiledmilk.renderer3DGeometryCapture","true");
+        Renderer3DWorldChunkFrame.ChunkMesh first = mesh(0, 17, 91);
+        Renderer3DWorldChunkFrame.ChunkMesh second = mesh(1, 6, -953);
+        Renderer3DWorldChunkFrame.ChunkMesh animated = mesh(2, 17, 114);
+        worldFrameSignatures(Collections.emptyList());
+        worldFrameSignatures(Arrays.asList(first, animated, second));
+        worldFrameSignatures(Arrays.asList(second, animated, first));
         Constructor<OpenGLTextureAtlas> ctor=OpenGLTextureAtlas.class.getDeclaredConstructor(LwjglBindings.class,int.class,int.class,int.class);ctor.setAccessible(true);
         Method center=OpenGLTextureAtlas.class.getDeclaredMethod("texelCenterU",int.class);center.setAccessible(true);
         StringBuilder rows=new StringBuilder();

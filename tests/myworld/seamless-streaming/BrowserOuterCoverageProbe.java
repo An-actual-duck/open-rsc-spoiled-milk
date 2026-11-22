@@ -15,6 +15,7 @@ import orsc.BrowserWebGLBridge;
 import orsc.Config;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.three.Renderer3DFrame;
+import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.World;
 import orsc.graphics.two.GraphicsController;
@@ -421,6 +422,17 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
+		if (Boolean.getBoolean("spoiledmilk.browserLazyFrameSignatures")) {
+			int[] work;
+			try {
+				work = (int[]) Renderer3DWorldChunkFrame.class.getMethod("getBrowserFrameSignatureWork").invoke(null);
+			} catch (ReflectiveOperationException error) {
+				throw new IllegalStateException("Deferred frame-signature counters are unavailable", error);
+			}
+			if (work[0] <= work[1] + work[2]) throw new IllegalStateException("World frames did not defer signatures");
+			BrowserBootstrap.report("outer-coverage:deferred-frame-signatures:frames=" + work[0]
+				+ ":static=" + work[1] + ":textures=" + work[2]);
+		}
 		if (Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels")) {
 			long[] work;
 			try {

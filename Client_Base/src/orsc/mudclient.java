@@ -27631,7 +27631,8 @@ public final class mudclient implements Runnable {
 	private void completeLayeredSceneActivationFreshFrame(
 		Renderer3DWorldChunkFrame worldChunkFrame) {
 		long staticWorldSignature =
-			worldChunkFrame == null
+			worldChunkFrame == null || (Renderer3DWorldChunkFrame.isBrowserFrameSignatureDeferred()
+				&& !this.shouldRetainLastPresentedFrame())
 				? 0L
 				: worldChunkFrame.getStaticPresentationSignature();
 		int staticChunkCount =
