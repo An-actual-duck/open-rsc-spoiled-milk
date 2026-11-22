@@ -22,6 +22,7 @@ final class SurfaceScenerySubscription {
 	private static final int DRAW_RADIUS = 2;
 	private static final int MAX_PAGES = 64;
 	private static final int PAGES_PER_CELL_PER_TICK = 2;
+	private static final boolean PREPARED_ADDITIONS = Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceAdds");
 	private static final Comparator<ObjectRecord> ORDER = Comparator
 		.comparingInt((ObjectRecord record) -> record.x)
 		.thenComparingInt(record -> record.y)
@@ -71,7 +72,7 @@ final class SurfaceScenerySubscription {
 						&& (previousDistance > DRAW_RADIUS || previousDistance <= RADIUS);
 				if (!changes) continue;
 				int x = targetX + dx, y = targetY + dy;
-				cells.put(cellKey(x, y), new Cell(x, y));
+				cells.put(cellKey(x, y), new Cell(x, y, PREPARED_ADDITIONS && radius == RADIUS && !retainedGameplay));
 			}
 		}
 	}
@@ -91,7 +92,8 @@ final class SurfaceScenerySubscription {
 				object.getDirection(), object.getType()));
 		}
 		for (Cell cell : cells.values()) {
-			cell.current.sort(ORDER);
+			// Match the legacy entering additions, which follow spatial index insertion order.
+			if (!cell.orderedAdditions) cell.current.sort(ORDER);
 			if (cell.sent == null || !sameContents(cell.current, cell.sent)) {
 				cell.sent = new ArrayList<>(cell.current);
 				cell.revision++;
@@ -136,13 +138,15 @@ final class SurfaceScenerySubscription {
 
 	private static final class Cell {
 		private final int x, y;
+		private final boolean orderedAdditions;
 		private final List<ObjectRecord> current = new ArrayList<>();
 		private List<ObjectRecord> sent;
 		private int revision, nextPage;
 
-		private Cell(int x, int y) {
+		private Cell(int x, int y, boolean orderedAdditions) {
 			this.x = x;
 			this.y = y;
+			this.orderedAdditions = orderedAdditions;
 		}
 	}
 }

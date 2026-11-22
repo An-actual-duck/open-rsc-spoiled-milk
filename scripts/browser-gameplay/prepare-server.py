@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Send source neighbors for every render cell')
     parser.add_argument('--live-surface-handoff', action='store_true')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Stream scenery revisions for draw cells')
+    parser.add_argument('--prepared-surface-adds', action='store_true', help='Send entering scenery in legacy addition order')
     parser.add_argument('--safe-walk-fixture', action='store_true', help='Protect the disposable walk probe from incidental combat')
     parser.add_argument('--surface-scenery-mutation', action='store_true', help='Change scenery during the automated route')
     parser.add_argument('--predicted-scenery', action='store_true', help='Enable the private scenery prediction')
@@ -117,6 +118,8 @@ def main():
         command.append('-Dspoiledmilk.surfaceSceneryDraw=true')
     if args.live_surface_handoff:
         command.append('-Dspoiledmilk.liveSurfaceHandoff=true')
+    if args.prepared_surface_adds:
+        command.append('-Dspoiledmilk.browserPreparedSurfaceAdds=true')
     if args.safe_walk_fixture:
         command.append('-Dspoiledmilk.privateSafeWalkFixture=true')
     if args.surface_scenery_mutation:

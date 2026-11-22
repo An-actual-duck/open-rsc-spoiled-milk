@@ -2618,6 +2618,27 @@ exactness for this route. Production adoption and timing remain
 separate steps.
 [Firefox result](../../../output/tests/browser-gameplay-spike/prepared-surface-scene-image-firefox/firefox-result.json) · [Chrome result](../../../output/tests/browser-gameplay-spike/prepared-surface-scene-image-chrome-retry/chrome-result.json) · [Verified receipts](../../../output/tests/seamless-world-streaming/prepared-surface-scene-image-build/travel-summary.json)
 
+#### Prepare authoritative scenery additions in wire order
+
+Entering cells retain the insertion order of the server's spatial index
+for a private trial. The draw builder still sees its canonical sorted
+order. Prepare separate object and wall addition lists in the next
+window's coordinates while the old window is active.
+
+During a verified rolling replay, compare each ordered incoming wire
+row exactly with the prepared list. The match may also include
+removals outside the new window, which the roll already handled. The
+prepared list then uses the existing model, collision, and picking
+installation path without building the legacy delta batch or scanning
+all the retained objects again. A region clear, repeated address,
+changed arrival order, in-window removal, or inconsistent origin
+uses the normal replay. Actor packets and the authoritative fence
+continue through their existing handlers.
+
+The native fixture covers exact order, multiple wall directions at
+one tile, departing removals, and invalid packets and origins.
+[Native ordered additions proof](../../../output/tests/seamless-world-streaming/prepared-surface-adds-build/native-order.log)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

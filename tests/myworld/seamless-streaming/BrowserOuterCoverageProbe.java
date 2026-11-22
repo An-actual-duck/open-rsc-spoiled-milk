@@ -405,6 +405,10 @@ public final class BrowserOuterCoverageProbe {
 				BrowserBootstrap.report("outer-coverage:prepared-scene-image:" + receipt);
 			}
 		}
+		if (Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceAdds")) {
+			BrowserBootstrap.report("outer-coverage:prepared-surface-adds:"
+				+ Arrays.toString(client.packetHandler.getPreparedSurfaceAddsWork()));
+		}
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
 	}
 

@@ -78,6 +78,7 @@ def main():
     parser.add_argument('--compatibility-mesh-worker', action='store_true', help='Prepare missing compatibility meshes when the fixed draw cell is already resident')
     parser.add_argument('--prepared-surface-receipt', action='store_true', help='Commit an exact predecoded walking terrain receipt')
     parser.add_argument('--prepared-surface-scene-image', action='store_true', help='Compare predicted gameplay placements with accepted live placements')
+    parser.add_argument('--prepared-surface-adds', action='store_true', help='Use exact prepared scenery additions during the live roll')
     parser.add_argument('--terrain-gameplay-words', action='store_true', help='Transfer exact gameplay terrain as bounded primitive arrays')
     parser.add_argument('--reuse-detached-scenery', action='store_true', help='Keep exact worker meshes for verified revisits')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
@@ -93,6 +94,8 @@ def main():
         parser.error('Prepared terrain receipts require the live surface handoff')
     if args.prepared_surface_scene_image and not (args.live_surface_handoff and args.surface_scenery_draw):
         parser.error('Prepared scene comparison requires live surface handoff and revisioned scenery')
+    if args.prepared_surface_adds and not (args.live_surface_handoff and args.surface_scenery_draw):
+        parser.error('Prepared additions require live surface handoff and revisioned scenery')
     sustained_trace = args.sustained_walk and args.travel_trace
     if args.sustained_walk and (args.manual or not (args.travel_trace or args.presentation_only)):
         parser.error('The automated sustained walk requires travel or presentation sampling')
@@ -235,6 +238,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserSurfaceCompatibilityWorker", "{str(args.compatibility_mesh_worker).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPreparedSurfaceReceipt", "{str(args.prepared_surface_receipt).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPreparedSurfaceSceneImage", "{str(args.prepared_surface_scene_image).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserPreparedSurfaceAdds", "{str(args.prepared_surface_adds).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceGameplayWords", "{str(args.terrain_gameplay_words).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserReuseDetachedScenery", "{str(args.reuse_detached_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
@@ -304,6 +308,7 @@ def main():
         *(['--expanded-surface-draw-border'] if args.expanded_surface_draw_border else []),
         *(['--surface-scenery-draw'] if args.surface_scenery_draw else []),
         *(['--live-surface-handoff'] if args.live_surface_handoff else []),
+        *(['--prepared-surface-adds'] if args.prepared_surface_adds else []),
         *(['--safe-walk-fixture'] if args.retarget_walk or args.safe_walk_fixture else []),
         *(['--surface-scenery-mutation'] if args.surface_scenery_cells and not (args.manual or args.retarget_walk) else []),
     ], cwd=ROOT, check=True)
@@ -364,6 +369,7 @@ def main():
         'compatibilityMeshWorker': args.compatibility_mesh_worker,
         'preparedSurfaceReceipt': args.prepared_surface_receipt,
         'preparedSurfaceSceneImage': args.prepared_surface_scene_image,
+        'preparedSurfaceAdds': args.prepared_surface_adds,
         'terrainGameplayWords': args.terrain_gameplay_words,
         'reuseDetachedScenery': args.reuse_detached_scenery,
         'surfaceDrawWorker': args.surface_draw_worker,

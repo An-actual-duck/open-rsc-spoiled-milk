@@ -63,6 +63,8 @@ public class PacketHandler {
 		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryCells");
 	private final SurfaceSceneryCells surfaceScenery = SURFACE_SCENERY_CELLS ? new SurfaceSceneryCells() : null;
 	private int pendingLiveSurfaceContext, pendingSurfaceRolls, verifiedLiveSurfaceContext;
+	private int preparedSurfaceAddPacketsChecked;
+	private final int[] preparedSurfaceAddsWork = mudclient.PREPARED_SURFACE_ADDS ? new int[6] : null;
 	private PredictedTerrainDecode pendingPredictedTerrainDecode;
 	private SurfaceHandoffPackets surfaceHandoffPackets;
 	private final long[] surfaceRollTiming = PERSISTENT_MOVEMENT_PREVIEW
@@ -88,6 +90,10 @@ public class PacketHandler {
 
 	public long[] getSurfaceRollRegionTiming() {
 		return surfaceRollRegionTiming == null ? new long[0] : Arrays.copyOf(surfaceRollRegionTiming, surfaceRollRegionTimingWords);
+	}
+
+	public int[] getPreparedSurfaceAddsWork() {
+		return preparedSurfaceAddsWork == null ? new int[0] : preparedSurfaceAddsWork.clone();
 	}
 
 	void recordSurfaceRollRegion(long total, long retirement, long terrain, long staticRebase, long materialize,
@@ -673,6 +679,7 @@ public class PacketHandler {
 		RSBuffer_Bits wire = packetsIncoming;
 		if (surfaceHandoffReplay == null) surfaceHandoffReplay = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 		packetsIncoming = surfaceHandoffReplay;
+		preparedSurfaceAddPacketsChecked = 0;
 		try {
 			for (byte[] packet : pending.packets) {
 				long packetStarted = capturePackets ? System.nanoTime() : 0;
@@ -688,6 +695,7 @@ public class PacketHandler {
 				}
 			}
 		} finally {
+			if (mudclient.PREPARED_SURFACE_ADDS) mc.finishRollingPreparedSurfaceAdds();
 			packetsIncoming = wire;
 		}
 		if (capture && verifiedLiveSurfaceContext != previousContext && verifiedLiveSurfaceContext > 0) {
@@ -4261,6 +4269,7 @@ public class PacketHandler {
 	}
 
 	private void showGameObjects(int length) {
+		if (applyPreparedSurfaceAdds(length, false)) return;
 		LegacyStaticSceneDeltaBatch batch =
 			new LegacyStaticSceneDeltaBatch(false);
 		while (length > packetsIncoming.packetEnd) {
@@ -4280,6 +4289,35 @@ public class PacketHandler {
 			}
 		}
 		applyLegacyGameObjectBatch(batch);
+	}
+
+	private boolean applyPreparedSurfaceAdds(int length, boolean wall) {
+		if (!mudclient.PREPARED_SURFACE_ADDS || packetsIncoming != surfaceHandoffReplay || pendingLiveSurfaceContext <= 0) return false;
+		int kind = wall ? 2 : 1;
+		if ((preparedSurfaceAddPacketsChecked & kind) != 0) return false;
+		preparedSurfaceAddPacketsChecked |= kind;
+		int offset = wall ? 3 : 0;
+		preparedSurfaceAddsWork[offset]++;
+		PreparedSurfaceSceneryAdds prepared = mc.getRollingPreparedSurfaceAdds();
+		if (prepared == null || !prepared.at(mc.getMidRegionBaseX(), mc.getMidRegionBaseZ())
+			|| !prepared.matches(packetsIncoming.dataBuffer, packetsIncoming.packetEnd, length,
+				mc.getLocalPlayerX(), mc.getLocalPlayerZ(), wall)) return false;
+		packetsIncoming.packetEnd = length;
+		preparedSurfaceAddsWork[offset + 1]++;
+		List<LegacyStaticSceneDeltaBatch.Record> additions = prepared.additions(wall);
+		preparedSurfaceAddsWork[offset + 2] += additions.size();
+		if (wall) {
+			for (LegacyStaticSceneDeltaBatch.Record row : additions) {
+				if (!mc.hasWallObjectInstanceCapacity()) break;
+				addLegacyWallObject(row);
+			}
+		} else {
+			for (LegacyStaticSceneDeltaBatch.Record row : additions) {
+				mc.getWorld().registerObjectDir(row.getX(), row.getZ(), row.getDirection());
+			}
+			for (LegacyStaticSceneDeltaBatch.Record row : additions) addLegacyGameObject(row);
+		}
+		return true;
 	}
 
 	private void applyLegacyGameObjectBatch(
@@ -4594,6 +4632,7 @@ public class PacketHandler {
 	}
 
 	private void showWalls(int length) {
+		if (applyPreparedSurfaceAdds(length, true)) return;
 		LegacyStaticSceneDeltaBatch batch =
 			new LegacyStaticSceneDeltaBatch(true);
 		while (length > packetsIncoming.packetEnd) {
@@ -4659,18 +4698,21 @@ public class PacketHandler {
 			if (!mc.hasWallObjectInstanceCapacity()) {
 				break;
 			}
-			int instanceIndex = mc.getWallObjectInstanceCount();
-			mc.setWallObjectInstanceModel(instanceIndex, null);
-			mc.setWallObjectInstanceX(instanceIndex, record.getX());
-			mc.setWallObjectInstanceZ(instanceIndex, record.getZ());
-			mc.setWallObjectInstanceID(instanceIndex, record.getId());
-			mc.setWallObjectInstanceDir(
-				instanceIndex, record.getDirection());
-			mc.setWallObjectInstanceMaterialized(instanceIndex, false);
-			mc.setWallObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());
-			mc.materializeWallObjectInstance(instanceIndex);
-			mc.setWallObjectInstanceCount(instanceIndex + 1);
+			addLegacyWallObject(record);
 		}
+	}
+
+	private void addLegacyWallObject(LegacyStaticSceneDeltaBatch.Record record) {
+		int instanceIndex = mc.getWallObjectInstanceCount();
+		mc.setWallObjectInstanceModel(instanceIndex, null);
+		mc.setWallObjectInstanceX(instanceIndex, record.getX());
+		mc.setWallObjectInstanceZ(instanceIndex, record.getZ());
+		mc.setWallObjectInstanceID(instanceIndex, record.getId());
+		mc.setWallObjectInstanceDir(instanceIndex, record.getDirection());
+		mc.setWallObjectInstanceMaterialized(instanceIndex, false);
+		mc.setWallObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());
+		mc.materializeWallObjectInstance(instanceIndex);
+		mc.setWallObjectInstanceCount(instanceIndex + 1);
 	}
 
 	private void showNPCs(int length) {

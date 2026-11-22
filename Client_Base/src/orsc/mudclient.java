@@ -999,6 +999,12 @@ public final class mudclient implements Runnable {
 	private static final boolean PREPARED_SURFACE_SCENE_IMAGE = Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceSceneImage");
 	private PreparedSurfaceSceneImage preparedSurfaceSceneImage;
 	private final List<String> preparedSurfaceSceneReceipts = PREPARED_SURFACE_SCENE_IMAGE ? new ArrayList<>() : null;
+	static final boolean PREPARED_SURFACE_ADDS = LIVE_SURFACE_HANDOFF
+		&& Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceAdds");
+	private PreparedSurfaceSceneryAdds preparedSurfaceSceneryAdds, rollingPreparedSurfaceAdds;
+	private static final Comparator<World.SurfaceSceneryPlacement> SURFACE_DRAW_PLACEMENT_ORDER = Comparator
+		.comparingInt((World.SurfaceSceneryPlacement row) -> row.x).thenComparingInt(row -> row.z)
+		.thenComparingInt(row -> row.type).thenComparingInt(row -> row.direction).thenComparingInt(row -> row.id);
 	private int adoptedSurfaceScenery;
 	private final ExecutorService residentObjectBuildExecutor =
 		Executors.newFixedThreadPool(
@@ -4012,18 +4018,56 @@ public final class mudclient implements Runnable {
 	void completeSurfaceSceneryTerrain(NativeLayeredTerrainSnapshot terrain) {
 		if (SURFACE_SCENERY_DRAW) surfaceSceneryTerrain = terrain;
 		if (PREPARED_SURFACE_SCENE_IMAGE) prepareSurfaceSceneImage();
+		if (PREPARED_SURFACE_ADDS) prepareSurfaceSceneryAdds();
 	}
 
 	void invalidateSurfaceSceneryDraw(int x, int z) {
 		SurfaceSceneryWork previous = surfaceSceneryWork.remove(SurfaceSceneryCells.key(x, z));
 		if (PREPARED_SURFACE_SCENE_IMAGE && previous != null && preparesGameplayScene(previous)) preparedSurfaceSceneImage = null;
+		if (PREPARED_SURFACE_ADDS && previous != null && previous.orderedAdds != null) preparedSurfaceSceneryAdds = null;
 		if (previous != null && previous.prepared != null) publishSurfaceSceneryDraws();
 	}
 
 	void stageSurfaceSceneryDraw(int x, int z, SurfaceSceneryCells.Band band, List<World.SurfaceSceneryPlacement> records) {
-		SurfaceSceneryWork work = new SurfaceSceneryWork(x, z, band, records);
+		List<World.SurfaceSceneryPlacement> orderedAdds = null;
+		if (PREPARED_SURFACE_ADDS && band == SurfaceSceneryCells.Band.ENTERING_PLAY) {
+			orderedAdds = records;
+			records = new ArrayList<>(records);
+			records.sort(SURFACE_DRAW_PLACEMENT_ORDER);
+		}
+		SurfaceSceneryWork work = new SurfaceSceneryWork(x, z, band, records, orderedAdds);
 		surfaceSceneryWork.put(SurfaceSceneryCells.key(x, z), work);
 		if (PREPARED_SURFACE_SCENE_IMAGE && preparesGameplayScene(work)) prepareSurfaceSceneImage();
+		if (orderedAdds != null) prepareSurfaceSceneryAdds();
+	}
+
+	private void prepareSurfaceSceneryAdds() {
+		preparedSurfaceSceneryAdds = null;
+		NativeLayeredTerrainSnapshot terrain = surfaceSceneryTerrain;
+		if (terrain == null || adoptSurfaceScenery) return;
+		int centerX = terrain.getCurrentChunkX(), centerZ = terrain.getCurrentChunkY();
+		int baseX = World.sectionToLocalBaseTile(centerX), baseZ = World.sectionToLocalBaseTile(centerZ);
+		int sourceX = midRegionBaseX, sourceZ = midRegionBaseZ;
+		if (Math.floorMod(sourceX, World.SECTION_SIZE) != 0 || Math.floorMod(sourceZ, World.SECTION_SIZE) != 0
+			|| Math.max(Math.abs((long) baseX - sourceX), Math.abs((long) baseZ - sourceZ)) != World.SECTION_SIZE) return;
+		List<World.SurfaceSceneryPlacement> entering = new ArrayList<>();
+		for (int x = centerX - 1; x <= centerX + 1; x++) {
+			for (int z = centerZ - 1; z <= centerZ + 1; z++) {
+				if (World.isLocalTile(x * World.SECTION_SIZE - sourceX, z * World.SECTION_SIZE - sourceZ)) continue;
+				SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(x, z));
+				if (work == null || work.orderedAdds == null) return;
+				entering.addAll(work.orderedAdds);
+			}
+		}
+		preparedSurfaceSceneryAdds = PreparedSurfaceSceneryAdds.from(sourceX, sourceZ, baseX, baseZ, entering);
+	}
+
+	PreparedSurfaceSceneryAdds getRollingPreparedSurfaceAdds() {
+		return rollingPreparedSurfaceAdds;
+	}
+
+	void finishRollingPreparedSurfaceAdds() {
+		rollingPreparedSurfaceAdds = null;
 	}
 
 	private static boolean preparesGameplayScene(SurfaceSceneryWork work) {
@@ -4060,6 +4104,8 @@ public final class mudclient implements Runnable {
 	void clearSurfaceSceneryDraw() {
 		surfaceSceneryTerrain = null;
 		preparedSurfaceSceneImage = null;
+		preparedSurfaceSceneryAdds = null;
+		rollingPreparedSurfaceAdds = null;
 		adoptSurfaceScenery = false;
 		surfaceSceneryWork.clear();
 		surfacePreparedScenery = Collections.emptyList();
@@ -4252,14 +4298,17 @@ public final class mudclient implements Runnable {
 		private final int x, z;
 		private final SurfaceSceneryCells.Band band;
 		private final List<World.SurfaceSceneryPlacement> records;
+		private final List<World.SurfaceSceneryPlacement> orderedAdds;
 		private boolean started;
 		private PreparedSurfaceScenery prepared;
 
-		private SurfaceSceneryWork(int x, int z, SurfaceSceneryCells.Band band, List<World.SurfaceSceneryPlacement> records) {
+		private SurfaceSceneryWork(int x, int z, SurfaceSceneryCells.Band band, List<World.SurfaceSceneryPlacement> records,
+				List<World.SurfaceSceneryPlacement> orderedAdds) {
 			this.x = x;
 			this.z = z;
 			this.band = band;
 			this.records = records;
+			this.orderedAdds = orderedAdds;
 		}
 	}
 
@@ -22623,6 +22672,9 @@ public final class mudclient implements Runnable {
 						- (centeredNativeWindow ? 1 : 32);
 					long phaseStartNanos = System.nanoTime();
 					if (rolling) {
+						PreparedSurfaceSceneryAdds adds = preparedSurfaceSceneryAdds;
+						rollingPreparedSurfaceAdds = adds != null && adds.moves(oldBaseX, oldBaseZ, nextBaseX, nextBaseZ) ? adds : null;
+						preparedSurfaceSceneryAdds = null;
 						rollSurfaceScenery(baseDX, baseDZ);
 					} else {
 						for (int i = 0; i < this.getGameObjectInstanceCount(); i++) this.dematerializeGameObjectInstance(i);
@@ -22803,6 +22855,7 @@ public final class mudclient implements Runnable {
 		int pixelX = -dx * tileSize, pixelZ = -dz * tileSize;
 		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
 			int x = getGameObjectInstanceX(i), z = getGameObjectInstanceZ(i);
+			if (rollingPreparedSurfaceAdds != null && !World.isLocalTile(x, z)) rollingPreparedSurfaceAdds = null;
 			if (!World.isLocalTile(x - dx, z - dz)) {
 				RSModel model = deferGameObjectSceneRemoval(i);
 				if (model != null) retired[removed++] = model;
@@ -22820,6 +22873,7 @@ public final class mudclient implements Runnable {
 		retained = 0;
 		for (int i = 0; i < getWallObjectInstanceCount(); i++) {
 			int x = getWallObjectInstanceX(i), z = getWallObjectInstanceZ(i);
+			if (rollingPreparedSurfaceAdds != null && !World.isLocalTile(x, z)) rollingPreparedSurfaceAdds = null;
 			if (!World.isLocalTile(x - dx, z - dz)) {
 				RSModel model = deferWallObjectSceneRemoval(i);
 				if (model != null) retired[removed++] = model;
