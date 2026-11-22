@@ -203,6 +203,8 @@ public final class BrowserOuterCoverageProbe {
 		Method walk = fieldWalk();
 		int[] projectionStart = Boolean.getBoolean("spoiledmilk.browserProjectionDemand")
 			? projectionDemand(client) : null;
+		long[] omittedStart = Boolean.getBoolean("spoiledmilk.browserResidentCameraCull")
+			? omittedProjection(client) : null;
 		if (Boolean.getBoolean("spoiledmilk.browserTravelTrace")) reportAnimatedScenery(client);
 		walkLeg(client, walk, 257, 609);
 		int[] before = client.packetHandler.getPersistentMovementReceipt();
@@ -222,7 +224,7 @@ public final class BrowserOuterCoverageProbe {
 			verifyIncomingSceneryMutations(client, walk, before[3]);
 		}
 		if (Boolean.getBoolean("spoiledmilk.browserPresentationOnly")) {
-			verifyUntracedTravel(client, walk, before, projectionStart);
+			verifyUntracedTravel(client, walk, before, projectionStart, omittedStart);
 			return;
 		}
 		boolean fixedDraw = Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
@@ -325,7 +327,12 @@ public final class BrowserOuterCoverageProbe {
 		return (int[]) client.getScene().getClass().getMethod("getBrowserProjectionDemand").invoke(client.getScene());
 	}
 
-	private static void verifyUntracedTravel(mudclient client, Method walk, int[] before, int[] projectionStart) throws Exception {
+	private static long[] omittedProjection(mudclient client) throws ReflectiveOperationException {
+		return (long[]) client.getScene().getClass().getMethod("getBrowserOmittedProjection").invoke(client.getScene());
+	}
+
+	private static void verifyUntracedTravel(mudclient client, Method walk, int[] before,
+			int[] projectionStart, long[] omittedStart) throws Exception {
 		Object actor = client.getLocalPlayer();
 		int[][] destinations = {{278,609}, {284,609}, {291,597}, {322,597}, {291,597}, {284,609}, {252,609}};
 		for (int[] destination : destinations) {
@@ -354,6 +361,13 @@ public final class BrowserOuterCoverageProbe {
 				+ ":projected=" + demand[1] + ":resident=" + demand[2] + ":rejected=" + demand[3]
 				+ ":terrain=" + demand[4] + ":structures=" + demand[5] + ":scenery=" + demand[6]
 				+ ":bounded=" + demand[7]);
+		}
+		if (omittedStart != null) {
+			long[] omitted = omittedProjection(client);
+			if (omitted[0] <= omittedStart[0] || omitted[1] <= omittedStart[1])
+				throw new IllegalStateException("Resident camera culling did not skip projection work");
+			BrowserBootstrap.report("outer-coverage:projection-omitted:models=" + (omitted[0] - omittedStart[0])
+				+ ":vertices=" + (omitted[1] - omittedStart[1]));
 		}
 		if (Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements")) {
 			int verified = client.getVerifiedWorkerSceneryMeshes(), mismatched = client.getMismatchedWorkerSceneryMeshes();

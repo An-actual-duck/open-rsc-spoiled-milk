@@ -1648,6 +1648,17 @@ rounding and falls back if an interval may cross the near plane or
 overflow the literal integer transform. It checks every predicted
 miss against the original rotated faces on the sampled frames. The
 ordinary projection and picking paths still run.
+Both browser captures moved the pointer through six screen positions
+while walking. In Chrome, the bounds accounted for 8,655,751 of
+8,713,382 sampled vertices. In Firefox they accounted for 8,586,333 of
+8,642,026. Every predicted miss agreed with the literal face cull.
+[Chrome bounds proof](../../../output/tests/browser-gameplay-spike/camera-pick-bounds-chrome/chrome-result.json) · [Firefox bounds proof](../../../output/tests/browser-gameplay-spike/camera-pick-bounds-firefox/firefox-result.json)
+
+The opt-in candidate omits the transform and CPU face loop for a
+proven miss. It requires resident GPU ownership, verified face
+indices, an unchanged transform cache, and projection arrays owned
+by the model. The ordinary rotation and face loop still handle
+pointer hits, interaction-only models, dirty models and fallback draws.
 
 #### Java client worker feasibility
 

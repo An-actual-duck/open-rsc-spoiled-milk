@@ -51,16 +51,24 @@ public final class BrowserModelPickBoundsFixture {
         boolean defaults=args[1].equals("default"),enabled=defaults||Boolean.parseBoolean(args[1]),current=args[0].equals("current");if(defaults)System.clearProperty("spoiledmilk.browserModelPickBounds");else System.setProperty("spoiledmilk.browserModelPickBounds",String.valueOf(enabled));
         for(String name:new String[]{"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster","browserOverlayCoverage"})System.setProperty("spoiledmilk."+name,"true");System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
         MessageDigest hash=MessageDigest.getInstance("SHA-256");
+        long omitted = 0;
         for(int mode=0;mode<4;mode++)for(boolean early:new boolean[]{false,true}){
             BrowserFrameSinkRegistry.install(null);if(mode<3)BrowserFrameSinkRegistry.install(BrowserWallRoofOwnershipFixture.sink(mode==2));System.setProperty("spoiledmilk.browserEarlyFaceCull",String.valueOf(early));
             BrowserWallRoofOwnershipFixture.View view=new BrowserWallRoofOwnershipFixture.View(mode!=1);RSModel dense=dense();view.s.addModel(dense);
+            RSModel fixed = dense();
+            fixed.setTranslate(96, 0, 128);
+            view.s.addModel(fixed);
             require(active(view.s)==(current&&enabled&&mode==0),"Actual feature gate changed native/software/mixed ownership");
             for(int frame=0;frame<72;frame++){
                 int scale=new int[]{1,2,3,14,Integer.MAX_VALUE}[frame%5];view.front.setPickBoundsScale(scale);view.models[2].setPickBoundsScale(scale);dense.setPickBoundsScale(scale);dense.setTranslate((frame%5-2)*120,frame%3*5,(frame%7-3)*90);dense.setRenderer3DModelKind(Renderer3DModelKind.values()[frame%Renderer3DModelKind.values().length]);dense.faceIndices[frame%dense.faceHead]=frame%2==0?new int[]{0,1,14,13}:new int[]{13,14,1,0};
                 BrowserWallRoofOwnershipFixture.Result value=view.draw(frame%4==0?0:frame%4==1?511:256,frame%4==0?0:frame%4==1?383:192,new int[]{20,100,600}[frame%3],new int[]{640,768,900}[frame%3],frame%2*256,new int[]{-12345,0,Scene.TRANSPARENT}[frame%3],frame%11==0);
                 text(hash,value.picks);text(hash,value.anchors);text(hash,value.faces);text(hash,value.resident);ByteBuffer pixels=ByteBuffer.allocate(value.pixels.length*4);for(int p:value.pixels)pixels.putInt(p);hash.update(pixels.array());
             }
+            if (Boolean.getBoolean("spoiledmilk.browserResidentCameraCull"))
+                omitted += view.s.getBrowserOmittedProjection()[1];
         }
+        if (Boolean.getBoolean("spoiledmilk.browserResidentCameraCull"))
+            require(omitted > 0, "The exact Scene fixture did not omit resident model projections");
         BrowserFrameSinkRegistry.install(null);
         try {Field f=Scene.class.getDeclaredField("TEST_FACE_BOUNDS_CALLS");f.setAccessible(true);System.out.println("PROBE_FACE_CALLS="+f.getLong(null));
             for(String name:new String[]{"TEST_MODEL_SCANS","TEST_MODEL_REJECTIONS","TEST_FACE_VALIDATIONS"}){Field c=ProjectedModelPickBounds.class.getDeclaredField(name);c.setAccessible(true);System.out.println(name+"="+c.getLong(null));}}

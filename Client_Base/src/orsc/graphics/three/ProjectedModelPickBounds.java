@@ -66,6 +66,10 @@ final class ProjectedModelPickBounds {
             return Math.abs((double) sine[axis]) <= 32768 && Math.abs((double) cosine[axis]) <= 32768;
         }
 
+        boolean isUsable() {
+            return usable;
+        }
+
         boolean missesMouse(RSModel model) {
             if (!usable || !model.copyWorldFaceBounds(world)
                 || !translate(0, x) || !translate(1, y) || !translate(2, z)

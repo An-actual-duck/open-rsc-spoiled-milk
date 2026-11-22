@@ -92,6 +92,9 @@ public final class RSModel {
 	private int minX;
 	private int minY;
 	private int minZ;
+    static final boolean BROWSER_RESIDENT_CAMERA_CULL = Boolean.getBoolean("spoiledmilk.browserResidentCameraCull");
+    private boolean browserProjectionRowsOwned;
+    private boolean browserProjectionTopologyChecked;
 	private int rot256X;
 	private int rot256Y;
 	private int rot256Z;
@@ -1131,6 +1134,7 @@ public final class RSModel {
 			this.maxX = -999999;
 			this.maxY = -999999;
 			this.maxFaceDimension = -999999;
+            boolean projectionTopology = BROWSER_RESIDENT_CAMERA_CULL;
 
 			for (int face = 0; face < this.faceHead; ++face) {
 				int[] fIndex = this.faceIndices[face];
@@ -1145,6 +1149,7 @@ public final class RSModel {
 
 				for (int vert = 0; fIndexCount > vert; ++vert) {
 					vID = fIndex[vert];
+                    if (projectionTopology && vID >= this.vertHead) projectionTopology = false;
 					if (this.vertZTransform[vID] >= minZ) {
 						if (this.vertZTransform[vID] > maxZ) {
 							maxZ = this.vertZTransform[vID];
@@ -1213,6 +1218,7 @@ public final class RSModel {
 					this.minZ = minZ;
 				}
 			}
+            this.browserProjectionTopologyChecked = projectionTopology;
 
 		} catch (RuntimeException var13) {
 			throw GenUtil.makeThrowable(var13, "ca.C(" + var1 + ')');
@@ -1230,6 +1236,7 @@ public final class RSModel {
 			this.vertYRot = new int[this.vertHead];
 			this.vertZRot = new int[this.vertHead];
 			this.vertexParam6 = new int[this.vertHead];
+            this.browserProjectionRowsOwned = BROWSER_RESIDENT_CAMERA_CULL;
 
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "ca.H(" + var1 + ')');
@@ -1869,6 +1876,7 @@ public final class RSModel {
 			int i;
 			if (this.m_Yb == 2) {
 				this.m_Yb = 0;
+                this.browserProjectionTopologyChecked = false;
 
 				for (i = 0; i < this.vertHead; ++i) {
 					this.vertXTransform[i] = this.vertX[i];
@@ -2728,6 +2736,17 @@ public final class RSModel {
         bounds[5] = maxZ;
         return true;
     }
+    final boolean canUseResidentCameraCull() {
+        return isBrowserBatchCacheClean() && browserProjectionRowsOwned && browserProjectionTopologyChecked
+            && faceHead > 0 && vertHead > 0 && isBrowserBatchFrustumVisible()
+            && hasProjectionCapacity(vertXTransform) && hasProjectionCapacity(vertYTransform)
+            && hasProjectionCapacity(vertZTransform) && hasProjectionCapacity(vertexParam6)
+            && hasProjectionCapacity(vertexParam2) && hasProjectionCapacity(vertXRot)
+            && hasProjectionCapacity(vertYRot) && hasProjectionCapacity(vertZRot);
+    }
+    private boolean hasProjectionCapacity(int[] rows) {
+        return rows != null && rows.length >= vertHead;
+    }
     final void borrowBrowserBatchArrays(int[][] rows, int offset) {
         rows[offset] = this.vertXTransform; rows[offset + 1] = this.vertYTransform;
         rows[offset + 2] = this.vertZTransform; rows[offset + 3] = this.vertexParam6;
@@ -2865,6 +2884,8 @@ public final class RSModel {
 
 	private void setFaceVertexCount(int faceCount, int vertexCount, int var3) {
 		try {
+            this.browserProjectionRowsOwned = false;
+            this.browserProjectionTopologyChecked = false;
 			if (!this.m_db) {
 				this.m_zb = new byte[faceCount];
 				this.facePickIndex = new int[faceCount];
@@ -2889,6 +2910,7 @@ public final class RSModel {
 				this.vertXRot = new int[vertexCount];
 				this.vertZRot = new int[vertexCount];
 				this.vertexParam6 = new int[vertexCount];
+                this.browserProjectionRowsOwned = BROWSER_RESIDENT_CAMERA_CULL;
 			}
 
 
