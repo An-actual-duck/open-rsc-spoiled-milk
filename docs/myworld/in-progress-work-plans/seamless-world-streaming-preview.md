@@ -1464,6 +1464,24 @@ so the appearance screen can receive input before the first world frame
 arrives.
 [Full HD preview](http://127.0.0.1:8482/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/local-atlas-player-preview/manual-login-result.json)
 
+#### Resident frame production and catch-up work
+
+The Chrome main-thread CPU capture aligns the profiler and the game
+frame clocks within 1.3 ms. Over the captured walk, 361 of 35,124
+samples were in garbage collection. The longest measured gap with no
+geometry uploads was 135 ms. It included four game updates totaling
+60 ms and 34 ms in scene capture. The Chrome profiler recorded one idle
+sample and zero garbage collector samples during that gap. Several
+shorter gaps had garbage collector samples. The profile startup
+interrupted the first leg, so its frame-rate summary is diagnostic.
+[Chrome profile analysis](../../../output/tests/browser-gameplay-spike/chrome-resident-cpu-profile/profile-summary.json) · [Profiler API](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/)
+
+The private catch-up trial presents the actual game state when the
+accumulated update work reaches one quarter of a frame. It carries
+the original five-update limit across successive draws. A single
+indivisible game update still runs to completion. The runtime continues
+to apply the original server receipts and interpolation rules.
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

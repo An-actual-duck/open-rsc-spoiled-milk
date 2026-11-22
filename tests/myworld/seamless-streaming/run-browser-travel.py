@@ -193,7 +193,8 @@ try {
         ['node', '--input-type=module', '-e', script, socket, method, json.dumps(params)], timeout=25, text=True))
 
 
-def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_profile=False, java_version=8):
+def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_profile=False,
+             java_version=8, chrome_profile=False, runtime='5.0'):
     server = json.loads((run / 'server-command.json').read_text())
     stage = json.loads((run / 'stage.json').read_text())
     fixture = json.loads((run / 'outer-coverage-fixture.json').read_text())
@@ -204,6 +205,8 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             or capture.exists() or (run / 'server.pid').exists()):
         raise ValueError('Use a fresh private sustained-walk stage')
     url = 'http://' + stage['http'] + '/?mode=webgl'
+    if runtime != '5.0':
+        url += '&runtime=' + runtime
     if wasmgc:
         url += '&wasmgc=1'
     if java_version != 8:
@@ -261,10 +264,29 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             def evaluate(script):
                 return request(prefix + '/execute/sync', {'script': PROOF + script, 'args': []})
 
+            def chrome_command(command, params=None):
+                return request(prefix + '/goog/cdp/execute', {'cmd': command, 'params': params or {}})
+
+            def chrome_timestamp():
+                return next(row['value'] * 1000 for row in chrome_command('Performance.getMetrics')['metrics']
+                            if row['name'] == 'Timestamp')
+
+            def chrome_clock_anchor():
+                before = chrome_timestamp()
+                relative = evaluate('return w.performance.now();')
+                after = chrome_timestamp()
+                return {'pageMs': relative, 'beforeMs': before, 'afterMs': after}
+
+            if chrome_profile:
+                chrome_command('Performance.enable')
+                chrome_command('Profiler.enable')
+                chrome_command('Profiler.setSamplingInterval', {'interval': 2000})
+
             deadline = time.monotonic() + 228
             previous_state = None
             reported_events = 0
             profiler_active = False
+            chrome_anchors = []
             watch = WATCH_PRESENTATION if fixture.get('presentationOnly') else WATCH_BROWSER_FRAMES
             while time.monotonic() < deadline:
                 snap = evaluate(watch + 'return {state:p.state?.mode,reason:p.stopReason,events:' + ROUTE_EVENTS + '};')
@@ -280,6 +302,11 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                     firefox_profiler_command(started['capabilities']['webSocketUrl'], 'moz:profiler.start', {
                         'entries': 4000000, 'interval': 2, 'features': ['js', 'stackwalk', 'cpu'],
                         'threads': ['GeckoMain', 'Compositor', 'DOM Worker', 'CanvasRenderer']})
+                    profiler_active = True
+                if chrome_profile and not profiler_active and any(
+                        event['message'].startswith('outer-coverage:walking:') for event in snap['events']):
+                    chrome_anchors.append(chrome_clock_anchor())
+                    chrome_command('Profiler.start')
                     profiler_active = True
                 if snap.get('reason') or any(event['message'].startswith(('outer-coverage:failed', 'outer-coverage:complete'))
                                              for event in snap['events']):
@@ -303,7 +330,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                     bridge:p.gpu?.javaBridgeWorkSamples,overlay:p.gpu?.overlayStageSamples,stages:p.gpu?.frameStageSamples,
                     slowStages:p.gpu?.slowFrameStages},
                 presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin,proofStartedAt:p.started};''')
-            if profiler_active:
+            if profiler_active and firefox_profile:
                 receipt = firefox_profiler_command(started['capabilities']['webSocketUrl'], 'moz:profiler.stop', {})
                 if not receipt.get('path'):
                     raise RuntimeError('Firefox profiler returned no capture')
@@ -311,6 +338,13 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 if profile.parent != run or not profile.is_file():
                     raise RuntimeError('Firefox profile was not saved in the private test run')
                 result['firefoxProfile'] = profile.name
+            if profiler_active and chrome_profile:
+                chrome_anchors.append(chrome_clock_anchor())
+                profile = chrome_command('Profiler.stop')['profile']
+                path = run / 'chrome-walk.cpuprofile'
+                path.write_text(json.dumps(profile) + '\n')
+                result['chromeProfile'] = {'path': path.name, 'clockAnchors': chrome_anchors,
+                                           'scope': 'Chrome renderer main thread JavaScript CPU samples'}
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
             server_status = json.loads((run / 'status.json').read_text())
@@ -363,6 +397,8 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             if completed and java_version != 8:
                 completed = any(event['message'] == f'outer-coverage:java-runtime:{java_version}'
                                 for event in result['events'])
+            if completed:
+                completed = (result.get('javaRuntime') or {}).get('release') == runtime
             if completed and output != 'default':
                 width, height = (1920, 1080) if output == 'full-hd' else (960, 540)
                 expected_size = dict(zip(OUTPUT_DIMENSIONS, (960, 540, width, height)))
@@ -422,14 +458,19 @@ def main():
     parser.add_argument('--driver-port', type=int, help='Port of the local WebDriver')
     parser.add_argument('--wasmgc', action='store_true', help='Test the experimental CheerpJ 5.0 engine')
     parser.add_argument('--java', choices=(8, 11, 17), type=int, default=8, help='Compare supported Java runtimes')
+    parser.add_argument('--runtime', choices=('5.0', '4.3'), default='5.0', help='Compare CheerpJ releases')
     parser.add_argument('--firefox-profile', action='store_true', help='Save a separate Firefox browser profiler capture in the test run')
+    parser.add_argument('--chrome-profile', action='store_true', help='Save a separate Chrome CPU profiler capture in the test run')
     parser.add_argument('--output', choices=('default', 'logical', 'full-hd'), default='default',
                         help='Compare 960x540 and 1920x1080 WebGL output with the same 960x540 UI')
     args = parser.parse_args()
     if args.firefox_profile and args.browser != 'firefox':
         parser.error('The Firefox profiler requires Firefox')
+    if args.chrome_profile and args.browser != 'chrome':
+        parser.error('The Chrome profiler requires Chrome')
     driver_port = args.driver_port if args.driver_port is not None else {'firefox': 44495, 'chrome': 9515}[args.browser]
-    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc, args.output, args.firefox_profile, args.java)
+    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc, args.output,
+                    args.firefox_profile, args.java, args.chrome_profile, args.runtime)
 
 
 if __name__ == '__main__':
