@@ -1644,7 +1644,6 @@ public class PacketHandler {
 			pollLayeredTerrainHaloReady();
 			return;
 		}
-		if (readyPredictedLayeredTerrainHalo != null) mc.prepareSurfaceCollisionRoll(readyPredictedLayeredTerrainHalo);
 		if (predictedSceneryTerrain != null && readyPredictedLayeredTerrainStructureStage != null) {
 			mc.dispatchPredictedSceneryBuild();
 		}

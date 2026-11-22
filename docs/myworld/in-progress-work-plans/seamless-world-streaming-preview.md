@@ -2003,6 +2003,40 @@ fresh worker submissions and elapsed Java replay time. They leave GPU
 scanout and detailed CPU attribution to separate captures.
 [Firefox roll capture](../../../output/tests/browser-gameplay-spike/scene-roll-pacing-firefox/firefox-result.json) · [Chrome roll capture](../../../output/tests/browser-gameplay-spike/scene-roll-pacing-chrome/chrome-result.json)
 
+#### Prepared collision view at the roll
+
+The collision trial takes a detached copy of the active contributors once
+the predicted terrain product is ready. The terrain preparation executor
+applies the departing scenery and walls to that copy and composes the next
+grid. The roll can install the grid and contributor counts together when
+the terrain product and both live revisions still match. Late or stale work
+uses the existing replay. The existing packet fence still verifies the
+scenery and wall inventory. New entries and later live edits use the normal
+collision updates.
+
+The native proof checked retained and departing footprints, duplicate walls,
+authored flags, stale revisions and subsequent removals. Firefox also ran
+the complete live route with the old collision updates enabled for parity.
+All three published grids and contributor counts matched the ordered replay
+before adoption. The server confirmed `(252,609)` with a single load epoch,
+zero held frames and zero sampled input closures. The parity run performs
+both paths and is separate from pacing comparisons.
+[Native collision proof](../../../output/tests/seamless-world-streaming/prepared-collision-roll-build/native-collision.log) · [Firefox parity route](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-parity-firefox/firefox-result.json)
+
+The same-build pacing trial installed all three views in both browsers
+with verification off. All four walks reached the same server destination
+without loading holds or sampled input closures.
+
+| Browser | Packet replay at the three rolls | Longest frame interval away from replay | 99th-percentile interval | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 83, 34, 58 → 53, 52, 54 ms | 169 → 262 ms | 29 → 28 ms | 18 → 16 |
+| Chrome | 49, 31, 31 → 40, 23, 27 ms | 94.2 → 125.3 ms | 25.6 → 27.8 ms | 19 → 23 |
+
+The improvement at some roll boundaries did not produce consistent frame
+pacing across the whole walk. The trial was retired. The exact collision
+proof and private captures remain available.
+[Firefox control](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-trial-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/prepared-collision-roll-trial-chrome/chrome-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

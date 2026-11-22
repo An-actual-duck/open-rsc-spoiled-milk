@@ -542,6 +542,21 @@ the early submission and integer scenery signature trials out of the
 player build because their pacing results were mixed.
 [Verified roll timings](seamless-world-streaming-preview.md#frame-pacing-at-verified-scene-rolls)
 
+An exact prepared collision view shortened all three Chrome replays and
+one of the two longer Firefox replays. The longest intervals away from
+replay grew in both browsers. Keep the literal collision path in the
+player preview. The detached view remains an exactness reference for a
+larger change that can remove collision and scenery work from the client
+thread during preparation as well as publication.
+[Prepared collision trial](seamless-world-streaming-preview.md#prepared-collision-view-at-the-roll)
+
+The Firefox and Chrome captures both recorded a zero-upload gap about
+21 seconds into the same route, soon after leaving `(284,609)`. Both
+also showed a slower cluster about four seconds after the first step.
+Use those first-pass and diagonal legs for a separate CPU capture. Match
+packet processing, terrain and scenery reply processing, scene capture
+and submission to the same clock before choosing the next change.
+
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
 TeaVM can ahead-of-time compile a detached Java library, with limited

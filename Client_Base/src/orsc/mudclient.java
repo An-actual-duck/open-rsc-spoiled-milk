@@ -3810,10 +3810,6 @@ public final class mudclient implements Runnable {
 
 	private RSModel dematerializeGameObjectInstance(
 			int index, boolean deferSceneRemoval) {
-		return dematerializeGameObjectInstance(index, deferSceneRemoval, true);
-	}
-
-	private RSModel dematerializeGameObjectInstance(int index, boolean deferSceneRemoval, boolean updateCollision) {
 		if (index < 0 || index >= this.sceneInstanceStore.getGameObjectCapacity()
 			|| !this.isGameObjectInstanceMaterialized(index)) {
 			return null;
@@ -3825,7 +3821,7 @@ public final class mudclient implements Runnable {
 		}
 		int id = this.getGameObjectInstanceID(index);
 		int x = this.getGameObjectInstanceX(index), z = this.getGameObjectInstanceZ(index);
-		if (updateCollision && !this.world.updateSurfaceObjectCollision(id, x, z, this.getGameObjectInstanceDir(index), false)) {
+		if (!this.world.updateSurfaceObjectCollision(id, x, z, this.getGameObjectInstanceDir(index), false)) {
 			this.world.removeGameObject_CollisonFlags(id, x, z);
 		}
 		this.setGameObjectInstanceMaterialized(index, false);
@@ -3867,10 +3863,6 @@ public final class mudclient implements Runnable {
 
 	private RSModel dematerializeWallObjectInstance(
 			int index, boolean deferSceneRemoval) {
-		return dematerializeWallObjectInstance(index, deferSceneRemoval, true);
-	}
-
-	private RSModel dematerializeWallObjectInstance(int index, boolean deferSceneRemoval, boolean updateCollision) {
 		if (index < 0 || index >= this.sceneInstanceStore.getWallObjectCapacity()
 			|| !this.isWallObjectInstanceMaterialized(index)) {
 			return null;
@@ -3880,10 +3872,11 @@ public final class mudclient implements Runnable {
 		if (!deferSceneRemoval) {
 			this.scene.removeModel(model);
 		}
-		if (updateCollision) {
-			this.world.removeWallObject_CollisionFlags(true, this.getWallObjectInstanceDir(index),
-				this.getWallObjectInstanceZ(index), this.getWallObjectInstanceX(index), this.getWallObjectInstanceID(index));
-		}
+		this.world.removeWallObject_CollisionFlags(true,
+			this.getWallObjectInstanceDir(index),
+			this.getWallObjectInstanceZ(index),
+			this.getWallObjectInstanceX(index),
+			this.getWallObjectInstanceID(index));
 		this.setWallObjectInstanceMaterialized(index, false);
 		return model;
 	}
@@ -22592,23 +22585,21 @@ public final class mudclient implements Runnable {
 					this.currentRegionMinX = midRegionX * World.SECTION_SIZE
 						- (centeredNativeWindow ? 1 : 32);
 					long phaseStartNanos = System.nanoTime();
-					boolean collisionPrepared = rolling && world.selectPreparedSurfaceCollisionRoll(sceneInstanceStore.getResidentPlacementRevision());
-					long dematerializeNanos, worldLoadNanos;
-					try {
-						if (rolling) {
-							rollSurfaceScenery(baseDX, baseDZ, !collisionPrepared || World.VERIFY_PREPARED_COLLISION_ROLL);
-						} else {
-							for (int i = 0; i < this.getGameObjectInstanceCount(); i++) this.dematerializeGameObjectInstance(i);
-							for (int i = 0; i < this.getWallObjectInstanceCount(); i++) this.dematerializeWallObjectInstance(i);
-						}
-						if (hardAreaLoad || heightOffsetChanged) this.clearResidentObjectChunkCache();
-						dematerializeNanos = System.nanoTime() - phaseStartNanos;
-						phaseStartNanos = System.nanoTime();
-						this.world.loadSections(wantX, wantZ, this.lastHeightOffset, rolling);
-						worldLoadNanos = System.nanoTime() - phaseStartNanos;
-					} finally {
-						if (collisionPrepared) world.clearSelectedSurfaceCollisionRoll();
+					if (rolling) {
+						rollSurfaceScenery(baseDX, baseDZ);
+					} else {
+						for (int i = 0; i < this.getGameObjectInstanceCount(); i++) this.dematerializeGameObjectInstance(i);
+						for (int i = 0; i < this.getWallObjectInstanceCount(); i++) this.dematerializeWallObjectInstance(i);
 					}
+					if (hardAreaLoad || heightOffsetChanged) {
+						this.clearResidentObjectChunkCache();
+					}
+					long dematerializeNanos =
+						System.nanoTime() - phaseStartNanos;
+					phaseStartNanos = System.nanoTime();
+					this.world.loadSections(wantX, wantZ, this.lastHeightOffset, rolling);
+					long worldLoadNanos =
+						System.nanoTime() - phaseStartNanos;
 					this.midRegionBaseX = nextBaseX;
 					this.midRegionBaseZ = nextBaseZ;
 					if (ROLLING_SURFACE_WINDOW) this.world.clearIncomingSurfaceScenery();
@@ -22764,39 +22755,19 @@ public final class mudclient implements Runnable {
 
 	public int getRollingSurfaceWindows() { return rollingSurfaceWindows; }
 
-	void prepareSurfaceCollisionRoll(World.NativeLayeredTerrainHaloPrebuildResult halo) {
-		world.prepareSurfaceCollisionRoll(halo, sceneInstanceStore.getResidentPlacementRevision(),
-			midRegionBaseX, midRegionBaseZ, this::collectSurfaceCollisionRetirements);
-	}
-
-	private void collectSurfaceCollisionRetirements(World.SurfaceCollisionDraft draft) {
-		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
-			int x = getGameObjectInstanceX(i), z = getGameObjectInstanceZ(i);
-			if (isGameObjectInstanceMaterialized(i) && !World.isLocalFaceTile(x - draft.dx, z - draft.dz)) {
-				draft.retire(getGameObjectInstanceID(i), x, z, getGameObjectInstanceDir(i), false);
-			}
-		}
-		for (int i = 0; i < getWallObjectInstanceCount(); i++) {
-			int x = getWallObjectInstanceX(i), z = getWallObjectInstanceZ(i);
-			if (isWallObjectInstanceMaterialized(i) && !World.isLocalFaceTile(x - draft.dx, z - draft.dz)) {
-				draft.retire(getWallObjectInstanceID(i), x, z, getWallObjectInstanceDir(i), true);
-			}
-		}
-	}
-
-	private void rollSurfaceScenery(int dx, int dz, boolean updateCollision) {
+	private void rollSurfaceScenery(int dx, int dz) {
 		RSModel[] retired = new RSModel[getGameObjectInstanceCount() + getWallObjectInstanceCount()];
 		int removed = 0, retained = 0;
 		int pixelX = -dx * tileSize, pixelZ = -dz * tileSize;
 		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
 			int x = getGameObjectInstanceX(i), z = getGameObjectInstanceZ(i);
 			if (!World.isLocalTile(x - dx, z - dz)) {
-				RSModel model = dematerializeGameObjectInstance(i, true, updateCollision);
+				RSModel model = deferGameObjectSceneRemoval(i);
 				if (model != null) retired[removed++] = model;
 				continue;
 			}
 			if (isGameObjectInstanceMaterialized(i)) {
-				if (updateCollision && !World.isLocalFaceTile(x - dx, z - dz)) {
+				if (!World.isLocalFaceTile(x - dx, z - dz)) {
 					world.updateSurfaceObjectCollision(getGameObjectInstanceID(i), x, z, getGameObjectInstanceDir(i), false);
 				}
 				getGameObjectInstanceModel(i).rebaseWorldOrigin(pixelX, pixelZ);
@@ -22808,12 +22779,12 @@ public final class mudclient implements Runnable {
 		for (int i = 0; i < getWallObjectInstanceCount(); i++) {
 			int x = getWallObjectInstanceX(i), z = getWallObjectInstanceZ(i);
 			if (!World.isLocalTile(x - dx, z - dz)) {
-				RSModel model = dematerializeWallObjectInstance(i, true, updateCollision);
+				RSModel model = deferWallObjectSceneRemoval(i);
 				if (model != null) retired[removed++] = model;
 				continue;
 			}
 			if (isWallObjectInstanceMaterialized(i)) {
-				if (updateCollision && !World.isLocalFaceTile(x - dx, z - dz)) {
+				if (!World.isLocalFaceTile(x - dx, z - dz)) {
 					world.removeWallObject_CollisionFlags(true, getWallObjectInstanceDir(i), z, x, getWallObjectInstanceID(i));
 				}
 				getWallObjectInstanceModel(i).translate2(pixelX, 0, pixelZ);

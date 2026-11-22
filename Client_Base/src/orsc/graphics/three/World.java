@@ -39,14 +39,12 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -68,15 +66,7 @@ public final class World {
 	private SurfaceDrawPreparation activeSurfaceDrawPreparation;
 	private static final boolean LIVE_SURFACE_DRAW_PREPARATION = FIXED_SURFACE_DRAW
 		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
-	private static final boolean PREPARE_COLLISION_ROLL = LIVE_SURFACE_DRAW_PREPARATION
-		&& Boolean.getBoolean("spoiledmilk.browserPrepareCollisionRoll");
-	public static final boolean VERIFY_PREPARED_COLLISION_ROLL = PREPARE_COLLISION_ROLL
-		&& Boolean.getBoolean("spoiledmilk.browserVerifyPreparedCollisionRoll");
 	private final SurfaceCollisionCells surfaceCollision = PERSISTENT_SURFACE_COLLISION ? new SurfaceCollisionCells() : null;
-	private SurfaceCollisionRoll preparedCollisionRoll;
-	private SurfaceCollisionCells selectedCollisionRoll;
-	private int preparedCollisionRollInstalls;
-	private int preparedCollisionRollVerifications;
 	private final AtomicReference<IncomingSurfaceCollision> incomingSurfaceCollision =
 		PERSISTENT_SURFACE_COLLISION ? new AtomicReference<>() : null;
 	private int earlySurfaceCollisionCells;
@@ -1926,124 +1916,15 @@ public final class World {
 			surfaceCollision.clear();
 			incomingSurfaceCollision.set(null);
 			earlySurfaceCollisionCells = 0;
-			if (preparedCollisionRoll != null) preparedCollisionRoll.result.cancel(false);
-			preparedCollisionRoll = null;
-			selectedCollisionRoll = null;
-		}
-	}
-
-	public void prepareSurfaceCollisionRoll(NativeLayeredTerrainHaloPrebuildResult halo, long placementRevision,
-		int currentBaseX, int currentBaseZ, Consumer<SurfaceCollisionDraft> collect) {
-		if (!PREPARE_COLLISION_ROLL || halo == null || halo.localTerrain == null || surfaceCollision == null
-			|| !surfaceCollision.active() || !Renderer3DSettings.isBrowserPresentationAvailable()
-			|| halo.sourceRevision != worldEditorTerrainRevision.get()) return;
-		String scope = surfaceCollisionScope();
-		if (scope == null) return;
-		PreparedLocalTerrain terrain = halo.localTerrain;
-		long collisionRevision = surfaceCollision.revision();
-		if (preparedCollisionRoll != null) {
-			if (!preparedCollisionRoll.result.isDone() || preparedCollisionRoll.matches(terrain, placementRevision, collisionRevision)) return;
-		}
-		int nextBaseX = sectionToLocalBaseTile(terrain.sectionX) - halo.worldOffsetX;
-		int nextBaseZ = sectionToLocalBaseTile(terrain.sectionY) - halo.worldOffsetZ;
-		int dx = nextBaseX - currentBaseX, dz = nextBaseZ - currentBaseZ;
-		if (Math.max(Math.abs(dx), Math.abs(dz)) != SECTION_SIZE) return;
-		SurfaceCollisionDraft draft = new SurfaceCollisionDraft(dx, dz);
-		collect.accept(draft);
-		SurfaceCollisionCells detached = surfaceCollision.copyForRoll();
-		int[][] flags = new int[terrain.collision.length][];
-		for (int x = 0; x < flags.length; x++) flags[x] = terrain.collision[x].clone();
-		Future<SurfaceCollisionCells> result = sectorPreloadExecutor.submit(() -> {
-			for (SurfaceSceneryPlacement record : draft.retired) {
-				if (record.type == 0) updateSurfaceObjectFlags(detached, record.id, record.x, record.z, record.direction, false);
-				else if (EntityHandler.getDoorDef(record.id).getDoorType() == 1) detached.wall(record.id, record.x, record.z, record.direction, false);
-			}
-			detached.install(scope, nextBaseX, nextBaseZ, flags);
-			return detached;
-		});
-		preparedCollisionRoll = new SurfaceCollisionRoll(terrain, placementRevision, collisionRevision, result);
-	}
-
-	public boolean selectPreparedSurfaceCollisionRoll(long placementRevision) {
-		if (!PREPARE_COLLISION_ROLL) return false;
-		SurfaceCollisionRoll prepared = preparedCollisionRoll;
-		preparedCollisionRoll = null;
-		if (prepared == null) return false;
-		if (!prepared.result.isDone() || !prepared.matches(pendingLocalTerrain, placementRevision, surfaceCollision.revision())) {
-			prepared.result.cancel(false);
-			return false;
-		}
-		// Retiring colliders can shade legacy terrain models. The prepared browser
-		// view applies only when there is no legacy terrain grid to update.
-		for (RSModel model : modelLandscapeGrid) if (model != null) return false;
-		try {
-			selectedCollisionRoll = prepared.result.get();
-			return true;
-		} catch (CancellationException | ExecutionException failed) {
-			return false;
-		} catch (InterruptedException interrupted) {
-			Thread.currentThread().interrupt();
-			return false;
-		}
-	}
-
-	public void clearSelectedSurfaceCollisionRoll() { selectedCollisionRoll = null; }
-
-	public int getPreparedCollisionRollInstalls() { return preparedCollisionRollInstalls; }
-	public int getPreparedCollisionRollVerifications() { return preparedCollisionRollVerifications; }
-
-	public static final class SurfaceCollisionDraft {
-		public final int dx, dz;
-		private final List<SurfaceSceneryPlacement> retired = new ArrayList<>();
-
-		private SurfaceCollisionDraft(int dx, int dz) { this.dx = dx; this.dz = dz; }
-
-		public void retire(int id, int x, int z, int direction, boolean wall) {
-			if (isLocalFaceTile(x, z)) retired.add(new SurfaceSceneryPlacement(id, x, z, direction, wall ? 1 : 0));
-		}
-	}
-
-	private static final class SurfaceCollisionRoll {
-		private final PreparedLocalTerrain terrain;
-		private final long placementRevision, collisionRevision;
-		private final Future<SurfaceCollisionCells> result;
-
-		private SurfaceCollisionRoll(PreparedLocalTerrain terrain, long placementRevision, long collisionRevision,
-			Future<SurfaceCollisionCells> result) {
-			this.terrain = terrain;
-			this.placementRevision = placementRevision;
-			this.collisionRevision = collisionRevision;
-			this.result = result;
-		}
-
-		private boolean matches(PreparedLocalTerrain terrain, long placements, long collision) {
-			return this.terrain == terrain && placementRevision == placements && collisionRevision == collision;
 		}
 	}
 
 	private void installSurfaceCollisionView(int sectionX, int sectionZ) {
 		if (surfaceCollision == null) return;
 		String scope = surfaceCollisionScope();
-		SurfaceCollisionCells selected = selectedCollisionRoll;
-		int x = sectionToLocalBaseTile(sectionX) - syntheticDeepFixtureOffsetX;
-		int z = sectionToLocalBaseTile(sectionZ) - syntheticDeepFixtureOffsetZ;
-		if (selected != null) {
-			if (!selected.hasWindow(scope, x, z)) throw new IllegalStateException("Prepared collision window changed during activation");
-			if (VERIFY_PREPARED_COLLISION_ROLL) {
-				surfaceCollision.install(scope, x, z, collisionFlags);
-				if (!surfaceCollision.matchesInstalledCollision(selected)) {
-					throw new IllegalStateException("Prepared collision differs from ordered collision replay");
-				}
-				preparedCollisionRollVerifications++;
-			}
-			surfaceCollision.installRoll(selected);
-			collisionFlags = surfaceCollision.installedFlags();
-			selectedCollisionRoll = null;
-			preparedCollisionRollInstalls++;
-			return;
-		}
 		if (scope == null) clearSurfaceCollision();
-		else surfaceCollision.install(scope, x, z, collisionFlags);
+		else surfaceCollision.install(scope, sectionToLocalBaseTile(sectionX) - syntheticDeepFixtureOffsetX,
+			sectionToLocalBaseTile(sectionZ) - syntheticDeepFixtureOffsetZ, collisionFlags);
 	}
 
 	private boolean installPreparedLocalTerrain(int plane, int sectionX, int sectionY) {
@@ -3208,18 +3089,14 @@ public final class World {
 	public boolean updateSurfaceObjectCollision(int id, int x, int z, int direction, boolean add) {
 		if (surfaceCollision == null || !surfaceCollision.active()) return false;
 		if (!isLocalFaceTile(x, z)) return true;
-		return updateSurfaceObjectFlags(surfaceCollision, id, x, z, direction, add);
-	}
-
-	private boolean updateSurfaceObjectFlags(SurfaceCollisionCells cells, int id, int x, int z, int direction, boolean add) {
 		com.openrsc.client.entityhandling.defs.GameObjectDef definition = EntityHandler.getObjectDef(id);
 		int type = definition.getType();
 		if (type == 1 || type == 2) {
 			boolean straight = direction == 0 || direction == 4;
 			int width = straight ? definition.getWidth() : definition.getHeight();
 			int height = straight ? definition.getHeight() : definition.getWidth();
-			cells.object(id, x, z, direction, width, height, type, add);
-			if (cells == surfaceCollision) setVertexLightArea(x, z, width, height);
+			surfaceCollision.object(id, x, z, direction, width, height, type, add);
+			setVertexLightArea(x, z, width, height);
 		}
 		return true;
 	}
