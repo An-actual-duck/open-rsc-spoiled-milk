@@ -12,6 +12,7 @@ import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.io.NativeLayeredTerrainChunk;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
+import com.openrsc.server.model.Path;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.PrivateMessage;
@@ -1195,15 +1196,24 @@ public final class GameStateUpdater {
 		if (structuralContext.intValue() != contextSequence) {
 			return;
 		}
-		final int[] targetCenter =
-			predictNativeTerrainCenter(player, activeTerrain);
+		final Path path = player.getWalkingQueue().path;
+		final int[] coveredExit = preparedRetargeting && path != null
+			? selectCoveredWalkingPredictionCenter(player.getX(), player.getY(),
+				activeTerrain.currentChunkX, activeTerrain.currentChunkY, path.getWaypoints())
+			: null;
+		final int[] targetCenter = coveredExit == null
+			? predictNativeTerrainCenter(player, activeTerrain) : coveredExit;
 		if (targetCenter == null) {
 			return;
 		}
 		final boolean sameTarget = pending != null && pending.matchesTarget(
 			location.getWorldSpace().getValue(), location.getCoordinate().getLevel(),
 			targetCenter[0], targetCenter[1], activeTerrain.terrainPackage.getManifestSha256());
-		if ((visualReady && !sameTarget && !preparedRetargeting) || (structuralReady && sameTarget)) return;
+		// A short path can start prefetching, but only a crossing on the
+		// queued path can replace the prediction already in progress.
+		if ((pending != null && !sameTarget && coveredExit == null) || (structuralReady && sameTarget)) {
+			return;
+		}
 		final boolean advanceToStructure = visualReady && sameTarget;
 		final NativeLayeredSceneTerrain stagedTerrain =
 			new NativeLayeredSceneTerrain(
@@ -1263,6 +1273,32 @@ public final class GameStateUpdater {
 			activeTerrain.currentChunkY,
 			usesCenteredClientSceneWindow(player),
 			player.getWalkingQueue().path.getWaypoints());
+	}
+
+	/**
+	 * Covered walking retains its active center past the original sector
+	 * boundary. Predict the first queued step that releases that center,
+	 * using the same test as nativeLayeredSceneTerrain.
+	 */
+	static int[] selectCoveredWalkingPredictionCenter(
+		final int playerX,
+		final int playerY,
+		final int activeCenterX,
+		final int activeCenterY,
+		final Iterable<Point> waypoints) {
+		final int centerX = Math.multiplyExact(activeCenterX, NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		final int centerY = Math.multiplyExact(activeCenterY, NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		for (Point step : waypoints) {
+			if (Math.max(Math.abs((long) step.getX() - playerX), Math.abs((long) step.getY() - playerY))
+					> NATIVE_LAYERED_PREDICTIVE_LEAD_TILES) {
+				return null;
+			}
+			if (!canRetainCoveredWalkingCenter(step.getX(), step.getY(), centerX, centerY)) {
+				return new int[] {Math.floorDiv(step.getX(), NATIVE_LAYERED_WIRE_CHUNK_SIZE),
+					Math.floorDiv(step.getY(), NATIVE_LAYERED_WIRE_CHUNK_SIZE)};
+			}
+		}
+		return null;
 	}
 
 	static int[] selectNativeTerrainPredictionCenter(

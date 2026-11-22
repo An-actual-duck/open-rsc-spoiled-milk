@@ -2,6 +2,7 @@ package orsc.browser;
 import java.net.InetAddress;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Properties;
 public final class BrowserNormalStartupRouteFixture {
     static int checks;static void check(boolean v,String why){checks++;if(!v)throw new AssertionError(why);}
     public static void main(String[] args)throws Exception {
@@ -12,6 +13,16 @@ public final class BrowserNormalStartupRouteFixture {
         InetAddress loop=InetAddress.getByAddress(new byte[]{127,0,0,1}),remote=InetAddress.getByAddress(new byte[]{1,2,3,4});
         BrowserBootstrap.validatePrivateConnection(loop,43639,null,"43639");checks++;
         for(InetAddress h:new InetAddress[]{loop,remote})try{BrowserBootstrap.validatePrivateConnection(h,43629,null,"43639");throw new AssertionError("wrong route accepted");}catch(java.io.IOException expected){checks++;}
+        Properties receive = new Properties();
+        check(!BrowserBootstrap.usesDetachedReceive(receive), "ordinary private client uses direct receive");
+        receive.setProperty("spoiledmilk.liveSurfaceHandoff", "true");
+        check(BrowserBootstrap.usesDetachedReceive(receive), "private live handoff uses the receive thread");
+        receive.setProperty("spoiledmilk.browserPublicAlpha", "true");
+        check(!BrowserBootstrap.usesDetachedReceive(receive), "public World Chunks uses direct receive");
+        receive.setProperty("spoiledmilk.browserWorldStreaming", "true");
+        check(BrowserBootstrap.usesDetachedReceive(receive), "public World Streaming uses the receive thread");
+        receive.setProperty("spoiledmilk.liveSurfaceHandoff", "false");
+        check(!BrowserBootstrap.usesDetachedReceive(receive), "an inactive handoff never starts the receive thread");
         final boolean[] chained={false};Thread.UncaughtExceptionHandler prior=Thread.getDefaultUncaughtExceptionHandler();
         try{
             Thread.setDefaultUncaughtExceptionHandler((t,e)->chained[0]=true);

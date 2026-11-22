@@ -3,6 +3,7 @@ package orsc.browser;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayDeque;
+import java.util.Properties;
 
 /** Private browser spike entry point. Not part of the desktop/client build. */
 public final class BrowserBootstrap {
@@ -438,12 +439,17 @@ public final class BrowserBootstrap {
         if(expected==43659&&(!"staged-login-v1".equals(fixture)||!Boolean.getBoolean("spoiledmilk.browserStagedLogin")))throw new IOException("Staged login requires its explicit private fixture");
         if(!host.isLoopbackAddress()||port!=expected)throw new IOException("Private prototype permits only the selected loopback fixture port");
     }
+    static boolean usesDetachedReceive(Properties properties) {
+        return Boolean.parseBoolean(properties.getProperty("spoiledmilk.liveSurfaceHandoff"))
+            && (!BrowserPublicAlpha.enabled(properties)
+                || Boolean.parseBoolean(properties.getProperty("spoiledmilk.browserWorldStreaming")));
+    }
+
     private static final class BrowserSocket extends SocketImpl {
         private static final int READ_AHEAD_LIMIT = 16 * 1024;
         private final boolean readAhead = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
             && Boolean.getBoolean("spoiledmilk.browserSocketReadAhead");
-        private final boolean detachedReceive = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
-            && Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
+        private final boolean detachedReceive = usesDetachedReceive(System.getProperties());
         private int connection = -1;
         private BrowserReceiveBuffer receiveBuffer;
         private byte[] received;
