@@ -533,10 +533,14 @@ Measure detached preparation, transfer and publication on their respective
 threads. A new Java executor alone shares the frame budget with the game loop.
 [CheerpJ threading](https://cheerpj.com/how-cheerpj-works/) · [Server activation fence](../../../server/src/com/openrsc/server/GameStateUpdater.java#L1795)
 
-For the next boundary trial, record the start and completion timestamps of
-each verified roll in memory and report them after the walk. This lets the
-fresh-frame sequence distinguish misses at a roll from misses in already
-resident terrain without enabling a per-frame Java trace.
+The low-overhead boundary capture found 31–64 ms of elapsed packet replay
+at every verified roll in Firefox and Chrome. The overlapping world frame
+intervals lasted 85–143 ms. Both browsers also recorded a gap above 120 ms
+more than two seconds from a replay. Compare preparation and publication
+at the roll separately from recurring producer work between rolls. Keep
+the early submission and integer scenery signature trials out of the
+player build because their pacing results were mixed.
+[Verified roll timings](seamless-world-streaming-preview.md#frame-pacing-at-verified-scene-rolls)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.

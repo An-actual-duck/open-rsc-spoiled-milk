@@ -1982,6 +1982,27 @@ retired after the mixed frame pacing results.
 
 [Firefox control](../../../output/tests/browser-gameplay-spike/scenery-signature-limbs-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/scenery-signature-limbs-trial-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/scenery-signature-limbs-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/scenery-signature-limbs-trial-chrome/chrome-result.json)
 
+#### Frame pacing at verified scene rolls
+
+The private `--roll-timings` fixture records the start and end of each
+verified packet replay in memory. It reports the three replay windows
+after the walk and matches them to fresh WebGL worker submissions. It
+preserves the normal scene and player update path. Frame-stage tracing
+stays off. Firefox and Chrome each captured all three replays at
+1920×1080 with a 960×540 logical UI, one load epoch, zero holds and zero
+sampled input closures. The server confirmed `(252,609)` in both runs.
+
+| Browser | Three packet replay durations | Frame intervals across the three replays | Longest gap over two seconds from a replay | Lowest one-second FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 64, 48, 50 ms | 143, 124, 131 ms | 168 ms | 40 FPS |
+| Chrome | 52, 31, 31 ms | 126.2, 88.5, 84.8 ms | 124.4 ms | 49 FPS |
+
+Every verified replay exceeded a 16.7 ms frame budget. Both browsers
+also had long intervals away from the rolls. The measurements record
+fresh worker submissions and elapsed Java replay time. They leave GPU
+scanout and detailed CPU attribution to separate captures.
+[Firefox roll capture](../../../output/tests/browser-gameplay-spike/scene-roll-pacing-firefox/firefox-result.json) · [Chrome roll capture](../../../output/tests/browser-gameplay-spike/scene-roll-pacing-chrome/chrome-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
@@ -2085,7 +2106,9 @@ submission gaps from the page and checks the same actor and server-confirmed
 endpoint. Add `--frame-stages` for the narrower bridge-stage timings. For a
 Chrome comparison, start a loopback ChromeDriver and use `--browser chrome`.
 Each presentation capture includes the browser's renderer and the
-distribution of fresh frame intervals. For a
+distribution of fresh frame intervals. With `--presentation-only` and
+`--surface-draw-worker`, add `--roll-timings` to match intervals to the
+three verified scene replays. For a
 manual trace, stage with
 `--manual --travel-trace` and serve it with `--travel-log
 <run>/manual-travel.ndjson`. Omit `--travel-trace` for an ordinary manual
