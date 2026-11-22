@@ -43,7 +43,6 @@ def main():
     parser.add_argument('--travel-trace', action='store_true', help='Record real submitted frames and server positions through extended travel')
     parser.add_argument('--presentation-only', action='store_true', help='Check sustained travel without detailed Java or server tracing')
     parser.add_argument('--frame-stages', action='store_true', help='Sample individual renderer stages during the presentation control')
-    parser.add_argument('--sync-sprite-calls', action='store_true', help='Use synchronous atlas plan and commit on the direct renderer')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
     parser.add_argument('--profile-minimap-walk', action='store_true', help='Keep the minimap open for the profiled walk')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
@@ -82,8 +81,6 @@ def main():
         parser.error('Presentation-only sampling requires untraced sustained live-surface travel')
     if args.frame_stages and not args.presentation_only:
         parser.error('Frame stage timing requires the presentation control')
-    if args.sync_sprite_calls and (args.surface_draw_worker or not (args.presentation_only or args.manual)):
-        parser.error('Synchronous sprite calls require the direct renderer')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -197,8 +194,7 @@ def main():
                '        new Thread(BrowserOuterCoverageProbe::run, "outer-coverage-fixture").start();')
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/', "
-           f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}, "
-           f"syncSpriteCalls:{str(args.sync_sprite_calls).lower()}}};")
+           f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}}};")
     if args.manual and args.travel_trace:
         (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
         insert(web / 'runtime.html', "    await import('./browser.js');",
@@ -285,7 +281,6 @@ def main():
         'travelTrace': args.travel_trace,
         'presentationOnly': args.presentation_only,
         'frameStages': args.frame_stages,
-        'syncSpriteCalls': args.sync_sprite_calls,
         'profilePanels': args.profile_panels,
         'profileMinimapWalk': args.profile_minimap_walk,
         'slicePreupload': args.slice_preupload,

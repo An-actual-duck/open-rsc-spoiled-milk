@@ -466,7 +466,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_deleteChunks(lib,input){
       alive();const ids=typed(input,Int32Array);if(capacity.enabled)for(const id of ids)if(pinnedChunks.has(id))throw new Error('Pinned zone geometry cannot be evicted');for(const id of ids){const x=chunks.get(id);if(!x)throw new Error('Eviction references absent GPU chunk');gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);stats.gpuBytes-=x.bytes;chunks.delete(id);}stats.evictedChunks=(stats.evictedChunks||0)+ids.length;
     },
-    Java_orsc_BrowserWebGLBridge_planWorldSprites(lib,epoch,sequence,images){
+    async Java_orsc_BrowserWebGLBridge_planWorldSprites(lib,epoch,sequence,images){
       alive();
       const start=frameStageSamples?performance.now():0;
       try{
@@ -475,7 +475,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         return missing;
       }catch(error){stats.backendFailed=true;throw error;}
     },
-    Java_orsc_BrowserWebGLBridge_commitWorldSprites(lib,epoch,sequence,pixels,quads){
+    async Java_orsc_BrowserWebGLBridge_commitWorldSprites(lib,epoch,sequence,pixels,quads){
       alive();
       const start=frameStageSamples?performance.now():0;
       try{
@@ -495,33 +495,10 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     natives.Java_orsc_BrowserWebGLBridge_overlayDeltaFrameObserved=observedOverlayDelta(observer,natives.Java_orsc_BrowserWebGLBridge_overlayDeltaFrame);
   }
   function dispose(){if(disposed)return;boundedResidency?.dispose();if(capacity.enabled){zoneController?.abort();stats.wholeZone.ready=false;stats.wholeZone.startupGpuCompleted=false;stats.wholeZone.phase='disposed';stats.wholeZone.pinnedChunks=stats.wholeZone.pinnedBytes=0;}pinnedChunks.clear();pinnedTextures.clear();pinnedMaterials.clear();wholeZoneSelection=wholeZoneCatalog=null;outputSizer.dispose();uploadValidation.dispose();if(activeTimerQuery){try{gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);}finally{gl.deleteQuery(activeTimerQuery);activeTimerQuery=null;}}pendingOwnedState=null;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.pendingOwnedState=null;worldReady.dispose();if(spriteAtlas)spriteAtlas.dispose();if(lighting)lighting.dispose();if(sky)sky.dispose();if(overlay)overlay.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
-  function failNative(error) {
-    if(uploadValidation.active)uploadValidation.fail(error);
-    worldReady.fail(String(error));
-    stats.lastError=String(error);
-    stats.lastErrorAt=performance.now();
-    report('Browser GPU error: '+error);
-    throw error;
-  }
   for(const name of Object.keys(natives)) {
-    const call=natives[name];
-    const syncSprite=options.syncSpriteCalls===true
-      && (name==='Java_orsc_BrowserWebGLBridge_planWorldSprites'||name==='Java_orsc_BrowserWebGLBridge_commitWorldSprites');
-    if(syncSprite) {
-      stats.synchronousSpriteCalls=0;
-      natives[name]=(...args)=>{
-        try {
-          uploadValidation.assertAlive();
-          stats.synchronousSpriteCalls++;
-          return call(...args);
-        } catch(error) { return failNative(error); }
-      };
-    } else {
-      natives[name]=async(...args)=>{
-        try { uploadValidation.assertAlive();return await call(...args); }
-        catch(error) { return failNative(error); }
-      };
-    }
+    const call=natives[name];natives[name]=async(...args)=>{
+      try{uploadValidation.assertAlive();return await call(...args);}catch(error){if(uploadValidation.active)uploadValidation.fail(error);worldReady.fail(String(error));stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
+    };
   }
   function queuePhysicalOutput(enabled){alive();if(!physicalControl||typeof enabled!=='boolean')throw new Error('Private physical output control unavailable');pendingPhysicalOutput=enabled;stats.pendingPhysicalOutput=enabled;return {queued:enabled,active:physicalOutput};}
   function queueStreamUploadValidation(enabled){alive();if(options.benchmarkControl!==true)throw new Error('Private benchmark control unavailable');uploadValidation.queue(enabled);}

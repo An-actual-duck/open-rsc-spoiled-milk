@@ -1286,6 +1286,48 @@ Java work. The untraced Firefox route reported a 37 ms 99th-percentile
 interval, a 141 ms longest interval and a 29 FPS lowest full second.
 [Firefox serialized trace](../../../output/tests/browser-gameplay-spike/terrain-reply-control-trace/firefox-result.json) · [Firefox primitive trace](../../../output/tests/browser-gameplay-spike/terrain-gameplay-words-trace/firefox-result.json) · [Firefox untraced walk](../../../output/tests/browser-gameplay-spike/terrain-gameplay-words-firefox/firefox-result.json)
 
+The untraced Chrome trial also accepted all three gameplay replies and
+15 draw replies. Its 99th-percentile frame interval was 34.7 ms, its
+longest interval was 160.2 ms and its lowest complete second was 28 FPS.
+The draw-only control recorded 33.5 ms, 181.4 ms and 33 FPS respectively.
+Both browsers finished the route with three gameplay rolls, one
+movement generation, and zero holds, input blocks or new load epochs.
+The delayed diagonal proof turned away from the already prepared
+destination and crossed with all nine gameplay cells ready while new
+fringe geometry was held. It retained the 16 overlapping GPU buffers.
+[Chrome untraced walk](../../../output/tests/browser-gameplay-spike/terrain-gameplay-words-chrome/chrome-result.json) · [Delayed diagonal proof](../../../output/tests/browser-gameplay-spike/terrain-flat-held-diagonal/firefox-result.json)
+
+The synchronous sprite atlas trial kept both atlas calls and their
+validation and removed the Promise handoff around their direct WebGL
+bodies. Firefox used 7,654 synchronous calls and Chrome used 8,344.
+Firefox's lowest complete second moved from 29 to 28 FPS and its
+99th-percentile frame interval stayed at 37 ms. Chrome's lowest second
+moved from 28 to 35 FPS and its 99th percentile from 34.7 to 32.3 ms.
+Firefox had three additional seconds below 50 FPS. The trial was
+removed after the browsers disagreed on its pacing benefit.
+[Firefox atlas dispatch trial](../../../output/tests/browser-gameplay-spike/atlas-sync-firefox/firefox-result.json) · [Chrome atlas dispatch trial](../../../output/tests/browser-gameplay-spike/atlas-sync-chrome/chrome-result.json)
+
+The paced gameplay decode trial yielded 8, 4 and 4 times while
+reconstructing the same three replies, publishing each only when
+complete. The worst overlap with a frame gap changed from 72 to
+70 ms, and the lowest complete second stayed at 27 FPS. Decode
+elapsed time grew from 36, 16 and 15 ms to 62, 25 and 34 ms. The
+bounded yield experiment was removed after this result.
+[Paced decode trace](../../../output/tests/browser-gameplay-spike/gameplay-reply-paced-trace/firefox-result.json)
+
+#### Java client worker feasibility
+
+The existing browser renderer worker moves WebGL submissions off the
+page. The Java client still runs its game updates, scene capture and
+bridge preparation on the page thread. A private experiment replaces
+the applet window with a small ClientPort and runs the same client JAR
+in a browser worker. Both browsers fetched the disposable server's
+real configuration and produced three 960×540 login framebuffers. All
+six framebuffers had the same RGB digest. This proves worker startup,
+private transport and login frame generation. Gameplay, GPU frame
+pacing, interactive input and the audio path are separate checks.
+[Firefox client worker startup](../../../output/tests/browser-gameplay-spike/worker-client-port-proof/firefox-worker-result.json) · [Chrome client worker startup](../../../output/tests/browser-gameplay-spike/worker-client-port-proof/chrome-worker-result.json) · [CheerpJ architecture](https://cheerpj.com/docs/explanation/architecture)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

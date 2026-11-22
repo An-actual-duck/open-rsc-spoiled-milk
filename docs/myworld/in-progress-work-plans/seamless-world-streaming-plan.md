@@ -418,14 +418,15 @@ replace the corresponding CPU draw data. Exact retained scenery can avoid
 repeat builds, with modest pacing benefit in the matched route.
 
 After terrain decode, measure where the remaining long gaps occur. The
-client and browser renderer share a browser thread. Compare useful work
-inside native calls with the time the Java caller is suspended. The sprite
-atlas uses separate plan and commit calls to send only missing pixels.
-The direct renderer can test synchronous dispatch for these two existing
-call bodies. Keep the exact atlas plan, commit, pixel data and draw order.
-Move on if it only changes elapsed time attribution or helps one browser at
-the expense of the other. Per-frame results must still verify ordinary
-authoritative movement and one continuous world presentation.
+current client and direct browser renderer share a browser thread. The
+synchronous sprite atlas trial exercised the same plans, pixels and
+draw order in both browsers and produced mixed pacing results. The next
+architectural question is whether the Java client can run in a browser
+worker with a ClientPort that owns no AWT window. Test the unchanged
+login framebuffer and private transport first. Then test the client and
+WebGL command transfer, including the cost and ownership of the existing
+UI pixels and the authoritative input fence. An isolated CPU worker
+still has to produce distinct current frames within the frame budget.
 [Scenery and terrain captures](seamless-world-streaming-preview.md#flat-scenery-replies-and-worker-packed-draws)
 
 ## Stop conditions and follow-up decisions

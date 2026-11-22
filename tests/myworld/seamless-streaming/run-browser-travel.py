@@ -286,8 +286,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
-                atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes,
-                    synchronousCalls:p.gpu?.synchronousSpriteCalls},
+                atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
                 javaRuntime:{version:p.javaVersion,release:p.runtimeVersion,wasmGC:p.wasmGC},
@@ -350,10 +349,6 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                              and any(event['message'].startswith('outer-coverage:placement-scenery-meshes:')
                                      or (event['message'].startswith('scenery-meshing:placements,')
                                          and event['message'].endswith(',true')) for event in result['browserEvents']))
-            if completed and fixture.get('syncSpriteCalls'):
-                atlas = result.get('atlas') or {}
-                completed = (atlas.get('synchronousCalls', 0) > 0
-                             and atlas['synchronousCalls'] == atlas.get('plans', 0) + atlas.get('commits', 0))
             if completed and fixture.get('sceneryWords'):
                 completed = (result.get('sceneryWorker') or {}).get('wordReplies', 0) > 0
             if completed and fixture.get('surfaceDrawWorker'):
