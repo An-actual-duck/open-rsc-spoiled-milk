@@ -102,7 +102,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private final OpenGLPixelWorkspace spriteWorkspace=new OpenGLPixelWorkspace();
     private final BrowserWorldSpriteCache spriteCache=new BrowserWorldSpriteCache();
     private static final boolean SPRITE_CACHE="cached".equals(System.getProperty("spoiledmilk.browserSpriteCache","uncached"));
-    private final BrowserLightingData lightingData=new BrowserLightingData();
+    private final BrowserLightingData lightingData=new BrowserLightingData(Boolean.getBoolean("spoiledmilk.browserWorkerGlowMasks"));
     private final BrowserSkyData skyData=new BrowserSkyData();
     private final BrowserWorldLoadState loadState=new BrowserWorldLoadState();
     private int maxTextureSize;
@@ -219,6 +219,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native int initialize(String vertex, String fragment);
     private static native void initializeLighting(String vertex,String fragment);
     private static native void uploadLightingMask(int unit,int width,int height,byte[] rgba,float[] bounds);
+    private static native void uploadGlowRecipe(int[] recipe);
     private static native void lightingFrame(float[] values);
     private static native void initializeSky();
     private static native void uploadSkyGeometry(float[] geometry,int[] ranges,int paletteCount);
@@ -1000,6 +1001,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         BrowserLightingData.Frame light=lightingData.prepare(frame,maxTextureSize,surfaceDraw,frameStageWork,24);
         long exportStarted = FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
         for(BrowserLightingData.Mask mask:light.changes)uploadLightingMask(mask.unit,mask.width,mask.height,mask.rgba,mask.bounds);
+        if (light.glowRecipe != null) uploadGlowRecipe(light.glowRecipe);
         lightingFrame(light.values);
         if (FRAME_STAGE_TRACE) frameStageWork[29] = (System.nanoTime() - exportStarted) / 1_000_000f;
     }

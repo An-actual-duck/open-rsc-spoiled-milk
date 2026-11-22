@@ -7,7 +7,7 @@ const P='Java_orsc_BrowserWebGLBridge_';
 // N nullable float plane. P nullable int plane.
 export const RENDER_WORKER_SCHEMA=Object.freeze({
   initialize:['s','s'],initializeWholeZone:['s','I','I'],wholeZoneFrame:['I','I'],initializeLighting:['s','s'],initializeSky:[],
-  uploadLightingMask:['i','i','i','B','F'],lightingFrame:['F'],uploadSkyGeometry:['F','I','i'],skyFrame:['F','F'],
+  uploadLightingMask:['i','i','i','B','F'],uploadGlowRecipe:['I'],lightingFrame:['F'],uploadSkyGeometry:['F','I','i'],skyFrame:['F','F'],
   overlayFrame:['i','i','i','n','n','i','b','N'],uploadCompactSceneChunk:['i','I','I','I'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],
   present:['i','i','b','F','F','I','I','P','n','n','N'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],

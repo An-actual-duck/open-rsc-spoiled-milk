@@ -235,6 +235,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     },
     async Java_orsc_BrowserWebGLBridge_initializeLighting(lib,vertex,fragment){alive();if(!lighting)throw new Error('Browser lighting initialized before world program');lighting.initialize(vertex,fragment);},
     async Java_orsc_BrowserWebGLBridge_uploadLightingMask(lib,unit,width,height,rgba,bounds){alive();lighting.uploadMask(unit,width,height,rgba,bounds);},
+    async Java_orsc_BrowserWebGLBridge_uploadGlowRecipe(lib,recipe){alive();lighting.uploadGlowRecipe(typed(recipe,Int32Array));},
     async Java_orsc_BrowserWebGLBridge_lightingFrame(lib,values){alive();lightingValues=new Float32Array(values);},
     async Java_orsc_BrowserWebGLBridge_initializeSky(){alive();sky.initialize();},
     async Java_orsc_BrowserWebGLBridge_uploadSkyGeometry(lib,geometry,ranges,paletteCount){alive();sky.uploadGeometry(geometry,ranges,paletteCount);},

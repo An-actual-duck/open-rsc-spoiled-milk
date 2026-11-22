@@ -18,6 +18,8 @@ public final class BrowserLightingData {
     private final TerrainDefinitionField terrain = new TerrainDefinitionField();
     private final RemasterGlowMaskBuilder glow = new RemasterGlowMaskBuilder();
     private final GeometryShadowRoofMask.Cache roofs = new GeometryShadowRoofMask.Cache();
+    private final boolean workerGlow;
+    private int[] lastGlowRecipe;
     private long terrainRevision = Long.MIN_VALUE, glowSignature = Long.MIN_VALUE, roofSignature = Long.MIN_VALUE;
     private DirectionalShadowProjection near, far, previousFar;
     private RendererShadowSettings.Quality quality;
@@ -26,6 +28,10 @@ public final class BrowserLightingData {
     private int residentTerrainFields;
 
     public int getResidentTerrainFields() { return residentTerrainFields; }
+
+    public BrowserLightingData() { this(false); }
+
+    BrowserLightingData(boolean workerGlow) { this.workerGlow = workerGlow; }
 
     public static final class Mask {
         public final int unit, width, height;
@@ -41,7 +47,10 @@ public final class BrowserLightingData {
     public static final class Frame {
         public final float[] values;
         public final Mask[] changes;
-        Frame(float[] values,List<Mask> changes){this.values=values;this.changes=changes.toArray(new Mask[changes.size()]);}
+        final int[] glowRecipe;
+        Frame(float[] values,List<Mask> changes,int[] glowRecipe){
+            this.values=values;this.changes=changes.toArray(new Mask[changes.size()]);this.glowRecipe=glowRecipe;
+        }
     }
     public static String depthVertex(){return depthSource("DEPTH_VERTEX");}
     public static String depthFragment(){return depthSource("DEPTH_FRAGMENT");}
@@ -51,6 +60,7 @@ public final class BrowserLightingData {
     }
     public void clear() {
         terrain.clear();glow.clear();roofs.clear();terrainRevision=glowSignature=roofSignature=Long.MIN_VALUE;
+        lastGlowRecipe=null;
         near=far=previousFar=null;quality=null;farAge=blendAge=0;
     }
     public Frame prepare(Renderer3DFrame frame,int maxTextureSize) {
@@ -70,7 +80,7 @@ public final class BrowserLightingData {
             if(texture!=null&&!RendererShadowCasterPolicy.isFarCaster(texture))excluded.add(texture.getTextureId());
         float[] values=new float[HEADER_FLOATS+excluded.size()];values[0]=1;values[15]=frame==null?0:frame.getSignedWorldLevel();
         values[80]=excluded.size();for(int n=0;n<excluded.size();n++)values[81+n]=excluded.get(n);
-        if(!populated){near=far=previousFar=null;farAge=blendAge=0;return new Frame(values,changes);}
+        if(!populated){near=far=previousFar=null;farAge=blendAge=0;lastGlowRecipe=null;return new Frame(values,changes,null);}
         if(world.getChunkCount()>256)throw new IllegalArgumentException("Browser lighting scene exceeds chunk bound");
         // AO uses absolute world coordinates even when sunlight shadows are off.
         int offX=GeometryShadowCoordinates.worldOffsetX(world),offZ=GeometryShadowCoordinates.worldOffsetZ(world);
@@ -90,17 +100,27 @@ public final class BrowserLightingData {
             }
         }
         started = recordPhase(timings, timingOffset + 1, started);
-        RemasterGlowMaskBuild built=directional?glow.build(world):null;
-        if(built!=null&&built.mask!=null) {
-            RemasterGlowMask mask=built.mask;values[14]=1;putBounds(values,28,mask.minX,mask.minZ,mask.invSpanX,mask.invSpanZ);
-            if(glowSignature!=mask.signature){changes.add(new Mask(2,mask.width,mask.height,mask.pixels(),bounds(values,28)));glowSignature=mask.signature;}
+        RemasterGlowMaskBuilder.WorkerRecipe recipe = directional && workerGlow ? RemasterGlowMaskBuilder.workerRecipe(world) : null;
+        int[] glowUpload = null;
+        if (recipe != null) {
+            values[14] = 1;
+            putBounds(values, 28, recipe.minX, recipe.minZ, recipe.invSpanX, recipe.invSpanZ);
+            if (!Arrays.equals(lastGlowRecipe, recipe.words)) lastGlowRecipe = glowUpload = recipe.words;
+            glowSignature = Long.MIN_VALUE;
+        } else {
+            lastGlowRecipe = null;
+            RemasterGlowMaskBuild built=directional?glow.build(world):null;
+            if(built!=null&&built.mask!=null) {
+                RemasterGlowMask mask=built.mask;values[14]=1;putBounds(values,28,mask.minX,mask.minZ,mask.invSpanX,mask.invSpanZ);
+                if(glowSignature!=mask.signature){changes.add(new Mask(2,mask.width,mask.height,mask.pixels(),bounds(values,28)));glowSignature=mask.signature;}
+            }
         }
         recordPhase(timings, timingOffset + 2, started);
         RendererShadowSettings.Quality next=RendererShadowSettings.getQuality();
         if(quality!=next){near=far=previousFar=null;farAge=blendAge=0;}quality=next;
         values[2]=next.ordinal();
         if(frame.isUnderground()||!directional||next==RendererShadowSettings.Quality.OFF) {
-            near=far=previousFar=null;farAge=blendAge=0;return new Frame(values,changes);
+            near=far=previousFar=null;farAge=blendAge=0;return new Frame(values,changes,glowUpload);
         }
         if(maxTextureSize<next.nearSize)throw new IllegalArgumentException("Browser texture limit cannot preserve selected shadow quality");
         int farSize=OpenGLGeometryShadows.supportedFarSize(maxTextureSize);
@@ -139,7 +159,7 @@ public final class BrowserLightingData {
         values[16]=1f/next.nearSize;values[17]=far==null?0:1f/farSize;values[18]=near.worldTexel;values[19]=far==null?0:far.worldTexel;
         System.arraycopy(near.matrix,0,values,32,16);if(far!=null)System.arraycopy(far.matrix,0,values,48,16);if(previousFar!=null)System.arraycopy(previousFar.matrix,0,values,64,16);
         recordPhase(timings, timingOffset + 4, started);
-        return new Frame(values,changes);
+        return new Frame(values,changes,glowUpload);
     }
 
     private static long recordPhase(float[] timings, int at, long started) {

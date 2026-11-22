@@ -1,10 +1,11 @@
 import {createBrowserShadows} from './browser-shadows.js';
+import {createBrowserGlowRaster} from './browser-glow-raster.js';
 
 /** Terrain/roof/glow textures use the byte-identical production Java builders.
  * All input arrays are copied or uploaded before a native bridge call returns. */
 export function createBrowserLighting(gl,options) {
   const {program,stats,ownedFrame}=options,shadows=createBrowserShadows(gl,options),masks=new Map(),locations=new Map();
-  const MAX_MASK_BYTES=8*1024*1024;let values=null,disposed=false;
+  const MAX_MASK_BYTES=8*1024*1024;let values=null,disposed=false,invisibleGlowRecipe=false,rasterGlow;
   stats.lightingMaskBytes=0;stats.lightingMaskBudgetBytes=MAX_MASK_BYTES;
   function loc(name){if(!locations.has(name))locations.set(name,gl.getUniformLocation(program,name));return locations.get(name);}
   function initialize(vertex,fragment){shadows.initialize(vertex,fragment);}
@@ -18,9 +19,18 @@ export function createBrowserLighting(gl,options) {
       const bytesView=ArrayBuffer.isView(input)?new Uint8Array(input.buffer,input.byteOffset,input.byteLength):new Uint8Array(input);
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,bytesView);
       stats.lightingMaskBytes+=bytes-(old?old.bytes:0);stats.lightingMaskUploads=(stats.lightingMaskUploads||0)+1;masks.set(unit,{texture,bytes,width,height,bounds:new Float32Array(bounds)});
+      if(unit===2)invisibleGlowRecipe=false;
     } finally {if(!ownedFrame?.active){gl.bindTexture(gl.TEXTURE_2D,binding);gl.activeTexture(active);}else gl.activeTexture(gl.TEXTURE0);}
   }
-  function prepare(input,draws){if(disposed)throw new Error('Browser lighting disposed');values=new Float32Array(input);shadows.prepare(values,draws);}
+  function uploadGlowRecipe(recipe){
+    if(disposed)throw new Error('Browser lighting disposed');
+    if(!rasterGlow)rasterGlow=createBrowserGlowRaster();
+    const mask=rasterGlow(recipe);
+    if(mask.visible)uploadMask(2,mask.axis,mask.axis,mask.rgba,mask.bounds);
+    invisibleGlowRecipe=!mask.visible;
+    stats.lightingGlowRecipes=(stats.lightingGlowRecipes||0)+1;
+  }
+  function prepare(input,draws){if(disposed)throw new Error('Browser lighting disposed');values=new Float32Array(input);if(invisibleGlowRecipe)values[14]=0;shadows.prepare(values,draws);}
   function bindMask(unit,enabled,prefix,at){
     const mask=masks.get(unit),active=enabled&&mask;gl.uniform1i(loc(prefix+'Enabled'),active?1:0);if(!active)return;
     gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,mask.texture);
@@ -41,6 +51,6 @@ export function createBrowserLighting(gl,options) {
     gl.activeTexture(gl.TEXTURE0);
   }
   function bindReceiverPlane(plane){gl.uniform1i(loc('uGeometryRoofReceivers'),values&&values[1]===1&&values[11]===1&&values[12]===plane&&masks.has(5)?1:0);}
-  function dispose(){if(disposed)return;shadows.dispose();for(const mask of masks.values())gl.deleteTexture(mask.texture);masks.clear();stats.lightingMaskBytes=0;disposed=true;}
-  return {initialize,uploadMask,prepare,bindReceiver,bindReceiverPlane,dispose};
+  function dispose(){if(disposed)return;shadows.dispose();for(const mask of masks.values())gl.deleteTexture(mask.texture);masks.clear();rasterGlow=undefined;stats.lightingMaskBytes=0;disposed=true;}
+  return {initialize,uploadMask,uploadGlowRecipe,prepare,bindReceiver,bindReceiverPlane,dispose};
 }

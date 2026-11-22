@@ -69,6 +69,7 @@ def main():
     parser.add_argument('--retarget-walk', action='store_true', help='Change course before the original predicted window activates')
     parser.add_argument('--steady-walk', action='store_true', help='Repeat the approach inside the installed area after its prediction is ready')
     parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
+    parser.add_argument('--worker-glow-masks', action='store_true', help='Rasterize exact glow masks on the render worker')
     parser.add_argument('--local-sprite-plan', action='store_true', help='Plan sprites without a render-worker round trip')
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
     parser.add_argument('--worker-scenery-placements', action='store_true', help='Build canonical scenery inputs from placements in the detached worker')
@@ -85,6 +86,8 @@ def main():
     parser.add_argument('--dependency-jar', type=Path, help='Use an explicit immutable client build for a matched comparison')
     parser.add_argument('--client-source-commit', help='Record the source commit of the supplied client build')
     args = parser.parse_args()
+    if args.worker_glow_masks and not args.surface_draw_worker:
+        parser.error('Glow mask rasterization requires the render worker')
     if args.compatibility_mesh_worker and not (args.terrain_words and args.surface_mesh_worker and args.fixed_surface_draw):
         parser.error('Compatibility mesh preparation requires worker terrain words and fixed surface drawing')
     sustained_trace = args.sustained_walk and args.travel_trace
@@ -202,6 +205,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserPresentationRollTimings", "{str(args.roll_timings).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPresentationRollPacketTimings", "{str(args.roll_packet_timings).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserFrameStageTrace", "{str(args.frame_stages).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserWorkerGlowMasks", "{str(args.worker_glow_masks).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProjectionDemand", "{str(args.projection_demand).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserResidentCameraCull", "{str(args.resident_camera_cull).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserIntegerCameraBounds", "{str(args.integer_camera_bounds).lower()}");\n'
@@ -329,6 +333,7 @@ def main():
         'travelTrace': args.travel_trace,
         'presentationOnly': args.presentation_only,
         'frameStages': args.frame_stages,
+        'workerGlowMasks': args.worker_glow_masks,
         'projectionDemand': args.projection_demand,
         'residentCameraCull': args.resident_camera_cull,
         'integerCameraBounds': args.integer_camera_bounds,
