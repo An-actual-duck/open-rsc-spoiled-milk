@@ -2,7 +2,6 @@ package orsc;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
 import java.util.*;
 import orsc.graphics.three.*;
 
@@ -41,10 +40,6 @@ public final class RemasterGlowMaskContentCacheFixture {
         if(differentPixels)require(!Arrays.equals(pixels(prior),pixels(result.mask)),label+" really changes pixels");
     }
     public static void main(String[] args)throws Exception {
-        if (args.length == 1 && args[0].equals("--worker-oracle")) {
-            workerOracle();
-            return;
-        }
         Renderer3DWorldChunkFrame original=frame(1000,11,0,1,A);
         RemasterGlowMaskBuilder builder=new RemasterGlowMaskBuilder();RemasterGlowMask first=builder.build(original).mask;
         byte[] originalBytes=pixels(first);
@@ -100,40 +95,5 @@ public final class RemasterGlowMaskContentCacheFixture {
         int retained=cache(collisionBuilder).size();try{collisionBuilder.build(frame(1000,3,0,1,b));throw new AssertionError("revision overflow accepted");}catch(ArithmeticException expected){checks++;}
         require(cache(collisionBuilder).size()==retained,"overflow cannot replace cached masks");
         System.out.println("PASS glow-mask content cache: "+checks+" checks; exact pixel dependencies, unrelated-geometry hits, collision-safe revisions, clear/LRU and immutable buffers");
-    }
-
-    private static void workerOracle() throws Exception {
-        Random random = new Random(47310L);
-        RemasterGlowMaskBuilder builder = new RemasterGlowMaskBuilder();
-        for (int scenario = 0; scenario < 32; scenario++) {
-            Renderer3DWorldChunkFrame.GlowEmitter[] emitters = new Renderer3DWorldChunkFrame.GlowEmitter[1 + scenario % 12];
-            for (int index = 0; index < emitters.length; index++) {
-                int x = scenario == 1 ? 50_003 : random.nextInt(2401) - 1200;
-                int z = scenario == 1 ? -60_031 : random.nextInt(2401) - 1200;
-                int color = scenario == 0 ? 0 : random.nextInt(0x1000000);
-                emitters[index] = emitter(x, 0, z, 1 + random.nextInt(1800), color, 1 + random.nextInt(255),
-                    Renderer3DModelKind.GAME_OBJECT);
-            }
-            if (scenario == 13) emitters[1] = emitters[0];
-            Renderer3DWorldChunkFrame world = frame(1300 + scenario, scenario, 0, 1, emitters);
-            RemasterGlowMaskBuilder.WorkerRecipe recipe = RemasterGlowMaskBuilder.workerRecipe(world);
-            if (recipe == null) throw new AssertionError("Expected a worker glow recipe");
-            RemasterGlowMaskBuild built = builder.build(world);
-            int[] bounds = {Float.floatToIntBits(recipe.minX), Float.floatToIntBits(recipe.minZ),
-                Float.floatToIntBits(recipe.invSpanX), Float.floatToIntBits(recipe.invSpanZ)};
-            String hash = "empty";
-            if (built != null) {
-                RemasterGlowMask mask = built.mask;
-                int[] expected = {Float.floatToIntBits(mask.minX), Float.floatToIntBits(mask.minZ),
-                    Float.floatToIntBits(mask.invSpanX), Float.floatToIntBits(mask.invSpanZ)};
-                if (!Arrays.equals(bounds, expected)) throw new AssertionError("Recipe changed production bounds");
-                StringBuilder hex = new StringBuilder();
-                for (byte value : MessageDigest.getInstance("SHA-256").digest(pixels(mask))) {
-                    hex.append(String.format("%02x", value & 255));
-                }
-                hash = hex.toString();
-            }
-            System.out.println(Arrays.toString(recipe.words) + "\t" + Arrays.toString(bounds) + "\t" + hash);
-        }
     }
 }

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 final class RemasterGlowMaskBuilder {
-	private static final int MAX_WORKER_EMITTERS = 512;
 	private static final String TEXTURE_SIZE_PROPERTY = "spoiledmilk.remasterGlowMaskTextureSize";
 	private static final String TEXTURE_SIZE_ENV = "SPOILED_MILK_REMASTER_GLOW_MASK_TEXTURE_SIZE";
 	private static final String CACHE_ENTRIES_PROPERTY = "spoiledmilk.remasterGlowMaskCacheEntries";
@@ -69,27 +68,7 @@ final class RemasterGlowMaskBuilder {
 		cacheByInputs.clear();
 	}
 
-	static WorkerRecipe workerRecipe(Renderer3DWorldChunkFrame frame) {
-		List<Renderer3DWorldChunkFrame.GlowEmitter> emitters = collectEmitters(frame);
-		if (emitters.isEmpty() || emitters.size() > MAX_WORKER_EMITTERS) return null;
-		RemasterGlowMaskBounds bounds = RemasterGlowMaskBounds.from(frame, emitters);
-		return bounds == null ? null : new WorkerRecipe(bounds, new MaskInputs(bounds, emitters).values);
-	}
-
-	static final class WorkerRecipe {
-		final int[] words;
-		final float minX, minZ, invSpanX, invSpanZ;
-
-		private WorkerRecipe(RemasterGlowMaskBounds bounds, int[] words) {
-			this.words = words;
-			minX = bounds.minX;
-			minZ = bounds.minZ;
-			invSpanX = bounds.invSpanX();
-			invSpanZ = bounds.invSpanZ();
-		}
-	}
-
-	private static List<Renderer3DWorldChunkFrame.GlowEmitter> collectEmitters(
+	private List<Renderer3DWorldChunkFrame.GlowEmitter> collectEmitters(
 		Renderer3DWorldChunkFrame chunkFrame) {
 		List<Renderer3DWorldChunkFrame.GlowEmitter> emitters =
 			new ArrayList<Renderer3DWorldChunkFrame.GlowEmitter>();

@@ -2303,8 +2303,8 @@ In the first matched pair, both browsers accepted five worker glow
 recipes. The first two switch intervals were shorter with the worker.
 The longest intervals away from replay grew in both browsers. No
 additional interval over 35 ms followed any switch within two seconds
-in the candidate walks. The reversed-order pair checks whether those
-differences persist.
+in the candidate walks. The reversed-order pair measured whether those
+differences persisted.
 
 | Browser | First three switch intervals | 99th percentile | Longest interval away from replay | Lowest one-second FPS |
 | --- | ---: | ---: | ---: | ---: |
@@ -2314,6 +2314,20 @@ differences persist.
 All four walks completed three verified rolls and the authoritative
 reversal with no holds or input closures at the same display sizes.
 [Chrome control](../../../output/tests/browser-gameplay-spike/worker-glow-mask-control-chrome/chrome-result.json) · [Chrome worker](../../../output/tests/browser-gameplay-spike/worker-glow-mask-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/worker-glow-mask-control-firefox/firefox-result.json) · [Firefox worker](../../../output/tests/browser-gameplay-spike/worker-glow-mask-trial-firefox/firefox-result.json)
+
+The reversed-order comparison again shortened some roll frames.
+Chrome's longest interval went from 112.9 to 106.1 ms and Firefox's
+went from 130 to 129 ms. Chrome's lowest second went from 56 to 54 FPS
+and Firefox's went from 54 to 51 FPS. Both browsers spent more measured
+seconds below 60 in the candidate repeats. Firefox's 99th percentile
+rose from 25 to 26 ms. Chrome's fell from 23.3 to 22.1 ms.
+
+The glow trial was retired after both pairs. Its exact code and 128-case
+parity proof remain in commit `fad09e1c6`. Port 8659 continues to serve
+the compatibility mesh worker, which consistently improved the
+between-roll pacing. Focus the next change on the local scene
+installation cost inside replay.
+[Chrome repeat control](../../../output/tests/browser-gameplay-spike/worker-glow-mask-repeat-control-chrome/chrome-result.json) · [Chrome repeat worker](../../../output/tests/browser-gameplay-spike/worker-glow-mask-repeat-trial-chrome/chrome-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/worker-glow-mask-repeat-control-firefox/firefox-result.json) · [Firefox repeat worker](../../../output/tests/browser-gameplay-spike/worker-glow-mask-repeat-trial-firefox/firefox-result.json)
 
 #### Java client worker feasibility
 

@@ -479,7 +479,6 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
-                lightingGlowRecipes:p.gpu?.lightingGlowRecipes || 0,
                 javaRuntime:{version:p.javaVersion,release:p.runtimeVersion,wasmGC:p.wasmGC},
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
                 physicalOutput:p.gpu?.physicalOutput,
@@ -576,8 +575,6 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 completed = (result.get('sceneryWorker') or {}).get('wordReplies', 0) > 0
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
-            if completed and fixture.get('workerGlowMasks'):
-                completed = result['lightingGlowRecipes'] > 0
             if completed and fixture.get('localSpritePlan'):
                 plans = (result.get('renderWorker') or {}).get('localSpritePlans', 0)
                 replayed = (result.get('atlas') or {}).get('plans', 0)

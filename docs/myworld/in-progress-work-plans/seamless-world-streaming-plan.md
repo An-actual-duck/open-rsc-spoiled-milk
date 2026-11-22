@@ -601,11 +601,24 @@ private player preview uses the worker. Its remaining intervals over
 100 ms include the verified rolls. In both browsers, preparing lighting
 consumed up to 20–30 ms on the first frame after a switch, alongside
 packet replay and scene capture. The per-stage capture isolated 10–18 ms
-of glow-mask work on each browser's first two cold rolls. Test rasterizing
-the exact mask on the existing render worker from the Java builder's
-ordered input. Check the texture bytes, renderer completion intervals
-and authoritative travel before advancing the preview again.
+of glow-mask work on each browser's first two cold rolls. The render
+worker produced byte-identical masks and shortened some switch frames.
+The repeated walks had mixed overall pacing, so the trial was retired.
+The compatibility mesh worker remains enabled on the private preview.
 [Terrain geometry preparation between rolls](seamless-world-streaming-preview.md#terrain-geometry-preparation-between-rolls)
+
+The first-roll packet measurements continue to put the largest span in
+legacy local scene installation. Most of the work inside that span
+retires scenery and translates retained models. The earlier cached-row
+trial removed most vertex writes with mixed end-to-end pacing.
+The next structural candidate should give retained scenery a persistent
+world-space position in the client instance store. Derive the current
+local view from that position and origin, and apply membership changes
+for the entering and leaving cells. Check stable model identity,
+interaction order, collision, and the alignment of the new view with
+the verified server context before switching the normal reader to it.
+The packet fence continues to publish the authority transition.
+[Region installation costs](seamless-world-streaming-preview.md#packet-costs-inside-a-verified-scene-roll) · [Prior row-write trial](seamless-world-streaming-preview.md#deferred-cached-transform-rows)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
