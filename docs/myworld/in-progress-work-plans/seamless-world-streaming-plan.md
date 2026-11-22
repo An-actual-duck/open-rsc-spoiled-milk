@@ -673,6 +673,38 @@ before the switch, with exact ordered emitters and bounds checked before
 adoption. The earlier glow experiment ran the raster on the renderer
 worker during the switch frame.
 
+The scenery trial confirmed that all 276 cell recipes matched the
+literal first-frame inputs in the Firefox verification walk. Both
+timing candidates reused those same cells. Chrome's first switch was
+6 ms slower and Firefox's was 44 ms slower. Retire reuse at the frame
+boundary and move preparation farther ahead of the switch.
+[First-frame scenery input trial](seamless-world-streaming-preview.md#reusing-exact-scenery-inputs-on-the-first-frame)
+
+`getPreparedTerrainMeshes(true)` already exposes the checked prediction's
+compatibility center and outer terrain as soon as the future scene is
+ready. Use that list and the retained and staged scenery products to
+assemble a candidate lighting recipe before the switch. Include animated
+emitters from the currently accepted scene. The first actual frame still
+supplies the authoritative ordered emitters and bounds. Adopt the early
+worker result only when every word matches. Measure receipt-to-use lead
+time and the number of actual first frames served by a prepared mask.
+Keep the current raster as the fallback for a new emitter, view, or map
+revision. A desktop worker or a Java executor within the browser runtime
+does not establish browser thread isolation.
+
+The ordered replay itself still exceeds a frame budget. A larger
+follow-up should make walking adoption consume an already verified
+scene revision. The server already provides scoped scenery pages for
+all entering and retained gameplay cells. It also sends ordered deltas
+and a count and hash fence at the actual switch. Compare next-cell
+membership against those deltas while retaining the original actor
+packets and precise placement order. The existing 32-bit fence is a
+consistency check. Exact staged reuse requires verified cell revision
+identities and an exact comparison or revision reference covering
+each change. Only a ready destination can use a prebuilt collision,
+picking and scene membership product. Late or invalidated cells use
+the normal authoritative path.
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet

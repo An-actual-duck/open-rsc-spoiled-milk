@@ -382,13 +382,6 @@ public final class BrowserOuterCoverageProbe {
 			BrowserBootstrap.report("outer-coverage:projection-omitted:models=" + (omitted[0] - omittedStart[0])
 				+ ":vertices=" + (omitted[1] - omittedStart[1]));
 		}
-		int[] residentInputs = client.getPreparedResidentInputWork();
-		if (residentInputs.length != 0) {
-			if (residentInputs[0] == 0 || residentInputs[1] + residentInputs[2] == 0)
-				throw new IllegalStateException("No resident scenery inputs reused");
-			BrowserBootstrap.report("outer-coverage:prepared-resident-inputs:frames=" + residentInputs[0]
-				+ ":reused=" + residentInputs[1] + ":staged=" + residentInputs[2] + ":rebuilt=" + residentInputs[3]);
-		}
 		if (Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements")) {
 			int verified = client.getVerifiedWorkerSceneryMeshes(), mismatched = client.getMismatchedWorkerSceneryMeshes();
 			if (verified == 0 || mismatched != 0) throw new IllegalStateException("Scenery mesh parity " + verified + "/" + mismatched

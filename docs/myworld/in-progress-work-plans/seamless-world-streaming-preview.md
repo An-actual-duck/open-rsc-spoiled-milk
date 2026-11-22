@@ -2439,6 +2439,43 @@ fixture are preserved at `4eb906be9`. All runs used the same JAR with
 SHA-256 `4df1352474d02fa1bc790d985b214ce9d0921c8f7790286ec8081834a4301e4d`.
 [Chrome control](../../../output/tests/browser-gameplay-spike/collision-cell-query-chrome-control/chrome-result.json) · [Chrome direct queries](../../../output/tests/browser-gameplay-spike/collision-cell-query-chrome-cells/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/collision-cell-query-firefox-control/firefox-result.json) · [Firefox direct queries](../../../output/tests/browser-gameplay-spike/collision-cell-query-firefox-cells/firefox-result.json) · [Native parity](../../../output/tests/seamless-world-streaming/collision-cell-query-build/native-cell-parity.log)
 
+#### Reusing exact scenery inputs on the first frame
+
+The trial groups the first frame's live scenery descriptors by world
+cell. It borrows the complete sorted input from the previous cell or
+from detached preparation when all placements and sampled elevations
+match. Candidate cells keep the same world key, chunk order, and counts
+of live and presentation-only models. A cell that differs uses the
+captured descriptors to assemble literal inputs. Animated models keep
+their frame-local input path.
+
+The focused native comparison passed 1,800 checks with shuffled order,
+duplicate placements, different tile sizes and altered descriptors. The
+Firefox verification walk compared the assembled inputs with the literal
+builder at all three switches. It reused 215 previous and 61 staged cell
+inputs, with zero literal cell rebuilds. The comparison covered ordering,
+anchor, offsets, model identities, cache keys, and every canonical
+placement and elevation. The timing pairs ran with this verification
+off. All walks used the same client JAR from `cbed543f0`, with SHA-256
+`15cfcaea0742877ff145ac037dd535c4ac62757b29c1632676d9a6a37e930b6d`.
+[Firefox input parity](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-firefox-verify/firefox-result.json) · [Native input comparison](../../../output/tests/seamless-world-streaming/prepared-resident-inputs-build/native-exactness.log)
+
+Both timing candidates also reused the same 276 cells. The four walks
+completed three verified switches and returned to `(252,609,0)` on the
+server at 1920×1080 output and 960×540 logical size. All stayed in one
+load epoch with zero held frames and input closures.
+
+| Browser | Three switch intervals, control → reuse | Longest interval between switches | 99th percentile | Lowest one-second FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 113.7, 83.2, 82.1 → 119.8, 83.4, 81.2 ms | 51.7 → 53.7 ms | 21.8 → 22.7 ms | 53 → 53 |
+| Firefox | 119, 132, 129 → 163, 84, 121 ms | 57 → 75 ms | 25 → 25 ms | 53 → 48 |
+
+Retire the candidate. It removes a second placement and elevation
+capture and reuses the sorted scenery recipes. The live comparison and
+the rest of the first-frame work still run after replay. The player
+preview remains the compatibility mesh worker build.
+[Chrome control](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-chrome-control/chrome-result.json) · [Chrome reuse](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-chrome-prepared/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-firefox-control/firefox-result.json) · [Firefox reuse](../../../output/tests/browser-gameplay-spike/prepared-resident-inputs-firefox-prepared/firefox-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
