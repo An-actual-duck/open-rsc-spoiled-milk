@@ -595,12 +595,11 @@ The focused capture saw local terrain cropping and array conversion on
 the page thread between verified replays. The compatibility-only trial
 moves a missing crop to the worker when the fixed WebGL surface is
 already resident. The native fixture matched the full worker reply.
-The first matched walks replaced three local crops in each browser and
-reduced the longest submission intervals away from replay below 57 ms.
-Repeat with the order reversed before updating the player preview. The
-slowest windows now include the verified rolls. Separate work before,
-inside, and after each replay so its packet duration is one part of the
-frame delay measurement.
+Both run orders replaced three local crops and reduced the longest
+submission intervals away from replay below 57 ms in each browser. The
+private player preview uses the worker. Its remaining intervals over
+100 ms include the verified rolls. Separate the work before, inside, and
+after each replay to measure what still delays the next frame.
 [Terrain geometry preparation between rolls](seamless-world-streaming-preview.md#terrain-geometry-preparation-between-rolls)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java

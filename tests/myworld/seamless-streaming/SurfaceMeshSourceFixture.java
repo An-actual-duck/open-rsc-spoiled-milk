@@ -62,7 +62,7 @@ public final class SurfaceMeshSourceFixture {
 		Method local = World.class.getDeclaredMethod("buildPresentationGeometry", int.class, int.class, int.class,
 			NativeLayeredTerrainSnapshot.class, int.class, int.class, boolean.class, boolean.class, slice);
 		local.setAccessible(true);
-		for (int[] cell : new int[][] {{-2, 0}, {2, -2}, {2, 2}}) {
+		for (int[] cell : new int[][] {{-2, 0}, {2, -2}, {2, 2}, {1, 0}, {-1, 1}}) {
 			int x = centerX + cell[0], z = centerZ + cell[1];
 			byte[] footprint = field.surfaceWorkerSource(x, z);
 			if (!Arrays.equals(footprint, NativeLayeredTerrainSnapshot.readSurfaceWorkerSource(footprint).surfaceWorkerSource(x, z))) {

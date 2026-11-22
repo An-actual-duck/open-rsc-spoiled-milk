@@ -2,15 +2,13 @@
 
 ## Current Full HD browser preview
 
-The loopback preview on port 8593 uses exact integer rounding in the
-resident camera bounds check. It carries compact scenery conversion,
-the empty roof removal guard, and cached transforms through
-translation-only scene rolls. The separate WebGL worker presents at
-1920×1080 with the original 960×540 logical UI. The disposable account
-is `browserdemo` / `BrowserProof13`. Normal keyboard and mouse login
-reached the playable scene at `(239,609)`. Port 8579 offers the previous
-build for comparison.
-[Play the updated preview](http://127.0.0.1:8593/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-player-preview/manual-login-result.json) · [Pacing results](#integer-camera-bounds) · [Compare on port 8579](http://127.0.0.1:8579/?mode=webgl&physical=on)
+The loopback preview on port 8659 prepares missing compatibility terrain
+meshes in the existing terrain worker. The separate WebGL worker presents
+at 1920×1080 with the original 960×540 logical UI. The disposable login is
+`browserdemo` / `BrowserProof13`. Normal keyboard and mouse login reached
+the playable scene at `(239,609)`. Port 8593 offers the same gameplay
+configuration with local compatibility mesh preparation.
+[Play the updated preview](http://127.0.0.1:8659/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-player-preview/manual-login-result.json) · [Matched pacing results](#terrain-geometry-preparation-between-rolls) · [Compare on port 8593](http://127.0.0.1:8593/?mode=webgl&physical=on)
 
 ## Early covered walking fixtures
 
@@ -2214,8 +2212,8 @@ A predicted cell can reuse its fixed WebGL surface while still requiring
 a new compatibility crop. The previous worker dispatch only covered
 missing fixed surfaces. The trial asks the worker for the missing crop
 alone and keeps the local builder as a fallback. Native comparisons at
-three route cells matched the compatibility words from the full worker
-reply exactly. The same fixture verified collision, minimap, roof and
+five cells matched the compatibility words from the full worker reply
+exactly, including radius-one and radius-two crops. The same fixture verified collision, minimap, roof and
 picking products.
 [Native terrain and gameplay equivalence](../../../output/tests/seamless-world-streaming/compatibility-mesh-worker-build/native-compatibility.log)
 
@@ -2234,11 +2232,29 @@ The first pair narrows the regular stutter to the scene changes and a
 shorter frame tail. Replaying the same routes with the run order reversed
 checks whether the benefit persists. The first verified roll still
 spans several frame budgets. Correlate CPU samples before, during and
-after its replay rather than treating the packet duration as the entire
-interval. On the existing Chrome control the 123.2 ms first-roll gap
+after its replay to account for the whole frame interval. On the existing Chrome control the 123.2 ms first-roll gap
 included 52 ms of replay followed by another 64.5 ms before the next
 fresh frame.
 [Chrome control](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-control-chrome/chrome-result.json) · [Chrome worker](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-control-firefox/firefox-result.json) · [Firefox worker](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-trial-firefox/firefox-result.json) · [Replay CPU alignment from the scoped control](../../../output/tests/browser-gameplay-spike/preview-residency-gap-profile-chrome/chrome-roll-cpu-offline.json)
+
+The reversed-order runs repeated the gain away from replay and in the
+99th-percentile interval. Chrome's lowest second rose from 45 to 55 FPS
+and Firefox's rose from 45 to 50 FPS. The candidate lowered the count of
+intervals over 100 ms in both orders, from 3 to 1 in Chrome and 6 to 2 in
+Firefox. The remaining long intervals fell at the verified rolls.
+
+| Browser | Longest frame interval away from replay | 99th percentile | Longest interval at a roll |
+| --- | ---: | ---: | ---: |
+| Chrome repeat | 105.7 → 48.9 ms | 24.1 → 23.6 ms | 113.9 → 117.2 ms |
+| Firefox repeat | 129 → 55 ms | 27 → 24 ms | 129 → 150 ms |
+
+Keep the worker in the private player preview so the ordinary travel
+gain can be tested by hand. Stable 60 FPS remains open. Inspect why the
+first frame after replay still arrives late and keep the old preview for
+comparison. These eight route runs used the same client JAR, built from
+`6cff03dc109b4f7843ee60dfb606cf4b6d377479` with SHA-256
+`b01f6c45674e318c9bafc3ea3af3f8fc07be4eb70b060c54e47a19b39261266c`.
+[Chrome repeat control](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-repeat-control-chrome/chrome-result.json) · [Chrome repeat worker](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-repeat-trial-chrome/chrome-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-repeat-control-firefox/firefox-result.json) · [Firefox repeat worker](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-repeat-trial-firefox/firefox-result.json)
 
 #### Java client worker feasibility
 
