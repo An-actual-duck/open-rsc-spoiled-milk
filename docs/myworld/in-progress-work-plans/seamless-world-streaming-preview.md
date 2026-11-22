@@ -2,14 +2,14 @@
 
 ## Current Full HD browser preview
 
-The loopback preview on port 8555 uses the verified compact scenery
-converter and omits CPU projection on resident models whose bounds miss
-the pointer. It uses the separate WebGL worker and retains the original
-960×540 logical UI. The disposable account is `browserdemo` /
-`BrowserProof13`. Normal keyboard and mouse login reached a playable
-1920×1080 scene at `(239,609)`. Port 8535 runs the compact converter
-with the established projection path for comparison.
-[Play the updated preview](http://127.0.0.1:8555/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/resident-camera-player-preview/manual-login-result.json) · [Pacing results](#remaining-client-work-after-compact-conversion) · [Compare on port 8535](http://127.0.0.1:8535/?mode=webgl&physical=on)
+The loopback preview on port 8563 includes compact scenery conversion,
+resident projection omission, and cached model transforms through
+translation-only scene rolls. It uses the separate WebGL worker and
+retains the original 960×540 logical UI. The disposable account is
+`browserdemo` / `BrowserProof13`. Normal keyboard and mouse login
+reached a playable 1920×1080 scene at `(239,609)`. Port 8555 offers the
+previous renderer for comparison.
+[Play the updated preview](http://127.0.0.1:8563/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-player-preview/manual-login-result.json) · [Pacing results](#remaining-client-work-after-compact-conversion) · [Compare on port 8555](http://127.0.0.1:8555/?mode=webgl&physical=on)
 
 ## Early covered walking fixtures
 
@@ -1710,6 +1710,27 @@ coordinates and bounds, retains translation-invariant lighting, and
 invalidates the camera polygon-normal cache as before. Models with
 aliased storage, dirty transforms or unsupported bounds use the literal
 rebuild path.
+
+The native comparison matched transformed coordinates, bounds, normals,
+lighting, picks, and pixels across 280 cached shifts and 40 literal
+fallbacks. Both browsers retained 1,740 models through the walk, covering
+136,977 vertices. Firefox's untraced 99th percentile stayed at 28 ms
+and Chrome's improved from 29.2 to 26.9 ms. The Chrome worst interval
+fell from 139 to 119 ms, while eight more completed seconds fell at 59
+frames. Firefox's worst interval was about 162 ms in both runs.
+
+| Traced Firefox roll | Scene capture | Full frame interval |
+| --- | ---: | ---: |
+| First | 29 → 12 ms | 154 → 126 ms |
+| Second | 25 → 11 ms | 91 → 89 ms |
+| Return | 39 → 18 ms | 147 → 137 ms |
+
+The traced candidate kept input live through all three rolls and
+reached the authoritative destination. The largest sampled player
+step was 0.328 tiles. Scene-baseline receive times remained significant,
+at 34–58 ms across the three rolls. The new preview includes the
+cached rebase based on the reduction in scene capture at every roll.
+[Exact native proof](../../../output/tests/seamless-world-streaming/cached-origin-rebase-build/native-picking.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-chrome/chrome-result.json) · [Scene-roll phase comparison](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-phase-trial/roll-comparison.json)
 
 #### Java client worker feasibility
 

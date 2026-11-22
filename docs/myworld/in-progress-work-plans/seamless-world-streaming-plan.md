@@ -461,7 +461,9 @@ client updates and 35 ms capturing a scene with zero geometry uploads.
 The projection diagnostic found that the existing CPU cull rejected
 all faces for nearly every projected resident vertex. Compare omission
 of a proven miss against the established renderer. Keep the literal
-path when a model can touch the pointer or has unverified inputs.
+path when a model can touch the pointer or has unverified inputs. The
+current preview also keeps verified transforms through pure origin
+shifts. Scene capture used 14–21 ms less at the three traced rolls.
 [Producer trace and projection proofs](seamless-world-streaming-preview.md#remaining-client-work-after-compact-conversion)
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
