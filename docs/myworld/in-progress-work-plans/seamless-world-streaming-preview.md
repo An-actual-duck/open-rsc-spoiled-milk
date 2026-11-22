@@ -2266,6 +2266,24 @@ capture and renderer stages with those verified rolls. The pacing
 comparisons above used the unprofiled walks.
 [Chrome CPU capture on the preview build](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-scene-roll-profile-chrome/chrome-between-rolls-cpu.json)
 
+The separate frame-stage walks matched the first frame interval across
+each verified roll. On the first two rolls, lighting took 30.1 and
+14.0 ms in Chrome and 20 and 21 ms in Firefox. Those four intervals
+had zero geometry uploads. The third roll spent 2.9 and 5 ms in
+lighting. Packet replay and scene capture also consumed frame time.
+
+| Browser | First two intervals at a verified roll | Client updates | Lighting before submission | WebGL submission |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 132.9, 81.6 ms | 59.8, 37.2 ms | 30.1, 14.0 ms | 6.2, 4.8 ms |
+| Firefox | 137, 145 ms | 77, 78 ms | 20, 21 ms | 5, 7 ms |
+
+The lighting-stage capture now separates terrain field assembly, terrain
+mask export, glow, roofs, shadow projections and bridge calls. The
+existing native lighting and glow-cache fixtures passed all 404 checks
+with the instrumented build. The per-mask timings will determine which
+lighting work to prepare before the scene changes.
+[Chrome frame stages](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-roll-stages-chrome/chrome-result.json) · [Firefox frame stages](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-roll-stages-firefox/firefox-result.json) · [Native lighting checks](../../../output/tests/seamless-world-streaming/lighting-roll-phases-build/native-lighting.log)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
