@@ -300,6 +300,7 @@ public class PacketHandler {
 		layeredSceneActivationState.reset();
 		if (mc != null) {
 			mc.resetLayeredSceneActivationPresentation();
+			mc.resetDetachedSceneryReuse();
 			mc.clearStaticScenePresentation();
 			if (mudclient.SURFACE_SCENERY_DRAW) mc.clearSurfaceSceneryDraw();
 			if (mc.getWorld() != null) {

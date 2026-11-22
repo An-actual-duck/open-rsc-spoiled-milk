@@ -45,7 +45,8 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
             const walking = events.find(event => event.message.startsWith('outer-coverage:walking:'));
             if (walking) samples.startedAt = first = p.started + walking.milliseconds;
         }
-        const complete = events.find(event => event.message.startsWith('outer-coverage:complete:'));
+        const complete = events.find(event => event.message === 'outer-coverage:walking-window-ended'
+            || event.message.startsWith('outer-coverage:complete:'));
         if (complete) {
             samples.endedAt = p.started + complete.milliseconds;
             return;
@@ -288,6 +289,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
+                preparedScenery:p.gpu?.preparedScenery,
                 javaRuntime:{version:p.javaVersion,release:p.runtimeVersion,wasmGC:p.wasmGC},
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
                 physicalOutput:p.gpu?.physicalOutput,
@@ -339,8 +341,16 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             if completed and fixture.get('workerSceneryPlacements'):
                 worker = result.get('sceneryWorker') or {}
                 completed = (worker.get('completed', 0) > 0 and worker.get('error') is None
-                             and any(event['message'].startswith('scenery-meshing:placements,')
-                                     and event['message'].endswith(',true') for event in result['browserEvents']))
+                             and any(event['message'].startswith('outer-coverage:placement-scenery-meshes:')
+                                     or (event['message'].startswith('scenery-meshing:placements,')
+                                         and event['message'].endswith(',true')) for event in result['browserEvents']))
+            if completed and fixture.get('sceneryWords'):
+                completed = (result.get('sceneryWorker') or {}).get('wordReplies', 0) > 0
+            if completed and fixture.get('packedScenery'):
+                prepared = result.get('preparedScenery') or {}
+                completed = prepared.get('uploaded', 0) > 0
+                if fixture.get('verifyWorkerSceneryPlacements'):
+                    completed = completed and prepared.get('verified') == prepared.get('uploaded')
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
             if completed and output != 'default':

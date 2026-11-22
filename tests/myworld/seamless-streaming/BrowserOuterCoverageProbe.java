@@ -328,6 +328,7 @@ public final class BrowserOuterCoverageProbe {
 				throw new IllegalStateException("Untraced walking lost the player or world input");
 			}
 		}
+		BrowserBootstrap.report("outer-coverage:walking-window-ended");
 		int[] after = client.packetHandler.getPersistentMovementReceipt();
 		if (client.getRollingSurfaceWindows() != 3 || after[0] != before[0] || after[1] <= before[1]
 			|| after[2] != 0 || after[3] != before[3] + 3) {
@@ -340,6 +341,11 @@ public final class BrowserOuterCoverageProbe {
 			int verified = client.getVerifiedWorkerSceneryMeshes(), mismatched = client.getMismatchedWorkerSceneryMeshes();
 			if (verified == 0 || mismatched != 0) throw new IllegalStateException("Scenery mesh parity " + verified + "/" + mismatched);
 			BrowserBootstrap.report("outer-coverage:placement-mesh-parity:" + verified);
+			if (Boolean.getBoolean("spoiledmilk.browserReuseDetachedScenery")) {
+				int reused = client.getVerifiedSceneryReuses();
+				if (reused == 0) throw new IllegalStateException("No reused scenery mesh was verified");
+				BrowserBootstrap.report("outer-coverage:reused-mesh-parity:" + reused);
+			}
 		}
 		for (String row : orsc.graphics.three.SurfaceSceneryMeshPreparation.traceSnapshot()) {
 			BrowserBootstrap.report("scenery-meshing:" + row);
@@ -357,6 +363,18 @@ public final class BrowserOuterCoverageProbe {
 		int scenery = client.getDetachedSurfaceSceneryMeshes();
 		if (scenery <= 0) throw new IllegalStateException("No scenery mesh came back from the detached worker");
 		BrowserBootstrap.report("outer-coverage:detached-scenery-meshes:" + scenery);
+		if (Boolean.getBoolean("spoiledmilk.browserWorkerSceneryPlacements")) {
+			int placements = client.getDetachedSceneryPlacementMeshes();
+			if (placements == 0) throw new IllegalStateException("No worker mesh was built from placements");
+			BrowserBootstrap.report("outer-coverage:placement-scenery-meshes:" + placements);
+		}
+		if (Boolean.getBoolean("spoiledmilk.browserReuseDetachedScenery")) {
+			long[] reuse = client.getDetachedSceneryReuseReceipt();
+			if (reuse.length != 2 || reuse[0] <= 0 || reuse[1] > 64L * 1024 * 1024) {
+				throw new IllegalStateException("Detached scenery reuse " + Arrays.toString(reuse));
+			}
+			BrowserBootstrap.report("outer-coverage:scenery-mesh-reuse:" + reuse[0] + ":bytes=" + reuse[1]);
+		}
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);

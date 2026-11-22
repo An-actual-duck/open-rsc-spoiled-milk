@@ -46,11 +46,31 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   if(liveCells&&!capacity.bounded)throw new Error('Live cells require the bounded catalog renderer');
   const geometryFormat=options.geometryFormat||'legacy';if(!['legacy','compact'].includes(geometryFormat)||geometryFormat==='compact'&&!capacity.enabled)throw new Error('Compact geometry requires private wholezone admission');
   const compactScene=options.compactScene===true&&!capacity.enabled;
+  const packedSurfaceScenery=compactScene&&options.packedSurfaceScenery===true;
   const wholeZoneConfig=capacity.enabled?validateWholeZoneConfig(options.wholeZoneCatalog):null;
   if(geometryFormat==='compact'&&!wholeZoneConfig?.compact)throw new Error('Compact geometry derivative has not been staged');
   const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
   const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,heldWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
+  const sceneryDrawQueue=packedSurfaceScenery?new Map():null;
+  if(packedSurfaceScenery)stats.preparedScenery={queued:0,queuedBytes:0,uploaded:0,verified:0,bytes:0,pendingBytes:0,evicted:0};
+  function queueSceneryDraw(draw) {
+    if(!sceneryDrawQueue||disposed||stats.contextLost||draw.length<8||draw.byteLength>1024*1024||draw[0]<1||draw[5]<12||draw[5]%12
+      ||draw[6]!==draw[5]/12||draw[7]<0||draw[7]%5||8+draw[5]+draw[6]+draw[7]!==draw.length)return false;
+    const receipt=stats.preparedScenery,key=draw.subarray(0,5).join(':');
+    if(sceneryDrawQueue.has(key))return true;
+    while(receipt.pendingBytes+draw.byteLength>24*1024*1024||sceneryDrawQueue.size>=128){
+      const first=sceneryDrawQueue.keys().next().value;
+      receipt.pendingBytes-=sceneryDrawQueue.get(first).byteLength;
+      sceneryDrawQueue.delete(first);
+      receipt.evicted++;
+    }
+    sceneryDrawQueue.set(key,draw);
+    receipt.queued++;
+    receipt.queuedBytes+=draw.byteLength;
+    receipt.pendingBytes+=draw.byteLength;
+    return true;
+  }
   if(capacity.enabled){if(!capacity.bounded)stats.resourceBudgetScope=stats.resourceBudgetScope.replace('256MiB chunk/texture pixels','private3072MiB chunk/texture pixels');stats.resourceBudgetScope+='; whole-zone catalogue metadata/loader/Worker/driver/Java heap separate';stats.wholeZone={enabled:true,residencyPolicy:capacity.bounded?'bounded':'full',phase:'unloaded',ready:false,capacityBytes:capacity.gpuBytes,maxResidentChunks:capacity.maxChunks,pinnedChunks:0,pinnedBytes:0,currentLocalDraws:0};}
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
   let wholeZoneCatalog=null,wholeZoneSelection=null,zoneController=null;
@@ -258,6 +278,24 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(!compactScene)throw new Error('Local compact geometry requires the private preview');
       uploadLocalChunk(id,vertexInput,indexInput,batchInput,COMPACT_GEOMETRY);
     },
+    async Java_orsc_BrowserWebGLBridge_uploadPreparedScenery(lib,id,epoch,x,z,low,high,expected){
+      const key=[epoch,x,z,low,high].join(':'),draw=sceneryDrawQueue?.get(key);
+      if(!draw)return 0;
+      const receipt=stats.preparedScenery;
+      if(expected!=null){
+        const reference=typed(expected,Int32Array);
+        if(reference.length!==draw.length||draw.some((word,i)=>word!==reference[i]))throw new Error('Detached scenery draw differs from local packing');
+        receipt.verified++;
+      }
+      const indexOffset=8+draw[5],batchOffset=indexOffset+draw[6];
+      uploadLocalChunk(id,draw.subarray(8,indexOffset),draw.subarray(indexOffset,batchOffset),draw.subarray(batchOffset),COMPACT_GEOMETRY);
+      sceneryDrawQueue.delete(key);
+      receipt.pendingBytes-=draw.byteLength;
+      receipt.uploaded++;
+      const bytes=(draw[5]+draw[6])*4;
+      receipt.bytes+=bytes;
+      return bytes;
+    },
     async Java_orsc_BrowserWebGLBridge_replaceChunk(lib,id,vertexInput,indexInput,batchInput){
       alive();if(pinnedChunks.has(id))throw new Error('Pinned zone geometry cannot be repacked');const chunk=chunks.get(id);if(!chunk||chunk.geometryLayout===COMPACT_GEOMETRY)throw new Error('Repack references absent or compact GPU chunk');
       const {vertices,indices,batches,bounds}=chunkData(vertexInput,indexInput,batchInput);
@@ -433,7 +471,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_frameWork(lib,values,poseInput){
       alive();const p=typed(poseInput,Int32Array);
       if(p.length!==14&&!(travel&&p.length===18))throw new Error("Invalid frame pose schema");
-      if(frameStageSamples&&spriteStage&&values.length===47&&stats.javaWorldFrames>stats.javaBridgeReportedWorldFrames){
+      if(frameStageSamples&&spriteStage&&(values.length===47||values.length===48)&&stats.javaWorldFrames>stats.javaBridgeReportedWorldFrames){
         const stages={worldFrame:stats.javaWorldFrames,submittedAt:lastWorld,...spriteStage,
           javaGatherMs:values[24],javaPlanMs:values[25]-values[31],javaCommitMs:values[26]-values[32],
           javaDescriptorPackMs:values[31],javaCommitPackMs:values[32],
@@ -443,7 +481,8 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           drawBeforeBridgeMs:values[42],sceneSetupMs:values[43],sceneCaptureMs:values[44],sceneryCollectionMs:values[45],
           bridgeBeforePresentMs:values[46],javaPresentMs:values[30],jsPresentMs:stats.jsSubmissionSamples.at(-1),
           bridgeTextureMs:values[1],bridgeGeometryMs:values[2],bridgeSpritesMs:values[3],
-          bridgeLightingMs:values[8],bridgeSkyMs:values[9]};
+          bridgeLightingMs:values[8],bridgeSkyMs:values[9],bridgeOverlayPreludeMs:values[27],
+          bridgeReadinessMs:values[28],bridgeOptionalDrawMs:values[29],bridgeResourceStagingMs:values[47]};
         frameStageSamples.push(stages);
         if(frameStageSamples.length>600)frameStageSamples.shift();
         if(stages.intervalMs>=50){
@@ -493,7 +532,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     const observer=createOverlayJournalObserver(stats);
     natives.Java_orsc_BrowserWebGLBridge_overlayDeltaFrameObserved=observedOverlayDelta(observer,natives.Java_orsc_BrowserWebGLBridge_overlayDeltaFrame);
   }
-  function dispose(){if(disposed)return;boundedResidency?.dispose();if(capacity.enabled){zoneController?.abort();stats.wholeZone.ready=false;stats.wholeZone.startupGpuCompleted=false;stats.wholeZone.phase='disposed';stats.wholeZone.pinnedChunks=stats.wholeZone.pinnedBytes=0;}pinnedChunks.clear();pinnedTextures.clear();pinnedMaterials.clear();wholeZoneSelection=wholeZoneCatalog=null;outputSizer.dispose();uploadValidation.dispose();if(activeTimerQuery){try{gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);}finally{gl.deleteQuery(activeTimerQuery);activeTimerQuery=null;}}pendingOwnedState=null;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.pendingOwnedState=null;worldReady.dispose();if(spriteAtlas)spriteAtlas.dispose();if(lighting)lighting.dispose();if(sky)sky.dispose();if(overlay)overlay.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
+  function dispose(){if(disposed)return;if(sceneryDrawQueue){sceneryDrawQueue.clear();stats.preparedScenery.pendingBytes=0;}boundedResidency?.dispose();if(capacity.enabled){zoneController?.abort();stats.wholeZone.ready=false;stats.wholeZone.startupGpuCompleted=false;stats.wholeZone.phase='disposed';stats.wholeZone.pinnedChunks=stats.wholeZone.pinnedBytes=0;}pinnedChunks.clear();pinnedTextures.clear();pinnedMaterials.clear();wholeZoneSelection=wholeZoneCatalog=null;outputSizer.dispose();uploadValidation.dispose();if(activeTimerQuery){try{gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);}finally{gl.deleteQuery(activeTimerQuery);activeTimerQuery=null;}}pendingOwnedState=null;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.pendingOwnedState=null;worldReady.dispose();if(spriteAtlas)spriteAtlas.dispose();if(lighting)lighting.dispose();if(sky)sky.dispose();if(overlay)overlay.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
   for(const name of Object.keys(natives)) {
     const call=natives[name];natives[name]=async(...args)=>{
       try{uploadValidation.assertAlive();return await call(...args);}catch(error){if(uploadValidation.active)uploadValidation.fail(error);worldReady.fail(String(error));stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
@@ -501,5 +540,5 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   }
   function queuePhysicalOutput(enabled){alive();if(!physicalControl||typeof enabled!=='boolean')throw new Error('Private physical output control unavailable');pendingPhysicalOutput=enabled;stats.pendingPhysicalOutput=enabled;return {queued:enabled,active:physicalOutput};}
   function queueStreamUploadValidation(enabled){alive();if(options.benchmarkControl!==true)throw new Error('Private benchmark control unavailable');uploadValidation.queue(enabled);}
-  return {natives,stats,dispose,canvas,...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
+  return {natives,stats,dispose,canvas,...(packedSurfaceScenery?{queueSceneryDraw}:{}),...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
 }

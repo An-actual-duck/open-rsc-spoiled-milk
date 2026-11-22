@@ -1183,6 +1183,67 @@ twenties. The trial was removed, and the one-second pacing measurement is
 now part of the sustained route runner.
 [Firefox control](../../../output/tests/browser-gameplay-spike/sprite-submit-control-firefox-retry/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/sprite-submit-trial-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/sprite-submit-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/sprite-submit-trial-chrome/chrome-result.json)
 
+#### Flat scenery replies and worker-packed draws
+
+The flat reply carries the exact static triangle soup in one bounded typed
+buffer. It preserves texture coordinates, normals, materials, shadow casters,
+glow emitters, and the mesh signature. The client validates the cell origin,
+section, revision and shape before creating the mesh. The format rebuilds
+the sequential indices and empty terrain fields of the existing static
+scenery builder without running its mesh construction again.
+
+The Firefox parity route matched all 127 detached placement meshes. The
+ordinary timed route returned 73.31 MiB including legacy responses, down
+from about 96.80 MiB in the prior placement capture. Firefox's elapsed
+placement decode time across the route fell from 934 to 172 ms. The
+95th-percentile placement decode fell from 19 to 4 ms. These captures
+completed the same walk at 1920×1080 with a 960×540 logical UI, a reversal,
+three rolls, and zero sampled input closures or loading holds.
+
+| Browser | p95 interval | p99 interval | Longest interval | Lowest one-second FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 29 → 28 ms | 49 → 42 ms | 245 → 163 ms | 19 → 19 |
+| Chrome | 22.2 → 21.7 ms | 43.1 → 38 ms | 191.8 → 176.9 ms | 16 → 28 |
+
+[Flat reply parity](../../../output/tests/browser-gameplay-spike/scenery-words-parity/firefox-result.json) · [Firefox flat reply](../../../output/tests/browser-gameplay-spike/scenery-words-firefox/firefox-result.json) · [Chrome flat reply](../../../output/tests/browser-gameplay-spike/scenery-words-chrome/chrome-result.json)
+
+The separate `--packed-scenery` trial also returns compact vertices, indices
+and material batches directly to WebGL. The queue uses exact cell identity
+and texture/renderer settings, with a 24 MiB and 128-cell bound and a 1 MiB
+packet cap. The parity runs matched 69 uploaded packets in Firefox and
+83 in Chrome against local packing. The timing runs used 81 and 82 worker
+packets respectively. The flat-mesh reply was still transferred alongside
+each packed packet for the existing lighting metadata and CPU consumers.
+
+| Browser | p95 interval | p99 interval | Longest interval | Lowest one-second FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 28 → 27 ms | 42 → 44 ms | 163 → 245 ms | 19 → 16 |
+| Chrome | 21.7 → 21.6 ms | 38 → 37 ms | 176.9 → 264.3 ms | 28 → 20 |
+
+The worker packing proof is behind a separate private flag. Carrying two
+complete representations consumed additional transfer capacity and the
+worst seconds regressed in both controls. The flat reply and exact cell
+reuse are the pacing candidates under test.
+[Firefox packed trial](../../../output/tests/browser-gameplay-spike/scenery-packed-firefox/firefox-result.json) · [Chrome packed trial](../../../output/tests/browser-gameplay-spike/scenery-packed-chrome/chrome-result.json)
+
+Two dense distant jobs previously selected the serialized fallback because
+the cell included a canonical windmill sail. Its 5.15 MB result exceeded the
+legacy limit and forced another local build. The primitive reply includes
+the exact distant model in 3.72 MB. The playable scene still handles the
+live windmill animation through its existing path. The last three legacy
+jobs included the generated, empty air-glyph source. Sharing that precise
+placeholder recipe let the final Firefox parity route build all 133 jobs
+from placements and compare every result. That route returned 69.81 MiB
+and sent 114.60 KiB of input data over the entire session.
+[Dense cell parity](../../../output/tests/browser-gameplay-spike/scenery-dense-parity/chrome-result.json) · [All placement sources](../../../output/tests/browser-gameplay-spike/scenery-all-placement-parity/firefox-result.json)
+
+Repeated cell keys accounted for 53 of 133 jobs in the flat-reply route.
+The next control tests retaining exact signed-world and model-scope meshes
+across revisits within a 64 MiB and 96-cell bound. Reuse checks the full
+sorted placement list and elevations, then rebases the retained mesh to the
+current view. Fresh authoritative placements still determine what can be
+drawn. The parity route also rebuilds hits to compare actual draws.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

@@ -12,6 +12,7 @@ public final class BrowserBootstrap {
     private static native byte[] buildSurfaceMesh(byte[] source, int offsetX, int offsetZ, int dx, int dz,
         boolean withRoofs, boolean customSprites, boolean gameplay);
     private static native byte[] buildSurfaceSceneryMesh(byte[] source);
+    private static native int[] buildSurfaceSceneryWords(byte[] source, int[] packing);
 
     private BrowserBootstrap() { }
     public static native void report(String message);
@@ -104,6 +105,9 @@ public final class BrowserBootstrap {
         if (!publicAlpha && webgl && Boolean.getBoolean("spoiledmilk.browserSurfaceMeshWorker") && startSurfaceMeshWorker()) {
             orsc.graphics.three.World.installSurfaceMeshWorker(BrowserBootstrap::buildSurfaceMesh);
             orsc.graphics.three.SurfaceSceneryMeshPreparation.install(BrowserBootstrap::buildSurfaceSceneryMesh);
+            if (Boolean.getBoolean("spoiledmilk.browserSurfaceSceneryWords")) {
+                orsc.graphics.three.SurfaceSceneryMeshPreparation.installWords(BrowserBootstrap::buildSurfaceSceneryWords);
+            }
         }
         final String assetRoot=BrowserPublicAlpha.assetRoot(System.getProperties());
         final BrowserOptimizedDefaults.Resolution optimizedDefaults=BrowserOptimizedDefaults.apply(webgl,benchmark,

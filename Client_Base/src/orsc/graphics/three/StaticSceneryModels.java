@@ -25,6 +25,10 @@ public final class StaticSceneryModels {
 
 	private StaticSceneryModels() { }
 
+	public static boolean isAirGlyphPlaceholder(String name) { return "myworld_air_glyph".equals(name); }
+
+	public static RSModel createAirGlyphPlaceholder() { return new RSModel(1, 1); }
+
 	public static RSModel gameObject(RSModel model, GameObjectDef def, int objectId,
 		int localX, int localZ, int direction, int tileSize, int index, int elevation) {
 		int xSize;

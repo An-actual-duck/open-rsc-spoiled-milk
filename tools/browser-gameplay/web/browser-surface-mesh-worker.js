@@ -20,6 +20,16 @@ self.onmessage = async ({data}) => {
       return;
     }
     const builder = await loading;
+    if (scenery && data.words) {
+      const result = new Int32Array(await builder.buildSceneryWords(clientRoot + 'Cache', data.bytes, data.packing));
+      if (result.length >= 19 && result[18] > 0) {
+        const draw = new Int32Array(await builder.takeSceneryDraw());
+        self.postMessage({result: result.buffer, draw: draw.buffer}, [result.buffer, draw.buffer]);
+      } else {
+        self.postMessage({result: result.buffer}, [result.buffer]);
+      }
+      return;
+    }
     const result = new Int8Array(scenery
       ? await builder.buildScenery(clientRoot + 'Cache', data.bytes)
       : await builder.build(clientRoot + 'Cache', data.bytes, ...data.args));

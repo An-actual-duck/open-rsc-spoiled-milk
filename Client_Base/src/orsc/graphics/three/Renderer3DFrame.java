@@ -57,6 +57,18 @@ public final class Renderer3DFrame {
 	private volatile int activePlane;
 	private boolean worldFaceStorageReleased;
 
+	/** Minimal texture descriptors for static vertex and material packing in a detached runtime. */
+	public static Renderer3DFrame forSceneryPacking(int[] descriptors, int offset) {
+		Renderer3DTextureData[] textures = new Renderer3DTextureData[(descriptors.length - offset) / 4];
+		for (int id = 0; id < textures.length; id++, offset += 4) {
+			if (descriptors[offset] > 0) {
+				textures[id] = Renderer3DTextureData.forPacking(id, descriptors[offset], descriptors[offset + 1],
+					descriptors[offset + 2], descriptors[offset + 3]);
+			}
+		}
+		return new Renderer3DFrame(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, textures);
+	}
+
 	Renderer3DFrame(
 		int sourceModelCount,
 		int fogDistance,

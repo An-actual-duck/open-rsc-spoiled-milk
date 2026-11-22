@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToIntFunction;
 
 /** Sends frozen models or canonical placements to the isolated browser scenery mesher. */
 public final class SurfaceSceneryMeshPreparation {
@@ -29,6 +30,8 @@ public final class SurfaceSceneryMeshPreparation {
 	private static final int PLACEMENTS = 0x53434e31;
 	private static final int PLACEMENT_WORDS = 7;
 	private static volatile Worker browserWorker;
+	private static volatile WordWorker wordWorker;
+	private static volatile int[] packingContext = new int[0];
 	private static final boolean TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.browserFrameStageTrace");
 	private static final ArrayDeque<String> trace = new ArrayDeque<>();
@@ -40,7 +43,21 @@ public final class SurfaceSceneryMeshPreparation {
 		byte[] build(byte[] source);
 	}
 
+	@FunctionalInterface
+	public interface WordWorker {
+		int[] build(byte[] source, int[] packingContext);
+	}
+
 	public static void install(Worker worker) { browserWorker = worker; }
+	public static void installWords(WordWorker worker) { wordWorker = worker; }
+	public static boolean isWordWorkerAvailable() { return wordWorker != null; }
+
+	public static void publishPackingContext(int[] context) { packingContext = context; }
+
+	public static int definitionFlags() {
+		return (Config.S_IMPROVED_ITEM_OBJECT_NAMES ? 1 : 0) | (Config.S_BATCH_PROGRESSION ? 2 : 0)
+			| (Config.S_WANT_LEFTCLICK_WEBS ? 4 : 0) | (Config.S_WANT_CUSTOM_SPRITES ? 8 : 0);
+	}
 
 	public static boolean isAvailable() { return browserWorker != null; }
 
@@ -63,6 +80,10 @@ public final class SurfaceSceneryMeshPreparation {
 
 	public static void traceAdoption(long at, long nanos, long cell, boolean hit) {
 		if (TRACE) trace("adopt," + at + "," + cell + "," + nanos + "," + hit);
+	}
+
+	public static void tracePlacementRefusal(long at, long cell, int objectId) {
+		if (TRACE) trace("placement-refused," + at + "," + cell + "," + objectId);
 	}
 
 	public static Renderer3DWorldChunkFrame.ChunkMesh prepare(int sectionX, int sectionZ, int originX, int originZ,
@@ -131,6 +152,7 @@ public final class SurfaceSceneryMeshPreparation {
 		long beforeBridge = 0, afterBridge = 0;
 		int sent = 0, received = 0;
 		boolean success = false;
+		WordWorker words = wordWorker;
 		try {
 			ByteArrayOutputStream bytes = new ByteArrayOutputStream(82 + placements.length * Integer.BYTES);
 			try (DataOutputStream output = new DataOutputStream(bytes)) {
@@ -144,16 +166,24 @@ public final class SurfaceSceneryMeshPreparation {
 				output.writeInt(scale);
 				output.writeLong(revision);
 				output.write(digest);
-				output.writeBoolean(Config.S_IMPROVED_ITEM_OBJECT_NAMES);
-				output.writeBoolean(Config.S_BATCH_PROGRESSION);
-				output.writeBoolean(Config.S_WANT_LEFTCLICK_WEBS);
-				output.writeBoolean(Config.S_WANT_CUSTOM_SPRITES);
+				int flags = definitionFlags();
+				for (int bit = 0; bit < 4; bit++) output.writeBoolean((flags & (1 << bit)) != 0);
 				output.writeInt(count);
 				for (int word : placements) output.writeInt(word);
 			}
 			byte[] request = bytes.toByteArray();
 			sent = request.length;
 			if (TRACE) beforeBridge = System.nanoTime();
+			if (words != null) {
+				int[] response = words.build(request, packingContext);
+				if (TRACE) afterBridge = System.nanoTime();
+				if (response == null || response.length == 0) return null;
+				received = response.length * Integer.BYTES;
+				Renderer3DWorldChunkFrame.ChunkMesh mesh = Renderer3DWorldChunkFrame.ChunkMesh.readDetachedSceneryWords(
+					response, sectionX, sectionZ, x, z, revision);
+				success = true;
+				return mesh;
+			}
 			byte[] response = worker.build(request);
 			if (TRACE) afterBridge = System.nanoTime();
 			if (response == null || response.length == 0) return null;
@@ -187,7 +217,8 @@ public final class SurfaceSceneryMeshPreparation {
 			try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(source))) {
 				if (input.readInt() != PLACEMENTS) return buildPacket(source);
 				try {
-					return buildPlacements(input, modelPath);
+					PlacementProduct result = buildPlacements(input, modelPath);
+					return writeMesh(result.mesh, result.revision);
 				} catch (IOException | RuntimeException unavailable) {
 					// A refused placement request can be retried with the original model packet.
 					return new byte[0];
@@ -195,7 +226,17 @@ public final class SurfaceSceneryMeshPreparation {
 			}
 		}
 
-		private byte[] buildPlacements(DataInputStream input, String modelPath) throws IOException {
+		public int[] buildWords(byte[] source, String modelPath, ToIntFunction<Renderer3DWorldChunkFrame.ChunkMesh> pack) {
+			try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(source))) {
+				if (input.readInt() != PLACEMENTS) return new int[0];
+				PlacementProduct result = buildPlacements(input, modelPath);
+				return result.mesh.writeDetachedSceneryWords(result.revision, pack.applyAsInt(result.mesh));
+			} catch (IOException | RuntimeException unavailable) {
+				return new int[0];
+			}
+		}
+
+		private PlacementProduct buildPlacements(DataInputStream input, String modelPath) throws IOException {
 			int sectionX = input.readInt(), sectionZ = input.readInt(), x = input.readInt(), z = input.readInt();
 			int baseX = input.readInt(), baseZ = input.readInt(), scale = input.readInt();
 			long revision = input.readLong();
@@ -236,7 +277,7 @@ public final class SurfaceSceneryMeshPreparation {
 					throw new IOException("Detached scenery placement kind");
 				}
 			}
-			return writeMesh(mesh(sectionX, sectionZ, x, z, models), revision);
+			return new PlacementProduct(mesh(sectionX, sectionZ, x, z, models), revision);
 		}
 
 		private void loadArchive(String path) throws IOException {
@@ -261,12 +302,26 @@ public final class SurfaceSceneryMeshPreparation {
 			if (model != null) return model;
 			int offset = DataOperations.getDataFileOffset(name + ".ob3", archive);
 			int length = DataOperations.getDataFileLength(name + ".ob3", archive);
-			if (offset == 0 || length <= 0 || length > 48 * 1024) throw new IOException("Detached scenery model unavailable");
-			model = StaticSceneryModels.normalizeLoadedModel(name, new RSModel(archive, offset, true));
+			if (offset == 0 && StaticSceneryModels.isAirGlyphPlaceholder(name)) {
+				model = StaticSceneryModels.createAirGlyphPlaceholder();
+			} else {
+				if (offset == 0 || length <= 0 || length > 48 * 1024) throw new IOException("Detached scenery model unavailable");
+				model = new RSModel(archive, offset, true);
+			}
+			model = StaticSceneryModels.normalizeLoadedModel(name, model);
 			model.m_cb = name.equals("giantcrystal");
 			if (templates.size() == MAX_TEMPLATES) templates.remove(templates.keySet().iterator().next());
 			templates.put(name, model);
 			return model;
+		}
+	}
+
+	private static final class PlacementProduct {
+		final Renderer3DWorldChunkFrame.ChunkMesh mesh;
+		final long revision;
+		PlacementProduct(Renderer3DWorldChunkFrame.ChunkMesh mesh, long revision) {
+			this.mesh = mesh;
+			this.revision = revision;
 		}
 	}
 

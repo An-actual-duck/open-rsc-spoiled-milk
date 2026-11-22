@@ -63,6 +63,9 @@ def main():
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
     parser.add_argument('--worker-scenery-placements', action='store_true', help='Build canonical scenery inputs from placements in the detached worker')
     parser.add_argument('--verify-worker-scenery-placements', action='store_true', help='Compare detached placement meshes byte for byte with the installed builder')
+    parser.add_argument('--scenery-words', action='store_true', help='Transfer exact scenery triangles as a bounded primitive array')
+    parser.add_argument('--packed-scenery', action='store_true', help='Stage worker-generated compact geometry directly for WebGL upload')
+    parser.add_argument('--reuse-detached-scenery', action='store_true', help='Keep exact worker meshes for verified revisits')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
@@ -111,10 +114,16 @@ def main():
         parser.error('Surface workers require live surface handoff')
     if args.worker_scenery_placements and not args.surface_mesh_worker:
         parser.error('Scenery placement requests require the surface mesher')
-    if args.worker_scenery_placements and not (args.manual or args.frame_stages):
-        parser.error('Automated scenery placement checks require frame stage receipts')
+    if args.worker_scenery_placements and not (args.manual or args.presentation_only):
+        parser.error('Automated scenery placement checks require the sustained presentation route')
     if args.verify_worker_scenery_placements and not (args.worker_scenery_placements and args.presentation_only):
         parser.error('Scenery parity requires the automated scenery placement route')
+    if args.scenery_words and not args.worker_scenery_placements:
+        parser.error('Primitive scenery replies require worker scenery placements')
+    if args.packed_scenery and not (args.scenery_words and args.compact_scenery and not args.surface_draw_worker):
+        parser.error('Prepared scenery requires primitive replies and the direct compact WebGL renderer')
+    if args.reuse_detached_scenery and not args.scenery_words:
+        parser.error('Detached scenery reuse requires primitive replies')
     if args.retarget_walk and (args.manual or not args.live_surface_handoff or args.sustained_walk):
         parser.error('Retarget walking requires the separate automated live surface route')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
@@ -171,6 +180,9 @@ def main():
            f'        System.setProperty("spoiledmilk.browserSurfaceMeshWorker", "{str(args.surface_mesh_worker).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserWorkerSceneryPlacements", "{str(args.worker_scenery_placements).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserVerifyWorkerSceneryPlacements", "{str(args.verify_worker_scenery_placements).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSurfaceSceneryWords", "{str(args.scenery_words).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSurfacePackedScenery", "{str(args.packed_scenery).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserReuseDetachedScenery", "{str(args.reuse_detached_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
@@ -180,7 +192,8 @@ def main():
                '        new Thread(BrowserOuterCoverageProbe::run, "outer-coverage-fixture").start();')
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/', "
-           f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}}};")
+           f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}, "
+           f"packedSurfaceScenery:{str(args.packed_scenery).lower()}}};")
     if args.manual and args.travel_trace:
         (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
         insert(web / 'runtime.html', "    await import('./browser.js');",
@@ -280,6 +293,9 @@ def main():
         'surfaceMeshWorker': args.surface_mesh_worker,
         'workerSceneryPlacements': args.worker_scenery_placements,
         'verifyWorkerSceneryPlacements': args.verify_worker_scenery_placements,
+        'sceneryWords': args.scenery_words,
+        'packedScenery': args.packed_scenery,
+        'reuseDetachedScenery': args.reuse_detached_scenery,
         'surfaceDrawWorker': args.surface_draw_worker,
         'sustainedWalk': args.sustained_walk,
         'safeWalkFixture': args.retarget_walk or args.safe_walk_fixture,

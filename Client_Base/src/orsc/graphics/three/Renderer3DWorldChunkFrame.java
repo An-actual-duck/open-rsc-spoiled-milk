@@ -248,6 +248,9 @@ public final class Renderer3DWorldChunkFrame {
 
 	public static final class ChunkMesh implements java.io.Serializable {
 		private static final long serialVersionUID = 1L;
+		private static final int SCENERY_WORD_MAGIC = 0x53434e57;
+		private static final int SCENERY_WORD_HEADER = 19;
+		private static final int MAX_SCENERY_WORDS = 2 * 1024 * 1024;
 		private final int plane;
 		private final int centerSectionX;
 		private final int centerSectionY;
@@ -294,6 +297,9 @@ public final class Renderer3DWorldChunkFrame {
 		private final long storageSignature;
 		private final long signature;
 		private int[] preparedSmoothDiffuse, preparedFlatDiffuse;
+		private transient int sceneryPackingContext;
+
+		public int getSceneryPackingContext() { return sceneryPackingContext; }
 
 		/** Prepared by the detached renderer before it publishes this mesh. */
 		public void setPreparedDiffuseLighting(int[] smooth, int[] flat) {
@@ -313,6 +319,147 @@ public final class Renderer3DWorldChunkFrame {
 		private int worldEditorTerrainGridAxis;
 		private int[] worldEditorTerrainGridHeights = new int[0];
 		private int worldEditorTerrainGridSignature;
+
+		/** Flat transport for the static-object builder's exact, unrebased triangle soup. */
+		int[] writeDetachedSceneryWords(long revision, int packingContext) {
+			int vertices = getVertexCount(), triangles = getTriangleCount();
+			if (plane != 0 || chunkRole != CHUNK_ROLE_STATIC_OBJECTS || vertexOffsetX != 0 || vertexOffsetZ != 0
+				|| vertices != triangles * 3 || indices.length != vertices || roofCoverageAxis != 0 || worldEditorTerrainGridAxis != 0
+				|| roofCoveredTileCount != 0 || terrainTriangles != 0 || wallTriangles != 0 || roofTriangles != 0
+				|| preparedSmoothDiffuse != null || preparedFlatDiffuse != null || surfaceOcclusion != null
+				|| signature != storageSignature || shadowCasterInventorySignatureKnown) return new int[0];
+			int words = sceneryWordCount(vertices, triangles, referencedTextureIds.length, shadowCasters.length, glowEmitters.length);
+			if (words == 0) return new int[0];
+			for (int i = 0; i < vertices; i++) {
+				if (indices[i] != i || vertexTerrainBlendColors[i] != 0 || vertexTerrainBlendStrengths[i] != 0) return new int[0];
+			}
+			for (int mask : triangleTerrainVariationMasks) if (mask != 0) return new int[0];
+			int[] output = new int[words];
+			int[] header = {SCENERY_WORD_MAGIC, (int) revision, (int) (revision >>> 32), centerSectionX, centerSectionY,
+				originWorldX, originWorldZ, vertices, triangles, referencedTextureIds.length, shadowCasters.length, glowEmitters.length,
+				(int) signature, (int) (signature >>> 32), minVertexX, maxVertexX, minVertexZ, maxVertexZ, packingContext};
+			int offset = 0;
+			for (int[] plane : new int[][] {header, vertexCoords, vertexLights, vertexNormalX, vertexNormalY, vertexNormalZ,
+				triangleTextures, triangleFallbackColors, referencedTextureIds}) {
+				System.arraycopy(plane, 0, output, offset, plane.length);
+				offset += plane.length;
+			}
+			for (float value : vertexTextureU) output[offset++] = Float.floatToRawIntBits(value);
+			for (float value : vertexTextureV) output[offset++] = Float.floatToRawIntBits(value);
+			for (int i = 0; i < triangles; i++) {
+				output[offset++] = triangleModelKinds[i].ordinal() | triangleMaterialFamilies[i].ordinal() << 8;
+			}
+			for (ShadowCaster shadow : shadowCasters) {
+				int[] row = {shadow.modelKind.ordinal(), shadow.baseX0, shadow.baseY, shadow.baseZ0, shadow.baseX1,
+					shadow.baseZ1, shadow.height, shadow.width, shadow.opacity, shadow.outdoorOnly ? 1 : 0,
+					shadow.footprintMinX, shadow.footprintMaxX, shadow.footprintMinZ, shadow.footprintMaxZ};
+				System.arraycopy(row, 0, output, offset, row.length);
+				offset += row.length;
+			}
+			for (GlowEmitter glow : glowEmitters) {
+				int[] row = {glow.modelKind.ordinal(), glow.centerX, glow.centerY, glow.centerZ, glow.radius, glow.color, glow.intensity};
+				System.arraycopy(row, 0, output, offset, row.length);
+				offset += row.length;
+			}
+			return output;
+		}
+
+		static ChunkMesh readDetachedSceneryWords(int[] words, int sx, int sz, int x, int z, long revision) {
+			if (words.length < SCENERY_WORD_HEADER || words[0] != SCENERY_WORD_MAGIC || readLong(words, 1) != revision
+				|| words[3] != sx || words[4] != sz || words[5] != x || words[6] != z
+				|| words.length != sceneryWordCount(words[7], words[8], words[9], words[10], words[11])) {
+				throw new IllegalStateException("Detached scenery word identity or size");
+			}
+			return new ChunkMesh(words);
+		}
+
+		private static int sceneryWordCount(int vertices, int triangles, int textures, int shadows, int glows) {
+			if (vertices < 0 || triangles < 0 || vertices != 3L * triangles || textures < 0 || textures > 4096
+				|| shadows < 0 || shadows > 4096 || glows < 0 || glows > 512) return 0;
+			long words = SCENERY_WORD_HEADER + vertices * 9L + triangles * 3L + textures + shadows * 14L + glows * 7L;
+			return words <= MAX_SCENERY_WORDS ? (int) words : 0;
+		}
+
+		private static long readLong(int[] words, int offset) {
+			return (words[offset] & 0xffffffffL) | (long) words[offset + 1] << 32;
+		}
+
+		private ChunkMesh(int[] words) {
+			plane = 0;
+			centerSectionX = words[3]; centerSectionY = words[4];
+			originWorldX = words[5]; originWorldZ = words[6];
+			int vertices = words[7], triangles = words[8];
+			storageSignature = signature = readLong(words, 12);
+			sceneryPackingContext = words[18];
+			minVertexX = words[14]; maxVertexX = words[15]; minVertexZ = words[16]; maxVertexZ = words[17];
+			hasVertexBounds = vertices != 0;
+			vertexOffsetX = vertexOffsetZ = 0;
+			SceneryWordInput input = new SceneryWordInput(words);
+			vertexCoords = input.ints(vertices * 3);
+			vertexLights = input.ints(vertices);
+			vertexNormalX = input.ints(vertices);
+			vertexNormalY = input.ints(vertices);
+			vertexNormalZ = input.ints(vertices);
+			triangleTextures = input.ints(triangles);
+			triangleFallbackColors = input.ints(triangles);
+			referencedTextureIds = input.ints(words[9]);
+			vertexTextureU = input.floats(vertices);
+			vertexTextureV = input.floats(vertices);
+			indices = new int[vertices];
+			for (int i = 0; i < vertices; i++) indices[i] = i;
+			vertexTerrainBlendColors = new int[vertices];
+			vertexTerrainBlendStrengths = new int[vertices];
+			triangleTerrainVariationMasks = new int[triangles];
+			triangleModelKinds = new Renderer3DModelKind[triangles];
+			triangleMaterialFamilies = new Renderer3DMaterialFamily[triangles];
+			Renderer3DModelKind[] kinds = Renderer3DModelKind.values();
+			Renderer3DMaterialFamily[] families = Renderer3DMaterialFamily.values();
+			materialFamilyTriangleCounts = new int[families.length];
+			for (int i = 0; i < triangles; i++) {
+				int pair = input.next();
+				int kind = pair & 255, family = pair >>> 8;
+				if (kind >= kinds.length || family >= families.length) throw new IllegalStateException("Detached scenery material");
+				triangleModelKinds[i] = kinds[kind];
+				triangleMaterialFamilies[i] = families[family];
+				materialFamilyTriangleCounts[family]++;
+			}
+			shadowCasters = new ShadowCaster[words[10]];
+			for (int i = 0; i < shadowCasters.length; i++) {
+				shadowCasters[i] = new ShadowCaster(input.kind(kinds), input.next(), input.next(), input.next(), input.next(),
+					input.next(), input.next(), input.next(), input.next(), input.next() != 0, input.next(), input.next(), input.next(), input.next());
+			}
+			glowEmitters = new GlowEmitter[words[11]];
+			for (int i = 0; i < glowEmitters.length; i++) {
+				glowEmitters[i] = new GlowEmitter(input.kind(kinds), input.next(), input.next(), input.next(), input.next(), input.next(), input.next());
+			}
+			objectChunk = true;
+			chunkRole = CHUNK_ROLE_STATIC_OBJECTS;
+			roofCoverageBits = new long[0];
+			roofCoverageAxis = roofCoveredTileCount = terrainTriangles = wallTriangles = roofTriangles = 0;
+		}
+
+		private static final class SceneryWordInput {
+			private final int[] words;
+			private int offset = SCENERY_WORD_HEADER;
+
+			private SceneryWordInput(int[] words) { this.words = words; }
+			private int next() { return words[offset++]; }
+			private int[] ints(int count) {
+				int[] result = Arrays.copyOfRange(words, offset, offset + count);
+				offset += count;
+				return result;
+			}
+			private float[] floats(int count) {
+				float[] result = new float[count];
+				for (int i = 0; i < count; i++) result[i] = Float.intBitsToFloat(next());
+				return result;
+			}
+			private Renderer3DModelKind kind(Renderer3DModelKind[] kinds) {
+				int kind = next();
+				if (kind < 0 || kind >= kinds.length) throw new IllegalStateException("Detached scenery effect kind");
+				return kinds[kind];
+			}
+		}
 
         /** Canonical non-overlapping CPU query cell. Visual triangles stay in the GPU catalog. */
         public int captureWholeRamCell(WholeRamData.Pool pool) {
@@ -984,6 +1131,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.originWorldX = Math.addExact(source.originWorldX,carrierUnitsX);
 			this.originWorldZ = Math.addExact(source.originWorldZ,carrierUnitsZ);
 			this.vertexCoords = source.vertexCoords;
+			this.sceneryPackingContext = source.sceneryPackingContext;
 			this.vertexOffsetX = Math.addExact(
 				source.vertexOffsetX, additionalOffsetX);
 			this.vertexOffsetZ = Math.addExact(
