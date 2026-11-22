@@ -43,7 +43,6 @@ def main():
     parser.add_argument('--travel-trace', action='store_true', help='Record real submitted frames and server positions through extended travel')
     parser.add_argument('--presentation-only', action='store_true', help='Check sustained travel without detailed Java or server tracing')
     parser.add_argument('--frame-stages', action='store_true', help='Sample individual renderer stages during the presentation control')
-    parser.add_argument('--model-batch-scratch', action='store_true', help='Reuse the browser model projection scratch workspace')
     parser.add_argument('--model-batch-native-validation', action='store_true', help='Check inter-model buffer aliases once at the browser boundary')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
     parser.add_argument('--profile-minimap-walk', action='store_true', help='Keep the minimap open for the profiled walk')
@@ -211,7 +210,6 @@ def main():
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/', "
            f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}, "
-           f"modelBatchScratch:{str(args.model_batch_scratch).lower()}, "
            f"localSpritePlan:{str(args.local_sprite_plan).lower()}}};")
     if args.manual and args.travel_trace:
         (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
@@ -299,7 +297,6 @@ def main():
         'travelTrace': args.travel_trace,
         'presentationOnly': args.presentation_only,
         'frameStages': args.frame_stages,
-        'modelBatchScratch': args.model_batch_scratch,
         'modelBatchNativeValidation': args.model_batch_native_validation,
         'profilePanels': args.profile_panels,
         'profileMinimapWalk': args.profile_minimap_walk,

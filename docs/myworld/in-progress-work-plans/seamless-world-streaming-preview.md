@@ -1505,11 +1505,23 @@ The Chrome allocation sample attributed about 1 GB of transient
 allocation to the browser model projection module across the walk. Its
 largest application site was the whole-packet validation function, which
 created arrays and buffer-range records on each call. The private
-projection trial keeps one scratch workspace per kernel. Weak buffer
-keys retain only the validation ranges and the Java array views expire
-when the native call completes. The same packet-wide alias checks run
+projection trial kept one scratch workspace per kernel. Weak buffer
+keys retained only the validation ranges and the Java array views expired
+when the native call completed. The same packet-wide alias checks ran
 before any projection writes.
 [Allocation analysis](../../../output/tests/browser-gameplay-spike/chrome-resident-allocations/allocation-summary.json) · [Allocation profiler API](https://chromedevtools.github.io/devtools-protocol/tot/HeapProfiler/)
+
+The scratch path matched 12,000 projections against Java and reused its
+buffer range records across 32,648 Firefox and 33,280 Chrome packets.
+Firefox's worst second fell from 37 to 29 FPS and its 99th percentile
+rose from 33 to 34 ms. Chrome's worst second rose from 37 to 46 FPS and
+its 99th percentile fell from 28.9 to 27 ms. The number of seconds below
+60 moved from 22 to 24 in Firefox and remained 13 in Chrome. All four
+walks completed at `(252,609)` with three rolls, one epoch, zero holds
+and zero sampled input closures. The scratch trial was removed after
+the divergent pacing results. The projection source and exact staged
+bundles remain available.
+[Firefox control](../../../output/tests/browser-gameplay-spike/model-batch-scratch-control-firefox/firefox-result.json) · [Firefox scratch](../../../output/tests/browser-gameplay-spike/model-batch-scratch-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/model-batch-scratch-control-chrome/chrome-result.json) · [Chrome scratch](../../../output/tests/browser-gameplay-spike/model-batch-scratch-chrome/chrome-result.json)
 
 #### Java client worker feasibility
 

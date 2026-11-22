@@ -34,81 +34,55 @@ function transformRow(count, sx, sy, sz, px, py, rx, ry, rz, camera, trig) {
 
 /** Validate the WHOLE packet before any write. Buffer bounds are conservative:
  * bounding unions can reject gaps, but never permit an overlapping writer. */
-export function transformModelBatch(size, rows, counts, camera, trig, trigSource = null, stats = null, scratch = null) {
+export function transformModelBatch(size, rows, counts, camera, trig, trigSource = null, stats = null) {
   if (!Number.isInteger(size) || size < 1 || size > 128 || rows == null || rows.length < size * 8
       || !(counts instanceof Int32Array) || counts.length < size
       || !(camera instanceof Int32Array) || camera.length !== 8 || camera[4] <= 0
       || !(trig instanceof Int32Array) || trig.length !== 6
       || trigSource !== null && !(trigSource instanceof Int32Array)) return false;
-  if (scratch?.busy) return false;
-  const borrowed = scratch?.borrowed ?? new Array(size * 8);
-  const lengths = scratch?.lengths ?? new Int32Array(size);
-  const buffers = scratch?.buffers ?? new Map();
-  const generation = scratch ? ++scratch.generation : 0;
+  const borrowed = new Array(size * 8), lengths = new Int32Array(size), buffers = new Map();
   function touch(a, writer) {
     const lo = a.byteOffset, hi = lo + a.byteLength;
-    const buffer = a.buffer;
-    let state = buffers.get(buffer);
-    if (!state) {
-      state = {generation,readLo: Infinity,readHi: -Infinity,writeLo: Infinity,writeHi: -Infinity};
-      buffers.set(buffer,state);
-      if (scratch && stats) stats.scratchRangeRecords++;
-    } else if (state.generation !== generation) {
-      state.generation = generation;
-      state.readLo = state.writeLo = Infinity;
-      state.readHi = state.writeHi = -Infinity;
-    }
+    let state = buffers.get(a.buffer);
+    if (!state) { state = {readLo: Infinity,readHi: -Infinity,writeLo: Infinity,writeHi: -Infinity}; buffers.set(a.buffer,state); }
     if (lo < state.writeHi && state.writeLo < hi || writer && lo < state.readHi && state.readLo < hi) return false;
     if (writer) { state.writeLo = Math.min(lo,state.writeLo); state.writeHi = Math.max(hi,state.writeHi); }
     else { state.readLo = Math.min(lo,state.readLo); state.readHi = Math.max(hi,state.readHi); }
     return true;
   }
-  if (scratch) scratch.busy = true;
-  try {
-    touch(counts,false); touch(camera,false); touch(trig,false); if (trigSource !== null) touch(trigSource,false);
-    let numeric = 0, vertices = 0;
-    for (let row = 0; row < size; row++) {
-      const count = counts[row];
-      if (count < 0) return false;
-      lengths[row] = count;
-      if (count === 0) continue;
-      numeric++; vertices += count;
-      const offset = row * 8;
-      for (let n = 0; n < 8; n++) {
-        const a = rows[offset + n]; // one synchronous proxy read per active leaf
-        if (!(a instanceof Int32Array) || a.length < count || !touch(a,n >= 3)) return false;
-        borrowed[offset + n] = a;
-      }
-    }
-    for (let row = 0; row < size; row++) {
-      const count = lengths[row]; if (count === 0) continue;
-      const at = row * 8;
-      transformRow(count,borrowed[at],borrowed[at+1],borrowed[at+2],borrowed[at+3],borrowed[at+4],
-        borrowed[at+5],borrowed[at+6],borrowed[at+7],camera,trig);
-    }
-    if (stats) {
-      stats.packets++; stats.models += numeric; stats.vertices += vertices; stats.metadata += size - numeric;
-      stats.maxModelsPerPacket = Math.max(stats.maxModelsPerPacket,size);
-      if (scratch) stats.scratchPackets++;
-    }
-    return true;
-  } finally {
-    if (scratch) {
-      // Clear every borrowed Java view, including the prefix of a rejected packet.
-      borrowed.fill(null,0,size * 8);
-      scratch.busy = false;
+  touch(counts,false); touch(camera,false); touch(trig,false); if (trigSource !== null) touch(trigSource,false);
+  let numeric = 0, vertices = 0;
+  for (let row = 0; row < size; row++) {
+    const count = counts[row];
+    if (count < 0) return false;
+    lengths[row] = count;
+    if (count === 0) continue;
+    numeric++; vertices += count;
+    const offset = row * 8;
+    for (let n = 0; n < 8; n++) {
+      const a = rows[offset + n]; // one synchronous proxy read per active leaf
+      if (!(a instanceof Int32Array) || a.length < count || !touch(a,n >= 3)) return false;
+      borrowed[offset + n] = a;
     }
   }
+  for (let row = 0; row < size; row++) {
+    const count = lengths[row]; if (count === 0) continue;
+    const at = row * 8;
+    transformRow(count,borrowed[at],borrowed[at+1],borrowed[at+2],borrowed[at+3],borrowed[at+4],
+      borrowed[at+5],borrowed[at+6],borrowed[at+7],camera,trig);
+  }
+  if (stats) {
+    stats.packets++; stats.models += numeric; stats.vertices += vertices; stats.metadata += size - numeric;
+    stats.maxModelsPerPacket = Math.max(stats.maxModelsPerPacket,size);
+  }
+  return true;
 }
 
-export function createBatchedModelKernel({reuseScratch = false} = {}) {
+export function createBatchedModelKernel() {
   const stats = {attempts: 0,packets: 0,models: 0,vertices: 0,metadata: 0,rejections: 0,maxModelsPerPacket: 0};
-  // Buffer keys are weak. Each value contains only the current packet's numeric bounds.
-  const scratch = reuseScratch ? {borrowed:new Array(128*8),lengths:new Int32Array(128),buffers:new WeakMap(),generation:0,busy:false} : null;
-  if (scratch) Object.assign(stats,{scratchPackets:0,scratchRangeRecords:0});
   return {stats, native(lib,size,rows,counts,camera,trig,trigSource) {
     stats.attempts++;
-    const used = transformModelBatch(size,rows,counts,camera,trig,trigSource,stats,scratch);
+    const used = transformModelBatch(size,rows,counts,camera,trig,trigSource,stats);
     if (!used) stats.rejections++;
     return used;
   }};

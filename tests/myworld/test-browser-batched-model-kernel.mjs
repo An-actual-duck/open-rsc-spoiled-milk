@@ -2,24 +2,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {pathToFileURL} from 'node:url';
 const {transformModelBatch,createBatchedModelKernel,batchedModelKernelPolicy}=await import(pathToFileURL(process.argv[2]));
-const scratchKernel = createBatchedModelKernel({reuseScratch:true});
 const input=fs.readFileSync(process.argv[3]);let offset=0;const i32=()=>{const v=input.readInt32BE(offset);offset+=4;return v;};
 const readArrays=()=>Array.from({length:8},()=>{const a=new Int32Array(i32());for(let n=0;n<a.length;n++)a[n]=i32();return a;});
 assert.equal(i32(),0x4e4b3031);const total=i32();let packets=0,vertices=0,values=0,records=[];
-function flush(){
-  if(!records.length)return;
-  const counts=Int32Array.from(records.map(r=>r.count)),rows=records.flatMap(r=>r.actual);
-  const scratchRows=rows.map(row=>row.slice()),{camera,trig}=records[0];
-  assert.equal(transformModelBatch(records.length,rows,counts,camera,trig),true);
-  assert.equal(scratchKernel.native(null,records.length,scratchRows,counts,camera,trig,null),true);
-  for(let index=0;index<records.length;index++)for(let n=0;n<8;n++){
-    const record=records[index], reason=`Frozen record ${record.index} array ${n}`;
-    assert.deepEqual(record.actual[n],record.expected[n],reason);
-    assert.deepEqual(scratchRows[index*8+n],record.expected[n],reason);
-    values+=record.actual[n].length;
-  }
-  packets++;records=[];
-}
+function flush(){if(!records.length)return;const counts=Int32Array.from(records.map(r=>r.count)),rows=records.flatMap(r=>r.actual);assert.equal(transformModelBatch(records.length,rows,counts,records[0].camera,records[0].trig),true);for(const r of records)for(let n=0;n<8;n++){assert.deepEqual(r.actual[n],r.expected[n],`Frozen record ${r.index} array ${n}`);values+=r.actual[n].length;}packets++;records=[];}
 for(let trial=0;trial<total;trial++){
   const count=i32(),camera=Int32Array.from({length:8},i32),trig=Int32Array.from({length:6},i32),actual=readArrays(),expected=readArrays();vertices+=count;
   if(records.length&&(records.length===128||!records[0].camera.every((v,n)=>v===camera[n])||!records[0].trig.every((v,n)=>v===trig[n])))flush();
@@ -28,7 +14,7 @@ for(let trial=0;trial<total;trial++){
 flush();assert.equal(offset,input.length);
 let guards=0;
 const valid=()=>({rows:Array.from({length:16},()=>new Int32Array([1,2,3])),counts:new Int32Array([3,3]),camera:new Int32Array([0,0,0,9,8,0,0,0]),trig:new Int32Array(6)});
-function reject(p){const saved=p.rows.map(a=>a instanceof Int32Array?Int32Array.from(a):a);assert.equal(transformModelBatch(2,p.rows,p.counts,p.camera,p.trig,p.table??null),false);assert.equal(scratchKernel.native(null,2,p.rows,p.counts,p.camera,p.trig,p.table??null),false);p.rows.forEach((a,n)=>assert.deepEqual(a,saved[n]));guards++;}
+function reject(p){const saved=p.rows.map(a=>a instanceof Int32Array?Int32Array.from(a):a);assert.equal(transformModelBatch(2,p.rows,p.counts,p.camera,p.trig,p.table??null),false);p.rows.forEach((a,n)=>assert.deepEqual(a,saved[n]));guards++;}
 // A bad later record cannot leave a valid prefix transformed.
 for(let n=8;n<16;n++)for(const invalid of [null,new Int32Array(2),new Float64Array(3),[1,2,3]]){const p=valid();p.rows[n]=invalid;reject(p);}
 for(let writer=3;writer<16;writer++){if(writer%8<3)continue;for(let prior=0;prior<writer;prior++){const p=valid();p.rows[writer]=p.rows[prior];reject(p);}}
@@ -44,21 +30,4 @@ assert.deepEqual(batchedModelKernelPolicy('webgl',new URLSearchParams('modelbatc
 assert.deepEqual(batchedModelKernelPolicy('webgl',new URLSearchParams('benchmark=1&modelbatch=on')),{properties:['spoiledmilk.browserBatchedModelKernel=true'],requested:true});
 assert.throws(()=>batchedModelKernelPolicy('webgl',new URLSearchParams('benchmark=1&modelbatch=bad')));
 {const p=valid(),n=createBatchedModelKernel(),returned=n.native(null,2,p.rows,p.counts,p.camera,p.trig,null);assert.equal(returned,true);assert.equal(typeof returned?.then,'undefined');assert.equal(n.stats.packets,1);assert.equal(n.stats.models,2);assert.equal(n.stats.vertices,6);assert(Object.values(n.stats).every(x=>typeof x==='number'));}
-{
-  const p=valid(), n=createBatchedModelKernel({reuseScratch:true});
-  const run=rows=>n.native(null,2,rows,p.counts,p.camera,p.trig,null);
-  assert.equal(run(p.rows),true);
-  const ranges=n.stats.scratchRangeRecords;
-  const alias=p.rows.slice();alias[15]=p.rows[0];
-  const previous=p.rows.map(row=>row.slice());
-  assert.equal(run(alias),false);
-  assert.deepEqual(p.rows,previous);
-  const reentrant=new Proxy(p.rows,{get(target,index){
-    if(index==='15')assert.equal(run(p.rows),false);
-    return target[index];
-  }});
-  assert.equal(run(reentrant),true);
-  assert.equal(n.stats.scratchRangeRecords,ranges);
-  assert.equal(n.stats.scratchPackets,2);
-}
 console.log(JSON.stringify({passed:true,cases:total,packets,vertices,values,guards,scope:'Whole-packet exact frozen Java array outputs and no-write rejection; CPU only, no browser/FPS claim'}));

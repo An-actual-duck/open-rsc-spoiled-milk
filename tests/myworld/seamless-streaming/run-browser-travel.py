@@ -451,11 +451,6 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 plans = (result.get('renderWorker') or {}).get('localSpritePlans', 0)
                 replayed = (result.get('atlas') or {}).get('plans', 0)
                 completed = replayed > 0 and 0 <= plans - replayed <= 3
-            if completed and fixture.get('modelBatchScratch'):
-                model_work = result.get('modelBatchWork') or {}
-                completed = (model_work.get('scratchPackets', 0) > 0
-                             and model_work['scratchPackets'] == model_work.get('packets')
-                             and 0 < model_work.get('scratchRangeRecords', 0) < model_work.get('models', 0) * 8)
             if completed and java_version != 8:
                 completed = any(event['message'] == f'outer-coverage:java-runtime:{java_version}'
                                 for event in result['events'])
