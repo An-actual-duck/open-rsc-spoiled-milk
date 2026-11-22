@@ -12,7 +12,7 @@ public final class NativeLayeredTerrainResidentCache {
 	public static final int DEFAULT_CAPACITY = 64;
 
 	private final int capacity;
-	private final LinkedHashMap<String, NativeLayeredTerrainChunk> resident;
+	private LinkedHashMap<String, NativeLayeredTerrainChunk> resident;
 	private long version;
 	private int lastPayloads;
 	private int lastReferences;
@@ -89,21 +89,27 @@ public final class NativeLayeredTerrainResidentCache {
 		}
 	}
 
-	private synchronized boolean commit(final Transaction transaction, boolean allowStale) {
+	private synchronized boolean commit(final Transaction transaction, boolean prepared) {
 		if (transaction.owner != this || transaction.committed) {
 			throw new IllegalStateException(
 				"Native terrain resident transaction is invalid");
 		}
 		if (transaction.baseVersion != version) {
-			if (allowStale) return false;
+			if (prepared) return false;
 			throw new IllegalStateException(
 				"Native terrain resident cache changed before receipt commit");
 		}
-		resident.clear();
-		resident.putAll(transaction.staged);
+		long nextVersion = Math.addExact(version, 1L);
+		if (prepared) {
+			// The precomputed transaction owns its map and no caller can mutate it after commit.
+			resident = transaction.staged;
+		} else {
+			resident.clear();
+			resident.putAll(transaction.staged);
+		}
 		lastPayloads = transaction.payloads;
 		lastReferences = transaction.references;
-		version = Math.addExact(version, 1L);
+		version = nextVersion;
 		transaction.committed = true;
 		return true;
 	}
