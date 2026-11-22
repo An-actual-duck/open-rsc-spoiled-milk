@@ -735,6 +735,19 @@ scene installation inside the player packet and the first frame that
 follows it.
 [Prepared receipt browser results](seamless-world-streaming-preview.md#prepared-terrain-receipt-at-the-switch)
 
+Preparing individual scenery poses improved all three Chrome
+switches, with mixed results in Firefox. Both browsers still had
+switch intervals above 100 ms. The flags were retired and the playable
+preview stays on the compatibility worker. Move ahead with preparing
+the full authoritative static state from revisioned gameplay cells.
+In both browsers the nine prepared cells matched 1,056, 757 and
+1,056 accepted placements exactly. They were ready about 2–15
+seconds ahead. A subsequent product should capture revision identities
+and materialize only changed state, then verify model order, collision
+and picking before switching to it. Keep the current actor and input
+path throughout the trial.
+[Scenery pose timings](seamless-world-streaming-preview.md#prepare-interactive-scenery-transforms-before-installation) · [Prepared placement comparison](seamless-world-streaming-preview.md#compare-prepared-gameplay-placements-with-the-accepted-scene)
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet

@@ -2582,6 +2582,42 @@ preserved at `b816dd368`. Shift the investigation to preparing an
 authoritative scenery state for the whole accepted switch.
 [Matched travel results](../../../output/tests/seamless-world-streaming/prepared-interactive-models-build/travel-summary.json)
 
+#### Compare prepared gameplay placements with the accepted scene
+
+Collect the nine complete revisioned gameplay cells for the incoming
+144×144 window. A new revision invalidates its previous contribution,
+and a new prediction discards the previous window. Once all nine
+cells are ready, assemble the object and wall placements as a sorted
+multiset of local tile, type, id and direction. Compare exact entries
+and duplicate counts against the live instance store after the
+authoritative fence accepts the switch. Record how long the full
+prepared inventory was ready.
+
+Both snapshots use the same terrain origin. The comparison is an
+opt-in diagnostic and still runs the normal authoritative replay.
+It covers placement identity and multiplicity. Sequential model
+order, resulting collision, picking, lighting and first-frame parity
+need their own checks before a prepared state can take over.
+
+Fresh Firefox and Chrome walks matched every placement on all six
+accepted switches. Both reached the server-confirmed destination
+`(252,609,0)` at 1920×1080 with the 960×540 logical UI and zero
+input closures or frame holds. Chrome's first launch found no
+WebDriver on the configured port. A fresh private stage passed
+using a dedicated local driver.
+
+| Destination center | Placements per browser | Firefox lead | Chrome lead |
+| --- | ---: | ---: | ---: |
+| (5,12) outbound | 1,056 | 1.981 s | 2.612 s |
+| (6,12) | 757 | 14.726 s | 14.711 s |
+| (5,12) return | 1,056 | 14.089 s | 14.064 s |
+
+Use the roughly two seconds of lead at the first switch to stage
+the static installation. The measurement establishes readiness and
+exactness for this route. Production adoption and timing remain
+separate steps.
+[Firefox result](../../../output/tests/browser-gameplay-spike/prepared-surface-scene-image-firefox/firefox-result.json) · [Chrome result](../../../output/tests/browser-gameplay-spike/prepared-surface-scene-image-chrome-retry/chrome-result.json) · [Verified receipts](../../../output/tests/seamless-world-streaming/prepared-surface-scene-image-build/travel-summary.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
