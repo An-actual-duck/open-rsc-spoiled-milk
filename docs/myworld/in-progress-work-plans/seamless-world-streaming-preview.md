@@ -1523,6 +1523,24 @@ the divergent pacing results. The projection source and exact staged
 bundles remain available.
 [Firefox control](../../../output/tests/browser-gameplay-spike/model-batch-scratch-control-firefox/firefox-result.json) · [Firefox scratch](../../../output/tests/browser-gameplay-spike/model-batch-scratch-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/model-batch-scratch-control-chrome/chrome-result.json) · [Chrome scratch](../../../output/tests/browser-gameplay-spike/model-batch-scratch-chrome/chrome-result.json)
 
+#### Compact scenery conversion
+
+The largest generated JavaScript allocation stack matched the Java
+compact scenery encoder by its float word offsets and packed byte
+groups. It accounted for an estimated 6.98 GB in the original Chrome
+capture and 7.03 GB in the scratch capture, including memory collected
+during the walks. The scratch trial sharply reduced the projection
+module's sampled allocations while leaving this conversion cost intact.
+[Source and stack match](../../../output/tests/browser-gameplay-spike/model-batch-scratch-allocations/compact-source-analysis.json) · [DevTools script source API](https://chromedevtools.github.io/devtools-protocol/tot/Debugger/#method-getScriptSource)
+
+The private compact trial gives the browser up to 128 canonical float
+vertices at a time. It writes exact compact words into the unpublished
+destination using the existing attribute contract and byte lookup
+tables. The Java renderer reuses one input block for these calls and
+still calculates the original material, lighting and UV values.
+Unsupported or inexact inputs run through the existing Java encoder
+and its legacy fallback. The GPU receives the same compact layout.
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

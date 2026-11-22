@@ -2936,14 +2936,56 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
     int[] copyBackendCompactChunkVertices(Renderer3DWorldChunkFrame.ChunkMesh chunk, Renderer3DFrame frame) {
         int count = chunk.getVertexCount();
         int[] words = new int[count * 12];
-        float[] vertex = new float[FLOATS_PER_VERTEX];
         int[] diffuse = buildChunkSmoothDiffuseLights(chunk, count);
         boolean unbaked = shouldUseUnbakedRemasterMaterialBase();
+        if (BROWSER_COMPACT_BLOCKS) {
+            for (int first = 0; first < count; first += COMPACT_BLOCK_VERTICES) {
+                int size = Math.min(COMPACT_BLOCK_VERTICES, count - first);
+                if (!packCompactBlock(chunk, frame, first, size, diffuse, unbaked, words)) return null;
+            }
+            return words;
+        }
+        float[] vertex = new float[FLOATS_PER_VERTEX];
         for (int i = 0; i < count; i++) {
             writeChunkVertex(vertex, 0, chunk, frame, i, false, true, diffuse, null, unbaked);
             if (!writeCompactVertex(words, i * 12, vertex)) return null;
         }
         return words;
+    }
+
+    private static final int COMPACT_BLOCK_VERTICES = 128;
+    private static final boolean BROWSER_COMPACT_BLOCKS = Boolean.getBoolean("spoiledmilk.browserCompactVertexBlocks");
+    private static final boolean VERIFY_COMPACT_BLOCKS = Boolean.getBoolean("spoiledmilk.verifyBrowserCompactVertexBlocks");
+    // The browser packer consumes this scratch synchronously. Pending jobs own
+    // their published destination buffers and never retain the source block.
+    private float[] browserCompactBlock;
+    private float[] browserCompactVertex;
+    private final int[] browserCompactCheck = VERIFY_COMPACT_BLOCKS ? new int[12] : null;
+
+    private static native boolean packBrowserCompactBlock(float[] source, int count, int[] output, int wordOffset);
+
+    private boolean packCompactBlock(Renderer3DWorldChunkFrame.ChunkMesh chunk, Renderer3DFrame frame,
+                                     int first, int size, int[] diffuse, boolean unbaked, int[] output) {
+        if (browserCompactBlock == null) browserCompactBlock = new float[COMPACT_BLOCK_VERTICES * FLOATS_PER_VERTEX];
+        for (int i = 0; i < size; i++) {
+            writeChunkVertex(browserCompactBlock, i * FLOATS_PER_VERTEX, chunk, frame, first + i,
+                false, true, diffuse, null, unbaked);
+        }
+        boolean packed = packBrowserCompactBlock(browserCompactBlock, size, output, first * 12);
+        if (packed && !VERIFY_COMPACT_BLOCKS) return true;
+        if (browserCompactVertex == null) browserCompactVertex = new float[FLOATS_PER_VERTEX];
+        for (int i = 0; i < size; i++) {
+            System.arraycopy(browserCompactBlock, i * FLOATS_PER_VERTEX, browserCompactVertex, 0, FLOATS_PER_VERTEX);
+            int at = (first + i) * 12;
+            if (packed) {
+                if (!writeCompactVertex(browserCompactCheck, 0, browserCompactVertex))
+                    throw new IllegalStateException("Browser compact packer accepted an inexact vertex");
+                for (int word = 0; word < 12; word++)
+                    if (output[at + word] != browserCompactCheck[word])
+                        throw new IllegalStateException("Browser compact packer changed vertex bits");
+            } else if (!writeCompactVertex(output, at, browserCompactVertex)) return false;
+        }
+        return true;
     }
 
     private static boolean writeCompactVertex(int[] words, int at, float[] vertex) {
@@ -2991,15 +3033,23 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         boolean advance(Renderer3DFrame frame, long stopAtNanos) {
             int count = chunk.getVertexCount();
             while (nextVertex < count) {
+                if (compact != null && BROWSER_COMPACT_BLOCKS) {
+                    int size = Math.min(COMPACT_BLOCK_VERTICES, count - nextVertex);
+                    if (!packCompactBlock(chunk, frame, nextVertex, size, diffuse, unbaked, compact)) {
+                        useLegacyPacking(count);
+                        return false;
+                    }
+                    nextVertex += size;
+                    if (System.nanoTime() >= stopAtNanos) break;
+                    continue;
+                }
                 if (compact == null) {
                     writeChunkVertex(legacy, nextVertex * FLOATS_PER_VERTEX, chunk, frame,
                         nextVertex, false, true, diffuse, null, unbaked);
                 } else {
                     writeChunkVertex(scratch, 0, chunk, frame, nextVertex, false, true, diffuse, null, unbaked);
                     if (!writeCompactVertex(compact, nextVertex * 12, scratch)) {
-                        legacy = new float[count * FLOATS_PER_VERTEX];
-                        compact = null;
-                        nextVertex = 0;
+                        useLegacyPacking(count);
                         return false;
                     }
                 }
@@ -3007,6 +3057,12 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
                 if ((nextVertex & 127) == 0 && System.nanoTime() >= stopAtNanos) break;
             }
             return nextVertex == count;
+        }
+
+        private void useLegacyPacking(int count) {
+            legacy = new float[count * FLOATS_PER_VERTEX];
+            compact = null;
+            nextVertex = 0;
         }
     }
 

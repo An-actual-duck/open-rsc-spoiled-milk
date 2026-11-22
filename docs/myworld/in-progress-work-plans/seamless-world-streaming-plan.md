@@ -438,12 +438,14 @@ mixed pacing across whole walks. The Chrome CPU trace also captured
 uploads. Keep the baseline fence intact while investigating the recurring
 CPU and allocation work on resident frames.
 
-Use the exact per-kernel scratch and native buffer validation trials to
-test the measured model projection allocations. Compare the worst second,
-the number of seconds below 60 FPS and the tail of the frame interval
-distribution with a matched control. Attribute any gain to work saved
-in the live browser, and stop work on a hot path when repeated travel
-results give mixed or negligible gains.
+The allocation samples isolated roughly 7 GB of transient allocation
+under compact scenery conversion across the Chrome walk. Test bounded
+typed-array conversion of the existing compact format. Require exact
+Java parity and compare both browsers with the same source JAR.
+Use the worst second, seconds below 60 FPS and the frame interval tails.
+The separate projection scratch trial gave divergent pacing across
+browsers and was removed.
+[Compact conversion evidence](seamless-world-streaming-preview.md#compact-scenery-conversion)
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.

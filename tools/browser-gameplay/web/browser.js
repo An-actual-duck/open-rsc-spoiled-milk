@@ -12,6 +12,7 @@ import {createRegionHandoffTraceCollector} from './browser-region-handoff-profil
 import {renderWorkerPolicy} from './browser-render-worker-protocol.js';
 import {optimizedRenderDefaults,canonicalRenderProperties} from './browser-optimized-render-defaults.js';
 import {createBatchedModelKernel} from './browser-batched-model-kernel.js';
+import {packCompactVertexBlock} from './browser-geometry-layout.js';
 import {browserGeometryTransferPolicy} from './browser-geometry-transfer-policy.js';
 import {privatePreparationCandidates} from './browser-preparation-candidates.js';
 import {createStutterDiagnostics,stutterDiagnosticsPolicy} from './browser-stutter-diagnostics.js';
@@ -138,6 +139,8 @@ const candidatePreparation=privatePreparationCandidates(window.browserProof.mode
 const optimizedDefaults=optimizedRenderDefaults(window.browserProof.mode,options);
 const modelBatchKernel=createBatchedModelKernel();
 window.browserProof.batchedModelKernelWork=modelBatchKernel.stats;
+const compactPackWork={blocks:0,vertices:0,rejected:0};
+window.browserProof.compactPackWork=compactPackWork;
 const fixturePolicy=deployment.publicAlpha?{properties:[],requested:null,tcpPort:43605,websocket:deployment.websocket}:repeatableFixturePolicy(window.browserProof.mode,options,window.browserPrivateTestRoute,location.origin);
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
@@ -203,6 +206,13 @@ const natives = {
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
+  Java_orsc_OpenGLWorldChunkRenderer_packBrowserCompactBlock(lib,input,count,output,outputAt){
+    if(deployment.publicAlpha)return false;
+    const packed=packCompactVertexBlock(input,count,output,outputAt);
+    if(packed){compactPackWork.blocks++;compactPackWork.vertices+=count;}
+    else compactPackWork.rejected++;
+    return packed;
+  },
   Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(lib,input){
     if(stopped)return;
     if(!deployment.publicAlpha||!input||input.length!==6||Array.from(input).some(v=>v!==0&&v!==1)||input[0]!==1||input[1]!==1||input[5]!==Number(input[2]===1&&input[3]===input[4]))throw new Error('Invalid public roof selection receipt');

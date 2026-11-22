@@ -36,6 +36,8 @@ def main():
     parser.add_argument('--predicted-scenery', action='store_true', help='Prebuild the predicted outer scenery strip')
     parser.add_argument('--preupload-scene', action='store_true', help='Stage prepared scenery and the predicted center mesh')
     parser.add_argument('--compact-scenery', action='store_true', help='Use compact GPU buffers for static scenery')
+    parser.add_argument('--compact-vertex-blocks', action='store_true', help='Convert compact scenery in bounded browser typed-array batches')
+    parser.add_argument('--verify-compact-vertex-blocks', action='store_true', help='Compare each accepted batch with the Java packer during the walk')
     parser.add_argument('--pace-terrain', action='store_true', help='Yield during browser terrain prediction builds')
     parser.add_argument('--prebuild-ownership', action='store_true', help='Stage scenery in the ownership transition strips')
     parser.add_argument('--prepare-local-terrain', action='store_true', help='Prepare collision, minimap layout and structure models before a walking handoff')
@@ -99,6 +101,10 @@ def main():
         parser.error('Scene uploads require terrain uploads and scenery preparation')
     if args.compact_scenery and not (args.preupload_scene or args.surface_scenery_draw):
         parser.error('Compact scenery requires scene uploads')
+    if args.compact_vertex_blocks and not args.compact_scenery:
+        parser.error('Batched compact packing requires compact scenery')
+    if args.verify_compact_vertex_blocks and not (args.compact_vertex_blocks and args.sustained_walk):
+        parser.error('Compact verification requires a sustained walk with batched packing')
     if args.prebuild_ownership and not args.predicted_scenery:
         parser.error('Scenery ownership prediction requires the scenery preview')
     if args.prepare_incoming_scenery and not args.prebuild_ownership:
@@ -165,6 +171,8 @@ def main():
            f'        System.setProperty("spoiledmilk.browserRegionHandoffTrace", "{str(args.trace).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPreuploadSceneMeshes", "{str(args.preupload_scene).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserCompactScenery", "{str(args.compact_scenery).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserCompactVertexBlocks", "{str(args.compact_vertex_blocks).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.verifyBrowserCompactVertexBlocks", "{str(args.verify_compact_vertex_blocks).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPaceTerrainPrediction", "{str(args.pace_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPrepareLocalTerrain", "{str(args.prepare_local_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPrepareIncomingScenery", "{str(args.prepare_incoming_scenery).lower()}");\n'
@@ -290,6 +298,8 @@ def main():
         'predictedScenery': args.predicted_scenery,
         'preuploadScene': args.preupload_scene,
         'compactScenery': args.compact_scenery,
+        'compactVertexBlocks': args.compact_vertex_blocks,
+        'verifyCompactVertexBlocks': args.verify_compact_vertex_blocks,
         'paceTerrain': args.pace_terrain,
         'prebuildOwnership': args.prebuild_ownership,
         'prepareLocalTerrain': args.prepare_local_terrain,

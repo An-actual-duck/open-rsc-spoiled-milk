@@ -359,6 +359,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
                 modelBatchWork:p.batchedModelKernelWork,
                 modelBatchPreparation:p.batchedModelPreparationWork,
+                compactPackWork:p.compactPackWork,
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
@@ -402,6 +403,10 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 preparation = result.get('modelBatchPreparation') or {}
                 if not preparation.get('nativeModels') or preparation.get('roleMapOperations') != 0:
                     raise RuntimeError('The walk did not exercise native-only inter-model alias checks')
+            if fixture.get('compactVertexBlocks'):
+                packing = result.get('compactPackWork') or {}
+                if not packing.get('blocks') or packing.get('vertices', 0) < 128:
+                    raise RuntimeError('The walk did not exercise batched compact scenery packing')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
             server_status = json.loads((run / 'status.json').read_text())
