@@ -62,6 +62,8 @@ public final class World {
 	private static final boolean FIXED_SURFACE_DRAW = orsc.BrowserWorldStreaming.allowsSurfaceFeatures()
 		&& Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
 	private volatile SurfaceTerrainDrawField fixedSurfaceDraw;
+	private volatile SurfaceHaloMeshes retainedVisualSurfaceHalo;
+	private volatile SurfaceHaloMeshes retainedCompleteSurfaceHalo;
 	private volatile SurfaceDrawPreparation preparedSurfaceDraw;
 	private SurfaceDrawPreparation activeSurfaceDrawPreparation;
 	private static final boolean LIVE_SURFACE_DRAW_PREPARATION = FIXED_SURFACE_DRAW
@@ -542,11 +544,24 @@ public final class World {
 		} else {
 			renderTerrain = haloTerrain;
 		}
+		final boolean retainSurfaceHalo = orsc.BrowserWorldStreaming.enabled()
+			&& renderTerrain.getLevel() == 0 && "global".equals(renderTerrain.getWorldSpace())
+			&& reusableChunks.getChunkCount() == 0
+			&& !WorldEditorBuildSettings.isEnabled() && !hasWholeOverworldTerrainPatches();
+		final boolean visualOnly = haloTerrain.getProtocolVersion()
+			== NativeLayeredTerrainSnapshot.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION;
+		if (retainSurfaceHalo) {
+			SurfaceHaloMeshes retained = visualOnly ? retainedVisualSurfaceHalo : retainedCompleteSurfaceHalo;
+			if (retained != null && retained.matches(activeScopeIdentity, renderTerrain, worldOffsetX, worldOffsetZ,
+				includeRoofGeometry)) {
+				return CompletableFuture.completedFuture(retained.forStage(haloTerrain, sourceRevision));
+			}
+		}
 		return sectorPreloadExecutor.submit(
 			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
 				@Override
 				public NativeLayeredTerrainHaloPrebuildResult call() {
-					return buildNativeLayeredTerrainHalo(
+					NativeLayeredTerrainHaloPrebuildResult result = buildNativeLayeredTerrainHalo(
 						activeTerrain,
 						renderTerrain,
 						haloTerrain.scopeIdentity(),
@@ -557,8 +572,41 @@ public final class World {
 						sourceRevision,
 						includeRoofGeometry,
 						reusableChunks);
+					// Retain only products assembled from the captured, unedited authority.
+					if (retainSurfaceHalo && sourceRevision == worldEditorTerrainRevision.get()) {
+						SurfaceHaloMeshes retained = new SurfaceHaloMeshes(renderTerrain.scopeIdentity(), result);
+						if (visualOnly) retainedVisualSurfaceHalo = retained;
+						else retainedCompleteSurfaceHalo = retained;
+					}
+					return result;
 				}
 			});
+	}
+
+	/** A bounded return cache. Each receipt still binds to the current scene and wire stage. */
+	private static final class SurfaceHaloMeshes {
+		private final String sourceIdentity;
+		private final NativeLayeredTerrainHaloPrebuildResult meshes;
+
+		private SurfaceHaloMeshes(String sourceIdentity, NativeLayeredTerrainHaloPrebuildResult meshes) {
+			this.sourceIdentity = sourceIdentity;
+			this.meshes = meshes;
+		}
+
+		private boolean matches(String activeIdentity, NativeLayeredTerrainSnapshot source, int offsetX, int offsetZ,
+			boolean includeRoofs) {
+			return meshes.activeScopeIdentity.equals(activeIdentity) && sourceIdentity.equals(source.scopeIdentity())
+				&& meshes.worldOffsetX == offsetX && meshes.worldOffsetZ == offsetZ
+				&& meshes.includeRoofGeometry == includeRoofs;
+		}
+
+		private NativeLayeredTerrainHaloPrebuildResult forStage(NativeLayeredTerrainSnapshot stage, long revision) {
+			return new NativeLayeredTerrainHaloPrebuildResult(meshes.activeScopeIdentity, stage.scopeIdentity(),
+				stage.getProtocolVersion(), revision, meshes.worldOffsetX, meshes.worldOffsetZ, meshes.plane,
+				meshes.sectionX, meshes.sectionY, meshes.includeRoofGeometry, meshes.outerChunks, meshes.retentionChunks,
+				null, null, meshes.fixedDraw, meshes.triangleCount, true, meshes.reusedCells + meshes.builtCells, 0,
+				meshes.compactDiagnosticSummary, meshes.cellDiagnostics, 0L);
+		}
 	}
 
 	public Future<NativeLayeredTerrainSnapshot> decodePredictedSurfaceTerrain(Callable<NativeLayeredTerrainSnapshot> decode) {
