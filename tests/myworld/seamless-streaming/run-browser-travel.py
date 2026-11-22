@@ -148,9 +148,9 @@ def summarize_walking(result):
     arrivals = [event['milliseconds'] for event in result['events'] if event['message'].startswith('outer-coverage:arrived:')]
     if not rows or not walks or not arrivals:
         return None
-    origin = result['timeOrigin']
-    first = origin + walks[0]
-    last = origin + arrivals[-1]
+    events_started = result['timeOrigin'] + result['proofStartedAt']
+    first = events_started + walks[0]
+    last = events_started + arrivals[-1]
     walk_rows = [row for row in rows if first <= row['time'] <= last]
     frames = [row for row in walk_rows if row['kind'] == 'frame']
     largest_visible_step = max((math.dist(before['shown'], after['shown']) / 128
@@ -302,7 +302,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 timingWindow:{gpu:p.gpu?.gpuWorkSamples,submission:p.gpu?.jsSubmissionSamples,
                     bridge:p.gpu?.javaBridgeWorkSamples,overlay:p.gpu?.overlayStageSamples,stages:p.gpu?.frameStageSamples,
                     slowStages:p.gpu?.slowFrameStages},
-                presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin};''')
+                presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin,proofStartedAt:p.started};''')
             if profiler_active:
                 receipt = firefox_profiler_command(started['capabilities']['webSocketUrl'], 'moz:profiler.stop', {})
                 if not receipt.get('path'):

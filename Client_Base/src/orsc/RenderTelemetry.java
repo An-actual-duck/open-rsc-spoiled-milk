@@ -719,7 +719,8 @@ public final class RenderTelemetry {
 				+ " frameComposeMs="
 					+ formatMillisRoot(symmetricComposeNanos)
 				+ " preloadMs=" + formatMillisRoot(preloadNanos);
-		ClientRuntimeLogger.logWorldTransition(summary);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
 	}
 
 	static void recordOpenGLBoundaryTransitionFrame(
@@ -990,7 +991,8 @@ public final class RenderTelemetry {
 				+ " terrainMs=" + formatMillisRoot(terrainNanos)
 				+ " wallMs=" + formatMillisRoot(wallNanos)
 				+ " roofMs=" + formatMillisRoot(roofNanos);
-		ClientRuntimeLogger.logWorldTransition(summary);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
 	}
 
 	public static void recordClientRegionTransition(
@@ -1085,7 +1087,8 @@ public final class RenderTelemetry {
 				+ " actorsMs=" + formatMillisRoot(actorRebaseNanos)
 				+ " finalizeMs=" + formatMillisRoot(finalizeNanos)
 				+ " baselineMs=" + formatMillisRoot(baselineNanos);
-		ClientRuntimeLogger.logWorldTransition(summary);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
 	}
 
 	public static String worldSectionLoadSummary() {

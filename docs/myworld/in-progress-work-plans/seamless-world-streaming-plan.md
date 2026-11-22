@@ -419,8 +419,10 @@ repeat builds, with modest pacing benefit in the matched route.
 
 Use the normal applet client with the verified WebGL worker as the
 current rendering baseline. That path improved frame pacing in both
-browsers after the terrain changes. The synchronous and acknowledged
-atlas trials produced mixed results. The full Java client worker
+browsers after the terrain changes. The Full HD player preview also
+plans the sprite atlas next to the Java client and verifies the same
+plan on the render worker. The synchronous and acknowledged atlas
+trials produced mixed results. The full Java client worker
 completed the Firefox route and had longer presentation gaps than the
 applet client. A future client port needs another concrete change to
 frame production or resource ownership before a new pacing comparison.
@@ -436,6 +438,7 @@ Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.
 [Scenery and terrain captures](seamless-world-streaming-preview.md#flat-scenery-replies-and-worker-packed-draws)
+[Current player preview and renderer measurements](seamless-world-streaming-preview.md#webgl-worker-at-full-hd)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.

@@ -1433,13 +1433,35 @@ fixture matched exact collision, minimap, roofs, picking geometry, and
 scenery size and data across the primitive worker boundary.
 [Delayed diagonal](../../../output/tests/browser-gameplay-spike/detached-halo-held-diagonal/firefox-result.json) · [Native parity](../../../output/tests/seamless-world-streaming/halo-prepared-build/native-parity.log)
 
+The final timing pass isolated the remainder of the world-load call.
+Collision installation took 0–1 ms and the activation message rounded
+to 0 ms. The synchronous transition telemetry fell between those
+measurements. Queuing the world and client transition summaries cut
+the traced region's world-load phase from 17–21 ms to 2–5 ms. Firefox's
+untraced worst second was 37 FPS with a 32 ms 99th percentile. Chrome's
+was 41 FPS with a 28.1 ms 99th percentile. The private build on port 8482
+had better overall pacing in both browser comparisons. The halo and
+queued-transition trials were removed from the gameplay source after the
+comparisons. Their exact builds and the boundary diagnostics are retained.
+[Tail timing](../../../output/tests/browser-gameplay-spike/halo-install-tail-trace/region-stage-summary.json) · [Queued transition timing](../../../output/tests/browser-gameplay-spike/world-transition-logging-trace/region-stage-summary.json) · [Firefox queued transition](../../../output/tests/browser-gameplay-spike/world-transition-logging-firefox/firefox-result.json) · [Chrome queued transition](../../../output/tests/browser-gameplay-spike/world-transition-logging-chrome/chrome-result.json)
+
+The travel trace now converts route events from the browser probe's
+clock origin before comparing them with worker timestamps. A fresh run
+of the queued-transition build passed the corrected walking window and
+arrived at `(252,609)` with zero holds, input blocks, or transitions.
+Its two longest gaps had zero time in packet handling. The full FPS
+comparison uses its own presentation window and was already applying
+the probe's clock offset.
+[Corrected travel trace](../../../output/tests/browser-gameplay-spike/world-transition-logging-clock-proof/firefox-result.json)
+
 The player preview uses the original applet input and the separate
 WebGL worker on loopback port 8482. It uses the local atlas planner and
 the same primitive terrain and scenery replies as the measured route.
 A normal mouse and keyboard login reached the appearance screen,
-accepted the character, and entered the playable world at 1920×1080. The waiting cover now
-clears when the worker acknowledges a UI frame so the appearance screen
-can receive input before the first world frame arrives.
+accepted the character, and entered the playable world at 1920×1080.
+The waiting cover now clears when the worker acknowledges a UI frame
+so the appearance screen can receive input before the first world frame
+arrives.
 [Full HD preview](http://127.0.0.1:8482/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/local-atlas-player-preview/manual-login-result.json)
 
 #### Java client worker feasibility

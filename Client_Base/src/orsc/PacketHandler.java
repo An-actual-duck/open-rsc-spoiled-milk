@@ -1531,7 +1531,12 @@ public class PacketHandler {
 	}
 
 	private static void logTerrainStreaming(String summary) {
-		ClientRuntimeLogger.logWorldTransition(summary);
+		if (mudclient.LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()) {
+			ClientRuntimeLogger.logStreaming(summary);
+		} else {
+			System.out.println(summary);
+			ClientRuntimeLogger.log(summary);
+		}
 	}
 
 	private void beginSurfaceSceneryPrediction(int stage, int context, int x, int z,
@@ -1928,7 +1933,8 @@ public class PacketHandler {
 			"NATIVE_TERRAIN_PREDICTED_HALO_ACTIVATED center="
 				+ predicted.getCurrentChunkX() + ","
 				+ predicted.getCurrentChunkY();
-		logTerrainStreaming(summary);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
 		return true;
 	}
 

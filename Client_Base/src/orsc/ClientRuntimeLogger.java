@@ -1,7 +1,5 @@
 package orsc;
 
-import orsc.graphics.three.Renderer3DSettings;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,14 +31,9 @@ final class ClientRuntimeLogger {
 			logThrowable("Uncaught exception in " + thread.getName(), throwable));
 	}
 
-	/** Keep browser streaming log writes outside the game's packet dispatch. */
-	static void logWorldTransition(String message) {
-		if (mudclient.LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()) {
-			StreamingLog.queued.offer(message);
-		} else {
-			System.out.println(message);
-			log(message);
-		}
+	/** Streaming notifications do not need to finish writing before the next game frame. */
+	static void logStreaming(String message) {
+		StreamingLog.queued.offer(message);
 	}
 
 	private static final class StreamingLog {
