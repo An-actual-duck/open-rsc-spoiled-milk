@@ -43,6 +43,8 @@ def main():
     parser.add_argument('--travel-trace', action='store_true', help='Record real submitted frames and server positions through extended travel')
     parser.add_argument('--presentation-only', action='store_true', help='Check sustained travel without detailed Java or server tracing')
     parser.add_argument('--frame-stages', action='store_true', help='Sample individual renderer stages during the presentation control')
+    parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
+    parser.add_argument('--profile-minimap-walk', action='store_true', help='Keep the minimap open for the profiled walk')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
     parser.add_argument('--safe-walk-fixture', action='store_true', help='Protect the disposable test character from combat damage')
     parser.add_argument('--slice-preupload', action='store_true', help='Pack large speculative vertex buffers across frames')
@@ -63,6 +65,7 @@ def main():
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
+    parser.add_argument('--dependency-jar', type=Path, help='Use an explicit immutable client build for a matched comparison')
     args = parser.parse_args()
     if args.sustained_walk and (args.manual or not (args.travel_trace or args.presentation_only)):
         parser.error('The automated sustained walk requires travel or presentation sampling')
@@ -72,6 +75,10 @@ def main():
         parser.error('Presentation-only sampling requires untraced sustained live-surface travel')
     if args.frame_stages and not args.presentation_only:
         parser.error('Frame stage timing requires the presentation control')
+    if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
+        parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
+    if args.profile_minimap_walk and not args.profile_panels:
+        parser.error('Minimap walking requires panel profiling')
     if args.hold_optional_terrain and not (args.retarget_walk and args.surface_mesh_worker and not args.manual):
         parser.error('The fringe hold requires the automated retarget walk and the terrain worker')
     if args.steady_walk and (args.manual or args.sustained_walk or args.retarget_walk or not args.live_surface_handoff):
@@ -118,6 +125,7 @@ def main():
     subprocess.run([
         'python3', str(scripts / 'prepare.py'), '--name', args.name,
         '--http-port', str(args.http_port),
+        *(['--dependency-jar', str(args.dependency_jar.resolve())] if args.dependency_jar else []),
     ], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
 
     run = category / args.name
@@ -138,6 +146,8 @@ def main():
            f'        System.setProperty("spoiledmilk.browserTravelTrace", "{str(args.travel_trace).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPresentationOnly", "{str(args.presentation_only).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserFrameStageTrace", "{str(args.frame_stages).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserProfilePanels", "{str(args.profile_panels).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserProfileMinimapWalk", "{str(args.profile_minimap_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSlicePreupload", "{str(args.slice_preupload).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSocketReadAhead", "{str(args.socket_read_ahead).lower()}");\n'
            f'        System.setProperty("spoiledmilk.persistentMovementPreview", "{str(args.persistent_movement).lower()}");\n'
@@ -245,6 +255,8 @@ def main():
         'travelTrace': args.travel_trace,
         'presentationOnly': args.presentation_only,
         'frameStages': args.frame_stages,
+        'profilePanels': args.profile_panels,
+        'profileMinimapWalk': args.profile_minimap_walk,
         'slicePreupload': args.slice_preupload,
         'socketReadAhead': args.socket_read_ahead,
         'persistentMovement': args.persistent_movement,

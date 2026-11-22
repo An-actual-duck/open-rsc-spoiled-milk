@@ -38,6 +38,7 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
     const samples = w.travelPresentation = {gaps: [], intervals: [], callbackGaps: [],
         frames: 0, holds: 0, blocked: 0, epochs: [], outputSizes: [], unobservedIntervals: 0};
     let first, last, startingFrame, startingHolds, lastUploadBytes, previousCount, previousCallback, lastOutput;
+    let lastPanelFrame = 0;
     const sample = stamp => {
         const events = p.events || [];
         if (first === undefined) {
@@ -46,6 +47,22 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
         }
         if (events.some(event => event.message.startsWith('outer-coverage:complete:'))) return;
         const gpu = p.gpu;
+        if (first === undefined && gpu?.frameStageSamples?.length) {
+            const marker = events.findLast(event => event.message.startsWith('outer-coverage:ui-profile:'));
+            const panel = marker?.message.split(':').at(-1);
+            if (panel && panel !== 'done') {
+                const frame = gpu.frameStageSamples.at(-1);
+                const hasInventory = frame.inventoryDrawMs >= 0;
+                const hasMinimap = frame.minimapDrawMs >= 0;
+                if (frame.worldFrame > lastPanelFrame && frame.submittedAt >= p.started + marker.milliseconds + 300 &&
+                    hasInventory === (panel === 'inventory') && hasMinimap === (panel === 'minimap')) {
+                    const profiles = samples.panelProfiles ??= {};
+                    const captured = profiles[panel] ??= [];
+                    if (captured.length < 600) captured.push(frame);
+                    lastPanelFrame = frame.worldFrame;
+                }
+            }
+        }
         if (first !== undefined && gpu?.lastFrame > first) {
             const output = gpu.physicalOutput;
             if (output && (!lastOutput || output.logicalWidth !== lastOutput.logicalWidth ||
@@ -80,9 +97,11 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
             previousCount = gpu.javaWorldFrames;
             if (gpu.lastFrame !== last) {
                 if (last !== undefined && gpu.lastFrame - last >= 50) {
+                    const stages = gpu.frameStageSamples?.at(-1);
                     samples.gaps.push({from: last, to: gpu.lastFrame, geometryUploadBytes: gpu.uploadedBytes - lastUploadBytes,
                         bridgeWork: gpu.javaBridgeWorkSamples.at(-1), javascriptSubmissionMs: gpu.jsSubmissionSamples.at(-1),
                         overlayStageMs: gpu.overlayStageSamples?.at(-1),
+                        frameStages: stages?.worldFrame === gpu.javaWorldFrames ? stages : undefined,
                         bridgeSampleCurrent: gpu.javaWorldFrames === gpu.javaBridgeReportedWorldFrames});
                     if (samples.gaps.length > 256) samples.gaps.shift();
                 }
@@ -219,7 +238,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
                     coverageBytes:p.gpu?.overlayCoverageBytes,retainedBytes:p.gpu?.retainedResourceBytes,
                     retainedCaptures:p.gpu?.retainedCaptures},
                 timingWindow:{gpu:p.gpu?.gpuWorkSamples,submission:p.gpu?.jsSubmissionSamples,
-                    bridge:p.gpu?.javaBridgeWorkSamples,overlay:p.gpu?.overlayStageSamples},
+                    bridge:p.gpu?.javaBridgeWorkSamples,overlay:p.gpu?.overlayStageSamples,stages:p.gpu?.frameStageSamples},
                 presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
@@ -256,6 +275,16 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
                 width, height = (1920, 1080) if output == 'full-hd' else (960, 540)
                 completed = (result.get('presentation') or {}).get('outputSizes') == [
                     {'logicalWidth': 960, 'logicalHeight': 540, 'width': width, 'height': height}]
+            if completed and fixture.get('profilePanels'):
+                profiles = (result.get('presentation') or {}).get('panelProfiles', {})
+                for panel, inventory, minimap in [('closed', False, False), ('inventory', True, False), ('minimap', False, True)]:
+                    samples = profiles.get(panel, [])
+                    completed = completed and len(samples) >= 60 and all(
+                        (row['inventoryDrawMs'] >= 0) == inventory and (row['minimapDrawMs'] >= 0) == minimap
+                        for row in samples)
+            if completed and fixture.get('profileMinimapWalk'):
+                stages = result['timingWindow'].get('stages', [])
+                completed = len(stages) >= 60 and all(row['minimapRasterMs'] >= 0 for row in stages)
             presentation = result.get('presentation')
             if presentation is not None:
                 intervals = sorted(presentation['intervals'])
@@ -268,8 +297,11 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
                         'maxMs': round(intervals[-1], 1),
                         'over100Ms': sum(interval >= 100 for interval in intervals),
                     }
-                print({key: value for key, value in presentation.items()
-                       if key not in ('gaps', 'intervals', 'callbackGaps')},
+                printable = {key: value for key, value in presentation.items()
+                             if key not in ('gaps', 'intervals', 'callbackGaps', 'panelProfiles')}
+                if fixture.get('profilePanels'):
+                    printable['panelSamples'] = {name: len(rows) for name, rows in presentation.get('panelProfiles', {}).items()}
+                print(printable,
                       'largest sampled frame gap:',
                       round(max((g['to'] - g['from'] for g in presentation['gaps']), default=0), 1), flush=True)
             capture.write_text(json.dumps(result, indent=2) + '\n')

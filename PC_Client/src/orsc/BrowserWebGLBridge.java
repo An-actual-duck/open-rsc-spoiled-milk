@@ -162,10 +162,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final long PREDICTED_PACK_SLICE_NANOS = 4_000_000L;
     private static final boolean TRAVEL_TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
         && Boolean.getBoolean("spoiledmilk.browserTravelTrace");
-    private static final boolean FRAME_STAGE_TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
-        && Boolean.getBoolean("spoiledmilk.browserFrameStageTrace");
-    // Sprite gather/plan/submit, overlay, world progress, draw list, present.
-    private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[7] : null;
+    private static final boolean FRAME_STAGE_TRACE = mudclient.TRACE_BROWSER_FRAME_STAGES;
+    // Sprite gather/plan/submit, overlay, world progress, draw list, present, sprite packing and UI.
+    private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[13] : null;
     private static final long PREDICTED_BUFFER_BUDGET = (COMPACT_SCENERY ? 64L : 48L) * 1024 * 1024;
     private static final long PREDICTED_UPLOAD_INTERVAL_NANOS = 75_000_000L;
     private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
@@ -477,6 +476,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             }
             if(FRAME_STAGE_TRACE){
                 int offset=15+mudclient.TRAVEL_TIMING_VALUES;
+                if(client!=null)client.copyBrowserUiTimings(frameStageWork,9);
                 frameStats=Arrays.copyOf(frameStats,offset+frameStageWork.length);
                 System.arraycopy(frameStageWork,0,frameStats,offset,frameStageWork.length);
             }
@@ -1013,13 +1013,20 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(spriteSequence>=9007199254740991L)throw new IllegalStateException("Sprite sequence exhausted");
         long sequence=++spriteSequence;int epoch=spriteCache.getEpoch();
         long gathered=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
-        int[] missing=planWorldSprites(epoch,sequence,batch.descriptors());
+        int[] descriptors=batch.descriptors();
+        long planStart=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+        int[] missing=planWorldSprites(epoch,sequence,descriptors);
         long planned=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
-        commitWorldSprites(epoch,sequence,batch.pixels(missing),batch.vertices());
+        byte[] pixels=batch.pixels(missing);
+        float[] vertices=batch.vertices();
+        long commitStart=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
+        commitWorldSprites(epoch,sequence,pixels,vertices);
         if(FRAME_STAGE_TRACE){
             frameStageWork[0]=(gathered-start)/1000000f;
             frameStageWork[1]=(planned-gathered)/1000000f;
             frameStageWork[2]=(System.nanoTime()-planned)/1000000f;
+            frameStageWork[7]=(planStart-gathered)/1000000f;
+            frameStageWork[8]=(commitStart-planned)/1000000f;
         }
         return batch.size();
     }

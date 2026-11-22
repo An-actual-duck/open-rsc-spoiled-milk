@@ -948,6 +948,87 @@ It observes the legacy raster and leaves sprites, framebuffer reads,
 and minimap raster operations to the existing path.
 [Sprite handoff](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L994) · [Java UI timing boundary](../../../Client_Base/src/orsc/mudclient.java#L10328) · [Overlay journal](../../../tools/browser-gameplay/web/browser-overlay-journal.js)
 
+#### Actor sprite handoff and open UI panels
+
+The private frame-stage trace now measures Java descriptor and pixel packing,
+elapsed time around the Java native calls, JavaScript atlas planning and
+commit work, and the WebGL upload calls. The runner matches these measurements
+to the submitted world frame when both receipts are available. The native-call
+times can include time waiting for the browser to run or resume the call.
+The WebGL upload timing measures CPU wall time around calls.
+
+The Full HD control opened each panel for six seconds over the same stationary
+scene. The two-item inventory and minimap were measured through their actual
+Java draw branches. The private fixture cleared the first-login dialogs that
+cover both panels and restored the original panel state before walking.
+
+| Browser | Closed UI median | Inventory panel median | Minimap panel median |
+| --- | ---: | ---: | ---: |
+| Firefox | 1 ms | 2 ms | 8 ms |
+| Chrome | 0.8 ms | 1.1 ms | 21.5 ms |
+
+The closed column measures the full Java UI draw with the side panels closed.
+The other columns measure the individual panel draws. Larger inventories and
+other panels need their own measurements. [Firefox panel control](../../../output/tests/browser-gameplay-spike/live-surface-sprite-ui-firefox-panels/firefox-result.json) · [Chrome panel control](../../../output/tests/browser-gameplay-spike/live-surface-sprite-ui-chrome-panels/chrome-result.json)
+
+Some walking hitches had a long native-call receipt while packing and atlas
+work were short. One 135 ms Firefox gap had 84 ms around the plan call,
+no measured JavaScript planning time at the 1 ms timer precision, and zero
+world geometry uploads. One 86.5 ms Chrome gap had 43.7 ms around the plan and
+commit calls and about 0.2 ms inside their JavaScript bodies. Other long gaps
+had short sprite receipts or lacked a matched receipt. The data identifies
+time around the handoff as a lead for some hitches.
+
+The direct-return trial used the same Java build and identical JavaScript
+callback bodies with the `async` declarations removed from sprite plan and
+commit in two private stages. It completed all three streaming rolls in both
+browsers. Firefox's 95th and 99th-percentile gaps went from 34 and 66 ms to
+33 and 68 ms. Chrome's went from 23.7 and 62 ms to 24.1 and 65.5 ms. The
+trial still recorded long Java elapsed times while the atlas callbacks were
+short. The standard callbacks remain in use. [Firefox direct return](../../../output/tests/browser-gameplay-spike/live-surface-sprite-ui-firefox-direct/firefox-result.json) · [Chrome direct return](../../../output/tests/browser-gameplay-spike/live-surface-sprite-ui-chrome-direct/chrome-result.json)
+
+#### Minimap pinned during sustained travel
+
+The pinned-minimap baseline measured the full panel and its rotated map
+image separately. In the last 600 reported frames, the panel's 95th-percentile
+Java draw took 6 ms in Firefox and 14.7 ms in Chrome. The rotated image
+accounted for 1 ms and 0.3 ms at the same percentile. Most of the panel work
+is outside the rotated-image draw. [Firefox baseline](../../../output/tests/browser-gameplay-spike/live-surface-minimap-raster-firefox/firefox-result.json) · [Chrome baseline](../../../output/tests/browser-gameplay-spike/live-surface-minimap-raster-chrome/chrome-result.json)
+
+A trial batched opacity writes for only the unmasked rotated scanlines.
+The RGB and coverage digests matched the baseline across 1,536 combinations
+of angle, zoom, clipping, and interlace. The pinned walking 95th-percentile
+gap moved from 45 to 43 ms in Firefox and from 53.5 to 50.9 ms in Chrome.
+The Firefox median was unchanged and its longest gap grew from 225 to
+277 ms. The rotated scanline change was removed. [Pixel proof](../../../output/tests/browser-minimap-pixels/rotated-coverage/candidate.txt) · [Firefox trial](../../../output/tests/browser-gameplay-spike/live-surface-minimap-coverage-firefox/firefox-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/live-surface-minimap-coverage-chrome/chrome-result.json)
+
+A second trial filled each solid rectangle row in bulk. It matched the
+baseline RGB and coverage digests with the panel background included.
+The median walking gap stayed at 24 ms in Firefox and 27.2 ms in Chrome.
+The Chrome 99th-percentile gap went from 112.9 to 118 ms. Firefox's
+stationary minimap draw stayed at 8 ms and Chrome's changed from 23.6
+to 22.7 ms. The change was removed after the paired runs showed limited
+pacing benefit. Both trials kept the original logical layout. The
+pinned walking tests completed three streaming rolls and a reversal
+with one load epoch and zero loading holds or sampled input closures.
+[Pixel proof](../../../output/tests/browser-minimap-pixels/opaque-panel-fill/candidate.txt) · [Firefox fill trial](../../../output/tests/browser-gameplay-spike/live-surface-minimap-fill-firefox/firefox-result.json) · [Chrome fill trial](../../../output/tests/browser-gameplay-spike/live-surface-minimap-fill-chrome/chrome-result.json)
+
+The next minimap investigation should time the marker loops. The
+scenery loop walks the installed object list, projects each object and
+sends five individually clipped pixels per dot. If that loop dominates
+the panel time, use the existing scenery placement revision to keep a
+local marker index and visit only the visible area. Keep live NPC,
+player and ground-item dots current. Exercise marker overlap, clipping,
+object updates at a streaming boundary and minimap click coordinates.
+The actor handoff remains a separate performance lead when the minimap
+is closed. [Marker drawing](../../../Client_Base/src/orsc/mudclient.java#L15970) · [Placement revision](../../../Client_Base/src/orsc/ClientSceneInstanceStore.java#L85)
+
+Use `--frame-stages --profile-panels` with the private sustained
+presentation control to capture the three stationary UI states before
+walking. Add `--profile-minimap-walk` to leave the minimap pinned across
+the route. Pass `--dependency-jar` to stage a specific client build
+and use `--output full-hd` when running the browser capture.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

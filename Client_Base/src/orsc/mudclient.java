@@ -132,6 +132,12 @@ public final class mudclient implements Runnable {
 	private static final boolean TRACE_BROWSER_TRAVEL = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.browserTravelTrace");
 	public static final int TRAVEL_TIMING_VALUES = 9;
+	static final boolean TRACE_BROWSER_FRAME_STAGES = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.browserFrameStageTrace");
+	private float browserUiDrawMs;
+	private float browserInventoryDrawMs;
+	private float browserMinimapDrawMs;
+	private float browserMinimapRasterMs;
 	private final long[] travelWorkNanos = TRACE_BROWSER_TRAVEL ? new long[7] : null;
 	private long slowestTravelPacketNanos;
 	private int slowestTravelPacketOpcode = -1;
@@ -10258,6 +10264,12 @@ public final class mudclient implements Runnable {
 
 						long worldOverlayNanos = RenderTelemetry.elapsedSince(worldOverlayStart);
 						long uiOverlayStart = RenderTelemetry.now();
+						long browserUiStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
+						if (TRACE_BROWSER_FRAME_STAGES) {
+							browserInventoryDrawMs = -1;
+							browserMinimapDrawMs = -1;
+							browserMinimapRasterMs = -1;
+						}
                         this.getSurface().captureRenderer2DUiBaseFrame();
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
 						if (this.messageTabSelected == MessageTab.ALL) {
@@ -10328,6 +10340,7 @@ public final class mudclient implements Runnable {
 					this.drawUi(0);
 					this.getSurface().loggedIn = false;
 					this.drawChatMessageTabs(var1 - 8);
+					if (TRACE_BROWSER_FRAME_STAGES) browserUiDrawMs = (System.nanoTime() - browserUiStart) / 1_000_000f;
 					RenderTelemetry.recordClientDrawPreparation(beforeSceneNanos, residentObjectsNanos,
 						worldOverlayNanos, RenderTelemetry.elapsedSince(uiOverlayStart));
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
@@ -12960,7 +12973,9 @@ public final class mudclient implements Runnable {
 				}
 
 				if (visibleSideMenuTab == Config.INVENTORY_TAB) {
+					long panelStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 					this.drawUiTab1(-15252, acceptTabInput);
+					if (TRACE_BROWSER_FRAME_STAGES) browserInventoryDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
 				if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
@@ -12968,7 +12983,9 @@ public final class mudclient implements Runnable {
 				}
 
 				if (this.shouldDrawMinimapPanel()) {
+					long panelStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 					this.drawUiTabMinimap(mustDrawMenu, (byte) 125);
+					if (TRACE_BROWSER_FRAME_STAGES) browserMinimapDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
 				if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) {
@@ -15944,8 +15961,10 @@ public final class mudclient implements Runnable {
 			int var11 = FastMath.trigTable_1024[(1023 & 1024 - var7 * 4) + 1024];
 			int var12 = mX * var11 + var10 * mZ >> 18;
 			mZ = mZ * var11 - mX * var10 >> 18;
+			long rasterStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 			this.getSurface().drawMinimapSprite(this.getSurface().minimapSprite, posY - (-(var5 / 2) - mZ),
 				var4 / 2 + posX - var12, 842218000, var6, 255 & 64 + var7);
+			if (TRACE_BROWSER_FRAME_STAGES) browserMinimapRasterMs = (System.nanoTime() - rasterStart) / 1_000_000f;
 
 			int var13;
 			for (var13 = 0; var13 < this.getGameObjectInstanceCount(); ++var13) {
@@ -27555,6 +27574,13 @@ public final class mudclient implements Runnable {
 		target[offset + 8] = slowestTravelPacketOpcode;
 		slowestTravelPacketNanos = 0L;
 		slowestTravelPacketOpcode = -1;
+	}
+
+	void copyBrowserUiTimings(float[] target, int offset) {
+		target[offset] = browserUiDrawMs;
+		target[offset + 1] = browserInventoryDrawMs;
+		target[offset + 2] = browserMinimapDrawMs;
+		target[offset + 3] = browserMinimapRasterMs;
 	}
 
 	public boolean shouldRetainLastPresentedFrame() {

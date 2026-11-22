@@ -12,6 +12,7 @@ import orsc.ORSCApplet;
 import orsc.NativeLayeredTerrainSnapshot;
 import orsc.PacketHandler;
 import orsc.BrowserWebGLBridge;
+import orsc.Config;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.RSModel;
@@ -75,6 +76,7 @@ public final class BrowserOuterCoverageProbe {
 		}
 		if (worldReady() != 1) throw new IllegalStateException("Initial graphics did not become ready");
 		if (worldX(client) != 239 || worldZ(client) != 609) throw new IllegalStateException("Wrong private spawn");
+		if (Boolean.getBoolean("spoiledmilk.browserProfilePanels")) profilePanels(client);
 		if (Boolean.getBoolean("spoiledmilk.persistentMovementPreview")) {
 			runPersistentMovementWalk(client);
 			return;
@@ -156,6 +158,42 @@ public final class BrowserOuterCoverageProbe {
 		panel.setText(field(mudclient.class, "controlLoginPass").getInt(client), password);
 		boolean[] loginButtons = (boolean[]) clicked.get(panel);
 		loginButtons[field(mudclient.class, "m_be").getInt(client)] = true;
+	}
+
+	private static void profilePanels(mudclient client) throws Exception {
+		// The disposable account's first-login dialogs cover the side panels.
+		field(mudclient.class, "showDialogMessage").setBoolean(client, false);
+		field(mudclient.class, "showDialogServerMessage").setBoolean(client, false);
+		Field pinnedTab = field(mudclient.class, "pinnedSideMenuTab");
+		Field pinnedMap = field(mudclient.class, "minimapPinned");
+		int savedTab = pinnedTab.getInt(client);
+		int savedHover = client.showUiTab;
+		boolean savedMap = pinnedMap.getBoolean(client);
+		try {
+			pinnedTab.setInt(client, 0);
+			pinnedMap.setBoolean(client, false);
+			client.showUiTab = 0;
+			BrowserBootstrap.report("outer-coverage:ui-profile:closed");
+			Thread.sleep(6000);
+			pinnedTab.setInt(client, Config.INVENTORY_TAB);
+			BrowserBootstrap.report("outer-coverage:ui-profile:inventory");
+			BrowserBootstrap.report("outer-coverage:ui-profile-inventory-items:" + field(mudclient.class, "inventoryItemCount").getInt(client));
+			Thread.sleep(6000);
+			pinnedTab.setInt(client, 0);
+			pinnedMap.setBoolean(client, true);
+			BrowserBootstrap.report("outer-coverage:ui-profile:minimap");
+			Thread.sleep(6000);
+			BrowserBootstrap.report("outer-coverage:ui-profile:done");
+		} finally {
+			pinnedTab.setInt(client, savedTab);
+			pinnedMap.setBoolean(client, savedMap);
+			client.showUiTab = savedHover;
+		}
+		if (Boolean.getBoolean("spoiledmilk.browserProfileMinimapWalk")) {
+			client.showUiTab = 0;
+			pinnedTab.setInt(client, 0);
+			pinnedMap.setBoolean(client, true);
+		}
 	}
 
 	private static int worldX(mudclient client) { return client.getMidRegionBaseX() + client.getLocalPlayerX(); }
