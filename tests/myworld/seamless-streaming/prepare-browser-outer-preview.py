@@ -64,6 +64,7 @@ def main():
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Include the signed source neighbors of outer draw cells')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Publish revisioned scenery meshes ahead of the crossing')
     parser.add_argument('--live-surface-handoff', action='store_true', help='Keep verified playable coverage live through a rolling rebase')
+    parser.add_argument('--browser-streaming-log', action='store_true', help='Capture streaming logs in the browser instead of the Java writer')
     parser.add_argument('--retarget-walk', action='store_true', help='Change course before the original predicted window activates')
     parser.add_argument('--steady-walk', action='store_true', help='Repeat the approach inside the installed area after its prediction is ready')
     parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
@@ -99,6 +100,8 @@ def main():
         parser.error('Cached rebasing requires certified resident projection models')
     if args.integer_camera_bounds and not args.resident_camera_cull:
         parser.error('Integer camera bounds require certified resident projection models')
+    if args.browser_streaming_log and not args.live_surface_handoff:
+        parser.error('The browser streaming log requires the live surface fixture')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -194,6 +197,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserProjectionDemand", "{str(args.projection_demand).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserResidentCameraCull", "{str(args.resident_camera_cull).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserIntegerCameraBounds", "{str(args.integer_camera_bounds).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserStreamingLog", "{str(args.browser_streaming_log).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserKeepRebasedModels", "{str(args.keep_rebased_models).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSkipEmptyModelRemovals", "{str(args.skip_empty_model_removals).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfilePanels", "{str(args.profile_panels).lower()}");\n'
@@ -320,6 +324,7 @@ def main():
         'projectionDemand': args.projection_demand,
         'residentCameraCull': args.resident_camera_cull,
         'integerCameraBounds': args.integer_camera_bounds,
+        'browserStreamingLog': args.browser_streaming_log,
         'keepRebasedModels': args.keep_rebased_models,
         'skipEmptyModelRemovals': args.skip_empty_model_removals,
         'profilePanels': args.profile_panels,

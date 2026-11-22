@@ -1533,6 +1533,7 @@ public class PacketHandler {
 	}
 
 	private static void logTerrainStreaming(String summary) {
+		if (BrowserStreamingLog.append(summary)) return;
 		if (mudclient.LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()) {
 			ClientRuntimeLogger.logStreaming(summary);
 		} else {
@@ -1940,8 +1941,10 @@ public class PacketHandler {
 			"NATIVE_TERRAIN_PREDICTED_HALO_ACTIVATED center="
 				+ predicted.getCurrentChunkX() + ","
 				+ predicted.getCurrentChunkY();
-		System.out.println(summary);
-		ClientRuntimeLogger.log(summary);
+		if (!BrowserStreamingLog.append(summary)) {
+			System.out.println(summary);
+			ClientRuntimeLogger.log(summary);
+		}
 		recordContextPhase("halo-activation-log", phaseStarted);
 		return true;
 	}

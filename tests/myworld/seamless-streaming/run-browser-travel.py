@@ -382,6 +382,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 time.sleep(.85)
 
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
+                streamingLog:p.streamingLog,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
                 modelBatchWork:p.batchedModelKernelWork,
@@ -432,6 +433,9 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                     raise RuntimeError('The walk did not exercise batched compact scenery packing')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
+            if completed and fixture.get('browserStreamingLog'):
+                activations = [line for line in result.get('streamingLog', []) if line.startswith('NATIVE_TERRAIN_PREDICTED_HALO_ACTIVATED')]
+                completed = len(activations) == 3
             server_status = json.loads((run / 'status.json').read_text())
             if completed and fixture.get('persistentMovement'):
                 arrival = next(event['message'] for event in reversed(result['events'])
