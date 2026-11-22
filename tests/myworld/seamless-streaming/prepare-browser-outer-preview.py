@@ -104,8 +104,8 @@ def main():
         parser.error('Cached rebasing requires certified resident projection models')
     if args.integer_camera_bounds and not args.resident_camera_cull:
         parser.error('Integer camera bounds require certified resident projection models')
-    if args.roll_timings and (not args.presentation_only or not args.surface_draw_worker or args.frame_stages):
-        parser.error('Roll timing requires the untraced presentation route and the render worker')
+    if args.roll_timings and not (args.presentation_only and args.surface_draw_worker):
+        parser.error('Roll timing requires the sustained presentation route and the render worker')
     if args.roll_packet_timings and not (args.roll_timings and args.sustained_walk):
         parser.error('Packet timing requires the sustained scene-roll timing route')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):

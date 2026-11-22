@@ -2256,6 +2256,16 @@ comparison. These eight route runs used the same client JAR, built from
 `b01f6c45674e318c9bafc3ea3af3f8fc07be4eb70b060c54e47a19b39261266c`.
 [Chrome repeat control](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-repeat-control-chrome/chrome-result.json) · [Chrome repeat worker](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-repeat-trial-chrome/chrome-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-repeat-control-firefox/firefox-result.json) · [Firefox repeat worker](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-repeat-trial-firefox/firefox-result.json)
 
+In a separate Chrome CPU capture of the new preview build, the first
+roll's 122.2 ms frame interval contained 7.2 ms before replay, 48.0 ms in
+replay, and 67.0 ms after it. The next two rolls also had 45–50 ms of
+elapsed time after replay before a fresh frame. Clock alignment was
+within 1.5 ms. The sampled stacks in those later spans were distributed
+across client work. A separate capture aligns the client loop, scene
+capture and renderer stages with those verified rolls. The pacing
+comparisons above used the unprofiled walks.
+[Chrome CPU capture on the preview build](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-scene-roll-profile-chrome/chrome-between-rolls-cpu.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
