@@ -522,6 +522,16 @@ movement authority in every candidate.
 [Scenery and terrain captures](seamless-world-streaming-preview.md#flat-scenery-replies-and-worker-packed-draws)
 [Current player preview and renderer measurements](seamless-world-streaming-preview.md#webgl-worker-at-full-hd)
 
+CheerpJ schedules Java threads on the browser thread that owns their VM.
+The resident scenery executor can defer Java work, but only the explicit
+browser workers run it on another core. For an authority preparation trial,
+build the next scenery and wall revision before the existing fence. Keep
+live edits on the current ordered gameplay path. Publish a staged result
+only when the fence confirms its scope, records and movement generation.
+Measure detached preparation, transfer and publication on their respective
+threads. A new Java executor alone shares the frame budget with the game loop.
+[CheerpJ threading](https://cheerpj.com/how-cheerpj-works/) · [Server activation fence](../../../server/src/com/openrsc/server/GameStateUpdater.java#L1795)
+
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
 TeaVM can ahead-of-time compile a detached Java library, with limited

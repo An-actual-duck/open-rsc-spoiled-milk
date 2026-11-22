@@ -1921,6 +1921,41 @@ parity and browser captures remain available. The current player preview
 uses the integer camera bounds build on port 8593.
 [Firefox control](../../../output/tests/browser-gameplay-spike/prepared-scene-rows-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/prepared-scene-rows-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/prepared-scene-rows-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/prepared-scene-rows-chrome/chrome-result.json)
 
+#### Complete the render batch at presentation
+
+The private trial submits a complete verified live world frame from the
+Java `present` call. The worker still verifies draw inputs, completes
+upload validation, and acknowledges each frame in order. Eligible frames
+skip the separate Java pose and timing callback. Startup, loading, and
+traced frames use the existing completion path. Protocol checks and the
+GL double passed the completion and failure cases.
+
+The first same-build pairs walked the full route and reversed through
+three rolls. All reached `(252,609)` on the server with one load epoch,
+zero held frames and zero sampled input closures. The trial exercised
+3,655 eligible frames in Firefox and 3,634 in Chrome. Measurements count
+fresh worker submissions at 1920×1080 with the original 960×540 logical
+UI.
+
+| Browser | 99th-percentile interval | Longest interval | Lowest one-second FPS | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 27 → 28 ms | 173 → 154 ms | 39 → 41 FPS | 17 → 16 |
+| Chrome | 25 → 24.7 ms | 142.3 → 120.9 ms | 48 → 51 FPS | 14 → 12 |
+
+[Firefox control](../../../output/tests/browser-gameplay-spike/complete-at-present-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/complete-at-present-trial-firefox-run2/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/complete-at-present-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/complete-at-present-trial-chrome/chrome-result.json)
+
+#### Exact integer scenery signatures
+
+The Chrome allocation capture attributed about 383 MB of sampled transient
+allocation to the scenery mesh signature loop. The private live trial
+uses the existing two-integer FNV-1a accumulator for that loop. The stored
+64-bit hash, input order, geometry, and shadow data use the same format.
+The native proof ran 98 construction cases with the trial enabled and
+disabled and with public mode selected. The three raw outputs matched
+byte for byte. The trial exercised 50 scenery signatures and the other
+two runs reported zero.
+[Sampled allocation sites](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-allocations-chrome/allocation-summary.json) · [Native trial](../../../output/tests/seamless-world-streaming/scenery-signature-limbs-build/trial.log) · [Native control](../../../output/tests/seamless-world-streaming/scenery-signature-limbs-build/control.log)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
