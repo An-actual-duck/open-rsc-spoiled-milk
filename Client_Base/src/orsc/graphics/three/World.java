@@ -6749,11 +6749,19 @@ public final class World {
 	}
 
 	private void clearTerrainModelGrids() {
+		scene.invalidateTerrainStructureOrder();
 		Arrays.fill(modelLandscapeGrid, null);
 		for (int plane = 0; plane < 4; plane++) {
 			Arrays.fill(modelWallGrid[plane], null);
 			Arrays.fill(modelRoofGrid[plane], null);
 		}
+	}
+
+	public boolean synchronizeTerrainStructures(int plane, boolean visible) {
+		boolean upperWalls = plane == 0;
+		return scene.synchronizeTerrainStructures(visible, modelRoofGrid[plane],
+			upperWalls ? modelWallGrid[1] : null, upperWalls ? modelRoofGrid[1] : null,
+			upperWalls ? modelWallGrid[2] : null, upperWalls ? modelRoofGrid[2] : null);
 	}
 
 	private void setTileDecoration(int xTile, int zTile, int val) {

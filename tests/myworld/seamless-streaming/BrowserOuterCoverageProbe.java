@@ -473,11 +473,10 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
-		boolean worldSpaceScenery = Boolean.getBoolean("spoiledmilk.browserWorldSpaceScenery");
-		if (worldSpaceScenery) {
-			int retained = client.getRetainedWorldSpaceModels();
-			if (retained <= 0) throw new IllegalStateException("No static model stayed in world space at a roll");
-			BrowserBootstrap.report("outer-coverage:world-space-scenery:retained=" + retained);
+		if (Boolean.getBoolean("spoiledmilk.browserStableTerrainStructureOrder")) {
+			int[] work = client.getScene().getTerrainStructureOrderWork();
+			if (work[0] <= 0 || work[1] <= 0) throw new IllegalStateException("No reconciled terrain structure order was reused");
+			BrowserBootstrap.report("outer-coverage:terrain-structure-order:reconciled=" + work[0] + ":reused=" + work[1]);
 		}
 		if (Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels")) {
 			long[] work;
@@ -486,9 +485,7 @@ public final class BrowserOuterCoverageProbe {
 			} catch (ReflectiveOperationException error) {
 				throw new IllegalStateException("Cached model rebase counters are unavailable", error);
 			}
-			if (!worldSpaceScenery && (work[0] <= 0 || work[1] <= 0)) {
-				throw new IllegalStateException("No model retained its transform across the rolls");
-			}
+			if (work[0] <= 0 || work[1] <= 0) throw new IllegalStateException("No model retained its transform across the rolls");
 			BrowserBootstrap.report("outer-coverage:preserved-model-rebase:models=" + work[0] + ":vertices=" + work[1]);
 		}
 		if (!Boolean.getBoolean("spoiledmilk.browserTravelTrace")) return;

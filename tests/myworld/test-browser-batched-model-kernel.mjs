@@ -5,31 +5,7 @@ const {transformModelBatch,createBatchedModelKernel,batchedModelKernelPolicy}=aw
 const input=fs.readFileSync(process.argv[3]);let offset=0;const i32=()=>{const v=input.readInt32BE(offset);offset+=4;return v;};
 const readArrays=()=>Array.from({length:8},()=>{const a=new Int32Array(i32());for(let n=0;n<a.length;n++)a[n]=i32();return a;});
 assert.equal(i32(),0x4e4b3031);const total=i32();let packets=0,vertices=0,values=0,records=[];
-function flush() {
-  if (!records.length) return;
-  const counts = Int32Array.from(records.map(record => record.count));
-  const worldCounts = new Int32Array(384);
-  worldCounts.set(counts);
-  const fixedRows = records.flatMap((record, index) => {
-    const x = (index % 3 - 1) * 6144, z = (index % 5 - 2) * 6144;
-    worldCounts[128 + index] = x;
-    worldCounts[256 + index] = z;
-    return record.actual.map((row, lane) =>
-      lane === 0 || lane === 2 ? row.map(value => value - (lane === 0 ? x : z)) : row.slice());
-  });
-  const {camera, trig} = records[0];
-  assert.equal(transformModelBatch(records.length, records.flatMap(record => record.actual), counts, camera, trig), true);
-  assert.equal(transformModelBatch(records.length, fixedRows, worldCounts, camera, trig), true);
-  for (const [index, record] of records.entries()) {
-    for (let lane = 0; lane < 8; lane++) {
-      assert.deepEqual(record.actual[lane], record.expected[lane], `Frozen record ${record.index} array ${lane}`);
-      if (lane >= 3) assert.deepEqual(fixedRows[index * 8 + lane], record.expected[lane], 'Fixed scenery projection changed');
-      values += record.actual[lane].length;
-    }
-  }
-  packets++;
-  records = [];
-}
+function flush(){if(!records.length)return;const counts=Int32Array.from(records.map(r=>r.count)),rows=records.flatMap(r=>r.actual);assert.equal(transformModelBatch(records.length,rows,counts,records[0].camera,records[0].trig),true);for(const r of records)for(let n=0;n<8;n++){assert.deepEqual(r.actual[n],r.expected[n],`Frozen record ${r.index} array ${n}`);values+=r.actual[n].length;}packets++;records=[];}
 for(let trial=0;trial<total;trial++){
   const count=i32(),camera=Int32Array.from({length:8},i32),trig=Int32Array.from({length:6},i32),actual=readArrays(),expected=readArrays();vertices+=count;
   if(records.length&&(records.length===128||!records[0].camera.every((v,n)=>v===camera[n])||!records[0].trig.every((v,n)=>v===trig[n])))flush();

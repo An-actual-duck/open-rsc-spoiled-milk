@@ -50,9 +50,70 @@ public final class BrowserWallRoofOwnershipFixture {
         }
     }
     static BrowserFrameSinkRegistry.Sink sink(final boolean cpu) {return new BrowserFrameSinkRegistry.Sink(){public void present(java.awt.image.BufferedImage i,orsc.graphics.Renderer2DFrame c,Renderer3DFrame f){}public boolean needsCpuDepthFrame(){return cpu;}};}
+
+    private static void literalStructures(Scene scene, boolean visible, RSModel[][] grids) {
+        for (int cell = 0; cell < grids[0].length; cell++) {
+            for (RSModel[] grid : grids) scene.removeModel(grid[cell]);
+            if (visible) for (RSModel[] grid : grids) scene.addModel(grid[cell]);
+        }
+    }
+
+    private static void terrainStructureOrder() {
+        View literal = new View(true), candidate = new View(true);
+        RSModel[][][] members = new RSModel[2][5][9];
+        for (int view = 0; view < 2; view++) {
+            View target = view == 0 ? literal : candidate;
+            members[view][0][3] = target.roof;
+            members[view][1][0] = target.wall;
+            for (int grid = 1; grid < 5; grid++) {
+                members[view][grid][grid + 1] = target.model(Renderer3DModelKind.ROOF, 80 + grid * 5,
+                    -100 - grid, -12345, 200 + grid, false);
+            }
+        }
+        RSModel[][] order = members[1];
+        for (int frame = 0; frame < 96; frame++) {
+            boolean visible = frame % 11 < 9;
+            if (frame % 5 == 0) {
+                for (View view : new View[]{literal, candidate}) {
+                    view.s.removeModel(view.front);
+                    view.s.addModel(view.front);
+                }
+            }
+            if (frame == 49) {
+                for (int view = 0; view < 2; view++) {
+                    View target = view == 0 ? literal : candidate;
+                    target.s.removeModel(members[view][0][3]);
+                    members[view][0][3] = null;
+                    target.s.invalidateTerrainStructureOrder();
+                }
+            }
+            literalStructures(literal.s, visible, members[0]);
+            require(candidate.s.synchronizeTerrainStructures(visible, order[0], order[1], order[2], order[3], order[4]),
+                "Unique terrain structures took the literal path");
+            Result a = literal.draw(256, 192, 600, 768, frame % 2 * 256, -12345, frame % 3 == 0);
+            Result b = candidate.draw(256, 192, 600, 768, frame % 2 * 256, -12345, frame % 3 == 0);
+            require(a.faces.equals(b.faces) && a.picks.equals(b.picks) && a.anchors.equals(b.anchors)
+                && a.resident.equals(b.resident) && Arrays.equals(a.pixels, b.pixels), "Terrain structure order changed the frame");
+        }
+        int[] work = candidate.s.getTerrainStructureOrderWork();
+        require(work[0] > 1 && work[1] > 1, "Missing reconciliation or unchanged-frame reuse");
+        candidate.s.addModel(candidate.wall);
+        candidate.s.addModel(candidate.wall);
+        require(!candidate.s.synchronizeTerrainStructures(true, order[0], order[1], order[2], order[3], order[4]),
+            "Duplicate installed structures must use literal removal");
+        RSModel[] duplicate = {candidate.wall, candidate.wall};
+        require(!candidate.s.synchronizeTerrainStructures(true, duplicate, null, null, null, null),
+            "Duplicate input structures must use literal removal");
+        System.out.println("PASS terrain structure order: " + checks + " frame, reuse, and duplicate checks");
+    }
+
     public static void main(String[] args) {
         for(String name:new String[]{"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster","browserEarlyFaceCull"})System.setProperty("spoiledmilk."+name,"true");
         System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");BrowserFrameSinkRegistry.install(sink(false));
+        if (args.length == 1 && args[0].equals("terrain-order")) {
+            terrainStructureOrder();
+            return;
+        }
         View ordinary=new View(false),full=new View(true);require(!ordinary.s.isBrowserFullResidentOwnershipEnabled()&&full.s.isBrowserFullResidentOwnershipEnabled(),"GPU-only ownership declaration not selected");
         int[][] points={{256,192},{210,160},{300,225},{0,0},{511,383}};
         for(int distance:new int[]{20,100,600})for(int pitch:new int[]{640,768,900})for(int yaw:new int[]{0,256})for(int material:new int[]{-12345,Scene.TRANSPARENT,0})for(boolean force:new boolean[]{false,true})for(int[] point:points) {

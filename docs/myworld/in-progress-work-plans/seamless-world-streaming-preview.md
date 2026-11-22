@@ -2329,6 +2329,47 @@ between-roll pacing. Focus the next change on the local scene
 installation cost inside replay.
 [Chrome repeat control](../../../output/tests/browser-gameplay-spike/worker-glow-mask-repeat-control-chrome/chrome-result.json) · [Chrome repeat worker](../../../output/tests/browser-gameplay-spike/worker-glow-mask-repeat-trial-chrome/chrome-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/worker-glow-mask-repeat-control-firefox/firefox-result.json) · [Firefox repeat worker](../../../output/tests/browser-gameplay-spike/worker-glow-mask-repeat-trial-firefox/firefox-result.json)
 
+#### World-space scenery at the switch
+
+The candidate stores object and wall coordinates in world tiles. A scene
+switch publishes the local origin once. Retained static models keep
+their original geometry. Both the legacy and batched projections apply
+the origin difference through the camera. Mesh export applies the same
+difference to geometry, shadows and glow emitters. Collision edits and
+model removal still use the active scene and the existing server fence.
+
+The native candidate matched the literal scene's render and picking
+digest. The focused model fixture passed 600 checks through forward,
+diagonal and reversed origin changes. It compared projection, bounds,
+mesh and lighting output and verified that the retained vertex rows
+stayed in their initial basis. The browser projection kernel matched
+6,000 native cases, with different origins within a batch. A placement
+fixture checked edits and local queries across an origin change and
+return.
+[Scene parity](../../../output/tests/seamless-world-streaming/world-space-scenery-build/native-scene-fixed.log) · [Model and lighting parity](../../../output/tests/seamless-world-streaming/world-space-scenery-build/native-world-models.log) · [Browser projection parity](../../../output/tests/seamless-world-streaming/world-space-scenery-build/native-browser-projection-equivalence.log) · [Placement parity](../../../output/tests/seamless-world-streaming/world-space-scenery-build/native-world-placements.log)
+
+The first matched Chrome and Firefox walks kept 1,902 model
+placements in their stored basis across three verified switches. The
+cached rebase receipt went from 1,740 models and 136,977 vertices to
+3 models and 225 vertices in both browsers. The longest switch gap
+stayed about 117 ms in Chrome and 136 ms in Firefox. Both preserved
+authoritative arrival and had no holds or input closures. Chrome's
+99th percentile increased from 23.2 to 23.8 ms. Firefox recorded the
+same 25 ms in both arms. Keep the exact foundation at `70e18b691`.
+The live fixture and player preview continue to use the earlier
+placement carrier.
+[Chrome control](../../../output/tests/browser-gameplay-spike/world-space-scenery-control-chrome/chrome-result.json) · [Chrome fixed](../../../output/tests/browser-gameplay-spike/world-space-scenery-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/world-space-scenery-control-firefox/firefox-result.json) · [Firefox fixed](../../../output/tests/browser-gameplay-spike/world-space-scenery-trial-firefox/firefox-result.json)
+
+#### Terrain roof and upper-wall order
+
+The legacy draw loop removes each terrain roof or upper wall by
+scanning the scene's model list, then re-adds visible models. It
+does this on every frame, including the first after a scene switch.
+The next private trial reuses the trailing model order when membership
+and visibility match. A change uses one stable compaction and appends
+the same models in cell order. Ambiguous duplicate membership keeps
+the literal path.
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

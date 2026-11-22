@@ -20,6 +20,8 @@ public final class Scene {
 	private final boolean browserOverlayCoverage = Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
 	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
 	private final boolean skipEmptyModelRemovals = Boolean.getBoolean("spoiledmilk.browserSkipEmptyModelRemovals");
+	private TerrainStructureOrder terrainStructureOrder;
+	private int terrainStructureReconciles, terrainStructureReuses;
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
 	private final boolean browserModelPickBounds = Boolean.parseBoolean(System.getProperty("spoiledmilk.browserModelPickBounds", "true"));
 	public boolean isBrowserModelPickBoundsEnabled() { return browserModelPickBounds && isBrowserFullResidentOwnershipEnabled(); }
@@ -2482,6 +2484,7 @@ public final class Scene {
 			this.ensureModelCapacity(this.modelCount + 1);
 			this.m_jb[this.modelCount] = 0;
 			this.models[this.modelCount++] = mod;
+			if (terrainStructureOrder != null) terrainStructureOrder.current = false;
 
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "lb.NA(" + "null" + ',' + 118 + ')');
@@ -3052,7 +3055,7 @@ public final class Scene {
                 }
                 if (batchModels && browserBatchedModelKernel.enqueue(this.models[var3])) continue;
                 if (batchModels) { browserBatchedModelKernel.flush(); browserBatchedModelKernel.literalModel(); }
-				this.models[var3].rotateForScene(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
+				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
 					this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
                 RSModel rotated = this.models[var3];
                 if (this.m_K && !this.interactionOnlyPickActive && rotated.m_dc && rotated.isInteractionOnly()) {
@@ -3921,6 +3924,7 @@ public final class Scene {
 			}
 
 			this.modelCount = 0;
+			if (terrainStructureOrder != null) terrainStructureOrder.current = false;
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "lb.GA(" + var1 + ')');
 		}
@@ -3934,6 +3938,7 @@ public final class Scene {
 			for (int i = 0; i < this.modelCount; ++i) {
 				if (this.models[i] == var1) {
 					--this.modelCount;
+					if (terrainStructureOrder != null) terrainStructureOrder.current = false;
 
 					for (int j = i; j < this.modelCount; ++j) {
 						this.models[j] = this.models[j + 1];
@@ -3979,11 +3984,14 @@ public final class Scene {
 		if (removalSet.isEmpty()) {
 			return;
 		}
+		compactWithoutModels(removalSet);
+	}
 
+	private void compactWithoutModels(IdentityHashMap<RSModel, ?> removals) {
 		int retained = 0;
 		for (int index = 0; index < this.modelCount; index++) {
 			RSModel model = this.models[index];
-			if (removalSet.containsKey(model)) {
+			if (removals.containsKey(model)) {
 				continue;
 			}
 			if (retained != index) {
@@ -3994,7 +4002,69 @@ public final class Scene {
 		}
 		Arrays.fill(this.models, retained, this.modelCount, null);
 		Arrays.fill(this.m_jb, retained, this.modelCount, 0);
+		if (retained != this.modelCount && terrainStructureOrder != null) terrainStructureOrder.current = false;
 		this.modelCount = retained;
+	}
+
+	/** Apply the same trailing, cell-interleaved order as the literal roof loop. */
+	boolean synchronizeTerrainStructures(boolean visible, RSModel[] roof, RSModel[] wall1, RSModel[] roof1,
+		RSModel[] wall2, RSModel[] roof2) {
+		TerrainStructureOrder order = terrainStructureOrder;
+		if (order == null || !order.matches(roof, wall1, roof1, wall2, roof2)) {
+			order = new TerrainStructureOrder(roof, wall1, roof1, wall2, roof2);
+			terrainStructureOrder = order;
+		}
+		if (!order.unique) return false;
+		if (order.current && order.visible == visible) {
+			terrainStructureReuses++;
+			return true;
+		}
+
+		Arrays.fill(order.seen, false);
+		for (int index = 0; index < modelCount; index++) {
+			Integer entry = order.position.get(models[index]);
+			if (entry == null) continue;
+			// The legacy single-removal loop can leave adjacent duplicates.
+			if (order.seen[entry]) return false;
+			order.seen[entry] = true;
+		}
+		compactWithoutModels(order.position);
+		if (visible) for (int index = 0; index < order.count; index++) addModel(order.models[index]);
+		order.visible = visible;
+		order.current = true;
+		terrainStructureReconciles++;
+		return true;
+	}
+
+	void invalidateTerrainStructureOrder() { terrainStructureOrder = null; }
+
+	public int[] getTerrainStructureOrderWork() { return new int[]{terrainStructureReconciles, terrainStructureReuses}; }
+
+	private static final class TerrainStructureOrder {
+		private final RSModel[][] source;
+		private final RSModel[] models;
+		private final boolean[] seen;
+		private final IdentityHashMap<RSModel, Integer> position = new IdentityHashMap<>();
+		private int count;
+		private boolean unique = true, current, visible;
+
+		private TerrainStructureOrder(RSModel[] roof, RSModel[] wall1, RSModel[] roof1, RSModel[] wall2, RSModel[] roof2) {
+			source = new RSModel[][]{roof, wall1, roof1, wall2, roof2};
+			models = new RSModel[roof.length * source.length];
+			for (int cell = 0; cell < roof.length; cell++) {
+				for (RSModel[] grid : source) {
+					RSModel model = grid == null ? null : grid[cell];
+					if (model == null) continue;
+					if (position.put(model, count) != null) unique = false;
+					models[count++] = model;
+				}
+			}
+			seen = new boolean[count];
+		}
+
+		private boolean matches(RSModel[] roof, RSModel[] wall1, RSModel[] roof1, RSModel[] wall2, RSModel[] roof2) {
+			return source[0] == roof && source[1] == wall1 && source[2] == roof1 && source[3] == wall2 && source[4] == roof2;
+		}
 	}
 
     /** Render metadata only; never mutates map or server location authority. */

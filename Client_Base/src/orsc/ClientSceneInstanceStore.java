@@ -36,16 +36,6 @@ final class ClientSceneInstanceStore {
 	private int[] wallObjectX;
 	private int[] wallObjectZ;
 	private int wallObjectCount;
-	private int originX, originZ;
-
-	void publishWorldOrigin(int x, int z) {
-		if (originX == x && originZ == z) return;
-		originX = x;
-		originZ = z;
-		// Local-coordinate readers invalidate their cached view as one change.
-		if (gameObjectCount != 0) gameObjectRevision++;
-		if (gameObjectCount != 0 || wallObjectCount != 0) residentPlacementRevision++;
-	}
 
 	ClientSceneInstanceStore() {
 		this(GAME_OBJECT_INITIAL_CAPACITY, WALL_OBJECT_INITIAL_CAPACITY);
@@ -166,11 +156,10 @@ final class ClientSceneInstanceStore {
 	}
 
 	int getGameObjectX(int index) {
-		return gameObjectX[index] - originX;
+		return gameObjectX[index];
 	}
 
 	void setGameObjectX(int index, int value) {
-		value += originX;
 		ensureGameObjectCapacity(index + 1);
 		if (gameObjectX[index] != value) {
 			gameObjectRevision++;
@@ -180,11 +169,10 @@ final class ClientSceneInstanceStore {
 	}
 
 	int getGameObjectZ(int index) {
-		return gameObjectZ[index] - originZ;
+		return gameObjectZ[index];
 	}
 
 	void setGameObjectZ(int index, int value) {
-		value += originZ;
 		ensureGameObjectCapacity(index + 1);
 		if (gameObjectZ[index] != value) {
 			gameObjectRevision++;
@@ -250,22 +238,20 @@ final class ClientSceneInstanceStore {
 	}
 
 	int getWallObjectX(int index) {
-		return wallObjectX[index] - originX;
+		return wallObjectX[index];
 	}
 
 	void setWallObjectX(int index, int value) {
-		value += originX;
 		ensureWallObjectCapacity(index + 1);
 		if (wallObjectX[index] != value) residentPlacementRevision++;
 		wallObjectX[index] = value;
 	}
 
 	int getWallObjectZ(int index) {
-		return wallObjectZ[index] - originZ;
+		return wallObjectZ[index];
 	}
 
 	void setWallObjectZ(int index, int value) {
-		value += originZ;
 		ensureWallObjectCapacity(index + 1);
 		if (wallObjectZ[index] != value) residentPlacementRevision++;
 		wallObjectZ[index] = value;
