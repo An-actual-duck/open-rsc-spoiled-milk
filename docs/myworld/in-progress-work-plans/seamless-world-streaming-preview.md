@@ -2513,6 +2513,40 @@ switches grew. Retire the trial and keep its lead-time and exactness
 proof for future work that can prepare the complete destination frame.
 [Chrome control](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-chrome-control/chrome-result.json) · [Chrome preparation](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-chrome-prepared/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-firefox-control/firefox-result.json) · [Firefox preparation](../../../output/tests/browser-gameplay-spike/prepared-glow-extents-firefox-prepared/firefox-result.json)
 
+#### Prepared terrain receipt at the switch
+
+The isolated trial prebuilds the next terrain window and its resident
+cache transaction. It commits the prepared product only when the live
+walking context contains the exact expected reference bytes and the
+cache has the same version. The existing parser handles differences.
+The native parity fixture compared 1,244,160 tile positions and
+residency state across 60 contexts. It also exercised stale cache state,
+changed bytes, and a different world or level.
+
+Chrome and Firefox each used three prepared receipts on three verified
+switches. They reached `(252,609,0)` at 1920×1080 with the 960×540
+logical UI, one load epoch, zero frame holds, and zero input closures.
+The initial Firefox run timed out waiting for playable graphics before
+travel. The fresh retry completed with the same client JAR and flags.
+
+| Browser | Terrain context packets | Enclosing switch intervals |
+| --- | ---: | ---: |
+| Chrome | 2.8, 2.5, 1.9 ms | 113.8, 85.9, 78.5 ms |
+| Firefox | 7, 9, 14 ms | 128, 119, 132 ms |
+
+Both browser proofs used `bedbcea73` with JAR SHA-256
+`dae6b09281b529f633c474ab5cf086330bbf0b42b7b34ae011da2a4c6d5f31f9`.
+[Native receipt parity](../../../output/tests/seamless-world-streaming/prepared-surface-receipt-build/native-receipt-parity.log) · [Chrome diagnostic walk](../../../output/tests/browser-gameplay-spike/prepared-surface-receipt-chrome-proof/chrome-result.json) · [Firefox diagnostic walk](../../../output/tests/browser-gameplay-spike/prepared-surface-receipt-firefox-retry/firefox-result.json) · [Initial Firefox attempt](../../../output/tests/browser-gameplay-spike/prepared-surface-receipt-firefox-proof/route.log)
+
+The same-build Firefox control measured 7, 14, and 15 ms for the
+terrain packets. The prepared run measured 7, 9, and 14 ms. Its
+enclosing switch intervals grew from 124, 84, and 81 ms to 128, 119,
+and 132 ms. Both runs reached the same server endpoint and had the
+same output dimensions and zero holds or input closures. Keep the
+receipt code as an opt-in preparation proof on AI-3. The player
+preview uses the verified compatibility mesh worker.
+[Firefox control](../../../output/tests/browser-gameplay-spike/prepared-surface-receipt-firefox-control/firefox-result.json) · [Matched Firefox timings](../../../output/tests/seamless-world-streaming/prepared-surface-receipt-build/firefox-timing-pair.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

@@ -727,6 +727,14 @@ positions in 60 contexts, including partially resident windows, void
 cells, and exact rejection of stale cache state.
 [Prepared terrain receipt comparison](../../../output/tests/seamless-world-streaming/prepared-surface-receipt-build/native-receipt-parity.log)
 
+Both browser proof walks consumed all three prepared receipts. The
+Firefox pair showed less time in two context packets and longer
+complete switch intervals. Use the receipt as a reference for staging
+terrain and scenery together. The next substantial cost is local
+scene installation inside the player packet and the first frame that
+follows it.
+[Prepared receipt browser results](seamless-world-streaming-preview.md#prepared-terrain-receipt-at-the-switch)
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet
