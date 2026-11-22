@@ -23,7 +23,7 @@ public final class BrowserRegionStreamingFixture {
     static int load(BrowserWebGLBridge bridge,Backend backend,BrowserWorldLoadState state,Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh[] meshes,boolean initial){
         Renderer3DWorldChunkFrame world=Renderer3DWorldChunkFrame.fromChunks(Arrays.asList(meshes));frame.setWorldChunkFrame(world);int passes=0,held=0;
         while(true){
-            check(++passes<=meshes.length,"upload starvation");Set<WorldChunkBufferKey>active=bridge.activeKeys(world);bridge.evictInactive(active);
+            check(++passes<=meshes.length,"upload starvation");Set<WorldChunkBufferKey>active=BrowserWebGLBridge.activeKeys(world);bridge.evictInactive(active);
             Renderer3DFrame previous=RendererFrameLighting.bind(frame);BrowserWebGLBridge.ChunkDraws result;
             try{result=bridge.prepareChunks(frame,world,active);}finally{RendererFrameLighting.restore(previous);}
             int ready=result.draws.length/8;state.frame(true,false,true,frame,meshes.length,ready,result.remainingRepacks,0,0,64,64,0);

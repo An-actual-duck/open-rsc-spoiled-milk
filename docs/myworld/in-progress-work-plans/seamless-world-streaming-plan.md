@@ -449,11 +449,12 @@ divergent pacing and was removed.
 [Current player preview](seamless-world-streaming-preview.md#current-full-hd-browser-preview)
 [Compact conversion evidence](seamless-world-streaming-preview.md#compact-scenery-conversion)
 
-The current profile identifies repeated renderer draw key computation
-on resident scenes. Test reuse of static mesh identities while preserving
-draw order, exact buffer selection, signed levels and animated poses.
-Use the worst second, seconds below 60 FPS and the frame interval tails
-in both browsers to decide whether to keep it.
+The resident draw-key trial saved more than 3 million lookups per browser
+and produced mixed frame pacing. Keep the established draw keys. Profile
+the compact preview during the remaining gaps and distinguish CPU work,
+garbage collection, and worker time. Look for recurring work that can be
+moved out of ordinary game updates or scene capture. Use exact picking,
+actor motion, and the same two-browser travel checks for the next change.
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.

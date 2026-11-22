@@ -75,12 +75,6 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native int initializeWholeZone(String manifestIdentity,int[] settings,int[] materials);
     private static native void wholeZoneFrame(int[] metadata,int[] objectCells);
     private static final int MAX_CHUNKS=256, MAX_VERTICES=524288, MAX_PIXELS=2097152, UPLOAD_VERTICES_PER_FRAME=32768;
-    private static final int MAX_STATIC_DRAW_KEYS = MAX_CHUNKS * 4;
-    // Static mesh instances own immutable storage and rebase metadata. Weak
-    // mesh references keep this index from extending a streamed cell's life.
-    private final Map<Renderer3DWorldChunkFrame.ChunkMesh, WorldChunkBufferKey> staticDrawKeys =
-        WorldChunkBufferKey.CACHE_BROWSER_HASH ? new WeakHashMap<>() : null;
-    private volatile int staticDrawKeyHits, staticDrawKeyBuilds;
     private final Map<WorldChunkBufferKey,CachedChunk> chunks=new LinkedHashMap<WorldChunkBufferKey,CachedChunk>(32,.75f,true);
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
     private final Map<Integer,int[]> textureMetadata=new HashMap<Integer,int[]>();
@@ -218,26 +212,6 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             return new WorldChunkBufferKey(chunk.getPlane(),0,0,0,0,chunk.isObjectChunk(),chunk.getChunkRole(),true,chunk.getStorageSignature(),0L);
         }
         return WorldChunkBufferKey.from(chunk,true);
-    }
-
-    WorldChunkBufferKey residentChunkKey(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
-        if (staticDrawKeys == null || chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)
-            return chunkKey(chunk);
-        WorldChunkBufferKey key = staticDrawKeys.get(chunk);
-        if (key != null) {
-            staticDrawKeyHits++;
-            return key;
-        }
-        if (staticDrawKeys.size() >= MAX_STATIC_DRAW_KEYS) staticDrawKeys.clear();
-        key = chunkKey(chunk);
-        staticDrawKeys.put(chunk, key);
-        staticDrawKeyBuilds++;
-        return key;
-    }
-
-    public static int[] getStableDrawKeyWork() {
-        BrowserWebGLBridge bridge = installedBridge;
-        return bridge == null ? new int[2] : new int[]{bridge.staticDrawKeyHits, bridge.staticDrawKeyBuilds};
     }
     private long residentChunkBytes;
     private int nextId=1;
@@ -518,13 +492,13 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         } finally { RendererFrameLighting.restore(previous); }
     }
 
-    private Set<WorldChunkBufferKey> interactiveDrawKeys(List<Renderer3DWorldChunkFrame.ChunkMesh> terrain,
+    private static Set<WorldChunkBufferKey> interactiveDrawKeys(List<Renderer3DWorldChunkFrame.ChunkMesh> terrain,
                                                                Renderer3DWorldChunkFrame.ChunkMesh active) {
         Set<WorldChunkBufferKey> keys = new HashSet<>();
         for (Renderer3DWorldChunkFrame.ChunkMesh cell : terrain) {
             int dx = cell.getCenterSectionX() - active.getCenterSectionX();
             int dz = cell.getCenterSectionY() - active.getCenterSectionY();
-            if (Math.max(Math.abs(dx), Math.abs(dz)) <= 1) keys.add(residentChunkKey(cell));
+            if (Math.max(Math.abs(dx), Math.abs(dz)) <= 1) keys.add(chunkKey(cell));
         }
         return keys;
     }
@@ -547,7 +521,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         for (Renderer3DWorldChunkFrame.ChunkMesh cell : stagedSource) {
             if (used == optionalDraws.length) break;
             if (containsSurfacePosition(active, cell)) continue;
-            CachedChunk cached = chunks.get(residentChunkKey(cell));
+            CachedChunk cached = chunks.get(chunkKey(cell));
             if (cached == null || cached.materialRevision != materialRevision || !Arrays.equals(cached.settings, settings)) continue;
             int visibility = 0;
             for (Renderer3DModelKind kind : Renderer3DModelKind.values()) {
@@ -578,7 +552,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             int sz = Math.floorDiv(cell.getOriginWorldZ(), sectorUnits);
             if (!enteringTerrain.contains(SurfaceSceneryCells.key(sx, sz))) continue;
             enteringScenery++;
-            CachedChunk cached = chunks.get(residentChunkKey(cell));
+            CachedChunk cached = chunks.get(chunkKey(cell));
             if (cached != null) residentScenery++;
             if (cached == null || cached.materialRevision != materialRevision
                 || !Arrays.equals(cached.settings, settings)) continue;
@@ -614,7 +588,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         int words = 0;
         for (Renderer3DWorldChunkFrame.ChunkMesh cell : world.getChunks()) {
             if (cell.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) continue;
-            CachedChunk cached = chunks.get(residentChunkKey(cell));
+            CachedChunk cached = chunks.get(chunkKey(cell));
             if (cached == null) continue;
             receipt[words++] = cell.getOriginWorldX();
             receipt[words++] = cell.getOriginWorldZ();
@@ -660,7 +634,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         int[] receipt = new int[surfaceDraw.size() * 3];
         int index = 0;
         for (Renderer3DWorldChunkFrame.ChunkMesh cell : surfaceDraw) {
-            CachedChunk cached = chunks.get(residentChunkKey(cell));
+            CachedChunk cached = chunks.get(chunkKey(cell));
             if (cached == null) continue;
             receipt[index++] = cell.getCenterSectionX();
             receipt[index++] = cell.getCenterSectionY();
@@ -684,8 +658,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         boolean keyed = PREUPLOAD_SCENE_MESHES || LIVE_SCENERY_DRAW;
         if (keyed && (stagedSource != predicted || stagedScenery != scenery)) {
             Set<WorldChunkBufferKey> keys = new HashSet<>();
-            for (Renderer3DWorldChunkFrame.ChunkMesh chunk : predicted) keys.add(residentChunkKey(chunk));
-            for (Renderer3DWorldChunkFrame.ChunkMesh chunk : scenery) keys.add(residentChunkKey(chunk));
+            for (Renderer3DWorldChunkFrame.ChunkMesh chunk : predicted) keys.add(chunkKey(chunk));
+            for (Renderer3DWorldChunkFrame.ChunkMesh chunk : scenery) keys.add(chunkKey(chunk));
             predictedKeys = keys;
         }
         stagedScenery = scenery;
@@ -736,7 +710,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private boolean preuploadOne(Renderer3DFrame frame, List<Renderer3DWorldChunkFrame.ChunkMesh> candidates,
                                  Set<WorldChunkBufferKey> active) {
         for (Renderer3DWorldChunkFrame.ChunkMesh chunk : candidates) {
-            WorldChunkBufferKey key = residentChunkKey(chunk);
+            WorldChunkBufferKey key = chunkKey(chunk);
             if ((!PREUPLOAD_SCENE_MESHES && !LIVE_SCENERY_DRAW && chunk.getVertexCount() > UPLOAD_VERTICES_PER_FRAME)
                 || chunks.containsKey(key)) continue;
             long bytes = chunkBytes(chunk);
@@ -839,14 +813,14 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     // Production native identity: static chunks retain immutable/rebased storage;
     // animated chunks own one positional slot and replace its latest exact pose.
-    Set<WorldChunkBufferKey> activeKeys(Renderer3DWorldChunkFrame world) {
+    static Set<WorldChunkBufferKey> activeKeys(Renderer3DWorldChunkFrame world) {
         return activeKeys(world.getChunks());
     }
 
-    private Set<WorldChunkBufferKey> activeKeys(List<Renderer3DWorldChunkFrame.ChunkMesh> chunks) {
+    private static Set<WorldChunkBufferKey> activeKeys(List<Renderer3DWorldChunkFrame.ChunkMesh> chunks) {
         Set<WorldChunkBufferKey> active=new HashSet<WorldChunkBufferKey>();
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:chunks) {
-            if(!active.add(residentChunkKey(chunk))&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)
+            if(!active.add(chunkKey(chunk))&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)
                 throw new IllegalStateException("Conflicting animated browser chunk identity");
         }
         return active;
@@ -868,16 +842,16 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         int count=0,uploaded=0,remainingRepacks=0,requiredReady=0,requiredRepacks=0;
         if (required != null) {
             sources = new ArrayList<>(sources);
-            sources.sort(Comparator.comparing(chunk -> !required.contains(residentChunkKey(chunk))));
+            sources.sort(Comparator.comparing(chunk -> !required.contains(chunkKey(chunk))));
         }
         List<PendingRepack> pending=new ArrayList<PendingRepack>();
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:sources) {
-            CachedChunk cached=chunks.get(residentChunkKey(chunk));if(cached==null)continue;
+            CachedChunk cached=chunks.get(chunkKey(chunk));if(cached==null)continue;
             int[] materialState=cached.materials;
             if(cached.signature!=chunk.getStorageSignature()||cached.materialRevision!=materialRevision){materialState=BrowserChunkVariant.materials(frame,chunk);if(Arrays.equals(materialState,cached.materials))cached.materialRevision=materialRevision;}
             if(cached.signature!=chunk.getStorageSignature()||cached.vertices!=chunk.getVertexCount()||cached.indices!=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3||!Arrays.equals(cached.settings,packingSettings)||!Arrays.equals(cached.materials,materialState))pending.add(new PendingRepack(cached,chunk,materialState));
         }
-        pending.sort(Comparator.comparing((PendingRepack change) -> required != null && !required.contains(residentChunkKey(change.chunk)))
+        pending.sort(Comparator.comparing((PendingRepack change) -> required != null && !required.contains(chunkKey(change.chunk)))
             .thenComparingLong(change -> change.cached.packedAt));
         for(PendingRepack update:pending) {
             // Settings-only repacks retain the existing bounded budget. A changed
@@ -885,7 +859,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             boolean poseChanged=update.cached.signature!=update.chunk.getStorageSignature();
             if(!poseChanged&&uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME){
                 remainingRepacks++;
-                if (required == null || required.contains(residentChunkKey(update.chunk))) requiredRepacks++;
+                if (required == null || required.contains(chunkKey(update.chunk))) requiredRepacks++;
                 continue;
             }
             updateChunk(frame,update.chunk,update.cached,packingSettings,update.materials,active);
@@ -898,7 +872,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             || chunks.containsKey(pendingOptionalDrawPack.key))) pendingOptionalDrawPack = null;
         boolean advancedOptional = false;
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:sources) {
-            WorldChunkBufferKey key=residentChunkKey(chunk);CachedChunk cached=chunks.get(key);
+            WorldChunkBufferKey key=chunkKey(chunk);CachedChunk cached=chunks.get(key);
             boolean needed = required == null || required.contains(key);
             boolean fishingPose = chunk.isResidentFishingPose();
             if (fishingPose && cached != null) fishingPoseHits++;
@@ -943,7 +917,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             CachedChunk replacement=upload(frame,chunk,settings);
             // Allocate+validate first. A failed native upload leaves the old cache
             // entry and accounting intact; it can never masquerade as this pose.
-            chunks.put(residentChunkKey(chunk),replacement);
+            chunks.put(chunkKey(chunk),replacement);
             residentChunkBytes+=replacement.bytes-cached.bytes;
             chunkBackend.delete(new int[]{cached.id});
             return replacement;

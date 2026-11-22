@@ -389,18 +389,6 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
-		if (Boolean.getBoolean("spoiledmilk.browserStableDrawKeys")) {
-			int[] keys;
-			try {
-				keys = (int[]) BrowserWebGLBridge.class.getMethod("getStableDrawKeyWork").invoke(null);
-			} catch (ReflectiveOperationException error) {
-				throw new IllegalStateException("Stable draw key counters are unavailable", error);
-			}
-			if (keys[0] <= keys[1] || keys[1] <= 0) {
-				throw new IllegalStateException("Static draw keys did not persist between draws: " + Arrays.toString(keys));
-			}
-			BrowserBootstrap.report("outer-coverage:stable-draw-keys:" + keys[0] + ":built=" + keys[1]);
-		}
 		if (!Boolean.getBoolean("spoiledmilk.browserTravelTrace")) return;
 		int reused = client.getResidentPlacementPublicationsReused();
 		if (reused <= 0) throw new IllegalStateException("Resident scenery was never reused between placement events");

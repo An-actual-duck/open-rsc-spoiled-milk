@@ -15,6 +15,3 @@ subprocess.run(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(clas
 for policy in ['lru','active']:
  for reuse in [None,'true','false']:
   subprocess.run(['java','-Xmx512m','-Djava.awt.headless=true','-Dspoiledmilk.browserCachePolicy='+policy]+([] if reuse is None else ['-Dspoiledmilk.browserAnimatedBufferReuse='+reuse])+['-cp',str(classes)+':'+str(jar),'orsc.BrowserAnimatedChunkFixture'],check=True)
- subprocess.run(['java','-Xmx512m','-Djava.awt.headless=true','-Dspoiledmilk.browserStableDrawKeys=true',
-                 '-Dspoiledmilk.browserCachePolicy='+policy,'-cp',str(classes)+':'+str(jar),
-                 'orsc.BrowserAnimatedChunkFixture'],check=True)

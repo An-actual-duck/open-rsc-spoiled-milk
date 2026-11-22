@@ -29,29 +29,11 @@ public final class BrowserAnimatedChunkFixture {
         return new Renderer3DWorldChunkFrame.ChunkMesh(plane,section,section,origin,origin,xyz,u,v,lights,indices,textures,fallback,kinds,null,0,0,0,true,role,signature);
     }
     private static Renderer3DWorldChunkFrame world(Renderer3DWorldChunkFrame.ChunkMesh... chunks){return Renderer3DWorldChunkFrame.fromChunks(Arrays.asList(chunks));}
-    private static BrowserWebGLBridge.ChunkDraws prepare(BrowserWebGLBridge bridge,Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh... chunks){Renderer3DWorldChunkFrame world=world(chunks);Set<WorldChunkBufferKey> active=bridge.activeKeys(world);bridge.evictInactive(active);Renderer3DFrame old=RendererFrameLighting.bind(frame);try{return bridge.prepareChunks(frame,world,active);}finally{RendererFrameLighting.restore(old);}}
+    private static BrowserWebGLBridge.ChunkDraws prepare(BrowserWebGLBridge bridge,Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh... chunks){Renderer3DWorldChunkFrame world=world(chunks);Set<WorldChunkBufferKey> active=BrowserWebGLBridge.activeKeys(world);bridge.evictInactive(active);Renderer3DFrame old=RendererFrameLighting.bind(frame);try{return bridge.prepareChunks(frame,world,active);}finally{RendererFrameLighting.restore(old);}}
     private static long bytes(BrowserWebGLBridge bridge)throws Exception{Field f=BrowserWebGLBridge.class.getDeclaredField("residentChunkBytes");f.setAccessible(true);return f.getLong(bridge);}
     private static void setLong(BrowserWebGLBridge bridge,String name,long value)throws Exception{Field f=BrowserWebGLBridge.class.getDeclaredField(name);f.setAccessible(true);f.setLong(bridge,value);}
     private static void reference(Backend backend,int id,Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh mesh){OpenGLWorldChunkRenderer renderer=new OpenGLWorldChunkRenderer(null,null,null,true,true,false,false,true,true,false);Renderer3DFrame old=RendererFrameLighting.bind(frame);try{Data actual=backend.resources.get(id);BrowserChunkMaterials.Buffers material=BrowserChunkMaterials.pack(renderer,frame,mesh);require(Arrays.equals(actual.vertices,renderer.copyBackendChunkVertices(mesh,frame)),"Current pose vertices differ from production packing");require(Arrays.equals(actual.indices,material.indices)&&Arrays.equals(actual.batches,material.batches),"Current material/index bytes differ from production packing");}finally{RendererFrameLighting.restore(old);}}
     private static void fails(Runnable action,String why){boolean failed=false;try{action.run();}catch(IllegalStateException expected){failed=true;}require(failed,why);}
-    private static void stableKeyParity() {
-        BrowserWebGLBridge bridge = new BrowserWebGLBridge(new Backend());
-        int statik = Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
-        int animated = Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS;
-        Renderer3DWorldChunkFrame.ChunkMesh fixed = mesh(statik, -2, 7, 100, 0, 2, 0x123456789abcdef0L, 0);
-        Renderer3DWorldChunkFrame.ChunkMesh shifted = fixed.rebaseStaticObjectPresentation(8, 9, -128, 256);
-        WorldChunkBufferKey first = bridge.residentChunkKey(fixed);
-        WorldChunkBufferKey afterRebase = bridge.residentChunkKey(shifted);
-        require(first == bridge.residentChunkKey(fixed), "Static mesh key was rebuilt");
-        require(first.equals(afterRebase) && first.hashCode() == afterRebase.hashCode(),
-            "Rebasing changed immutable storage identity");
-        WorldChunkBufferKey different = bridge.residentChunkKey(mesh(statik, -1, 7, 100, 0, 2, 0x123456789abcdef0L, 0));
-        require(!first.equals(different), "Cached key aliased signed world levels");
-        Renderer3DWorldChunkFrame.ChunkMesh actor = mesh(animated, 0, 7, 100, 1, 2, 7777, 0);
-        WorldChunkBufferKey beforeFishing = bridge.residentChunkKey(actor);
-        actor.markResidentFishingPose();
-        require(!beforeFishing.equals(bridge.residentChunkKey(actor)), "Cached key hid the fishing pose identity");
-    }
     private static void immutableControl(Renderer3DFrame frame)throws Exception {
         int animated=Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS,statik=Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
         Backend backend=new Backend();BrowserWebGLBridge bridge=new BrowserWebGLBridge(backend);
@@ -74,7 +56,6 @@ public final class BrowserAnimatedChunkFixture {
         require(backend.resources.size()<=(active?1:512),"OFF bypassed resident bound");long live=0;for(Data data:backend.resources.values())live+=data.vertices.length*4L+data.indices.length*4L;require(live==bytes(bridge),"OFF resident accounting differs from live boundary");
     }
     public static void main(String[] args)throws Exception{
-        if (Boolean.getBoolean("spoiledmilk.browserStableDrawKeys")) stableKeyParity();
         System.setProperty("spoiledmilk.renderer3DGeometryCapture","true");
         RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
         Scene scene=new Scene(new MudClientGraphics(64,64,1),4,16,4);scene.setMidpoints(32,true,64,32,32,9,64);scene.setCamera(0,-4,0,768,0,0,600);scene.setFrustum(0,11,7,1);

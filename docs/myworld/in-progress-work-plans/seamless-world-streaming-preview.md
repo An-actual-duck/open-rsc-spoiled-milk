@@ -1609,12 +1609,18 @@ Chrome with the change enabled. Stable 60 FPS through the entire walk
 remains the target.
 [Firefox first control](../../../output/tests/browser-gameplay-spike/compact-block-control-firefox/firefox-result.json) · [Firefox first candidate](../../../output/tests/browser-gameplay-spike/compact-block-firefox/firefox-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/compact-block-repeat-control-firefox/firefox-result.json) · [Firefox repeat candidate](../../../output/tests/browser-gameplay-spike/compact-block-repeat-firefox/firefox-result.json) · [Chrome first control](../../../output/tests/browser-gameplay-spike/compact-block-control-chrome/chrome-result.json) · [Chrome first candidate](../../../output/tests/browser-gameplay-spike/compact-block-chrome/chrome-result.json) · [Chrome repeat control](../../../output/tests/browser-gameplay-spike/compact-block-repeat-control-chrome/chrome-result.json) · [Chrome repeat candidate](../../../output/tests/browser-gameplay-spike/compact-block-repeat-chrome/chrome-result.json)
 
-The separate draw key trial keeps a bounded weak map per browser
-renderer, keyed by static mesh instance. Each stored key owns an
-immutable hash and retains no mesh data. Animated meshes still use
-their current positional or fishing-pose identity. Draw ordering,
-visibility, owner transitions, buffer budgets and materials continue
-through the existing renderer paths.
+The separate draw key trial kept a bounded weak map per browser
+renderer, keyed by static mesh instance. Each stored key owned an
+immutable hash and retained no mesh data. Native checks covered signed
+planes, rebases, animated poses, texture changes, and buffer failure
+paths. Each browser built 604 keys and reused more than 3 million
+lookups. Chrome's worst second moved from 44 to 45 FPS, with two
+fewer gaps over 100 ms. Firefox's worst second stayed at 41 FPS and
+its longest interval improved from 163 to 134 ms. Firefox spent
+24 seconds below 60 FPS instead of 18. The profile and the mixed
+pacing results led to removal of the trial. The player build uses
+compact conversion with the established draw keys.
+[Native draw checks](../../../output/tests/seamless-world-streaming/stable-draw-key-build/animated-chunks.log) · [Chrome control](../../../output/tests/browser-gameplay-spike/stable-draw-keys-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/stable-draw-keys-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/stable-draw-keys-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/stable-draw-keys-firefox/firefox-result.json)
 
 #### Java client worker feasibility
 
