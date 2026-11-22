@@ -2553,46 +2553,44 @@ public final class mudclient implements Runnable {
 
 			while (tries >= 1) {
 				if (angle != 1 || (CollisionFlag.OBJECT
-					& this.world.collisionFlags[tileX][tileZ - tries]) != CollisionFlag.OBJECT
+					& this.world.collisionAt(tileX, tileZ - tries)) != CollisionFlag.OBJECT
 					&& (CollisionFlag.OBJECT
-					& this.world.collisionFlags[tileX - tries][tileZ]) != CollisionFlag.OBJECT
-					&& (this.world.collisionFlags[tileX - tries][tileZ - tries]
+					& this.world.collisionAt(tileX - tries, tileZ)) != CollisionFlag.OBJECT
+					&& (this.world.collisionAt(tileX - tries, tileZ - tries)
 					& CollisionFlag.OBJECT) != CollisionFlag.OBJECT) {
 					if (angle == 3 && ((CollisionFlag.OBJECT
-						& this.world.collisionFlags[tileX][tries + tileZ]) == CollisionFlag.OBJECT
-						|| (this.world.collisionFlags[tileX - tries][tileZ]
+						& this.world.collisionAt(tileX, tries + tileZ)) == CollisionFlag.OBJECT
+						|| (this.world.collisionAt(tileX - tries, tileZ)
 						& CollisionFlag.OBJECT) == CollisionFlag.OBJECT
-						|| (CollisionFlag.OBJECT & this.world.collisionFlags[tileX - tries][tries
-						+ tileZ]) == CollisionFlag.OBJECT)) {
+						|| (CollisionFlag.OBJECT & this.world.collisionAt(tileX - tries, tries + tileZ)) == CollisionFlag.OBJECT)) {
 						return false;
 					}
-					if (angle != 5 || (this.world.collisionFlags[tileX][tileZ + tries]
+					if (angle != 5 || (this.world.collisionAt(tileX, tileZ + tries)
 						& CollisionFlag.OBJECT) != CollisionFlag.OBJECT
-						&& (this.world.collisionFlags[tries + tileX][tileZ]
+						&& (this.world.collisionAt(tries + tileX, tileZ)
 						& CollisionFlag.OBJECT) != CollisionFlag.OBJECT
-						&& (this.world.collisionFlags[tileX + tries][tileZ + tries]
+						&& (this.world.collisionAt(tileX + tries, tileZ + tries)
 						& CollisionFlag.OBJECT) != CollisionFlag.OBJECT) {
-						if (angle == 7 && ((this.world.collisionFlags[tileX][tileZ - tries]
+						if (angle == 7 && ((this.world.collisionAt(tileX, tileZ - tries)
 							& CollisionFlag.OBJECT) == CollisionFlag.OBJECT
 							|| (CollisionFlag.OBJECT
-							& this.world.collisionFlags[tries + tileX][tileZ]) == CollisionFlag.OBJECT
-							|| (CollisionFlag.OBJECT & this.world.collisionFlags[tries + tileX][tileZ
-							- tries]) == CollisionFlag.OBJECT)) {
+							& this.world.collisionAt(tries + tileX, tileZ)) == CollisionFlag.OBJECT
+							|| (CollisionFlag.OBJECT & this.world.collisionAt(tries + tileX, tileZ - tries)) == CollisionFlag.OBJECT)) {
 							return false;
 						}
-						if (angle == 0 && (this.world.collisionFlags[tileX][tileZ - tries]
+						if (angle == 0 && (this.world.collisionAt(tileX, tileZ - tries)
 							& CollisionFlag.OBJECT) == CollisionFlag.OBJECT) {
 							return false;
 						}
-						if (angle == 2 && (this.world.collisionFlags[tileX - tries][tileZ]
+						if (angle == 2 && (this.world.collisionAt(tileX - tries, tileZ)
 							& CollisionFlag.OBJECT) == CollisionFlag.OBJECT) {
 							return false;
 						}
 						if (angle == 4 && (CollisionFlag.OBJECT
-							& this.world.collisionFlags[tileX][tries + tileZ]) == CollisionFlag.OBJECT) {
+							& this.world.collisionAt(tileX, tries + tileZ)) == CollisionFlag.OBJECT) {
 							return false;
 						}
-						if (angle == 6 && (this.world.collisionFlags[tileX + tries][tileZ]
+						if (angle == 6 && (this.world.collisionAt(tileX + tries, tileZ)
 							& CollisionFlag.OBJECT) == CollisionFlag.OBJECT) {
 							return false;
 						}
@@ -30953,7 +30951,7 @@ public final class mudclient implements Runnable {
 				&& tileZ >= 0
 				&& tileZ < this.world.collisionFlags[tileX].length) {
 				playerTileCovered =
-					(this.world.collisionFlags[tileX][tileZ] & CollisionFlag.OBJECT) != 0;
+					(this.world.collisionAt(tileX, tileZ) & CollisionFlag.OBJECT) != 0;
 			}
 		}
 		return Renderer3DRoofVisibility.resolve(

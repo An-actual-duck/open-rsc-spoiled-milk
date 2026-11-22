@@ -76,6 +76,7 @@ def main():
     parser.add_argument('--scenery-words', action='store_true', help='Transfer exact scenery triangles as a bounded primitive array')
     parser.add_argument('--terrain-words', action='store_true', help='Transfer exact terrain draw geometry as bounded primitive arrays')
     parser.add_argument('--compatibility-mesh-worker', action='store_true', help='Prepare missing compatibility meshes when the fixed draw cell is already resident')
+    parser.add_argument('--collision-cell-queries', action='store_true', help='Read the persistent world collision cells directly')
     parser.add_argument('--terrain-gameplay-words', action='store_true', help='Transfer exact gameplay terrain as bounded primitive arrays')
     parser.add_argument('--reuse-detached-scenery', action='store_true', help='Keep exact worker meshes for verified revisits')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
@@ -213,6 +214,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserSocketReadAhead", "{str(args.socket_read_ahead).lower()}");\n'
            f'        System.setProperty("spoiledmilk.persistentMovementPreview", "{str(args.persistent_movement).lower()}");\n'
            f'        System.setProperty("spoiledmilk.persistentSurfaceCollision", "{str(args.persistent_collision).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSurfaceCollisionCellQueries", "{str(args.collision_cell_queries).lower()}");\n'
            f'        System.setProperty("spoiledmilk.surfaceSceneryCells", "{str(args.surface_scenery_cells).lower()}");\n'
            f'        System.setProperty("spoiledmilk.rollingSurfaceWindow", "{str(args.rolling_surface_window).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixedSurfaceDraw", "{str(args.fixed_surface_draw).lower()}");\n'
@@ -342,6 +344,7 @@ def main():
         'socketReadAhead': args.socket_read_ahead,
         'persistentMovement': args.persistent_movement,
         'persistentCollision': args.persistent_collision,
+        'collisionCellQueries': args.collision_cell_queries,
         'surfaceSceneryCells': args.surface_scenery_cells,
         'rollingSurfaceWindow': args.rolling_surface_window,
         'fixedSurfaceDraw': args.fixed_surface_draw,
