@@ -748,6 +748,24 @@ and picking before switching to it. Keep the current actor and input
 path throughout the trial.
 [Scenery pose timings](seamless-world-streaming-preview.md#prepare-interactive-scenery-transforms-before-installation) · [Prepared placement comparison](seamless-world-streaming-preview.md#compare-prepared-gameplay-placements-with-the-accepted-scene)
 
+The ordered additions trial prepares the new rows directly from the
+entering cell revisions. Exact wire order lets it reuse the existing
+installation calls in their original order and avoid reconstructing
+the delta at the switch. Both browsers consumed all six static
+batches. Chrome's gaps shortened slightly and Firefox had mixed
+results, with a longer first switch. Keep it as a private component
+for the combined installation. Continue by
+validating those rows against the buffered context, player position,
+and static packet sequence before any region mutation. At that point
+a candidate can prove both the old store revision and the new terrain
+and scenery identities. Derive destination collision from the ready
+cells before the switch and verify the composed flags and contributor
+counts against the existing replay. Check model membership, picking
+keys, and the first complete frame before selecting a combined
+candidate for timing. Keep the original replay for incomplete and
+superseded preparations.
+[Ordered additions trial](seamless-world-streaming-preview.md#prepare-authoritative-scenery-additions-in-wire-order)
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet

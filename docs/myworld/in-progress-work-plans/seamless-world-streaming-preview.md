@@ -2639,6 +2639,28 @@ The native fixture covers exact order, multiple wall directions at
 one tile, departing removals, and invalid packets and origins.
 [Native ordered additions proof](../../../output/tests/seamless-world-streaming/prepared-surface-adds-build/native-order.log)
 
+Both trial browsers used the exact staged order on all three object
+and all three wall packets. Each installed 890 objects and 56 walls.
+The matched controls and trials used identical client and server
+artifacts and included the exact placement comparison. All four
+walks reached `(252,609,0)` in one epoch at 1920×1080 with the
+960×540 logical UI and zero frame holds or input closures. Every
+placement comparison matched.
+
+| Browser | Control switch gaps | Trial switch gaps | Longest gap away from a switch, control → trial |
+| --- | ---: | ---: | ---: |
+| Chrome | 119, 88.1, 80.1 ms | 117.5, 80.1, 77 ms | 58.5 → 51.7 ms |
+| Firefox | 117, 85, 134 ms | 163, 86, 108 ms | 55 → 60 ms |
+
+Keep the ordered preparation available for a combined installation
+trial. The timing was mixed and the playable preview uses the
+verified compatibility worker build. The first trial roll still spent
+29–30 ms in local installation, of which scenery retirement and
+rebasing accounted for 18–20 ms. The ordered wire check is a
+prerequisite for publishing a larger prepared state before the
+first frame.
+[Matched travel and packet results](../../../output/tests/seamless-world-streaming/prepared-surface-adds-build/travel-summary.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
