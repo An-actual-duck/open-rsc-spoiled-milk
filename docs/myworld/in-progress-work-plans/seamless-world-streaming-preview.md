@@ -2075,16 +2075,28 @@ with the 960×540 logical surface.
 
 [Chrome control](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-control-chrome/chrome-result.json) · [Chrome packed](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-control-firefox/firefox-result.json) · [Firefox packed](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-trial-firefox/firefox-result.json)
 
+The same build repeated the route with each browser's test order
+reversed. All four repeats passed the same movement and output checks.
+
+| Browser | 99th-percentile interval | Longest frame interval | Longest interval away from replay | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 24.9 → 25.9 ms | 123.1 → 120.2 ms | 78.1 → 91.2 ms | 17 → 14 |
+| Firefox | 29 → 28 ms | 145 → 154 ms | 141 → 154 ms | 16 → 20 |
+
+The tail and slow-second results varied across the two comparisons.
+The packed tile trial was retired and the proofs remain available.
+[Chrome repeat control](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-repeat-control-chrome/chrome-result.json) · [Chrome repeat packed](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-repeat-trial-chrome/chrome-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-repeat-control-firefox/firefox-result.json) · [Firefox repeat packed](../../../output/tests/browser-gameplay-spike/packed-surface-tiles-repeat-trial-firefox/firefox-result.json)
+
 #### Packed gameplay terrain mesh vertices
 
 The Chrome diagnostic recorded three gameplay terrain replies of
 8.19–8.23 MB each. Their checked vertex planes include the full
 compatibility mesh. The browser normally draws the installed fixed
 cells and uses the captured frame for material, lighting and coverage
-metadata. The private trial keeps coordinates, texture coordinates,
-light, normals and implicit triangle indices in the immutable reply.
-Queries still read the same values. A bulk copy or serialization can
-expand the vertex planes on demand using the existing array layout.
+metadata. The private trial reads coordinates, texture coordinates,
+light and normals from the immutable reply. The vertex sequence also
+defines the triangle indices. A bulk copy or serialization can expand
+the vertex planes on demand using the existing array layout.
 
 The signed native fixture matched all 136,797 vertex records by field
 and verified that those reads left the reply packed. Serialized mesh

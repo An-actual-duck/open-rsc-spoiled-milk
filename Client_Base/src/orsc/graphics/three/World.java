@@ -59,8 +59,6 @@ public final class World {
 			|| Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow"));
 	private static final boolean PERSISTENT_SURFACE_COLLISION = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision");
-	private static final boolean KEEP_PACKED_SURFACE_TILES = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
-		&& Boolean.getBoolean("spoiledmilk.browserPackedSurfaceTiles");
 	private static final boolean FIXED_SURFACE_DRAW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
 	private static final boolean KEEP_PACKED_GAMEPLAY_VERTICES = FIXED_SURFACE_DRAW
@@ -150,13 +148,11 @@ public final class World {
 	private PreparedLocalTerrain pendingLocalTerrain;
 	private PreparedLocalTerrain installedDetachedTerrain;
 	private int detachedSurfaceGameplayInstalls;
-	private int installedPackedSurfaceSectors;
 	private int installedPackedGameplayMeshes;
 	private volatile int acceptedSurfaceTerrainWordReplies;
 	private volatile int acceptedSurfaceGameplayWordReplies;
 
 	public int getDetachedSurfaceGameplayInstalls() { return detachedSurfaceGameplayInstalls; }
-	public int getInstalledPackedSurfaceSectors() { return installedPackedSurfaceSectors; }
 	public int getInstalledPackedGameplayMeshes() { return installedPackedGameplayMeshes; }
 	public boolean hasCurrentPackedGameplayMesh() {
 		PreparedLocalTerrain current = installedDetachedTerrain;
@@ -1961,9 +1957,6 @@ public final class World {
 		for (int i = 0; i < pixels.length; i++) pixels[i] = palette[pixels[i]];
 		minimapGraphics.publishMinimapRaster(pixels, NATIVE_MINIMAP_PIXEL_SIZE, NATIVE_MINIMAP_PIXEL_SIZE);
 		System.arraycopy(prepared.tiles, 0, sectors, 0, sectors.length);
-		if (KEEP_PACKED_SURFACE_TILES) {
-			for (Sector sector : prepared.tiles) if (sector.hasPackedTiles()) installedPackedSurfaceSectors++;
-		}
 		collisionFlags = prepared.collision;
 		prepared.roofInput.copyElevationsInto(tileElevationCache);
 		modelWallGrid[plane] = prepared.walls;
@@ -2110,11 +2103,6 @@ public final class World {
 			for (int n = 0; n < tiles.length; n++) {
 				int loaded = words[at++];
 				if (loaded != 0 && loaded != 1) throw new IOException("Surface gameplay sector status");
-				if (KEEP_PACKED_SURFACE_TILES) {
-					tiles[n] = Sector.fromSurfaceWords(loaded != 0, words, at);
-					at += 4 * SECTION_SIZE * SECTION_SIZE;
-					continue;
-				}
 				Sector sector = loaded != 0 ? Sector.blankLoaded() : new Sector();
 				for (int i = 0; i < SECTION_SIZE * SECTION_SIZE; i++) {
 					Tile tile = sector.getTile(i);
@@ -2983,9 +2971,9 @@ public final class World {
 		if (isLocalTile(localTileX, localTileZ)) {
 			Sector loaded = sectorForLocalTile(localTileX, localTileZ);
 			if (loaded != null && loaded.isLoaded()) {
-				return loaded.groundElevation(
+				return loaded.getTile(
 					tileInSector(localTileX),
-					tileInSector(localTileZ)) * 3;
+					tileInSector(localTileZ)).groundElevation * 3;
 			}
 		}
 		int worldTileX = Math.addExact(
@@ -5620,7 +5608,7 @@ public final class World {
 
 			Sector sector = sectorForLocalTile(tileX, tileZ);
 			if (sector != null) {
-				return sector.groundTexture(tileInSector(tileX), tileInSector(tileZ)) & 0xff;
+				return sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundTexture & 0xff;
 			} else
 				return 0;
 		} catch (RuntimeException var5) {
@@ -5654,7 +5642,7 @@ public final class World {
 
 			Sector sector = sectorForLocalTile(xTile, zTile);
 			if (sector != null) {
-				return sector.groundOverlay(tileInSector(xTile), tileInSector(zTile)) & 0xFF;
+				return sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundOverlay & 0xFF;
 				// like this while adding stuff, objects etc.
 				// return 255 & this.tileDecoration[chunk][xTile * 48 + zTile];
 			} else
@@ -5681,7 +5669,7 @@ public final class World {
 
 			Sector sector = sectorForLocalTile(xTile, zTile);
 			if (sector != null) {
-				return sector.groundElevation(tileInSector(xTile), tileInSector(zTile)) * 3;
+				return sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundElevation * 3;
 				// return (255 & this.elevation[region][xTile * 48 + zTile]) *
 				// 3;
 			} else
@@ -5696,7 +5684,7 @@ public final class World {
 
 			Sector sector = sectorForLocalTile(tileX, tileZ);
 			if (sector != null) {
-				return sector.diagonalWalls(tileInSector(tileX), tileInSector(tileZ));
+				return sector.getTile(tileInSector(tileX), tileInSector(tileZ)).diagonalWalls;
 				// here.
 			} else
 				return 0;
@@ -5710,7 +5698,7 @@ public final class World {
 
 			Sector sector = sectorForLocalTile(tileX, tileZ);
 			if (sector != null) {
-				return sector.verticalWall(tileInSector(tileX), tileInSector(tileZ)) & 0xff;
+				return sector.getTile(tileInSector(tileX), tileInSector(tileZ)).verticalWall & 0xff;
 			} else
 				return 0;
 		} catch (RuntimeException var6) {
@@ -5723,7 +5711,7 @@ public final class World {
 
 			Sector sector = sectorForLocalTile(xTile, zTile);
 			if (sector != null) {
-				return sector.horizontalWall(tileInSector(xTile), tileInSector(zTile)) & 0xFF;
+				return sector.getTile(tileInSector(xTile), tileInSector(zTile)).horizontalWall & 0xFF;
 			} else
 				return 0;
 		} catch (RuntimeException var6) {
@@ -5736,7 +5724,7 @@ public final class World {
 
 			Sector sector = sectorForLocalTile(tileX, tileZ);
 			if (sector != null) {
-				return sector.roofTexture(tileInSector(tileX), tileInSector(tileZ));
+				return sector.getTile(tileInSector(tileX), tileInSector(tileZ)).roofTexture;
 				// return this.wallsRoof[chunk][tileZ + tileX * 48];
 			} else
 				return 0;
@@ -6560,7 +6548,7 @@ public final class World {
 		if (sector == null) {
 			return 0;
 		}
-		return sector.groundOverlay(tileInSector(xTile), tileInSector(zTile)) & 0xFF;
+		return sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundOverlay & 0xFF;
 	}
 
 	private static void setTileDecoration(Sector[] window, int xTile, int zTile, int val) {
@@ -8699,16 +8687,16 @@ public final class World {
 
 		private int terrainColour(int tileX, int tileZ) {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
-			return sector == null ? 0 : sector.groundTexture(tileInSector(tileX), tileInSector(tileZ)) & 0xff;
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundTexture & 0xff;
 		}
 
 		private int tileDecorationID(int tileX, int tileZ) {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
-			return sector == null ? 0 : sector.groundOverlay(tileInSector(tileX), tileInSector(tileZ)) & 0xff;
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundOverlay & 0xff;
 		}
 		private boolean editorPaintedOverlay(int tileX,int tileZ){
 			Sector sector=sectorForLocalTile(sectors,tileX,tileZ);
-			return sector != null && sector.isEditorPaintedOverlay(tileInSector(tileX), tileInSector(tileZ));
+			return sector!=null&&sector.getTile(tileInSector(tileX),tileInSector(tileZ)).editorPaintedOverlay;
 		}
 
 		private int tileDecorationCacheVal(int tileX, int tileZ, int defaultVal,
@@ -8727,7 +8715,7 @@ public final class World {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
 			return sector == null
 				? 0
-				: sector.groundElevation(tileInSector(tileX), tileInSector(tileZ)) * 3;
+				: sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundElevation * 3;
 		}
 
 		private int tileType2(int tileX, int tileZ) {
@@ -8744,22 +8732,22 @@ public final class World {
 
 		private int wallDiagonal(int tileX, int tileZ) {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
-			return sector == null ? 0 : sector.diagonalWalls(tileInSector(tileX), tileInSector(tileZ));
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).diagonalWalls;
 		}
 
 		private int verticalWall(int tileX, int tileZ) {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
-			return sector == null ? 0 : sector.verticalWall(tileInSector(tileX), tileInSector(tileZ)) & 0xff;
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).verticalWall & 0xff;
 		}
 
 		private int horizontalWall(int tileX, int tileZ) {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
-			return sector == null ? 0 : sector.horizontalWall(tileInSector(tileX), tileInSector(tileZ)) & 0xff;
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).horizontalWall & 0xff;
 		}
 
 		private int wallRoof(int tileX, int tileZ) {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
-			return sector == null ? 0 : sector.roofTexture(tileInSector(tileX), tileInSector(tileZ));
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).roofTexture;
 		}
 
 		private boolean hasRoofStrut(int tileX, int tileZ) {

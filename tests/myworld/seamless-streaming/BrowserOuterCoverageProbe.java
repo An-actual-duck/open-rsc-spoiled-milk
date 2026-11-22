@@ -408,18 +408,6 @@ public final class BrowserOuterCoverageProbe {
 			if (accepted < expected) throw new IllegalStateException("Expected " + expected + " primitive gameplay replies, accepted " + accepted);
 			BrowserBootstrap.report("outer-coverage:terrain-gameplay-word-replies:" + accepted);
 		}
-		if (Boolean.getBoolean("spoiledmilk.browserPackedSurfaceTiles")) {
-			int packed;
-			try {
-				packed = (int) World.class.getMethod("getInstalledPackedSurfaceSectors").invoke(client.getWorld());
-			} catch (ReflectiveOperationException error) {
-				throw new IllegalStateException("Packed surface tile count is unavailable", error);
-			}
-			if (packed < expected * World.ACTIVE_SECTION_GRID * World.ACTIVE_SECTION_GRID) {
-				throw new IllegalStateException("Incomplete packed gameplay tiles " + packed);
-			}
-			BrowserBootstrap.report("outer-coverage:packed-surface-sectors:" + packed);
-		}
 		if (Boolean.getBoolean("spoiledmilk.browserPackedGameplayVertices")) {
 			int packed;
 			boolean current;

@@ -557,13 +557,15 @@ Use those first-pass and diagonal legs for a separate CPU capture. Match
 packet processing, terrain and scenery reply processing, scene capture
 and submission to the same clock before choosing the next change.
 
-The fresh Chrome capture linked one return-leg gap to gameplay terrain
-reply decoding and collector work. The Java receiver currently expands
-all nine sectors into mutable tile objects despite the checked packed
-source. Keep an owned copy of the packed tile plane and read the fields
-directly for terrain queries. Preserve the mutable tile path for actual
-edits and compare the full terrain and pick product byte for byte.
-[CPU capture between rolls](seamless-world-streaming-preview.md#cpu-capture-between-scene-rolls)
+The fresh Chrome capture linked a return-leg gap to gameplay terrain
+reply decoding and collector work. The packed tile trial matched
+20,736 direct reads and the full gameplay product. Timing pairs and
+reversed-order repeats gave mixed pacing. The trial was retired.
+The same reply also carries a full 144×144 compatibility mesh. Keep its
+vertex planes in the validated primitive reply and use exact reads for
+queries or fallback drawing. In the normal fixed-cell path, check that
+the mesh stays packed through publication and run matched Full HD walks.
+[CPU capture between rolls](seamless-world-streaming-preview.md#cpu-capture-between-scene-rolls) · [Packed tile results](seamless-world-streaming-preview.md#packed-gameplay-terrain-tiles) · [Packed mesh proof](seamless-world-streaming-preview.md#packed-gameplay-terrain-mesh-vertices)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
