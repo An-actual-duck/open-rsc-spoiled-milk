@@ -5892,8 +5892,14 @@ public final class World {
 				predictiveClearNanos,
 				symmetricComposeNanos,
 				preloadNanos);
+			long logStart = RenderTelemetry.boundaryDiagnosticsNow();
 			logNativeLayeredTerrainActivation(worldX, worldZ, plane, x, z);
+			long collisionStart = logStart == 0L ? 0L : System.nanoTime();
+			RenderTelemetry.recordBoundaryPhase("world-section", "activation-log", logStart,
+				logStart == 0L ? 0L : collisionStart - logStart);
 			installSurfaceCollisionView(x, z);
+			RenderTelemetry.recordBoundaryPhase("world-section", "collision-view", collisionStart,
+				collisionStart == 0L ? 0L : System.nanoTime() - collisionStart);
 
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');

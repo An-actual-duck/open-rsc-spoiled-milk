@@ -23,7 +23,8 @@ public final class BrowserRegionHandoffTrace {
         "handoff.world-frame", "handoff.scene-render", "handoff.object-frame", "handoff.fresh-candidate",
         "scenery.cache", "scenery.prepared", "terrain.prepared-install", "scenery.incoming", "scenery.mesh-item",
         "baseline.fence-prune", "baseline.fence-hash", "baseline.fence-publication",
-        "baseline.page-records", "baseline.page-prune", "baseline.page-apply", "baseline.page-diagnostics"
+        "baseline.page-records", "baseline.page-prune", "baseline.page-apply", "baseline.page-diagnostics",
+        "world-section.activation-log", "world-section.collision-view"
     };
     private static long ordinal;
     private static int count, next, context, packetBudget, frameBudget;
