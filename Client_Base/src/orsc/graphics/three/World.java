@@ -1448,7 +1448,11 @@ public final class World {
 			&& !hasWholeOverworldTerrainPatches()
 			&& Math.floorMod(worldOffsetX, SECTION_SIZE) == 0 && Math.floorMod(worldOffsetZ, SECTION_SIZE) == 0
 			? new SurfaceTerrainDrawField(haloTerrain, activeSectionX, activeSectionY, includeRoofGeometry) : null;
-		TerrainPredictionSlice slice = predicted && PACE_BROWSER_TERRAIN_PREDICTION ? new TerrainPredictionSlice() : null;
+		// A cold floor return can still need a halo. Yield between build steps so that
+		// the browser can render the authoritative floor and process its input while
+		// the surrounding terrain is being prepared.
+		boolean paceHalo = predicted || orsc.BrowserWorldStreaming.enabled();
+		TerrainPredictionSlice slice = paceHalo && PACE_BROWSER_TERRAIN_PREDICTION ? new TerrainPredictionSlice() : null;
 		int predictedRebaseX = predicted
 			? Math.multiplyExact(
 				activeTerrain.getCurrentChunkX()
@@ -4101,7 +4105,7 @@ public final class World {
 		}
 	}
 
-	/** CheerpJ can schedule another Java task while this predicted builder is asleep. */
+	/** CheerpJ can schedule another Java task while this background builder is asleep. */
 	private static final class TerrainPredictionSlice {
 		private long lastYield = System.nanoTime();
 
@@ -4111,7 +4115,7 @@ public final class World {
 				Thread.sleep(1L);
 			} catch (InterruptedException interrupted) {
 				Thread.currentThread().interrupt();
-				throw new CancellationException("Terrain prediction was superseded");
+				throw new CancellationException("Terrain preparation was superseded");
 			}
 			lastYield = System.nanoTime();
 		}
