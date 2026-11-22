@@ -3245,15 +3245,10 @@ public final class World {
 		}
 	}
 
-	public int collisionAt(int x, int z) {
-		int flags = this.collisionFlags[x][z];
-		return surfaceCollision == null ? flags : surfaceCollision.flagsAt(x, z, flags);
-	}
-
 	private int collisionFlagSafe(int x, int z) {
 		try {
 
-			return isLocalTile(x, z) ? collisionAt(x, z) : 0;
+			return isLocalTile(x, z) ? this.collisionFlags[x][z] : 0;
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "k.JA(" + -38 + ',' + z + ',' + x + ')');
 		}
@@ -3397,32 +3392,32 @@ public final class World {
 
 				if (reachBorder) {
 					if (x > 0 && xLow <= x - 1 && xHigh >= x - 1 && zLow <= z && zHigh >= z
-						&& (collisionAt(x - 1, z) & CollisionFlag.WALL_WEST) == 0) {
+						&& (this.collisionFlags[x - 1][z] & CollisionFlag.WALL_WEST) == 0) {
 						complete = true;
 						break;
 					}
 
 					if (x < LOCAL_FACE_TILE_COUNT && 1 + x >= xLow && x + 1 <= xHigh && z >= zLow && zHigh >= z
-						&& (CollisionFlag.WALL_EAST & collisionAt(x + 1, z)) == 0) {
+						&& (CollisionFlag.WALL_EAST & this.collisionFlags[x + 1][z]) == 0) {
 						complete = true;
 						break;
 					}
 
 					if (z > 0 && xLow <= x && xHigh >= x && z - 1 >= zLow && zHigh >= z - 1
-						&& (CollisionFlag.WALL_SOUTH & collisionAt(x, z - 1)) == 0) {
+						&& (CollisionFlag.WALL_SOUTH & this.collisionFlags[x][z - 1]) == 0) {
 						complete = true;
 						break;
 					}
 
 					if (z < LOCAL_FACE_TILE_COUNT && xLow <= x && x <= xHigh && zLow <= z + 1 && zHigh >= z + 1
-						&& (CollisionFlag.WALL_NORTH & collisionAt(x, z + 1)) == 0) {
+						&& (CollisionFlag.WALL_NORTH & this.collisionFlags[x][z + 1]) == 0) {
 						complete = true;
 						break;
 					}
 				}
 
 				if (x > 0 && this.pathFindSource[x - 1][z] == 0
-					&& (collisionAt(x - 1, z) & CollisionFlag.WEST_BLOCKED) == 0) {
+					&& (this.collisionFlags[x - 1][z] & CollisionFlag.WEST_BLOCKED) == 0) {
 					pathX[openListWrite] = x - 1;
 					pathZ[openListWrite] = z;
 					this.pathFindSource[x - 1][z] = CollisionFlag.SOURCE_WEST;
@@ -3430,7 +3425,7 @@ public final class World {
 				}
 
 				if (x < LOCAL_FACE_TILE_COUNT && this.pathFindSource[1 + x][z] == 0
-					&& (collisionAt(1 + x, z) & CollisionFlag.EAST_BLOCKED) == 0) {
+					&& (this.collisionFlags[1 + x][z] & CollisionFlag.EAST_BLOCKED) == 0) {
 					pathX[openListWrite] = 1 + x;
 					pathZ[openListWrite] = z;
 					this.pathFindSource[x + 1][z] = CollisionFlag.SOURCE_EAST;
@@ -3438,7 +3433,7 @@ public final class World {
 				}
 
 				if (z > 0 && this.pathFindSource[x][z - 1] == 0
-					&& (CollisionFlag.SOUTH_BLOCKED & collisionAt(x, z - 1)) == 0) {
+					&& (CollisionFlag.SOUTH_BLOCKED & this.collisionFlags[x][z - 1]) == 0) {
 					pathX[openListWrite] = x;
 					pathZ[openListWrite] = z - 1;
 					this.pathFindSource[x][z - 1] = CollisionFlag.SOURCE_SOUTH;
@@ -3446,16 +3441,16 @@ public final class World {
 				}
 
 				if (z < LOCAL_FACE_TILE_COUNT && this.pathFindSource[x][1 + z] == 0
-					&& (CollisionFlag.NORTH_BLOCKED & collisionAt(x, 1 + z)) == 0) {
+					&& (CollisionFlag.NORTH_BLOCKED & this.collisionFlags[x][1 + z]) == 0) {
 					pathX[openListWrite] = x;
 					pathZ[openListWrite] = z + 1;
 					this.pathFindSource[x][z + 1] = CollisionFlag.SOURCE_NORTH;
 					openListWrite = (openListWrite + 1) % openListSize;
 				}
 
-				if (x > 0 && z > 0 && (CollisionFlag.SOUTH_BLOCKED & collisionAt(x, z - 1)) == 0
-					&& (CollisionFlag.WEST_BLOCKED & collisionAt(x - 1, z)) == 0
-					&& (CollisionFlag.SOUTH_WEST_BLOCKED & collisionAt(x - 1, z - 1)) == 0
+				if (x > 0 && z > 0 && (CollisionFlag.SOUTH_BLOCKED & this.collisionFlags[x][z - 1]) == 0
+					&& (CollisionFlag.WEST_BLOCKED & this.collisionFlags[x - 1][z]) == 0
+					&& (CollisionFlag.SOUTH_WEST_BLOCKED & this.collisionFlags[x - 1][z - 1]) == 0
 					&& this.pathFindSource[x - 1][z - 1] == 0) {
 					pathX[openListWrite] = x - 1;
 					pathZ[openListWrite] = z - 1;
@@ -3463,9 +3458,9 @@ public final class World {
 					openListWrite = (1 + openListWrite) % openListSize;
 				}
 
-				if (x < LOCAL_FACE_TILE_COUNT && z > 0 && (collisionAt(x, z - 1) & CollisionFlag.SOUTH_BLOCKED) == 0
-					&& (collisionAt(1 + x, z) & CollisionFlag.EAST_BLOCKED) == 0
-					&& (collisionAt(x + 1, z - 1) & CollisionFlag.SOUTH_EAST_BLOCKED) == 0
+				if (x < LOCAL_FACE_TILE_COUNT && z > 0 && (this.collisionFlags[x][z - 1] & CollisionFlag.SOUTH_BLOCKED) == 0
+					&& (this.collisionFlags[1 + x][z] & CollisionFlag.EAST_BLOCKED) == 0
+					&& (this.collisionFlags[x + 1][z - 1] & CollisionFlag.SOUTH_EAST_BLOCKED) == 0
 					&& this.pathFindSource[1 + x][z - 1] == 0) {
 					pathX[openListWrite] = 1 + x;
 					pathZ[openListWrite] = z - 1;
@@ -3473,9 +3468,9 @@ public final class World {
 					openListWrite = (1 + openListWrite) % openListSize;
 				}
 
-				if (x > 0 && z < LOCAL_FACE_TILE_COUNT && (collisionAt(x, 1 + z) & CollisionFlag.NORTH_BLOCKED) == 0
-					&& (collisionAt(x - 1, z) & CollisionFlag.WEST_BLOCKED) == 0
-					&& (collisionAt(x - 1, 1 + z) & CollisionFlag.NORTH_WEST_BLOCKED) == 0
+				if (x > 0 && z < LOCAL_FACE_TILE_COUNT && (this.collisionFlags[x][1 + z] & CollisionFlag.NORTH_BLOCKED) == 0
+					&& (this.collisionFlags[x - 1][z] & CollisionFlag.WEST_BLOCKED) == 0
+					&& (this.collisionFlags[x - 1][1 + z] & CollisionFlag.NORTH_WEST_BLOCKED) == 0
 					&& this.pathFindSource[x - 1][1 + z] == 0) {
 					pathX[openListWrite] = x - 1;
 					pathZ[openListWrite] = 1 + z;
@@ -3483,9 +3478,9 @@ public final class World {
 					this.pathFindSource[x - 1][z + 1] = CollisionFlag.SOURCE_NORTH_WEST;
 				}
 
-				if (x < LOCAL_FACE_TILE_COUNT && z < LOCAL_FACE_TILE_COUNT && (CollisionFlag.NORTH_BLOCKED & collisionAt(x, 1 + z)) == 0
-					&& (collisionAt(x + 1, z) & CollisionFlag.EAST_BLOCKED) == 0
-					&& (CollisionFlag.NORTH_EAST_BLOCKED & collisionAt(x + 1, 1 + z)) == 0
+				if (x < LOCAL_FACE_TILE_COUNT && z < LOCAL_FACE_TILE_COUNT && (CollisionFlag.NORTH_BLOCKED & this.collisionFlags[x][1 + z]) == 0
+					&& (this.collisionFlags[x + 1][z] & CollisionFlag.EAST_BLOCKED) == 0
+					&& (CollisionFlag.NORTH_EAST_BLOCKED & this.collisionFlags[x + 1][1 + z]) == 0
 					&& this.pathFindSource[x + 1][1 + z] == 0) {
 					pathX[openListWrite] = 1 + x;
 					pathZ[openListWrite] = 1 + z;
@@ -6423,7 +6418,7 @@ public final class World {
 				tileInSector(localX),
 				tileInSector(localZ));
 		int collision = isLocalTile(localX, localZ)
-			? collisionAt(localX, localZ)
+			? collisionFlags[localX][localZ]
 			: -1;
 		String summary =
 			"NATIVE_TERRAIN_ACTIVATION"

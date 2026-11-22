@@ -12,30 +12,15 @@ import java.util.Map;
 /** Published world-coordinate terrain and live collision contributions for the surface. */
 final class SurfaceCollisionCells {
 	private static final int CELL_SIZE = World.SECTION_SIZE;
-	// The extra row and column cover a window with an unaligned origin.
-	private static final int DIRECTORY_SIZE = World.LOCAL_TILE_COUNT / CELL_SIZE + 1;
 	private final Map<Long, int[]> terrain = new HashMap<>();
 	private final Map<Long, IncomingScenery> incomingScenery = new HashMap<>();
 	private final Map<Long, TileContributions> live = new HashMap<>();
-	private final Map<Long, CollisionCell> liveCells = new HashMap<>();
-	private final CollisionCell[] windowCells = new CollisionCell[DIRECTORY_SIZE * DIRECTORY_SIZE];
-	private final boolean readCells;
 	private final Map<Placement, Integer> placements = new HashMap<>();
 	private String scope;
 	private int baseX;
 	private int baseZ;
-	private int offsetX;
-	private int offsetZ;
 	private int[][] view;
 	private int incomingCells;
-
-	SurfaceCollisionCells() {
-		this(Boolean.getBoolean("spoiledmilk.browserSurfaceCollisionCellQueries"));
-	}
-
-	SurfaceCollisionCells(boolean readCells) {
-		this.readCells = readCells;
-	}
 
 	boolean active() { return view != null; }
 	void detachView() { view = null; }
@@ -46,8 +31,6 @@ final class SurfaceCollisionCells {
 		terrain.clear();
 		incomingScenery.clear();
 		live.clear();
-		liveCells.clear();
-		Arrays.fill(windowCells, null);
 		placements.clear();
 		incomingCells = 0;
 	}
@@ -67,16 +50,6 @@ final class SurfaceCollisionCells {
 			}
 		}
 		view = staticFlags;
-		if (readCells) {
-			offsetX = Math.floorMod(x, CELL_SIZE);
-			offsetZ = Math.floorMod(z, CELL_SIZE);
-			for (int dx = 0; dx < DIRECTORY_SIZE; dx++) {
-				for (int dz = 0; dz < DIRECTORY_SIZE; dz++) {
-					windowCells[dx * DIRECTORY_SIZE + dz] = liveCells.get(encode(west + dx, south + dz));
-				}
-			}
-			return;
-		}
 		if (live.isEmpty()) return;
 		for (Map.Entry<Long, TileContributions> entry : live.entrySet()) {
 			long key = entry.getKey();
@@ -87,17 +60,6 @@ final class SurfaceCollisionCells {
 				view[localX][localZ] = tile.terrainFlags | tile.flags;
 			}
 		}
-	}
-
-	int flagsAt(int localX, int localZ, int flags) {
-		if (!readCells || view == null) return flags;
-		int windowX = localX + offsetX, windowZ = localZ + offsetZ;
-		CollisionCell cell = windowCells[directoryIndex(windowX, windowZ)];
-		return cell == null ? flags : flags | cell.flags[windowX % CELL_SIZE * CELL_SIZE + windowZ % CELL_SIZE];
-	}
-
-	private static int directoryIndex(int x, int z) {
-		return x / CELL_SIZE * DIRECTORY_SIZE + z / CELL_SIZE;
 	}
 
 	void stage(String mapScope, Prepared prepared) {
@@ -261,13 +223,8 @@ final class SurfaceCollisionCells {
 		if (!terrain.containsKey(cellKey) || !incomingScenery.containsKey(cellKey)) return -1;
 		long tile = encode(x, z);
 		int flags = terrainFlags(x, z);
-		if (readCells) {
-			CollisionCell cell = liveCells.get(cellKey);
-			if (cell != null) flags |= cell.flags[tileIndex(x, z)];
-		} else {
-			TileContributions active = live.get(tile);
-			if (active != null) flags |= active.flags;
-		}
+		TileContributions active = live.get(tile);
+		if (active != null) flags |= active.flags;
 		for (IncomingScenery cell : incomingScenery.values()) flags |= cell.blockers.getOrDefault(tile, 0);
 		return flags;
 	}
@@ -289,10 +246,6 @@ final class SurfaceCollisionCells {
 
 	private void change(int localX, int localZ, int flag, boolean add) {
 		int x = baseX + localX, z = baseZ + localZ;
-		if (readCells) {
-			changeCell(x, z, localX, localZ, flag, add);
-			return;
-		}
 		long key = encode(x, z);
 		boolean visible = view != null && World.isLocalTile(localX, localZ);
 		TileContributions cell = live.get(key);
@@ -302,51 +255,20 @@ final class SurfaceCollisionCells {
 			live.put(key, cell);
 		}
 		if (cell == null) return;
-		cell.change(flag, add);
+		int bit = Integer.numberOfTrailingZeros(flag);
+		if (add) {
+			cell.counts[bit]++;
+			cell.flags |= flag;
+		} else if (cell.counts[bit] > 0 && --cell.counts[bit] == 0) {
+			cell.flags &= ~flag;
+		}
 		if (cell.flags == 0) live.remove(key);
 		if (visible) view[localX][localZ] = cell.terrainFlags | cell.flags;
-	}
-
-	private void changeCell(int x, int z, int localX, int localZ, int flag, boolean add) {
-		long key = encode(Math.floorDiv(x, CELL_SIZE), Math.floorDiv(z, CELL_SIZE));
-		CollisionCell cell = liveCells.get(key);
-		int windowX = localX + offsetX, windowZ = localZ + offsetZ;
-		int directoryExtent = DIRECTORY_SIZE * CELL_SIZE;
-		int windowIndex = windowX >= 0 && windowX < directoryExtent && windowZ >= 0 && windowZ < directoryExtent
-			? directoryIndex(windowX, windowZ) : -1;
-		if (cell == null) {
-			if (!add) return;
-			cell = new CollisionCell();
-			liveCells.put(key, cell);
-			if (windowIndex >= 0) windowCells[windowIndex] = cell;
-		}
-		int index = tileIndex(x, z);
-		TileContributions tile = cell.tiles[index];
-		if (tile == null) {
-			if (!add) return;
-			tile = new TileContributions();
-			cell.tiles[index] = tile;
-			cell.occupied++;
-		}
-		tile.change(flag, add);
-		cell.flags[index] = tile.flags;
-		if (tile.flags == 0) {
-			cell.tiles[index] = null;
-			if (--cell.occupied == 0) {
-				liveCells.remove(key);
-				if (windowIndex >= 0) windowCells[windowIndex] = null;
-			}
-		}
-	}
-
-	private static int tileIndex(int x, int z) {
-		return Math.floorMod(x, CELL_SIZE) * CELL_SIZE + Math.floorMod(z, CELL_SIZE);
 	}
 
 	int terrainFlags(int x, int z) {
 		int localX = x - baseX, localZ = z - baseZ;
 		if (view != null && World.isLocalTile(localX, localZ)) {
-			if (readCells) return view[localX][localZ];
 			TileContributions occupied = live.get(encode(x, z));
 			return occupied == null ? view[localX][localZ] : occupied.terrainFlags;
 		}
@@ -359,26 +281,10 @@ final class SurfaceCollisionCells {
 
 	private static long encode(int x, int z) { return ((long)x << 32) | (z & 0xffffffffL); }
 
-	private static final class CollisionCell {
-		private final int[] flags = new int[CELL_SIZE * CELL_SIZE];
-		private final TileContributions[] tiles = new TileContributions[CELL_SIZE * CELL_SIZE];
-		private int occupied;
-	}
-
 	private static final class TileContributions {
 		private final int[] counts = new int[8];
 		private int flags;
 		private int terrainFlags;
-
-		private void change(int flag, boolean add) {
-			int bit = Integer.numberOfTrailingZeros(flag);
-			if (add) {
-				counts[bit]++;
-				flags |= flag;
-			} else if (counts[bit] > 0 && --counts[bit] == 0) {
-				flags &= ~flag;
-			}
-		}
 	}
 
 	private static final class Placement {

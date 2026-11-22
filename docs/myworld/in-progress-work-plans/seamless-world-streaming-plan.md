@@ -632,6 +632,47 @@ testable entry point for that approach. The current client still reaches
 desktop APIs through AWT and its core classes.
 [CheerpJ 5.0 release notes](https://labs.leaningtech.com/blog/cheerpj-5.0) · [TeaVM overview](https://www.teavm.org/docs/intro/overview.html) · [TeaVM JavaScript interop](https://teavm.org/docs/runtime/jso.html)
 
+### Prepare the first complete frame before the roll
+
+The direct world-cell collision query trial removed the step that
+reapplies all scenery contributions to the terrain grid. The exact
+collision results and all four travel runs passed. The frame intervals
+between switches grew in both browsers, so the trial is out of the
+preview. Move from collision storage to first-frame construction.
+[Direct collision query trial](seamless-world-streaming-preview.md#reading-live-collision-from-persistent-world-cells)
+
+The slow roll frame pays for more than publication of the collision
+view. In the detailed Full HD controls, the first verified switch also
+spent 11–13 ms capturing the scene, 11–14 ms collecting resident
+scenery, and 20–30 ms preparing browser lighting. The terrain and
+scenery draw buffers were already resident on those frames. Staging
+geometry is useful only if the first frame can consume the staged
+products without reconstructing them on the client thread.
+[Chrome frame stages](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-roll-stages-chrome/chrome-result.json) · [Firefox frame stages](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-roll-stages-firefox/firefox-result.json)
+
+Start with `buildResidentObjectChunkInputs` and `appendResidentObjectChunkFrame`.
+The static input cache currently requires the same local anchor, origin,
+and presentation revision. The first render after a verified switch
+therefore captures canonical descriptors and assembles resident inputs
+even for unchanged world cells. Test preparing the next frame's static
+inputs and draw metadata by world cell. Retain immutable inputs for
+overlapping cells and derive entering inputs from the detached terrain
+and scenery revisions. Validate terrain samples, placement and model
+versions, content order, and anchor translation before adoption. A live
+scenery change invalidates the affected prepared cells. Animation,
+picking, effects, and actor motion still use the current accepted game
+state.
+
+Compare the assembled chunk order, offsets, triangle and material
+attributes, glow emitters, roof coverage, and picks against the literal
+frame before using the candidate. Measure the amount of scene and
+lighting work left at the roll, as well as the whole-walk submission
+tail. The target is one frame budget for a verified switch. Use the
+same products to test whether lighting inputs can also be rasterized
+before the switch, with exact ordered emitters and bounds checked before
+adoption. The earlier glow experiment ran the raster on the renderer
+worker during the switch frame.
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet

@@ -2409,6 +2409,36 @@ compatibility reference. Leaning Tech's current 5.0 release still
 describes its alternate WasmGC backend as experimental.
 [Chrome Java 11 walk](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-java11-chrome/chrome-result.json) · [Firefox Java 11 walk](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-java11-firefox/firefox-result.json) · [CheerpJ 5.0 release notes](https://labs.leaningtech.com/blog/cheerpj-5.0)
 
+#### Reading live collision from persistent world cells
+
+The private trial kept the terrain grid and live collision contributions
+separate. Movement queries, camera clearance, and terrain lighting read
+the current contribution from a small directory of world cells. A roll
+updated the directory and kept the underlying contributions, eliminating
+the pass that wrote every live contribution into the new terrain grid.
+The terrain and scenery receipts and gameplay packet ordering stayed on
+the existing path.
+
+The focused native fixture passed scope changes, overlapping objects,
+reciprocal wall blockers and negative origins. A second native comparison
+matched 3,138,048 tile checks across 35 view switches and 16,800 placement
+changes. All four fresh browser runs completed three verified switches
+and the server-confirmed return to `(252,609,0)`. Each used 1920×1080
+output, the 960×540 logical UI, one load epoch, and zero input closures
+or frame holds.
+
+| Browser | Three switch intervals, control → direct queries | Longest interval between switches | 99th percentile | Lowest one-second FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 131.8, 101.2, 84.8 → 128.4, 84.3, 83.2 ms | 47.6 → 73.8 ms | 23.3 → 23.1 ms | 54 → 54 |
+| Firefox | 161, 91, 118 → 134, 133, 93 ms | 70 → 82 ms | 25 → 25 ms | 46 → 49 |
+
+The improvement at several switches came with longer intervals between
+switches in both browsers and a slower second switch in Firefox. Retire
+the trial and keep the current player preview. The candidate and focused
+fixture are preserved at `4eb906be9`. All runs used the same JAR with
+SHA-256 `4df1352474d02fa1bc790d985b214ce9d0921c8f7790286ec8081834a4301e4d`.
+[Chrome control](../../../output/tests/browser-gameplay-spike/collision-cell-query-chrome-control/chrome-result.json) · [Chrome direct queries](../../../output/tests/browser-gameplay-spike/collision-cell-query-chrome-cells/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/collision-cell-query-firefox-control/firefox-result.json) · [Firefox direct queries](../../../output/tests/browser-gameplay-spike/collision-cell-query-firefox-cells/firefox-result.json) · [Native parity](../../../output/tests/seamless-world-streaming/collision-cell-query-build/native-cell-parity.log)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
