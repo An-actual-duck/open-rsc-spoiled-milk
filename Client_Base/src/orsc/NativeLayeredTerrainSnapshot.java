@@ -398,6 +398,9 @@ public final class NativeLayeredTerrainSnapshot {
 		return manifestSha256;
 	}
 
+	String getPackageId() { return packageId; }
+	String getPackageVersion() { return packageVersion; }
+
 	public int getSectorX() {
 		return sectorX;
 	}

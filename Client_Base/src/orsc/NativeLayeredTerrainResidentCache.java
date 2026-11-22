@@ -89,12 +89,13 @@ public final class NativeLayeredTerrainResidentCache {
 		}
 	}
 
-	private synchronized void commit(final Transaction transaction) {
+	private synchronized boolean commit(final Transaction transaction, boolean allowStale) {
 		if (transaction.owner != this || transaction.committed) {
 			throw new IllegalStateException(
 				"Native terrain resident transaction is invalid");
 		}
 		if (transaction.baseVersion != version) {
+			if (allowStale) return false;
 			throw new IllegalStateException(
 				"Native terrain resident cache changed before receipt commit");
 		}
@@ -104,6 +105,7 @@ public final class NativeLayeredTerrainResidentCache {
 		lastReferences = transaction.references;
 		version = Math.addExact(version, 1L);
 		transaction.committed = true;
+		return true;
 	}
 
 	private static LinkedHashMap<String, NativeLayeredTerrainChunk>
@@ -179,6 +181,18 @@ public final class NativeLayeredTerrainResidentCache {
 			references = Math.addExact(references, 1);
 		}
 
+		NativeLayeredTerrainChunk resolvePreparedReference(String contentIdentity, NativeLayeredTerrainChunk prepared) {
+			requireOpen();
+			NativeLayeredTerrainChunk cached = staged.get(requireIdentity(contentIdentity));
+			if (cached == null) {
+				acceptPreparedReference(contentIdentity, prepared);
+				return prepared;
+			} else {
+				references = Math.addExact(references, 1);
+				return cached;
+			}
+		}
+
 		public NativeLayeredTerrainChunk resolveReference(
 			final String contentIdentity) {
 			requireOpen();
@@ -194,7 +208,11 @@ public final class NativeLayeredTerrainResidentCache {
 
 		public void commit() {
 			requireOpen();
-			owner.commit(this);
+			owner.commit(this, false);
+		}
+
+		boolean tryCommitTo(NativeLayeredTerrainResidentCache cache) {
+			return cache == owner && !committed && owner.commit(this, true);
 		}
 
 		private void requireOpen() {

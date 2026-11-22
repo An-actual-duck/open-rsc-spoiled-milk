@@ -173,6 +173,9 @@ public class PacketHandler {
 	private World.NativeLayeredTerrainHaloPrebuildResult
 		readyPredictedLayeredTerrainHalo;
 	private NativeLayeredTerrainSnapshot readyPredictedLayeredTerrainStage;
+	private static final boolean PREPARED_SURFACE_RECEIPT = Boolean.getBoolean("spoiledmilk.browserPreparedSurfaceReceipt");
+	private NativeLayeredTerrainPacketDecoder.PreparedSurfaceReceipt preparedSurfaceReceipt;
+	private int preparedSurfaceReceiptAttempts, preparedSurfaceReceiptsAccepted;
 	private NativeLayeredTerrainSnapshot predictedSceneryTerrain;
 	private NativeLayeredTerrainSnapshot
 		readyPredictedLayeredTerrainStructureStage;
@@ -416,6 +419,7 @@ public class PacketHandler {
 		if (!sceneryAuthorized && mudclient.PREDICTED_SCENERY_PREVIEW && mc != null) mc.clearPredictedScenery();
 		readyPredictedLayeredTerrainHalo = null;
 		readyPredictedLayeredTerrainStage = null;
+		preparedSurfaceReceipt = null;
 		readyPredictedLayeredTerrainStructureStage = null;
 		readyPredictionDecodeNanos = 0L;
 		readyPredictionBuildNanos = 0L;
@@ -623,6 +627,10 @@ public class PacketHandler {
 		try{handlePacket(opcode,length);}finally{browserStagedPacket=false;}
 	}
 	boolean isReceivingSurfaceHandoff() { return surfaceHandoffPackets != null; }
+
+	public int[] getPreparedSurfaceReceiptWork() {
+		return new int[]{preparedSurfaceReceiptAttempts, preparedSurfaceReceiptsAccepted};
+	}
 
 	private boolean receiveSurfaceHandoffPacket(int opcode, int length) {
 		if (surfaceHandoffPackets == null) {
@@ -1043,7 +1051,12 @@ public class PacketHandler {
 					contextCache);
 			} else if (mudclient.LIVE_SURFACE_HANDOFF && !nativeTerrainRecovery.isPending()
 				&& readyPredictedLayeredTerrainStructureStage != null) {
-				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV8WithPreparedSurface(
+				if (preparedSurfaceReceipt != null) {
+					preparedSurfaceReceiptAttempts++;
+					nativeTerrain = preparedSurfaceReceipt.accept(body, worldSpace, logicalLevel, contextCache);
+					if (nativeTerrain != null) preparedSurfaceReceiptsAccepted++;
+				}
+				if (nativeTerrain == null) nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV8WithPreparedSurface(
 					body, worldSpace, logicalLevel, contextCache, readyPredictedLayeredTerrainStage);
 			} else {
 				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV8(
@@ -1514,6 +1527,8 @@ public class PacketHandler {
 				stagedTerrain.getCurrentChunkX(), stagedTerrain.getCurrentChunkY(), activeTerrain);
 			mc.completeSurfaceSceneryTerrain(stagedTerrain);
 			readyPredictedLayeredTerrainStage = stagedTerrain;
+			if (PREPARED_SURFACE_RECEIPT) preparedSurfaceReceipt = NativeLayeredTerrainPacketDecoder.prepareSurfaceReceipt(
+				stagedTerrain, nativeLayeredTerrainResidentCache);
 			readyPredictionDecodeNanos += decodeNanos;
 			sendLayeredTerrainStageReady(protocolVersion, stageSequence, contextSequence, worldSpace, logicalLevel, stagedTerrain);
 			logTerrainStreaming("layer terrain stage seq " + stageSequence + " visual inputs ready for surface cells");

@@ -1,8 +1,12 @@
 package orsc;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -116,6 +120,73 @@ public final class NativeLayeredTerrainPacketDecoder {
 			decoder.preparedSurface = preparedSurface;
 		}
 		return decoder.advance(Long.MAX_VALUE);
+	}
+
+	/** Prepared walking contexts send the complete inner window as references. */
+	static PreparedSurfaceReceipt prepareSurfaceReceipt(NativeLayeredTerrainSnapshot visual,
+			NativeLayeredTerrainResidentCache cache) {
+		NativeLayeredTerrainSnapshot inner = visual.toAtomicActivationInnerWindow();
+		NativeLayeredTerrainChunk[] resolved = new NativeLayeredTerrainChunk[inner.getChunkSlotCount()];
+		NativeLayeredTerrainResidentCache.Transaction transaction = cache.begin();
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream(2048);
+		try (DataOutputStream output = new DataOutputStream(bytes)) {
+			writeWireString(output, inner.getPackageId());
+			writeWireString(output, inner.getPackageVersion());
+			writeWireString(output, inner.getManifestSha256());
+			output.writeByte(inner.getPresentationChunkSize());
+			output.writeInt(inner.getCurrentChunkX());
+			output.writeInt(inner.getCurrentChunkY());
+			output.writeByte(inner.getChunkRadius());
+			output.writeByte(resolved.length);
+			for (int index = 0; index < resolved.length; index++) {
+				NativeLayeredTerrainChunk chunk = inner.getChunkMetadata(index);
+				resolved[index] = chunk;
+				output.writeInt(chunk.getChunkX());
+				output.writeInt(chunk.getChunkY());
+				output.writeBoolean(chunk.isAvailable());
+				if (!chunk.isAvailable()) continue;
+				output.writeInt(chunk.getSourceSectorX());
+				output.writeInt(chunk.getSourceSectorY());
+				writeWireString(output, chunk.getSourceEncoding());
+				writeWireString(output, chunk.getSourcePayloadSha256());
+				output.writeBoolean(false);
+				String reference = residentContentIdentity(inner.getPackageId(), inner.getPackageVersion(), inner.getManifestSha256(),
+					inner.getWorldSpace(), inner.getLevel(), inner.getPresentationChunkSize(), chunk.getChunkX(), chunk.getChunkY(),
+					chunk.getSourceSectorX(), chunk.getSourceSectorY(), chunk.getSourceEncoding(), chunk.getSourcePayloadSha256());
+				resolved[index] = transaction.resolvePreparedReference(reference, chunk);
+			}
+		} catch (IOException impossible) {
+			throw new IllegalStateException("Could not encode an in-memory terrain receipt", impossible);
+		}
+		NativeLayeredTerrainSnapshot committed = new NativeLayeredTerrainSnapshot(inner.getProtocolVersion(),
+			inner.getPackageId(), inner.getPackageVersion(), inner.getManifestSha256(), inner.getPresentationChunkSize(),
+			inner.getWorldSpace(), inner.getLevel(), inner.getCurrentChunkX(), inner.getCurrentChunkY(), inner.getChunkRadius(), resolved);
+		return new PreparedSurfaceReceipt(committed, transaction, bytes.toByteArray());
+	}
+
+	private static void writeWireString(DataOutputStream output, String value) throws IOException {
+		output.write(value.getBytes(StandardCharsets.US_ASCII));
+		output.writeByte(10);
+	}
+
+	static final class PreparedSurfaceReceipt {
+		private final NativeLayeredTerrainSnapshot inner;
+		private final NativeLayeredTerrainResidentCache.Transaction transaction;
+		private final byte[] expectedBody;
+
+		private PreparedSurfaceReceipt(NativeLayeredTerrainSnapshot inner,
+				NativeLayeredTerrainResidentCache.Transaction transaction, byte[] expectedBody) {
+			this.inner = inner;
+			this.transaction = transaction;
+			this.expectedBody = expectedBody;
+		}
+
+		NativeLayeredTerrainSnapshot accept(byte[] body, String space, int level, NativeLayeredTerrainResidentCache cache) {
+			if (cache == null || !inner.getWorldSpace().equals(space) || inner.getLevel() != level
+				|| !Arrays.equals(expectedBody, body)) return null;
+			WorldBuilderClientProfile.current().requireNativePackageIdentity(inner.getPackageId(), inner.getPackageVersion(), inner.getManifestSha256());
+			return transaction.tryCommitTo(cache) ? inner : null;
+		}
 	}
 
 	public static NativeLayeredTerrainSnapshot decodeV7Stage(
