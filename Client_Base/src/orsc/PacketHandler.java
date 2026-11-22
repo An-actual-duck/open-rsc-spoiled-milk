@@ -1531,12 +1531,7 @@ public class PacketHandler {
 	}
 
 	private static void logTerrainStreaming(String summary) {
-		if (mudclient.LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()) {
-			ClientRuntimeLogger.logStreaming(summary);
-		} else {
-			System.out.println(summary);
-			ClientRuntimeLogger.log(summary);
-		}
+		ClientRuntimeLogger.logWorldTransition(summary);
 	}
 
 	private void beginSurfaceSceneryPrediction(int stage, int context, int x, int z,

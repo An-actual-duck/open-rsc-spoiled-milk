@@ -1413,11 +1413,31 @@ its 99th percentile rose from 26.5 to 29.1 ms, with a shorter maximum gap.
 The trial was removed after the pacing results.
 [Firefox enqueue trial](../../../output/tests/browser-gameplay-spike/worker-frame-queue-firefox/firefox-result.json) · [Chrome enqueue trial](../../../output/tests/browser-gameplay-spike/worker-frame-queue-chrome/chrome-result.json)
 
+The rebuilt halo candidate prepares the outer and retained frame metadata
+alongside its meshes and sends the activation message through the existing
+streaming logger. Its context prediction and activation phase fell from
+14–15 ms to 0–1 ms at the three rolls. The client still spent 18–19 ms
+inside the region's world-load call while the logged world-section work
+accounted for 2–3 ms. The untraced pacing results were mixed. Firefox's
+worst second moved from 40 to 37 FPS and the number of seconds below 50
+fell from six to four. Chrome's worst second moved from 43 to 42 FPS and
+its 99th percentile rose from 26.5 to 30.3 ms. Both reached `(252,609)`
+with three rolls, one epoch, and zero sampled holds or input closures.
+[Firefox halo candidate](../../../output/tests/browser-gameplay-spike/detached-halo-rebuilt-firefox/firefox-result.json) · [Chrome halo candidate](../../../output/tests/browser-gameplay-spike/detached-halo-rebuilt-chrome/chrome-result.json) · [Halo phase analysis](../../../output/tests/browser-gameplay-spike/detached-halo-rebuilt-trace/region-stage-summary.json)
+
+The rebuilt client also crossed the diagonal while the optional terrain
+jobs were deliberately held. All nine gameplay cells were ready and all
+16 overlapping draw buffers stayed resident. The server confirmed
+`(250,550)` with zero holds or sampled input closures. Its signed native
+fixture matched exact collision, minimap, roofs, picking geometry, and
+scenery size and data across the primitive worker boundary.
+[Delayed diagonal](../../../output/tests/browser-gameplay-spike/detached-halo-held-diagonal/firefox-result.json) · [Native parity](../../../output/tests/seamless-world-streaming/halo-prepared-build/native-parity.log)
+
 The player preview uses the original applet input and the separate
 WebGL worker on loopback port 8482. It uses the local atlas planner and
-the same primitive terrain and scenery replies as the measured route. A normal mouse and
-keyboard login reached the appearance screen, accepted the character,
-and entered the playable world at 1920×1080. The waiting cover now
+the same primitive terrain and scenery replies as the measured route.
+A normal mouse and keyboard login reached the appearance screen,
+accepted the character, and entered the playable world at 1920×1080. The waiting cover now
 clears when the worker acknowledges a UI frame so the appearance screen
 can receive input before the first world frame arrives.
 [Full HD preview](http://127.0.0.1:8482/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/local-atlas-player-preview/manual-login-result.json)
