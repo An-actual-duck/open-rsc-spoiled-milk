@@ -61,7 +61,6 @@ def main():
     parser.add_argument('--steady-walk', action='store_true', help='Repeat the approach inside the installed area after its prediction is ready')
     parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
     parser.add_argument('--local-sprite-plan', action='store_true', help='Plan sprites without a render-worker round trip')
-    parser.add_argument('--local-frame-queue', action='store_true', help='Enqueue worker readiness and world draw calls without yielding')
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
     parser.add_argument('--worker-scenery-placements', action='store_true', help='Build canonical scenery inputs from placements in the detached worker')
     parser.add_argument('--verify-worker-scenery-placements', action='store_true', help='Compare detached placement meshes byte for byte with the installed builder')
@@ -118,8 +117,6 @@ def main():
         parser.error('Surface workers require live surface handoff')
     if args.local_sprite_plan and not args.surface_draw_worker:
         parser.error('The local atlas planner requires the WebGL worker')
-    if args.local_frame_queue and not args.surface_draw_worker:
-        parser.error('The local frame queue requires the WebGL worker')
     if args.worker_scenery_placements and not args.surface_mesh_worker:
         parser.error('Scenery placement requests require the surface mesher')
     if args.worker_scenery_placements and not (args.manual or args.presentation_only or sustained_trace):
@@ -203,7 +200,6 @@ def main():
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/', "
            f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}, "
-           f"localFrameQueue:{str(args.local_frame_queue).lower()}, "
            f"localSpritePlan:{str(args.local_sprite_plan).lower()}}};")
     if args.manual and args.travel_trace:
         (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
@@ -312,7 +308,6 @@ def main():
         'reuseDetachedScenery': args.reuse_detached_scenery,
         'surfaceDrawWorker': args.surface_draw_worker,
         'localSpritePlan': args.local_sprite_plan,
-        'localFrameQueue': args.local_frame_queue,
         'sustainedWalk': args.sustained_walk,
         'safeWalkFixture': args.retarget_walk or args.safe_walk_fixture,
         'retargetWalk': args.retarget_walk,

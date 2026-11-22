@@ -1396,6 +1396,15 @@ server position. Its largest sampled player step was 0.336 tiles and the
 server confirmed `(252,609)` after the reversal.
 [Full HD packet capture](../../../output/tests/browser-gameplay-spike/atlas-local-packet-trace-firefox/firefox-result.json) · [Packet and frame stage correlation](../../../output/tests/browser-gameplay-spike/atlas-local-packet-trace-firefox/packet-stage-summary.json)
 
+A separate trial enqueued world readiness and draw data without waiting
+on frontend promises. The worker still owned submission and queue
+backpressure. The candidate ran more than 4,200 local world enqueues per
+browser. Firefox's worst second fell from 40 to 36 FPS and its longest
+gap grew from 155 to 206 ms. Chrome's worst second stayed at 43 FPS and
+its 99th percentile rose from 26.5 to 29.1 ms, with a shorter maximum gap.
+The trial was removed after the pacing results.
+[Firefox enqueue trial](../../../output/tests/browser-gameplay-spike/worker-frame-queue-firefox/firefox-result.json) · [Chrome enqueue trial](../../../output/tests/browser-gameplay-spike/worker-frame-queue-chrome/chrome-result.json)
+
 The player preview uses the original applet input and the separate
 WebGL worker on loopback port 8469. It stages the same primitive
 terrain and scenery replies as the measured route. A normal mouse and
