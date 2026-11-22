@@ -147,6 +147,10 @@ public final class mudclient implements Runnable {
 	static final boolean LIVE_SURFACE_HANDOFF = SURFACE_SCENERY_DRAW
 		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
 	private int rollingSurfaceWindows;
+	private static final boolean PREPARE_SURFACE_INSTANCE_ROLL = LIVE_SURFACE_HANDOFF
+		&& Boolean.getBoolean("spoiledmilk.prepareSurfaceInstanceRoll");
+	private ClientSceneInstanceStore.SurfaceRoll preparedSurfaceInstanceRoll;
+	private int preparedSurfaceInstanceInstalls;
 	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
 		&& Boolean.getBoolean("spoiledmilk.browserPrepareIncomingScenery");
 	private static final int MAX_PREPARED_INCOMING_MODELS = 512;
@@ -4033,6 +4037,7 @@ public final class mudclient implements Runnable {
 
 	void clearSurfaceSceneryDraw() {
 		surfaceSceneryTerrain = null;
+		preparedSurfaceInstanceRoll = null;
 		adoptSurfaceScenery = false;
 		surfaceSceneryWork.clear();
 		surfacePreparedScenery = Collections.emptyList();
@@ -4103,6 +4108,13 @@ public final class mudclient implements Runnable {
 
 	void pollSurfaceSceneryDraw() {
 		if (!SURFACE_SCENERY_DRAW) return;
+		if (preparedSurfaceInstanceRoll != null) {
+			ClientSceneInstanceStore.SurfaceRoll roll = preparedSurfaceInstanceRoll;
+			if (!sceneInstanceStore.matchesSurfaceRoll(roll, roll.dx, roll.dz)) {
+				preparedSurfaceInstanceRoll = sceneInstanceStore.prepareSurfaceRoll(roll.dx, roll.dz,
+					World.LOCAL_TILE_COUNT, World.LOCAL_FACE_TILE_COUNT);
+			}
+		}
 		if (activeSurfaceSceneryBuild != null) {
 			if (!activeSurfaceSceneryBuild.isDone()) return;
 			SurfaceSceneryWork work = activeSurfaceSceneryWork;
@@ -22755,7 +22767,24 @@ public final class mudclient implements Runnable {
 
 	public int getRollingSurfaceWindows() { return rollingSurfaceWindows; }
 
+	void prepareSurfaceInstanceRoll(int sectionDX, int sectionDZ) {
+		if (PREPARE_SURFACE_INSTANCE_ROLL && Math.max(Math.abs((long) sectionDX), Math.abs((long) sectionDZ)) == 1) {
+			preparedSurfaceInstanceRoll = sceneInstanceStore.prepareSurfaceRoll(
+				sectionDX * World.SECTION_SIZE, sectionDZ * World.SECTION_SIZE,
+				World.LOCAL_TILE_COUNT, World.LOCAL_FACE_TILE_COUNT);
+		}
+	}
+
+	public int getPreparedSurfaceInstanceInstalls() { return preparedSurfaceInstanceInstalls; }
+
 	private void rollSurfaceScenery(int dx, int dz) {
+		ClientSceneInstanceStore.SurfaceRoll prepared = preparedSurfaceInstanceRoll;
+		preparedSurfaceInstanceRoll = null;
+		if (sceneInstanceStore.matchesSurfaceRoll(prepared, dx, dz)) {
+			publishPreparedSurfaceInstances(prepared);
+			preparedSurfaceInstanceInstalls++;
+			return;
+		}
 		RSModel[] retired = new RSModel[getGameObjectInstanceCount() + getWallObjectInstanceCount()];
 		int removed = 0, retained = 0;
 		int pixelX = -dx * tileSize, pixelZ = -dz * tileSize;
@@ -22792,6 +22821,40 @@ public final class mudclient implements Runnable {
 			sceneInstanceStore.moveWallObject(i, retained++, x - dx, z - dz);
 		}
 		setWallObjectInstanceCount(retained);
+		scene.removeModels(retired, removed);
+	}
+
+	private void publishPreparedSurfaceInstances(ClientSceneInstanceStore.SurfaceRoll roll) {
+		byte[] game = roll.game.membership, walls = roll.wall.membership;
+		RSModel[] retired = new RSModel[game.length + walls.length];
+		int removed = 0;
+		int pixelX = -roll.dx * tileSize, pixelZ = -roll.dz * tileSize;
+		for (int i = 0; i < game.length; i++) {
+			if (game[i] == ClientSceneInstanceStore.SurfaceRoll.Rows.LEAVES) {
+				RSModel model = deferGameObjectSceneRemoval(i);
+				if (model != null) retired[removed++] = model;
+			} else if (isGameObjectInstanceMaterialized(i)) {
+				if (game[i] == ClientSceneInstanceStore.SurfaceRoll.Rows.LEAVES_COLLISION) {
+					world.updateSurfaceObjectCollision(getGameObjectInstanceID(i), getGameObjectInstanceX(i),
+						getGameObjectInstanceZ(i), getGameObjectInstanceDir(i), false);
+				}
+				getGameObjectInstanceModel(i).rebaseWorldOrigin(pixelX, pixelZ);
+			}
+		}
+		sceneInstanceStore.installSurfaceGameObjects(roll.game);
+		for (int i = 0; i < walls.length; i++) {
+			if (walls[i] == ClientSceneInstanceStore.SurfaceRoll.Rows.LEAVES) {
+				RSModel model = deferWallObjectSceneRemoval(i);
+				if (model != null) retired[removed++] = model;
+			} else if (isWallObjectInstanceMaterialized(i)) {
+				if (walls[i] == ClientSceneInstanceStore.SurfaceRoll.Rows.LEAVES_COLLISION) {
+					world.removeWallObject_CollisionFlags(true, getWallObjectInstanceDir(i), getWallObjectInstanceZ(i),
+						getWallObjectInstanceX(i), getWallObjectInstanceID(i));
+				}
+				getWallObjectInstanceModel(i).translate2(pixelX, 0, pixelZ);
+			}
+		}
+		sceneInstanceStore.installSurfaceWallObjects(roll.wall);
 		scene.removeModels(retired, removed);
 	}
 

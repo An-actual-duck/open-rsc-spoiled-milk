@@ -1548,6 +1548,7 @@ public class PacketHandler {
 		clearSurfaceSceneryPrediction();
 		int dx = x - activeTerrain.getCurrentChunkX(), dz = z - activeTerrain.getCurrentChunkY();
 		surfaceScenery.begin(stage, context, persistentMovement.generation(), x, z, dx, dz, mudclient.SURFACE_SCENERY_DRAW);
+		mc.prepareSurfaceInstanceRoll(dx, dz);
 	}
 
 	private void cancelPredictedTerrainDecode() {

@@ -337,6 +337,97 @@ final class ClientSceneInstanceStore {
 		wallObjectPendingAreaLoad[to] = wallObjectPendingAreaLoad[from];
 	}
 
+	SurfaceRoll prepareSurfaceRoll(int dx, int dz, int width, int faces) {
+		return new SurfaceRoll(dx, dz, residentPlacementRevision,
+			new SurfaceRoll.Rows(gameObjectX, gameObjectZ, gameObjectCount, dx, dz, width, faces),
+			new SurfaceRoll.Rows(wallObjectX, wallObjectZ, wallObjectCount, dx, dz, width, faces));
+	}
+
+	boolean matchesSurfaceRoll(SurfaceRoll roll, int dx, int dz) {
+		return roll != null && roll.dx == dx && roll.dz == dz
+			&& roll.revision == residentPlacementRevision;
+	}
+
+	void installSurfaceGameObjects(SurfaceRoll.Rows rows) {
+		for (int to = 0; to < rows.count; to++) {
+			int from = rows.sources[to];
+			if (from == to) continue;
+			gameObjectIds[to] = gameObjectIds[from];
+			gameObjectDirections[to] = gameObjectDirections[from];
+			RSModel model = gameObjectModels[to] = gameObjectModels[from];
+			if (model != null) {
+				model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
+				model.key = to;
+			}
+			gameObjectMaterialized[to] = gameObjectMaterialized[from];
+			gameObjectPendingAreaLoad[to] = gameObjectPendingAreaLoad[from];
+		}
+		System.arraycopy(rows.x, 0, gameObjectX, 0, rows.count);
+		System.arraycopy(rows.z, 0, gameObjectZ, 0, rows.count);
+		gameObjectRevision++;
+		residentPlacementRevision++;
+		setGameObjectCount(rows.count);
+	}
+
+	void installSurfaceWallObjects(SurfaceRoll.Rows rows) {
+		for (int to = 0; to < rows.count; to++) {
+			int from = rows.sources[to];
+			if (from == to) continue;
+			wallObjectIds[to] = wallObjectIds[from];
+			wallObjectDirections[to] = wallObjectDirections[from];
+			RSModel model = wallObjectModels[to] = wallObjectModels[from];
+			if (model != null) {
+				model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
+				model.key = to + WALL_OBJECT_KEY_BASE;
+			}
+			wallObjectMaterialized[to] = wallObjectMaterialized[from];
+			wallObjectPendingAreaLoad[to] = wallObjectPendingAreaLoad[from];
+		}
+		System.arraycopy(rows.x, 0, wallObjectX, 0, rows.count);
+		System.arraycopy(rows.z, 0, wallObjectZ, 0, rows.count);
+		residentPlacementRevision++;
+		setWallObjectCount(rows.count);
+	}
+
+	/** Detached rows preserve the active store's order and never carry mutable model references. */
+	static final class SurfaceRoll {
+		final int dx, dz;
+		final long revision;
+		final Rows game, wall;
+
+		private SurfaceRoll(int dx, int dz, long revision, Rows game, Rows wall) {
+			this.dx = dx;
+			this.dz = dz;
+			this.revision = revision;
+			this.game = game;
+			this.wall = wall;
+		}
+
+		static final class Rows {
+			static final byte LEAVES = 0, STAYS = 1, LEAVES_COLLISION = 2;
+			final byte[] membership;
+			private final int[] x, z, sources;
+			private final int count;
+
+			Rows(int[] currentX, int[] currentZ, int size, int dx, int dz, int width, int faces) {
+				membership = new byte[size];
+				x = new int[size];
+				z = new int[size];
+				sources = new int[size];
+				int next = 0;
+				for (int i = 0; i < size; i++) {
+					int translatedX = currentX[i] - dx, translatedZ = currentZ[i] - dz;
+					if (translatedX < 0 || translatedZ < 0 || translatedX >= width || translatedZ >= width) continue;
+					membership[i] = translatedX < faces && translatedZ < faces ? STAYS : LEAVES_COLLISION;
+					sources[next] = i;
+					x[next] = translatedX;
+					z[next++] = translatedZ;
+				}
+				count = next;
+			}
+		}
+	}
+
 	void clearFrameMarks() {
 		Arrays.fill(gameObjectFrameMarks, 0, gameObjectCount, false);
 		Arrays.fill(wallObjectFrameMarks, 0, wallObjectCount, false);
