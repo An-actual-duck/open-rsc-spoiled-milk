@@ -15,6 +15,7 @@ import {createWorldReadiness} from './browser-world-ready.js';
 import {createBrowserOverlay} from './browser-overlay.js';
 import {createBrowserSky} from './browser-sky.js';
 import {createBrowserLighting} from './browser-lighting.js';
+import {FRAME_STAGE_SAMPLE_LENGTHS} from './browser-render-worker-stats.js';
 import {buildChunkColorBounds,hasResidentPositionContract,isChunkOutsideColorFrustum} from './browser-color-frustum.js';
 /** Experimental resident-world WebGL2 backend. Receives ordinary Java-produced scene frames. */
 export function adaptResidentShader(source, fragment) {
@@ -433,7 +434,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_frameWork(lib,values,poseInput){
       alive();const p=typed(poseInput,Int32Array);
       if(p.length!==14&&!(travel&&p.length===18))throw new Error("Invalid frame pose schema");
-      if(frameStageSamples&&spriteStage&&(values.length===47||values.length===48||values.length===54)&&stats.javaWorldFrames>stats.javaBridgeReportedWorldFrames){
+      if(frameStageSamples&&spriteStage&&FRAME_STAGE_SAMPLE_LENGTHS.includes(values.length)&&stats.javaWorldFrames>stats.javaBridgeReportedWorldFrames){
         const stages={worldFrame:stats.javaWorldFrames,submittedAt:lastWorld,...spriteStage,
           javaGatherMs:values[24],javaPlanMs:values[25]-values[31],javaCommitMs:values[26]-values[32],
           javaDescriptorPackMs:values[31],javaCommitPackMs:values[32],
@@ -444,9 +445,10 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           bridgeBeforePresentMs:values[46],javaPresentMs:values[30],jsPresentMs:stats.jsSubmissionSamples.at(-1),
           bridgeTextureMs:values[1],bridgeGeometryMs:values[2],bridgeSpritesMs:values[3],
           bridgeLightingMs:values[8],bridgeSkyMs:values[9],bridgeOverlayPreludeMs:values[27],
-          bridgeReadinessMs:values[28],bridgeOptionalDrawMs:values[29],bridgeResourceStagingMs:values[47],
-          terrainFieldMs:values[48],terrainMaskExportMs:values[49],glowMaskMs:values[50],roofMaskMs:values[51],
-          shadowStateMs:values[52],lightingBridgeMs:values[53]};
+          bridgeReadinessMs:values[28],bridgeOptionalDrawMs:values[29]};
+        if(values.length>=48)stages.bridgeResourceStagingMs=values[47];
+        if(values.length===54)Object.assign(stages,{terrainFieldMs:values[48],terrainMaskExportMs:values[49],
+          glowMaskMs:values[50],roofMaskMs:values[51],shadowStateMs:values[52],lightingBridgeMs:values[53]});
         frameStageSamples.push(stages);
         if(frameStageSamples.length>600)frameStageSamples.shift();
         if(stages.intervalMs>=50){

@@ -1,5 +1,6 @@
 /** Closed bounded diagnostics: never clone renderer caches, typed planes or inputs. */
 export const WORKER_SAMPLE_FIELDS=Object.freeze(['frameSamples','worldFrameSamples','gpuWorkSamples','jsSubmissionSamples','javaBridgeWorkSamples','worldFramePolicies','worldFrameSpriteGroups','physicalOutputWorldFramePolicies']);
+export const FRAME_STAGE_SAMPLE_LENGTHS=Object.freeze([47,48,54]);
 const FRAME_STAGE_FIELDS=['frameStageSamples','slowFrameStages'];
 const OBJECTS=new Set(['contextAttributes','worldReadiness','physicalOutput','overlayDeclaration','pose','spriteCompositeCache','opaqueAlphaProof','wholeZone','boundedResidency']);
 const HISTORIES=new Set(['ownedStateTransitions','physicalOutputTransitions','worldStreamSamples','limitations']);
@@ -35,7 +36,7 @@ export function createWorkerStatsSnapshot(stats){
       samples[key]=selected.map(sample=>{
         if(stages.includes(key))return bounded(sample,0,{left:64,chars:0});
         if(key==='javaBridgeWorkSamples'){
-          const allowed=stages.length?[47,48]:[stats.travelTrace?24:14];
+          const allowed=stages.length?FRAME_STAGE_SAMPLE_LENGTHS:[stats.travelTrace?24:14];
           if(!Array.isArray(sample)||!allowed.includes(sample.length)||sample.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw new Error('Invalid worker bridge sample');
           return sample.slice();
         }
