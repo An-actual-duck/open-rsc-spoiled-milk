@@ -2118,6 +2118,26 @@ showed a similar longest interval and a slightly longer frame tail.
 The private mesh mode was retired after the matched comparisons.
 [Chrome control](../../../output/tests/browser-gameplay-spike/packed-gameplay-mesh-control-chrome/chrome-result.json) · [Chrome packed](../../../output/tests/browser-gameplay-spike/packed-gameplay-mesh-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/packed-gameplay-mesh-control-firefox/firefox-result.json) · [Firefox packed](../../../output/tests/browser-gameplay-spike/packed-gameplay-mesh-trial-firefox/firefox-result.json)
 
+#### Packet costs inside a verified scene roll
+
+The private replay capture records ordered opcodes, sizes and elapsed
+dispatch time in memory. The route prints the receipt after the last
+walk. Both browsers observed three verified rolls at 1920×1080 with a
+960×540 logical surface and no holds or input closures.
+
+| Browser | Player position and local scene install | Layered scene context | Scenery delta | Wall delta |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 29, 20.7, 17.6 ms | 3.6, 3.4, 2.3 ms | 7.5, 3.5, 8 ms | 2, 1, 0.7 ms |
+| Firefox | 31, 24, 18 ms | 18, 19, 17 ms | 10, 6, 10 ms | 3, 2, 2 ms |
+
+The player-position packet is seven bytes and invokes the local scene
+transition before applying the player update. It was the largest
+packet span at every roll. Capture the existing phase timers for
+scenery retirement, terrain installation and local publication
+without enabling detailed logging. NPC coordinate updates took
+1–3 ms per roll.
+[Chrome packet costs](../../../output/tests/browser-gameplay-spike/scene-roll-packet-cost-chrome/packet-cost-summary.json) · [Firefox packet costs](../../../output/tests/browser-gameplay-spike/scene-roll-packet-cost-firefox/packet-cost-summary.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

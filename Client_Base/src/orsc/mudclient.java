@@ -22724,6 +22724,11 @@ public final class mudclient implements Runnable {
 					}
 					long baselineNanos =
 						System.nanoTime() - phaseStartNanos;
+					long transitionNanos = System.nanoTime() - transitionStartNanos;
+					if (rolling) {
+						this.packetHandler.recordSurfaceRollRegion(transitionNanos, dematerializeNanos, worldLoadNanos,
+							staticRebaseNanos, staticMaterializeNanos, groundItemsNanos, actorRebaseNanos, finalizeNanos, baselineNanos);
+					}
 					RenderTelemetry.recordClientRegionTransition(
 						rolling ? "rolling-surface" : this.world.hasNativeLayeredTerrain()
 							? "native-authoritative"
@@ -22736,7 +22741,7 @@ public final class mudclient implements Runnable {
 						this.getWallObjectInstanceCount(),
 						this.playerCount,
 						this.npcCount,
-						System.nanoTime() - transitionStartNanos,
+						transitionNanos,
 						dematerializeNanos,
 						worldLoadNanos,
 						staticRebaseNanos,

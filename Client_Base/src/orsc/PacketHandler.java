@@ -72,6 +72,9 @@ public class PacketHandler {
 	private final long[] surfaceRollPacketTiming = surfaceRollTiming != null
 		&& Boolean.getBoolean("spoiledmilk.browserPresentationRollPacketTimings") ? new long[32 * (2 + 32 * 3)] : null;
 	private volatile int surfaceRollPacketTimingWords;
+	private static final int SURFACE_REGION_TIMING_WORDS = 10;
+	private final long[] surfaceRollRegionTiming = surfaceRollPacketTiming != null ? new long[32 * SURFACE_REGION_TIMING_WORDS] : null;
+	private volatile int surfaceRollRegionTimingWords;
 
 	int getVerifiedLiveSurfaceContext() { return verifiedLiveSurfaceContext; }
 
@@ -81,6 +84,27 @@ public class PacketHandler {
 
 	public long[] getSurfaceRollPacketTiming() {
 		return surfaceRollPacketTiming == null ? new long[0] : Arrays.copyOf(surfaceRollPacketTiming, surfaceRollPacketTimingWords);
+	}
+
+	public long[] getSurfaceRollRegionTiming() {
+		return surfaceRollRegionTiming == null ? new long[0] : Arrays.copyOf(surfaceRollRegionTiming, surfaceRollRegionTimingWords);
+	}
+
+	void recordSurfaceRollRegion(long total, long retirement, long terrain, long staticRebase, long materialize,
+		long groundItems, long actors, long finalizeRegion, long baseline) {
+		int at = surfaceRollRegionTimingWords;
+		if (surfaceRollRegionTiming == null || at >= surfaceRollRegionTiming.length
+			|| packetsIncoming != surfaceHandoffReplay || pendingLiveSurfaceContext <= 0) return;
+		surfaceRollRegionTiming[at] = pendingLiveSurfaceContext;
+		surfaceRollRegionTiming[at + 1] = total;
+		surfaceRollRegionTiming[at + 2] = retirement;
+		surfaceRollRegionTiming[at + 3] = terrain;
+		surfaceRollRegionTiming[at + 4] = staticRebase;
+		surfaceRollRegionTiming[at + 5] = materialize;
+		surfaceRollRegionTiming[at + 6] = groundItems;
+		surfaceRollRegionTiming[at + 7] = actors;
+		surfaceRollRegionTiming[at + 8] = finalizeRegion;
+		surfaceRollRegionTiming[at + 9] = baseline;
 	}
 
 	private RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
@@ -634,6 +658,9 @@ public class PacketHandler {
 		int packetTimingAt = packetTimingStart + 2;
 		boolean capturePackets = capture && surfaceRollPacketTiming != null
 			&& packetTimingAt + pending.packets.size() * 3 <= surfaceRollPacketTiming.length;
+		int regionTimingAt = surfaceRollRegionTimingWords;
+		boolean captureRegion = capturePackets && regionTimingAt < surfaceRollRegionTiming.length;
+		if (captureRegion) surfaceRollRegionTiming[regionTimingAt] = 0;
 		// A receive may have left an incomplete wire packet in the socket parser's buffer.
 		RSBuffer_Bits wire = packetsIncoming;
 		if (surfaceHandoffReplay == null) surfaceHandoffReplay = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
@@ -664,6 +691,9 @@ public class PacketHandler {
 				surfaceRollPacketTiming[packetTimingStart] = verifiedLiveSurfaceContext;
 				surfaceRollPacketTiming[packetTimingStart + 1] = pending.packets.size();
 				surfaceRollPacketTimingWords = packetTimingAt;
+			}
+			if (captureRegion && surfaceRollRegionTiming[regionTimingAt] == verifiedLiveSurfaceContext) {
+				surfaceRollRegionTimingWords += SURFACE_REGION_TIMING_WORDS;
 			}
 		}
 	}

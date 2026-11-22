@@ -420,6 +420,16 @@ public final class BrowserOuterCoverageProbe {
 			BrowserBootstrap.report(receipt.toString());
 		}
 		if (word != timing.length) throw new IllegalStateException("Unexpected additional scene rolls");
+		long[] phases = (long[]) PacketHandler.class.getMethod("getSurfaceRollRegionTiming").invoke(client.packetHandler);
+		if (phases.length != 30) throw new IllegalStateException("Missing verified scene installation timings");
+		for (int at = 0; at < phases.length; at += 10) {
+			if (phases[at] != startContext + at / 10 + 1) {
+				throw new IllegalStateException("Scene installation timing order changed");
+			}
+			StringBuilder receipt = new StringBuilder("outer-coverage:roll-region:").append(phases[at]);
+			for (int phase = 1; phase < 10; phase++) receipt.append(',').append(phases[at + phase]);
+			BrowserBootstrap.report(receipt.toString());
+		}
 	}
 
 	private static void verifyDetachedGameplayInstalls(mudclient client, int expected) {
