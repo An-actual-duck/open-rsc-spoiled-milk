@@ -135,6 +135,7 @@ public final class World {
 	private final Map<String, Map<Integer, TerrainPatch>> worldEditorTerrainPatches =
 		new HashMap<String, Map<Integer, TerrainPatch>>();
 	private final AtomicLong worldEditorTerrainRevision = new AtomicLong();
+	private volatile boolean worldEditorTerrainWasEdited;
 	private volatile boolean syntheticDeepFixtureTerrain;
 	private volatile int syntheticDeepFixtureOffsetX;
 	private volatile int syntheticDeepFixtureOffsetZ;
@@ -547,7 +548,7 @@ public final class World {
 		final boolean retainSurfaceHalo = orsc.BrowserWorldStreaming.enabled()
 			&& renderTerrain.getLevel() == 0 && "global".equals(renderTerrain.getWorldSpace())
 			&& reusableChunks.getChunkCount() == 0
-			&& !WorldEditorBuildSettings.isEnabled() && !hasWholeOverworldTerrainPatches();
+			&& !WorldEditorBuildSettings.isEnabled() && !worldEditorTerrainWasEdited;
 		final boolean visualOnly = haloTerrain.getProtocolVersion()
 			== NativeLayeredTerrainSnapshot.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION;
 		if (retainSurfaceHalo) {
@@ -1742,7 +1743,8 @@ public final class World {
 			sectionY,
 			terrainRevision,
 			terrain,
-			false);
+			worldOffsetX,
+			worldOffsetZ);
 		CpuSectionWindow window;
 		synchronized (cpuSectionWindowCacheLock) {
 			window = cpuSectionWindowCache.get(windowKey);
@@ -1773,7 +1775,8 @@ public final class World {
 			includeRoofGeometry,
 			terrainRevision,
 			terrain,
-			false);
+			worldOffsetX,
+			worldOffsetZ);
 		WorldModelProduct product;
 		boolean productCacheHit;
 		synchronized (worldModelProductCacheLock) {
@@ -2403,7 +2406,8 @@ public final class World {
 			sectionY,
 			targetRevision,
 			stagedTerrain,
-			false);
+			worldOffsetX,
+			worldOffsetZ);
 		CpuSectionWindow window;
 		boolean cpuCacheHit;
 		synchronized (cpuSectionWindowCacheLock) {
@@ -2437,7 +2441,8 @@ public final class World {
 			includeRoofGeometry,
 			targetRevision,
 			stagedTerrain,
-			false);
+			worldOffsetX,
+			worldOffsetZ);
 		WorldModelProduct product;
 		boolean productCacheHit;
 		synchronized (worldModelProductCacheLock) {
@@ -6627,14 +6632,14 @@ public final class World {
 	}
 
 	private String sectionWindowKey(int height, int sectionX, int sectionY) {
+		NativeLayeredTerrainSnapshot terrain = nativeLayeredTerrainSnapshot;
+		if (terrain != null) {
+			return sectionWindowKey(height, sectionX, sectionY, worldEditorTerrainRevision.get(), terrain,
+				syntheticDeepFixtureOffsetX, syntheticDeepFixtureOffsetZ);
+		}
 		return sectorFilename(height, sectionX, sectionY)
 			+ "-editor-" + worldEditorTerrainRevision.get()
-			+ (nativeLayeredTerrainSnapshot != null
-				? "-native-"
-					+ nativeLayeredTerrainSnapshot.scopeIdentity()
-				: syntheticDeepFixtureTerrain
-					? "-synthetic-deep-room-v1"
-					: "-legacy-terrain")
+			+ (syntheticDeepFixtureTerrain ? "-synthetic-deep-room-v1" : "-legacy-terrain")
 			+ "-window";
 	}
 
@@ -6644,14 +6649,15 @@ public final class World {
 		int sectionY,
 		long terrainRevision,
 		NativeLayeredTerrainSnapshot nativeTerrain,
-		boolean syntheticDeepFixture) {
+		int worldOffsetX,
+		int worldOffsetZ) {
+		// A floor change advances the live scene revision. The decoded pages and
+		// their coordinate basis are sufficient to identify unedited products.
+		boolean reusableSource = orsc.BrowserWorldStreaming.enabled()
+			&& !WorldEditorBuildSettings.isEnabled() && !worldEditorTerrainWasEdited;
 		return sectorFilename(height, sectionX, sectionY)
-			+ "-editor-" + terrainRevision
-			+ (nativeTerrain != null
-				? "-native-" + nativeTerrain.scopeIdentity()
-				: syntheticDeepFixture
-					? "-synthetic-deep-room-v1"
-					: "-legacy-terrain")
+			+ (reusableSource ? "-source-" + worldOffsetX + "," + worldOffsetZ : "-editor-" + terrainRevision)
+			+ "-native-" + nativeTerrain.scopeIdentity()
 			+ "-window";
 	}
 
@@ -6685,14 +6691,16 @@ public final class World {
 		boolean includeRoofGeometry,
 		long terrainRevision,
 		NativeLayeredTerrainSnapshot nativeTerrain,
-		boolean syntheticDeepFixture) {
+		int worldOffsetX,
+		int worldOffsetZ) {
 		return sectionWindowKey(
 			height,
 			sectionX,
 			sectionY,
 			terrainRevision,
 			nativeTerrain,
-			syntheticDeepFixture)
+			worldOffsetX,
+			worldOffsetZ)
 			+ (includeRoofGeometry
 				? "-world-product-roofs"
 				: "-world-product-no-roofs")
@@ -7097,6 +7105,9 @@ public final class World {
 		int localX=Math.floorMod(archiveX,SECTION_SIZE),localZ=Math.floorMod(archiveZ,SECTION_SIZE);
 		String sector=sectorFilename(plane,sectionX,sectionY);
 		synchronized(worldEditorTerrainPatchLock){
+			worldEditorTerrainWasEdited = true;
+			retainedVisualSurfaceHalo = null;
+			retainedCompleteSurfaceHalo = null;
 			Map<Integer,TerrainPatch> patches=worldEditorTerrainPatches.get(sector);
 			if(patches==null){patches=new HashMap<Integer,TerrainPatch>();worldEditorTerrainPatches.put(sector,patches);}
 			int key=localX*SECTION_SIZE+localZ;TerrainPatch previous=patches.get(key);
