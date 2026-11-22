@@ -34,6 +34,28 @@ No account schema or map migration was introduced. See the
 [server protocol](../myworld/in-progress-work-plans/browser-staged-login-server.md)
 and [client review](../myworld/in-progress-work-plans/browser-staged-login-client-review.md).
 
+## Browser loading choices
+
+Package a reviewed browser release with `package-public-alpha.py --world-streaming`
+to show **Play with World Chunks** and **Play with World Streaming**. The
+chunks button selects the existing public whole-zone graphics and staged
+login preset. The streaming button selects the rolling surface backend and
+uses the same WSS endpoint and staged account admission. A choice applies
+to a single browser session.
+
+The opt-in requires the compatible game server with
+`-Dspoiledmilk.browserWorldStreaming=true`. The server negotiates the
+capability on the requesting WebSocket before authentication and keeps it
+on that connection. Ordinary browser and desktop connections retain their
+normal mode. The launcher presents the extra choice only in a release
+explicitly marked for streaming.
+
+Build the integrated release and verify both choices against a private
+server first. Activate the compatible server during an authorized
+maintenance window, then switch the static browser release pointer and
+verify both modes. The previous immutable browser release remains
+available as the static rollback.
+
 ## Why direct WSS
 
 The existing game's connection admission, packet limits, login checks and player

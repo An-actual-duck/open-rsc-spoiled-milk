@@ -16,6 +16,16 @@ gate.observe('LOGIN',{...proof,completedFrame:19});assert.equal(gate.blocked,tru
 gate.observe('GAME',{...proof,completedFrame:18});assert.equal(gate.blocked,true,'pre-COMMIT frame cannot release the cover');
 gate.observe('GAME',{...proof,completedFrame:19,blocked:true});assert.equal(gate.blocked,true);
 gate.observe('GAME',{...proof,completedFrame:19});assert.equal(gate.blocked,false);
+const appearance=createStagedLoginGate({enabled:true});
+appearance.begin(1,12);
+appearance.observe('GAME',{interfaceReady:true,completedFrame:20,blocked:false});
+assert.equal(appearance.blocked,true,'appearance never admits an uncommitted account');
+assert.equal(appearance.ready(1,{...proof,completedFrame:13}),true);
+appearance.finish(1,true,18);
+appearance.observe('GAME',{interfaceReady:true,completedFrame:18,blocked:false});
+assert.equal(appearance.blocked,true,'a prior frame cannot unlock appearance');
+appearance.observe('GAME',{interfaceReady:true,completedFrame:19,blocked:false});
+assert.equal(appearance.blocked,false,'the fresh committed appearance interface can accept input');
 gate.begin(2,20);gate.finish(1,false);assert.equal(gate.stats.phase,'preparing');
 assert.equal(gate.ready(1,{...proof,completedFrame:30}),false);assert.throws(()=>gate.begin(1,20));
 gate.finish(2,false);assert.equal(gate.blocked,false);gate.dispose();assert.equal(gate.ready(2,proof),false);

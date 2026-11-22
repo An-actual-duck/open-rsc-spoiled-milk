@@ -80,7 +80,8 @@ function updateWholeRamProof(){
 }
 function updateWorldCover(){
   updateWholeRamProof();
-  stagedLogin.observe(window.browserProof.state?.mode,{worldReady:stagedWorldReady(),completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,blocked:boundedInputGate?.blocked??false});
+  stagedLogin.observe(window.browserProof.state?.mode,{worldReady:stagedWorldReady(),interfaceReady:gpu?.stats.worldReadiness?.phase==='ui',
+    completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,blocked:boundedInputGate?.blocked??false});
   if(boundedInputGate)window.browserProof.boundedResidencyInput={blocked:boundedInputGate.blocked,requiredWorkerFrame:boundedInputGate.afterFrame,scope:'Producer scope/mutation identity must receive a matching-or-newer coverage-ready ACK before world input'};
   let state=gpu?.stats.worldReadiness;const error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null)||window.browserProof.wholeRamError||worldPreparation.stats.latest?.failureCode;
   if(boundedInputGate?.blocked&&!['loading','error','login'].includes(state?.phase))state={...state,phase:'streaming',reason:'Preparing required GPU cells',blocksWorldInput:true,blocksKeyboard:true};
