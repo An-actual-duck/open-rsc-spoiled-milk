@@ -346,12 +346,14 @@ public final class BrowserOuterCoverageProbe {
 		if (projectionStart != null) {
 			int[] demand = projectionDemand(client);
 			for (int n = 0; n < demand.length; n++) demand[n] -= projectionStart[n];
-			if (demand[0] == 0 || demand[2] == 0 || demand[3] != demand[4] + demand[5] + demand[6]) {
+			if (demand.length != 8 || demand[0] == 0 || demand[2] == 0
+				|| demand[3] != demand[4] + demand[5] + demand[6] || demand[7] > demand[3]) {
 				throw new IllegalStateException("Invalid resident projection demand " + Arrays.toString(demand));
 			}
 			BrowserBootstrap.report("outer-coverage:projection-demand:samples=" + demand[0]
 				+ ":projected=" + demand[1] + ":resident=" + demand[2] + ":rejected=" + demand[3]
-				+ ":terrain=" + demand[4] + ":structures=" + demand[5] + ":scenery=" + demand[6]);
+				+ ":terrain=" + demand[4] + ":structures=" + demand[5] + ":scenery=" + demand[6]
+				+ ":bounded=" + demand[7]);
 		}
 		if (Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements")) {
 			int verified = client.getVerifiedWorkerSceneryMeshes(), mismatched = client.getMismatchedWorkerSceneryMeshes();

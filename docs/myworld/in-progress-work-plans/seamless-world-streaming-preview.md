@@ -1636,10 +1636,18 @@ crossed all three rolls with one epoch and finished at `(252,609)`.
 
 The private projection-demand capture counts the vertices of visible
 resident models whose faces all fail the existing CPU cull after
-projection. It measures the possible scope of moving rejection ahead of
-projection. A candidate would still need to establish the same result
-before any skip, while preserving picking, sprite anchors, near-plane
-handling and the literal fallback.
+projection. The early cull rejected every face for 8,681,625 of
+8,710,772 projected vertices in Chrome and 8,672,011 of 8,702,851
+in Firefox. About 8 million sampled vertices in each browser were
+scenery. This measures the possible scope of moving rejection ahead
+of projection.
+[Chrome projection demand](../../../output/tests/browser-gameplay-spike/projection-demand-chrome/chrome-result.json) · [Firefox projection demand](../../../output/tests/browser-gameplay-spike/projection-demand-firefox/firefox-result.json)
+
+The follow-up capture projects conservative model bounds with outward
+rounding and falls back if an interval may cross the near plane or
+overflow the literal integer transform. It checks every predicted
+miss against the original rotated faces on the sampled frames. The
+ordinary projection and picking paths still run.
 
 #### Java client worker feasibility
 

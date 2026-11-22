@@ -2718,6 +2718,16 @@ public final class RSModel {
             && this.minX <= MiscFunctions.frustumMinY && this.maxX >= MiscFunctions.frustumMaxY
             && this.minY <= MiscFunctions.frustumNearZ && this.maxY >= MiscFunctions.frustumFarZ;
     }
+    final boolean copyWorldFaceBounds(int[] bounds) {
+        if (m_Yb != 0 || faceHead == 0 || vertHead == 0) return false;
+        bounds[0] = minX;
+        bounds[1] = maxX;
+        bounds[2] = minY;
+        bounds[3] = maxY;
+        bounds[4] = minZ;
+        bounds[5] = maxZ;
+        return true;
+    }
     final void borrowBrowserBatchArrays(int[][] rows, int offset) {
         rows[offset] = this.vertXTransform; rows[offset + 1] = this.vertYTransform;
         rows[offset + 2] = this.vertZTransform; rows[offset + 3] = this.vertexParam6;

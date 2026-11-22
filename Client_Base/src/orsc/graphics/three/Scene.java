@@ -126,11 +126,13 @@ public final class Scene {
         return browserBatchedModelKernel == null ? new int[14] : browserBatchedModelKernel.work();
     }
     private final int[] browserProjectionDemand =
-        Boolean.getBoolean("spoiledmilk.browserProjectionDemand") ? new int[7] : null;
+        Boolean.getBoolean("spoiledmilk.browserProjectionDemand") ? new int[8] : null;
+    private final ProjectedModelPickBounds.CameraBounds browserPickCameraBounds =
+        browserProjectionDemand == null ? null : new ProjectedModelPickBounds.CameraBounds();
     private int browserProjectionDemandSequence;
 
     public int[] getBrowserProjectionDemand() {
-        return browserProjectionDemand == null ? new int[7] : browserProjectionDemand.clone();
+        return browserProjectionDemand == null ? new int[8] : browserProjectionDemand.clone();
     }
 	private int modelCount;
 	private RSModel[] models;
@@ -3056,7 +3058,12 @@ public final class Scene {
             boolean sampleProjectionDemand = browserProjectionDemand != null && earlyResidentFaceCull
                 && useModelPickBounds && skipProjectedWorldCapture && !forceLegacyWorldRaster
                 && (++browserProjectionDemandSequence & 7) == 0;
-            if (sampleProjectionDemand) browserProjectionDemand[0]++;
+            if (sampleProjectionDemand) {
+                browserProjectionDemand[0]++;
+                browserPickCameraBounds.set(this.rot1024_off_x, this.rot1024_off_y, this.rot1024_off_z,
+                    this.cameraProjZ, this.cameraProjY, this.cameraProjX, this.rot1024_vp_src, this.rot1024_zTop,
+                    this.m_Nb, this.m_j, this.m_Wb, FastMath.trigTable1024);
+            }
 			for (var9 = 0; var9 < this.modelCount; ++var9) {
 				var2 = this.models[var9];
 				if (var2.m_dc) {
@@ -3071,6 +3078,7 @@ public final class Scene {
                         && !ProjectedModelPickBounds.couldContainMouse(var2, this.m_Nb, this.m_j, this.m_Wb);
                     boolean countResident = sampleProjectionDemand && residentPickModel && !var2.isInteractionOnly();
                     boolean allFacesRejected = countResident;
+                    boolean rejectByCamera = countResident && (!this.m_K || browserPickCameraBounds.missesMouse(var2));
                     if (sampleProjectionDemand) browserProjectionDemand[1] += var2.vertHead;
                     if (countResident) browserProjectionDemand[2] += var2.vertHead;
 					for (var3 = 0; var3 < var2.faceHead; ++var3) {
@@ -3193,6 +3201,11 @@ public final class Scene {
                         else if (pickModelKind == Renderer3DModelKind.WALL || pickModelKind == Renderer3DModelKind.ROOF)
                             browserProjectionDemand[5] += var2.vertHead;
                         else browserProjectionDemand[6] += var2.vertHead;
+                    }
+                    if (rejectByCamera) {
+                        if (!allFacesRejected)
+                            throw new IllegalStateException("Pre-projection bounds hid a face retained by the exact CPU cull");
+                        browserProjectionDemand[7] += var2.vertHead;
                     }
 				}
 			}
