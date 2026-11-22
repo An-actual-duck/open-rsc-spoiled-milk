@@ -1660,6 +1660,16 @@ indices, an unchanged transform cache, and projection arrays owned
 by the model. The ordinary rotation and face loop still handle
 pointer hits, interaction-only models, dirty models and fallback draws.
 
+The native Scene fixture matched picks, sprite anchors, surfaces,
+and pixels over 576 frames and exercised the omission. An additional
+6,000 fixed-point projection cases checked the conservative envelope
+against literal face bounds. The envelope rejected 947 cases and kept
+all 3,580 literal hits. The first untraced walks omitted 68.71 million
+projections in Firefox and 69.33 million in Chrome. Both reached the
+server-confirmed destination after three rolls and sampled zero loading
+holds or input closures.
+[Exact native proof](../../../output/tests/seamless-world-streaming/resident-camera-cull-build/native-picking-expanded.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/resident-camera-cull-firefox/firefox-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/resident-camera-cull-chrome/chrome-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

@@ -455,6 +455,14 @@ the compact preview during the remaining gaps and distinguish CPU work,
 garbage collection, and worker time. Look for recurring work that can be
 moved out of ordinary game updates or scene capture. Use exact picking,
 actor motion, and the same two-browser travel checks for the next change.
+
+The latest producer trace found a 145 ms gap which spent 68 ms in
+client updates and 35 ms capturing a scene with zero geometry uploads.
+The projection diagnostic found that the existing CPU cull rejected
+all faces for nearly every projected resident vertex. Compare omission
+of a proven miss against the established renderer. Keep the literal
+path when a model can touch the pointer or has unverified inputs.
+[Producer trace and projection proofs](seamless-world-streaming-preview.md#remaining-client-work-after-compact-conversion)
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.

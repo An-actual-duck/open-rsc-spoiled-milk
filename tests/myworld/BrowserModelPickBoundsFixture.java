@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.*;
 import orsc.BrowserFrameSinkRegistry;
+import orsc.MiscFunctions;
+import orsc.util.FastMath;
 
 /** Frozen Scene differential plus direct conservative rejection/exception oracles. */
 public final class BrowserModelPickBoundsFixture {
@@ -40,6 +42,51 @@ public final class BrowserModelPickBoundsFixture {
         }
         m.vertexParam6=null;require(ProjectedModelPickBounds.couldContainMouse(m,0,0,0),"Missing projected array was guessed");m.vertexParam6=new int[1];require(ProjectedModelPickBounds.couldContainMouse(m,0,0,0),"Short projected array was guessed");
         System.out.println("PASS conservative model bounds checks="+checks+" acceptedFaces="+accepted+" rejectedModels="+rejected+"; int-wrap/huge scales/malformed/spare-capacity fallback; no timing claim");
+        cameraBoundsMath(scene, old);
+    }
+
+    private static void cameraBoundsMath(Scene scene, Method literalPick) throws Exception {
+        int[] trig = FastMath.trigTable1024 = new int[2048];
+        for (int i = 0; i < 1024; i++) {
+            double angle = i * Math.PI / 512;
+            trig[i] = (int) (Math.sin(angle) * 32768);
+            trig[i + 1024] = (int) (Math.cos(angle) * 32768);
+        }
+        MiscFunctions.frustumMinX = MiscFunctions.frustumMinY = MiscFunctions.frustumNearZ = Integer.MAX_VALUE;
+        MiscFunctions.frustumMaxX = MiscFunctions.frustumMaxY = MiscFunctions.frustumFarZ = Integer.MIN_VALUE;
+        ProjectedModelPickBounds.CameraBounds bounds = new ProjectedModelPickBounds.CameraBounds();
+        Random random = new Random(473231);
+        int misses = 0, hits = 0;
+        for (int trial = 0; trial < 6000; trial++) {
+            RSModel model = new RSModel(6, 2);
+            int[][] faces = new int[2][3];
+            for (int f = 0; f < 2; f++) {
+                for (int v = 0; v < 3; v++)
+                    faces[f][v] = model.insertVertex(random.nextInt(256)-128, random.nextInt(256)-128, random.nextInt(256)-128);
+                model.insertFace(3, faces[f], -12345, -12345, false);
+            }
+            model.setPickBoundsScale(new int[]{1, 2, 14, Integer.MAX_VALUE}[trial % 4]);
+            int x = random.nextInt(2000) - 1000, y = random.nextInt(2000) - 1000, z = random.nextInt(2000) - 1000;
+            int pitch = random.nextInt(1024), yaw = random.nextInt(1024), roll = trial % 3 == 0 ? 0 : random.nextInt(1024);
+            int shift = trial % 7 == 0 ? 29 : 9, near = 1 + random.nextInt(400);
+            model.rotate1024(y, shift, x, (byte) -122, z, yaw, roll, pitch, near);
+            require(model.m_dc, "Wide frustum unexpectedly rejected the test model");
+            int viewportY = trial % 9 == 0 ? random.nextInt() : 192;
+            int mx = trial % 2 == 0 ? model.vertexParam6[0] : random.nextInt(3000) - 1500;
+            int my = trial % 2 == 0 ? viewportY + model.vertexParam2[0] : random.nextInt(3000) - 1500;
+            MX.setInt(scene, mx);
+            MY.setInt(scene, my);
+            OFFSET.setInt(scene, viewportY);
+            boolean hit = false;
+            for (int[] face : faces) hit |= (Boolean) literalPick.invoke(scene, model, face, face.length);
+            bounds.set(x, y, z, roll, yaw, pitch, shift, near, viewportY, mx, my, trig);
+            boolean miss = bounds.missesMouse(model);
+            require(!hit || !miss, "Camera bounds rejected a literal face at trial " + trial);
+            if (hit) hits++;
+            if (miss) misses++;
+        }
+        require(hits > 500 && misses > 500, "Vacuous camera bounds corpus");
+        System.out.println("PASS camera bounds 6000 fixed-point projection cases, literal hits=" + hits + " proven misses=" + misses);
     }
     static RSModel dense(){
         int side=12;RSModel m=new RSModel((side+1)*(side+1),side*side);for(int z=0;z<=side;z++)for(int x=0;x<=side;x++)m.insertVertex((x-6)*8,110,(z-6)*8);
