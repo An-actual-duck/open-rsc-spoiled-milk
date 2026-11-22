@@ -36,6 +36,7 @@ final class ProjectedModelPickBounds {
 
     /** Conservative fixed-point bounds for model faces before per-vertex projection. */
     static final class CameraBounds {
+        private static final boolean INTEGER_ROUNDING = Boolean.getBoolean("spoiledmilk.browserIntegerCameraBounds");
         private final int[] world = new int[6];
         private final double[] low = new double[3], high = new double[3];
         private final int[] sine = new int[3], cosine = new int[3];
@@ -79,10 +80,22 @@ final class ProjectedModelPickBounds {
             double y0 = low[1] * scale, y1 = high[1] * scale;
             if (!fitsInt(x0, x1) || !fitsInt(y0, y1)) return false;
             if (low[2] >= near) {
-                x0 = Math.floor(x0 / (x0 < 0 ? low[2] : high[2]));
-                x1 = Math.ceil(x1 / (x1 < 0 ? high[2] : low[2]));
-                y0 = Math.floor(y0 / (y0 < 0 ? low[2] : high[2]));
-                y1 = Math.ceil(y1 / (y1 < 0 ? high[2] : low[2]));
+                double x0Depth = x0 < 0 ? low[2] : high[2];
+                double x1Depth = x1 < 0 ? high[2] : low[2];
+                double y0Depth = y0 < 0 ? low[2] : high[2];
+                double y1Depth = y1 < 0 ? high[2] : low[2];
+                if (INTEGER_ROUNDING) {
+                    // The camera operations have proved integral coordinates and positive depth.
+                    x0 = floorQuotient((int) x0, (int) x0Depth);
+                    x1 = ceilQuotient((int) x1, (int) x1Depth);
+                    y0 = floorQuotient((int) y0, (int) y0Depth);
+                    y1 = ceilQuotient((int) y1, (int) y1Depth);
+                } else {
+                    x0 = Math.floor(x0 / x0Depth);
+                    x1 = Math.ceil(x1 / x1Depth);
+                    y0 = Math.floor(y0 / y0Depth);
+                    y1 = Math.ceil(y1 / y1Depth);
+                }
             }
             y0 += viewportY;
             y1 += viewportY;
@@ -108,11 +121,29 @@ final class ProjectedModelPickBounds {
             double secondLow = minimum(first, -s) + minimum(second, c);
             double secondHigh = maximum(first, -s) + maximum(second, c);
             if (!fitsInt(firstLow, firstHigh) || !fitsInt(secondLow, secondHigh)) return false;
-            low[first] = Math.floor(firstLow / 32768);
-            high[first] = Math.floor(firstHigh / 32768);
-            low[second] = Math.floor(secondLow / 32768);
-            high[second] = Math.floor(secondHigh / 32768);
+            if (INTEGER_ROUNDING) {
+                // The literal model projection uses the same signed fixed-point shift.
+                low[first] = (int) firstLow >> 15;
+                high[first] = (int) firstHigh >> 15;
+                low[second] = (int) secondLow >> 15;
+                high[second] = (int) secondHigh >> 15;
+            } else {
+                low[first] = Math.floor(firstLow / 32768);
+                high[first] = Math.floor(firstHigh / 32768);
+                low[second] = Math.floor(secondLow / 32768);
+                high[second] = Math.floor(secondHigh / 32768);
+            }
             return true;
+        }
+
+        private static int floorQuotient(int numerator, int depth) {
+            int whole = numerator / depth;
+            return numerator < 0 && numerator % depth != 0 ? whole - 1 : whole;
+        }
+
+        private static int ceilQuotient(int numerator, int depth) {
+            int whole = numerator / depth;
+            return numerator > 0 && numerator % depth != 0 ? whole + 1 : whole;
         }
 
         private double minimum(int axis, int coefficient) {

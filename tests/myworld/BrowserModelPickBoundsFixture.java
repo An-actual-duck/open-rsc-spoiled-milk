@@ -51,6 +51,7 @@ public final class BrowserModelPickBoundsFixture {
         ProjectedModelPickBounds.CameraBounds bounds = new ProjectedModelPickBounds.CameraBounds();
         Random random = new Random(473231);
         int misses = 0, hits = 0;
+        MessageDigest decisions = MessageDigest.getInstance("SHA-256");
         for (int trial = 0; trial < 6000; trial++) {
             RSModel model = new RSModel(6, 2);
             int[][] faces = new int[2][3];
@@ -75,12 +76,14 @@ public final class BrowserModelPickBoundsFixture {
             for (int[] face : faces) hit |= (Boolean) literalPick.invoke(scene, model, face, face.length);
             bounds.set(x, y, z, roll, yaw, pitch, shift, near, viewportY, mx, my, trig);
             boolean miss = bounds.missesMouse(model);
+            decisions.update((byte) (miss ? 1 : 0));
             require(!hit || !miss, "Camera bounds rejected a literal face at trial " + trial);
             if (hit) hits++;
             if (miss) misses++;
         }
         require(hits > 500 && misses > 500, "Vacuous camera bounds corpus");
         System.out.println("PASS camera bounds 6000 fixed-point projection cases, literal hits=" + hits + " proven misses=" + misses);
+        System.out.println("Camera rejection digest=" + hex(decisions.digest()));
     }
 
     private static void wideFrustum() {
@@ -178,6 +181,12 @@ public final class BrowserModelPickBoundsFixture {
         try {Field f=Scene.class.getDeclaredField("TEST_FACE_BOUNDS_CALLS");f.setAccessible(true);System.out.println("PROBE_FACE_CALLS="+f.getLong(null));
             for(String name:new String[]{"TEST_MODEL_SCANS","TEST_MODEL_REJECTIONS","TEST_FACE_VALIDATIONS"}){Field c=ProjectedModelPickBounds.class.getDeclaredField(name);c.setAccessible(true);System.out.println(name+"="+c.getLong(null));}}
         catch(NoSuchFieldException production){/* No counters or extra work in maintained production source. */}
-        StringBuilder hex=new StringBuilder();for(byte b:hash.digest())hex.append(String.format("%02x",b&255));System.out.println(hex);
+        System.out.println(hex(hash.digest()));
+    }
+
+    private static String hex(byte[] digest) {
+        StringBuilder text = new StringBuilder();
+        for (byte value : digest) text.append(String.format("%02x", value & 255));
+        return text.toString();
     }
 }
