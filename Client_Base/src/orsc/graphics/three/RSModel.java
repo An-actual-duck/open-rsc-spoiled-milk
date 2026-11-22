@@ -97,6 +97,7 @@ public final class RSModel {
     private static long preservedRebases, preservedRebaseVertices;
     private boolean browserProjectionRowsOwned;
     private boolean browserProjectionTopologyChecked;
+    private boolean preparedIncomingPlacement;
 	private int rot256X;
 	private int rot256Y;
 	private int rot256Z;
@@ -3051,6 +3052,19 @@ public final class RSModel {
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6, "ca.L(" + tY + ',' + "dummy" + ',' + tZ + ',' + tX + ')');
 		}
+	}
+
+	/** This model belongs to the incoming scene and has no live scene consumers yet. */
+	public final void prepareIncomingPlacement(int x, int y, int z) {
+		setTranslate(x, y, z);
+		resetTransformCache(7972);
+		preparedIncomingPlacement = true;
+	}
+
+	public final boolean consumePreparedIncomingPlacement(int x, int y, int z) {
+		if (!preparedIncomingPlacement) return false;
+		preparedIncomingPlacement = false;
+		return m_Yb == 0 && translateX == x && translateY == y && translateZ == z;
 	}
 
 	final void setVertexLightOther(int id, int val) {

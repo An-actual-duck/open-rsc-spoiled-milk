@@ -254,6 +254,9 @@ public final class World {
 	private Scene scene;
 	private RSModel modelAccumulate;
 	private RSModel[] modelLandscapeGrid = new RSModel[MODEL_GRID_COUNT];
+	private boolean landscapeVertexLightingAvailable;
+	private static final boolean SKIP_ABSENT_LANDSCAPE_LIGHTING = Boolean.getBoolean("spoiledmilk.browserSkipAbsentLandscapeLighting");
+	private int skippedLandscapeLightingUpdates;
 	private Sector[] worldMapSector = new Sector[ACTIVE_SECTION_COUNT];
 	private int mapPointX = 0;
 	private int mapPointZ = 0;
@@ -4819,6 +4822,7 @@ public final class World {
 		this.modelLandscapeGrid = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
 			MODEL_GRID_WORLD_SIZE, 112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT,
 			MODEL_GRID_WORLD_SIZE, false, 0);
+		this.landscapeVertexLightingAvailable = true;
 		tagRenderer3DModels(this.modelLandscapeGrid, Renderer3DModelKind.TERRAIN);
 
 		for (int x = 0; x < MODEL_GRID_COUNT; ++x) {
@@ -6750,6 +6754,7 @@ public final class World {
 
 	private void clearTerrainModelGrids() {
 		Arrays.fill(modelLandscapeGrid, null);
+		landscapeVertexLightingAvailable = false;
 		for (int plane = 0; plane < 4; plane++) {
 			Arrays.fill(modelWallGrid[plane], null);
 			Arrays.fill(modelRoofGrid[plane], null);
@@ -6791,6 +6796,10 @@ public final class World {
 	}
 
 	private void setVertexLightArea(int tileX, int tileZ, int width, int height) {
+		if (SKIP_ABSENT_LANDSCAPE_LIGHTING && !landscapeVertexLightingAvailable) {
+			skippedLandscapeLightingUpdates++;
+			return;
+		}
 		try {
 
 			if (tileX >= 1 && tileZ >= 1 && width + tileX < LOCAL_TILE_COUNT && height + tileZ < LOCAL_TILE_COUNT)
@@ -6818,6 +6827,8 @@ public final class World {
 				"k.B(" + width + ',' + height + ',' + "dummy" + ',' + tileX + ',' + tileZ + ')');
 		}
 	}
+
+	public int getSkippedLandscapeLightingUpdates() { return skippedLandscapeLightingUpdates; }
 
 	private void setVertexLightOther(int x, int z, int light) {
 		try {

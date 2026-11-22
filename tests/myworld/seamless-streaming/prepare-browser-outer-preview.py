@@ -77,6 +77,8 @@ def main():
     parser.add_argument('--terrain-words', action='store_true', help='Transfer exact terrain draw geometry as bounded primitive arrays')
     parser.add_argument('--compatibility-mesh-worker', action='store_true', help='Prepare missing compatibility meshes when the fixed draw cell is already resident')
     parser.add_argument('--prepared-surface-receipt', action='store_true', help='Commit an exact predecoded walking terrain receipt')
+    parser.add_argument('--prepare-incoming-scenery-pose', action='store_true', help='Prepare the world transforms of incoming interactive scenery')
+    parser.add_argument('--skip-absent-landscape-lighting', action='store_true', help='Skip vertex relighting when a scene has no legacy landscape grid')
     parser.add_argument('--terrain-gameplay-words', action='store_true', help='Transfer exact gameplay terrain as bounded primitive arrays')
     parser.add_argument('--reuse-detached-scenery', action='store_true', help='Keep exact worker meshes for verified revisits')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
@@ -90,6 +92,8 @@ def main():
         parser.error('Compatibility mesh preparation requires worker terrain words and fixed surface drawing')
     if args.prepared_surface_receipt and not args.live_surface_handoff:
         parser.error('Prepared terrain receipts require the live surface handoff')
+    if args.prepare_incoming_scenery_pose and not args.live_surface_handoff:
+        parser.error('Prepared scenery poses require the live surface handoff')
     sustained_trace = args.sustained_walk and args.travel_trace
     if args.sustained_walk and (args.manual or not (args.travel_trace or args.presentation_only)):
         parser.error('The automated sustained walk requires travel or presentation sampling')
@@ -231,6 +235,8 @@ def main():
            f'        System.setProperty("spoiledmilk.browserSurfaceTerrainWords", "{str(args.terrain_words).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceCompatibilityWorker", "{str(args.compatibility_mesh_worker).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPreparedSurfaceReceipt", "{str(args.prepared_surface_receipt).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserPrepareIncomingSceneryPose", "{str(args.prepare_incoming_scenery_pose).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSkipAbsentLandscapeLighting", "{str(args.skip_absent_landscape_lighting).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceGameplayWords", "{str(args.terrain_gameplay_words).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserReuseDetachedScenery", "{str(args.reuse_detached_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
@@ -359,6 +365,8 @@ def main():
         'terrainWords': args.terrain_words,
         'compatibilityMeshWorker': args.compatibility_mesh_worker,
         'preparedSurfaceReceipt': args.prepared_surface_receipt,
+        'prepareIncomingSceneryPose': args.prepare_incoming_scenery_pose,
+        'skipAbsentLandscapeLighting': args.skip_absent_landscape_lighting,
         'terrainGameplayWords': args.terrain_gameplay_words,
         'reuseDetachedScenery': args.reuse_detached_scenery,
         'surfaceDrawWorker': args.surface_draw_worker,
