@@ -24,7 +24,9 @@ public final class BrowserRegionHandoffTrace {
         "scenery.cache", "scenery.prepared", "terrain.prepared-install", "scenery.incoming", "scenery.mesh-item",
         "baseline.fence-prune", "baseline.fence-hash", "baseline.fence-publication",
         "baseline.page-records", "baseline.page-prune", "baseline.page-apply", "baseline.page-diagnostics",
-        "world-section.activation-log", "world-section.collision-view"
+        "world-section.activation-log", "world-section.collision-view",
+        "context.halo-publication", "context.prediction-retire", "context.halo-activation-log",
+        "context.live-window-ready"
     };
     private static long ordinal;
     private static int count, next, context, packetBudget, frameBudget;

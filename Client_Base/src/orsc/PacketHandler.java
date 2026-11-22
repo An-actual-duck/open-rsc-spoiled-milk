@@ -1094,6 +1094,7 @@ public class PacketHandler {
 			cancelPendingLayeredTerrainPrebuild();
 			predictedPublished =
 				publishReadyPredictedLayeredTerrainHalo(nativeTerrain, ordinaryWalking);
+			long windowReadyStarted = BoundaryLoadingDiagnostics.now();
 			keepSurfaceScenery = surfaceScenery != null && ordinaryWalking && predictedPublished
 				&& mudclient.ROLLING_SURFACE_WINDOW;
 			layeredSceneActivationState.begin(sequence);
@@ -1106,6 +1107,7 @@ public class PacketHandler {
 				mc.beginLayeredSceneActivation(hadLayeredSceneContext && !result.isScopeChanged(), ordinaryWalking);
 			}
 			refreshLayeredSceneActivationCover();
+			recordContextPhase("live-window-ready", windowReadyStarted);
 		} else {
 			clearReadyPredictedLayeredTerrainHalo();
 		}
@@ -1915,6 +1917,7 @@ public class PacketHandler {
 			clearReadyPredictedLayeredTerrainHalo();
 			return false;
 		}
+		long phaseStarted = BoundaryLoadingDiagnostics.now();
 		boolean published =
 			mc.getWorld().publishPredictedNativeLayeredTerrainHalo(
 				readyPredictedLayeredTerrainHalo,
@@ -1922,20 +1925,30 @@ public class PacketHandler {
 				readyPredictedLayeredTerrainStructureStage,
 				mc.getWorldOffsetX(),
 				mc.getWorldOffsetZ(), ordinaryWalking);
+		recordContextPhase("halo-publication", phaseStarted);
+		phaseStarted = BoundaryLoadingDiagnostics.now();
 		boolean sceneryAuthorized = published && predicted == predictedSceneryTerrain;
 		if (sceneryAuthorized) mc.authorizePredictedScenery(ordinaryWalking);
 		clearReadyPredictedLayeredTerrainHalo(sceneryAuthorized);
+		recordContextPhase("prediction-retire", phaseStarted);
 		if (!published) {
 			throw new IllegalStateException(
 				"Acknowledged predicted terrain could not publish at activation");
 		}
+		phaseStarted = BoundaryLoadingDiagnostics.now();
 		final String summary =
 			"NATIVE_TERRAIN_PREDICTED_HALO_ACTIVATED center="
 				+ predicted.getCurrentChunkX() + ","
 				+ predicted.getCurrentChunkY();
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
+		recordContextPhase("halo-activation-log", phaseStarted);
 		return true;
+	}
+
+	private static void recordContextPhase(String phase, long started) {
+		BoundaryLoadingDiagnostics.recordPhase("context", phase, started,
+			started == 0L ? 0L : System.nanoTime() - started);
 	}
 
 	private void updatePredictedSceneryCell(int length) {

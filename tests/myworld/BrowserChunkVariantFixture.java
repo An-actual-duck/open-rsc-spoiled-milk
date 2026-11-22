@@ -54,12 +54,12 @@ public final class BrowserChunkVariantFixture {
     static boolean matches(WorldChunkBuffer b,int[] s){return b.matches(31,3,3,1,false,s[0],s[1],s[2],s[3],true,0);}
     public static void main(String[] args)throws Exception {
         System.setProperty("spoiledmilk.renderer3DGeometryCapture","true");
-        Renderer3DWorldChunkFrame.ChunkMesh first = mesh(0, 17, 91);
-        Renderer3DWorldChunkFrame.ChunkMesh second = mesh(1, 6, -953);
+        Renderer3DWorldChunkFrame.ChunkMesh terrain = mesh(0, 17, 91);
+        Renderer3DWorldChunkFrame.ChunkMesh scenery = mesh(1, 6, -953);
         Renderer3DWorldChunkFrame.ChunkMesh animated = mesh(2, 17, 114);
         worldFrameSignatures(Collections.emptyList());
-        worldFrameSignatures(Arrays.asList(first, animated, second));
-        worldFrameSignatures(Arrays.asList(second, animated, first));
+        worldFrameSignatures(Arrays.asList(terrain, animated, scenery));
+        worldFrameSignatures(Arrays.asList(scenery, animated, terrain));
         Constructor<OpenGLTextureAtlas> ctor=OpenGLTextureAtlas.class.getDeclaredConstructor(LwjglBindings.class,int.class,int.class,int.class);ctor.setAccessible(true);
         Method center=OpenGLTextureAtlas.class.getDeclaredMethod("texelCenterU",int.class);center.setAccessible(true);
         StringBuilder rows=new StringBuilder();
