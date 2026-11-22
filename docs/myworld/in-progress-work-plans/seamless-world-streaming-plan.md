@@ -313,6 +313,14 @@ play. For deliberate delivery delays, verify that ready terrain remains
 playable and that stale data cannot publish. Confirm the result in owner play
 on both clients before making it the default.
 
+For browser frame pacing, retain the 960×540 logical UI, picking, and
+camera projection. Evaluate 60 FPS with a 1920×1080 physical WebGL buffer
+in both Firefox and Chrome. Measure a matched 960×540 physical buffer
+with the same layout, route, and rendering settings to isolate the cost
+of drawing more world pixels. Also compare high-percentile frame gaps
+and the longest gaps. Entering cells must stay usable with ordinary
+input and authoritative movement. [Physical output and UI evidence](seamless-world-streaming-preview.md#full-hd-world-output-with-the-original-ui)
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet
@@ -321,6 +329,11 @@ on both clients before making it the default.
 - If continuity passes with preinstalled coverage and fails during real
   streaming, separate the cost of delivery, preparation, publication, and GPU
   upload. Change the responsible stage and repeat the independent delay checks.
+- If choppiness persists with resident cells, measure ordinary frame
+  production, including sprites, the Java-to-browser handoff, and GPU
+  composition. Use those measurements to decide whether a retained UI
+  layer is worth prototyping. Require parity for UI size, legibility,
+  input targets, and scaling before considering a broader redesign.
 - Consider a cell-backed pathfinder only if the derived grid cannot support
   continuous coverage with correct paths and picking. Consider changing the
   package layout or splitting the transport only if measured delivery or

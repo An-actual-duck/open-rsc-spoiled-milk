@@ -36,8 +36,8 @@ if (p.state?.mode === 'GAME' && !w.travelBrowserFrames) {
 WATCH_PRESENTATION = """
 if (p.state?.mode === 'GAME' && !w.travelPresentation) {
     const samples = w.travelPresentation = {gaps: [], intervals: [], callbackGaps: [],
-        frames: 0, holds: 0, blocked: 0, epochs: [], unobservedIntervals: 0};
-    let first, last, startingFrame, startingHolds, lastUploadBytes, previousCount, previousCallback;
+        frames: 0, holds: 0, blocked: 0, epochs: [], outputSizes: [], unobservedIntervals: 0};
+    let first, last, startingFrame, startingHolds, lastUploadBytes, previousCount, previousCallback, lastOutput;
     const sample = stamp => {
         const events = p.events || [];
         if (first === undefined) {
@@ -47,6 +47,14 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
         if (events.some(event => event.message.startsWith('outer-coverage:complete:'))) return;
         const gpu = p.gpu;
         if (first !== undefined && gpu?.lastFrame > first) {
+            const output = gpu.physicalOutput;
+            if (output && (!lastOutput || output.logicalWidth !== lastOutput.logicalWidth ||
+                output.logicalHeight !== lastOutput.logicalHeight || output.width !== lastOutput.width ||
+                output.height !== lastOutput.height)) {
+                lastOutput = {logicalWidth: output.logicalWidth, logicalHeight: output.logicalHeight,
+                    width: output.width, height: output.height};
+                samples.outputSizes.push(lastOutput);
+            }
             if (previousCallback !== undefined && stamp - previousCallback >= 50) {
                 samples.callbackGaps.push(stamp - previousCallback);
                 if (samples.callbackGaps.length > 256) samples.callbackGaps.shift();
@@ -74,6 +82,7 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
                 if (last !== undefined && gpu.lastFrame - last >= 50) {
                     samples.gaps.push({from: last, to: gpu.lastFrame, geometryUploadBytes: gpu.uploadedBytes - lastUploadBytes,
                         bridgeWork: gpu.javaBridgeWorkSamples.at(-1), javascriptSubmissionMs: gpu.jsSubmissionSamples.at(-1),
+                        overlayStageMs: gpu.overlayStageSamples?.at(-1),
                         bridgeSampleCurrent: gpu.javaWorldFrames === gpu.javaBridgeReportedWorldFrames});
                     if (samples.gaps.length > 256) samples.gaps.shift();
                 }
@@ -116,7 +125,7 @@ def summarize_walking(result):
             'slowestFrameGaps': intervals[:8]}
 
 
-def run_walk(run, driver_port, browser, wasmgc=False):
+def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
     server = json.loads((run / 'server-command.json').read_text())
     stage = json.loads((run / 'stage.json').read_text())
     fixture = json.loads((run / 'outer-coverage-fixture.json').read_text())
@@ -129,6 +138,10 @@ def run_walk(run, driver_port, browser, wasmgc=False):
     url = 'http://' + stage['http'] + '/?mode=webgl'
     if wasmgc:
         url += '&wasmgc=1'
+    if output != 'default':
+        if not fixture.get('presentationOnly'):
+            raise ValueError('Use a presentation control for a resolution comparison')
+        url += '&physical=' + ('on' if output == 'full-hd' else 'off')
 
     def request(path, payload=None, method='POST'):
         data = json.dumps(payload or {}).encode() if method == 'POST' else None
@@ -165,6 +178,8 @@ def run_walk(run, driver_port, browser, wasmgc=False):
             started = request('/session', {'capabilities': {'alwaysMatch': capabilities}})
             session = started['sessionId']
             prefix = '/session/' + session
+            if output != 'default':
+                request(prefix + '/window/rect', {'width': 2240, 'height': 1400})
             request(prefix + '/url', {'url': url})
             element = request(prefix + '/element', {'using': 'css selector', 'value': '#start'})
             request(prefix + '/element/' + next(iter(element.values())) + '/click')
@@ -198,6 +213,13 @@ def run_walk(run, driver_port, browser, wasmgc=False):
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
                 javaRuntime:{version:p.javaVersion,release:p.runtimeVersion,wasmGC:p.wasmGC},
                 display:p.gpu?.display, visibility:w.document.visibilityState, browserFrames:w.travelBrowserFrames,
+                physicalOutput:p.gpu?.physicalOutput,
+                overlay:{uploadedBytes:p.gpu?.overlayUploadBytes,uploadCalls:p.gpu?.overlayUploadCalls,
+                    coverageFrames:p.gpu?.overlayCoverageFrames,rgbBytes:p.gpu?.overlayRgbBytes,
+                    coverageBytes:p.gpu?.overlayCoverageBytes,retainedBytes:p.gpu?.retainedResourceBytes,
+                    retainedCaptures:p.gpu?.retainedCaptures},
+                timingWindow:{gpu:p.gpu?.gpuWorkSamples,submission:p.gpu?.jsSubmissionSamples,
+                    bridge:p.gpu?.javaBridgeWorkSamples,overlay:p.gpu?.overlayStageSamples},
                 presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin};''')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
@@ -230,6 +252,10 @@ def run_walk(run, driver_port, browser, wasmgc=False):
                 completed = detached.get('completed', 0) > 0 and detached.get('error') is None
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
+            if completed and output != 'default':
+                width, height = (1920, 1080) if output == 'full-hd' else (960, 540)
+                completed = (result.get('presentation') or {}).get('outputSizes') == [
+                    {'logicalWidth': 960, 'logicalHeight': 540, 'width': width, 'height': height}]
             presentation = result.get('presentation')
             if presentation is not None:
                 intervals = sorted(presentation['intervals'])
@@ -265,9 +291,11 @@ def main():
     parser.add_argument('--browser', choices=('firefox', 'chrome'), default='firefox')
     parser.add_argument('--driver-port', type=int, help='Port of the local WebDriver')
     parser.add_argument('--wasmgc', action='store_true', help='Test the experimental CheerpJ 5.0 engine')
+    parser.add_argument('--output', choices=('default', 'logical', 'full-hd'), default='default',
+                        help='Compare 960x540 and 1920x1080 WebGL output with the same 960x540 UI')
     args = parser.parse_args()
     driver_port = args.driver_port if args.driver_port is not None else {'firefox': 44495, 'chrome': 9515}[args.browser]
-    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc)
+    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc, args.output)
 
 
 if __name__ == '__main__':

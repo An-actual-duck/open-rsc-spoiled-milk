@@ -872,6 +872,82 @@ The pacing gains varied by browser and by metric, so the layout trial was
 removed.
 [Firefox layout candidate](../../../output/tests/browser-gameplay-spike/live-surface-cached-layout/firefox-result.json) · [Chrome layout candidate](../../../output/tests/browser-gameplay-spike/live-surface-cached-layout-chrome/chrome-result.json)
 
+#### Full HD world output with the original UI
+
+The browser uses two sizes. The WebGL drawing buffer follows the fitted
+display and device-pixel ratio up to 1920×1080. The game's UI, pointer
+coordinates, and camera projection still use 960×540. The compositor maps
+logical UI texels into the physical drawing buffer. This is the existing
+browser display policy. [Physical sizing](../../../tools/browser-gameplay/web/browser-physical-output.js) · [UI compositor](../../../tools/browser-gameplay/web/browser-overlay.js) · [Pointer mapping](../../../tools/browser-gameplay/web/browser-display.js)
+
+Both output sizes upload the same 4,147,200 bytes for the two logical UI
+planes on each full overlay upload. A 1920×1080 logical UI would multiply
+that payload by four and would need its own scaling and hit-testing work.
+The existing Full HD setting does increase the size of the physical world
+buffer, the composite pass, and the retained world image. The two retained
+textures occupy 16,588,800 bytes at 1920×1080 and 4,147,200 bytes at
+960×540. [Retained frame](../../../tools/browser-gameplay/web/browser-retained-frame.js)
+
+For a matched comparison, stage a fresh private presentation-only
+route per run with `--frame-stages --safe-walk-fixture`. Run
+`run-browser-travel.py <run> --output logical` and
+`run-browser-travel.py <run> --output full-hd` in the same browser. Use
+`--browser chrome` to repeat in Chrome. The runner checks that each
+output size holds throughout the walk. The optional stage recorder
+measures wall time around the upload, draw, and copy calls on the
+JavaScript side. Those timings exclude legacy Java UI drawing and
+cannot resolve separate GPU completion times. Each run retains 600
+samples for its stage summaries. Frame gaps measure
+fresh world submissions in headless browsers.
+
+| Browser | WebGL output | Median gap | 95th percentile | 99th percentile | Longest gap | Gaps ≥100 ms |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Firefox | 960×540 | 18 ms | 32 ms | 71 ms | 180 ms | 19 |
+| Firefox | 1920×1080 | 18 ms | 34 ms | 70 ms | 195 ms | 16 |
+| Chrome | 960×540 | 16.9 ms | 23.7 ms | 73 ms | 196.1 ms | 18 |
+| Chrome | 1920×1080 | 17 ms | 23.8 ms | 64.9 ms | 281.6 ms | 18 |
+
+All four walks completed three streaming rolls and the reversal with one
+load epoch and zero held frames or sampled input closures. Each retained its
+intended output size throughout the measured walk. The disposable test account
+had combat damage protection. Frame pacing still misses the 60 FPS target.
+[Firefox 960×540](../../../output/tests/browser-gameplay-spike/live-surface-ui-firefox-logical/firefox-result.json) · [Firefox 1920×1080](../../../output/tests/browser-gameplay-spike/live-surface-ui-firefox-full-hd/firefox-result.json) · [Chrome 960×540](../../../output/tests/browser-gameplay-spike/live-surface-ui-chrome-logical-exact/chrome-result.json) · [Chrome 1920×1080](../../../output/tests/browser-gameplay-spike/live-surface-ui-chrome-full-hd-exact/chrome-result.json)
+
+The four JavaScript overlay stages together had a 3 ms median and 4 ms 95th
+percentile at both sizes in Firefox. The Full HD run's 195 ms gap had zero
+world geometry uploads, 3 ms in the nearby JavaScript overlay sample, and
+92 ms in the Java bridge's actor sprite atlas upload phase. That Java phase
+includes buffer packing and can include waiting on the browser callback.
+Firefox provided no GPU timer samples for these runs.
+
+Chrome measured a 1.2 to 1.3 ms median for the same JavaScript stages.
+Median timed WebGL work rose from 2.27 ms to 3.52 ms at Full HD.
+The largest Full HD gap had zero world geometry uploads and 1.7 ms in
+the nearby JavaScript overlay sample. The four runs show that the world
+buffer size adds measurable GPU work in Chrome and that long gaps occur
+at both sizes. Repeated comparisons would be needed to attribute a
+change in worst-case frame intervals to resolution.
+
+A separate Radeon/WebGL pixel check in Firefox passed all 47 cases.
+The added Full HD case used patterned RGB and partial transmittance at
+960×540 and checked the resulting 1920×1080 frame against a CPU-expanded
+reference. Across the whole suite, 31,026,120 compared bytes matched
+exactly. The display mapping suite also passed its logical input checks.
+These tests cover composition and input mapping, alongside the walking
+test's checks on the world input gate. [Pixel comparison](../../../output/tests/browser-physical-output/hardware/live-surface-1080-ui-parity-full-size/firefox-result.json) · [Display tests](../../../tests/myworld/test-browser-display.mjs)
+
+Prioritize the actor sprite handoff when investigating the long gaps.
+Time atlas planning, Java buffer packing, and WebGL uploads on both
+sides of the bridge and correlate them with the same frame. Time the
+Java UI raster separately with panels open before choosing a UI
+optimization. If that work contributes materially, prototype one
+persistent UI panel rendered from stable assets and state changes.
+Keep logical layout and hit targets independent of the world buffer.
+The existing rectangle and glyph journal can help verify pixels.
+It observes the legacy raster and leaves sprites, framebuffer reads,
+and minimap raster operations to the existing path.
+[Sprite handoff](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L994) · [Java UI timing boundary](../../../Client_Base/src/orsc/mudclient.java#L10328) · [Overlay journal](../../../tools/browser-gameplay/web/browser-overlay-journal.js)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

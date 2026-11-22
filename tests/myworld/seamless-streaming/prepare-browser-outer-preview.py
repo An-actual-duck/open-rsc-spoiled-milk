@@ -44,6 +44,7 @@ def main():
     parser.add_argument('--presentation-only', action='store_true', help='Check sustained travel without detailed Java or server tracing')
     parser.add_argument('--frame-stages', action='store_true', help='Sample individual renderer stages during the presentation control')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
+    parser.add_argument('--safe-walk-fixture', action='store_true', help='Protect the disposable test character from combat damage')
     parser.add_argument('--slice-preupload', action='store_true', help='Pack large speculative vertex buffers across frames')
     parser.add_argument('--socket-read-ahead', action='store_true', help='Buffer available socket bytes before the Java packet drain')
     parser.add_argument('--persistent-movement', action='store_true', help='Use the private movement stream independent of the terrain center')
@@ -65,6 +66,8 @@ def main():
     args = parser.parse_args()
     if args.sustained_walk and (args.manual or not (args.travel_trace or args.presentation_only)):
         parser.error('The automated sustained walk requires travel or presentation sampling')
+    if args.safe_walk_fixture and not args.sustained_walk:
+        parser.error('Test character protection requires the automated sustained walk')
     if args.presentation_only and (not (args.sustained_walk and args.live_surface_handoff) or args.trace or args.travel_trace):
         parser.error('Presentation-only sampling requires untraced sustained live-surface travel')
     if args.frame_stages and not args.presentation_only:
@@ -157,7 +160,7 @@ def main():
                '        new Thread(BrowserOuterCoverageProbe::run, "outer-coverage-fixture").start();')
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/', "
-           f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}}};")
+           f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}}};")
     if args.manual and args.travel_trace:
         (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
         insert(web / 'runtime.html', "    await import('./browser.js');",
@@ -211,7 +214,7 @@ def main():
         *(['--expanded-surface-draw-border'] if args.expanded_surface_draw_border else []),
         *(['--surface-scenery-draw'] if args.surface_scenery_draw else []),
         *(['--live-surface-handoff'] if args.live_surface_handoff else []),
-        *(['--safe-walk-fixture'] if args.retarget_walk else []),
+        *(['--safe-walk-fixture'] if args.retarget_walk or args.safe_walk_fixture else []),
         *(['--surface-scenery-mutation'] if args.surface_scenery_cells and not (args.manual or args.retarget_walk) else []),
     ], cwd=ROOT, check=True)
     staged_hashes = {
@@ -255,6 +258,7 @@ def main():
         'surfaceMeshWorker': args.surface_mesh_worker,
         'surfaceDrawWorker': args.surface_draw_worker,
         'sustainedWalk': args.sustained_walk,
+        'safeWalkFixture': args.retarget_walk or args.safe_walk_fixture,
         'retargetWalk': args.retarget_walk,
         'steadyWalk': args.steady_walk,
         'holdOptionalTerrain': args.hold_optional_terrain,
