@@ -11,6 +11,7 @@ import java.util.Map;
 
 final class RemasterGlowMaskBuilder {
 	private static final int MAX_PREPARED_EMITTERS = 512;
+	private static final boolean VERIFY_PREPARED_MASK = Boolean.getBoolean("spoiledmilk.browserVerifyPreparedGlow");
 	private static final String TEXTURE_SIZE_PROPERTY = "spoiledmilk.remasterGlowMaskTextureSize";
 	private static final String TEXTURE_SIZE_ENV = "SPOILED_MILK_REMASTER_GLOW_MASK_TEXTURE_SIZE";
 	private static final String CACHE_ENTRIES_PROPERTY = "spoiledmilk.remasterGlowMaskCacheEntries";
@@ -63,6 +64,13 @@ final class RemasterGlowMaskBuilder {
 		RemasterGlowMask mask = prepared == null ? null : prepared.take(chunkFrame, inputs.values, revision,
 			bounds.minX, bounds.minZ, bounds.invSpanX(), bounds.invSpanZ());
 		if (mask == null) mask = buildMask(revision, bounds, emitters);
+		else if (VERIFY_PREPARED_MASK) {
+			RemasterGlowMask literal = buildMask(revision, bounds, emitters);
+			if (mask.visiblePixels != literal.visiblePixels || !mask.pixels().equals(literal.pixels())) {
+				throw new IllegalStateException("Prepared glow mask changed the live raster");
+			}
+			prepared.recordVerification();
+		}
 		if (mask == null || mask.visiblePixels <= 0) {
 			return null;
 		}
@@ -76,12 +84,17 @@ final class RemasterGlowMaskBuilder {
 	}
 
 	static int[] prepareRecipe(List<BrowserGlowPreparation.Source> chunks) {
+		return prepareRecipe(chunks, chunks.size());
+	}
+
+	static int[] prepareRecipe(List<BrowserGlowPreparation.Source> chunks, int extentChunks) {
 		float minX = Float.MAX_VALUE, maxX = -Float.MAX_VALUE;
 		float minZ = Float.MAX_VALUE, maxZ = -Float.MAX_VALUE;
 		List<Renderer3DWorldChunkFrame.GlowEmitter> emitters = new ArrayList<>();
-		for (BrowserGlowPreparation.Source source : chunks) {
+		for (int i = 0; i < chunks.size(); i++) {
+			BrowserGlowPreparation.Source source = chunks.get(i);
 			Renderer3DWorldChunkFrame.ChunkMesh chunk = source.chunk;
-			if (chunk.hasVertexBounds()) {
+			if (i < extentChunks && chunk.hasVertexBounds()) {
 				minX = Math.min(minX, Math.addExact(chunk.getMinVertexX(), source.offsetX));
 				maxX = Math.max(maxX, Math.addExact(chunk.getMaxVertexX(), source.offsetX));
 				minZ = Math.min(minZ, Math.addExact(chunk.getMinVertexZ(), source.offsetZ));

@@ -398,6 +398,9 @@ public final class BrowserOuterCoverageProbe {
 		}
 		if (Boolean.getBoolean("spoiledmilk.browserPrepareNextGlow")) {
 			int[] glow = (int[]) BrowserWebGLBridge.class.getMethod("getPreparedGlowWork").invoke(null);
+			if (Boolean.getBoolean("spoiledmilk.browserVerifyPreparedGlow") && glow[glow.length - 1] == 0) {
+				throw new IllegalStateException("No adopted glow mask was compared with the live raster");
+			}
 			BrowserBootstrap.report("outer-coverage:prepared-glow:" + Arrays.toString(glow));
 		}
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
