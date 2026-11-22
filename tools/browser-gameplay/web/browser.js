@@ -179,7 +179,7 @@ const natives = {
     if(!bulkStaging)throw new Error('Public game data staging unavailable');
     bulkStaging.release(relative,copied);
   },
-  Java_orsc_browser_BrowserBootstrap_isRamBulkCancelled(){return stopped||!bulkStaging||bulkStaging.cancelled();},
+  Java_orsc_browser_BrowserBootstrap_isRamBulkCancelled(){return stopped||(wholeRam.enabled&&(!bulkStaging||bulkStaging.cancelled()));},
   Java_orsc_browser_BrowserBootstrap_reportStartupProgress(lib,phase,bytes,files,totalFiles,elapsedMillis){
     if(stopped)return;
     if(!['assets','data','client'].includes(phase)||!Number.isSafeInteger(bytes)||bytes<0||bytes>2**40||!Number.isSafeInteger(files)||!Number.isSafeInteger(totalFiles)||files<0||files>totalFiles||totalFiles>100000||!Number.isFinite(elapsedMillis)||elapsedMillis<0||elapsedMillis>7*86400000)throw new Error('Invalid startup copy receipt');

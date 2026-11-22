@@ -179,6 +179,10 @@ if(publicStreaming){
   const file=argument('--properties-output');if(file)fs.writeFileSync(file,props.join('\n')+'\n');
   await new Promise(resolve=>setImmediate(resolve));
   assert.deepEqual(publicRunArgs,['orsc.browser.BrowserBootstrap','/app/assets/alpha-test1/browser-spike.jar:/app/assets/alpha-test1/client.jar','webgl']);
+  const cancelled=configured.natives.Java_orsc_browser_BrowserBootstrap_isRamBulkCancelled;
+  assert.equal(cancelled(),false,'World Streaming copies ordinary startup files without a RAM preload');
+  window.browserSessionDispose();
+  assert.equal(cancelled(),true,'Stopping World Streaming cancels ordinary startup copies');
   stopJava(0);
   await evaluating;
   console.log('PASS chosen public World Streaming reaches staged login with its fixed WSS endpoint and versioned archive paths');
