@@ -1569,6 +1569,22 @@ zero. The comparison runs include the Java encoding cost for verification
 and are separate from the frame-pacing controls.
 [Firefox exact walk](../../../output/tests/browser-gameplay-spike/compact-parity-firefox/firefox-result.json) · [Chrome exact walk](../../../output/tests/browser-gameplay-spike/compact-parity-chrome/chrome-result.json) · [Native renderer suite](../../../output/tests/seamless-world-streaming/compact-vertex-blocks-build/native-variants.log) · [Browser geometry suite](../../../output/tests/seamless-world-streaming/compact-vertex-blocks-build/compact-layout.json)
 
+The Chrome capture with conversion enabled sampled 13.42 GB of transient
+allocations, down from 18.74 GB in the original diagnostic. It packed
+3,044,288 vertices with zero rejections. The Java compact vertex encoder
+disappeared from the largest sampled sites. The newest generated
+profile identified about 436 MB under the draw key's hash computation.
+The Java renderer constructs these keys several times per resident mesh
+each frame, including when it orders required draws and looks up buffers.
+[Compact conversion allocation capture](../../../output/tests/browser-gameplay-spike/compact-block-allocations/allocation-summary.json)
+
+The separate draw key trial keeps a bounded weak map per browser
+renderer, keyed by static mesh instance. Each stored key owns an
+immutable hash and retains no mesh data. Animated meshes still use
+their current positional or fishing-pose identity. Draw ordering,
+visibility, owner transitions, buffer budgets and materials continue
+through the existing renderer paths.
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

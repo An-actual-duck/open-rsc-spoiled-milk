@@ -34,7 +34,7 @@ public final class BrowserRegionTraceIndependentFixture {
  static void prepare(String label,BrowserWebGLBridge bridge,Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh[]meshes)throws Exception{
   text(label);Renderer3DWorldChunkFrame world=Renderer3DWorldChunkFrame.fromChunks(Arrays.asList(meshes));frame.setWorldChunkFrame(world);
   for(int n=0;n<=meshes.length+1;n++){
-   Set<WorldChunkBufferKey>active=BrowserWebGLBridge.activeKeys(world);bridge.evictInactive(active);Renderer3DFrame old=RendererFrameLighting.bind(frame);BrowserWebGLBridge.ChunkDraws d;
+   Set<WorldChunkBufferKey>active=bridge.activeKeys(world);bridge.evictInactive(active);Renderer3DFrame old=RendererFrameLighting.bind(frame);BrowserWebGLBridge.ChunkDraws d;
    Object sample=beginProfile(bridge);int beforeU=uploads,beforeR=replaces;long beforeV=submittedVertices,beforeB=submittedBytes;try{d=bridge.prepareChunks(frame,world,active);}finally{RendererFrameLighting.restore(old);endProfile(bridge,sample,beforeU,beforeR,beforeV,beforeB);}passes++;text("draw");ints(d.draws);out.writeInt(d.remainingRepacks);accounting(bridge);
    if(d.draws.length==meshes.length*8&&d.remainingRepacks==0)return;
   }

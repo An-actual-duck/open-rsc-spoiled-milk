@@ -4138,6 +4138,7 @@ final class WorldChunkMaterialKey {
 }
 
 final class WorldChunkBufferKey {
+	static final boolean CACHE_BROWSER_HASH = Boolean.getBoolean("spoiledmilk.browserStableDrawKeys");
 	final int plane;
 	final int centerSectionX;
 	final int centerSectionY;
@@ -4148,6 +4149,7 @@ final class WorldChunkBufferKey {
 	final boolean drawOffsetStorage;
 	final long storageSignature;
 	final long storageVariantSignature;
+	private final int cachedHash;
 
 	WorldChunkBufferKey(
 		int plane,
@@ -4170,6 +4172,7 @@ final class WorldChunkBufferKey {
 		this.drawOffsetStorage = drawOffsetStorage;
 		this.storageSignature = storageSignature;
 		this.storageVariantSignature = storageVariantSignature;
+		this.cachedHash = CACHE_BROWSER_HASH ? calculateHash() : 0;
 	}
 
 	static WorldChunkBufferKey from(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
@@ -4243,6 +4246,10 @@ final class WorldChunkBufferKey {
 
 	@Override
 	public int hashCode() {
+		return CACHE_BROWSER_HASH ? cachedHash : calculateHash();
+	}
+
+	private int calculateHash() {
 		int result = plane;
 		result = 31 * result + centerSectionX;
 		result = 31 * result + centerSectionY;

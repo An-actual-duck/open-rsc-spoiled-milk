@@ -56,6 +56,7 @@ def main():
     parser.add_argument('--surface-scenery-cells', action='store_true', help='Receive complete viewer-authorized incoming scenery cells')
     parser.add_argument('--rolling-surface-window', action='store_true', help='Preserve overlapping world instances when the playable window moves')
     parser.add_argument('--fixed-surface-draw', action='store_true', help='Draw signed terrain through persistent world cells')
+    parser.add_argument('--stable-draw-keys', action='store_true', help='Reuse immutable draw keys and their hashes for resident meshes')
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Include the signed source neighbors of outer draw cells')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Publish revisioned scenery meshes ahead of the crossing')
     parser.add_argument('--live-surface-handoff', action='store_true', help='Keep verified playable coverage live through a rolling rebase')
@@ -187,6 +188,7 @@ def main():
            f'        System.setProperty("spoiledmilk.surfaceSceneryCells", "{str(args.surface_scenery_cells).lower()}");\n'
            f'        System.setProperty("spoiledmilk.rollingSurfaceWindow", "{str(args.rolling_surface_window).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixedSurfaceDraw", "{str(args.fixed_surface_draw).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserStableDrawKeys", "{str(args.stable_draw_keys).lower()}");\n'
            f'        System.setProperty("spoiledmilk.expandedSurfaceDrawBorder", "{str(args.expanded_surface_draw_border).lower()}");\n'
            f'        System.setProperty("spoiledmilk.surfaceSceneryDraw", "{str(args.surface_scenery_draw).lower()}");\n'
            f'        System.setProperty("spoiledmilk.liveSurfaceHandoff", "{str(args.live_surface_handoff).lower()}");\n'
@@ -308,6 +310,7 @@ def main():
         'surfaceSceneryCells': args.surface_scenery_cells,
         'rollingSurfaceWindow': args.rolling_surface_window,
         'fixedSurfaceDraw': args.fixed_surface_draw,
+        'stableDrawKeys': args.stable_draw_keys,
         'expandedSurfaceDrawBorder': args.expanded_surface_draw_border,
         'surfaceSceneryDraw': args.surface_scenery_draw,
         'liveSurfaceHandoff': args.live_surface_handoff,
