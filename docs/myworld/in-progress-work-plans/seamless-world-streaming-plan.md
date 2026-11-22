@@ -321,6 +321,80 @@ of drawing more world pixels. Also compare high-percentile frame gaps
 and the longest gaps. Entering cells must stay usable with ordinary
 input and authoritative movement. [Physical output and UI evidence](seamless-world-streaming-preview.md#full-hd-world-output-with-the-original-ui)
 
+## Lessons from other streaming engines
+
+- **Sodium** gives each mesh worker a build context with scratch buffers
+  and a block-render cache. Finished meshes get their own buffers and
+  explicit lifetimes. Its mapped GPU staging implementation uses a fixed
+  buffer and reclaims space after the associated GPU fence completes.
+  These choices reduce pressure on the managed heap and bound in-flight
+  transfers. For our browser client, the transferable ideas are scratch
+  reuse, explicit ownership, and bounded transfer queues. CheerpJ's
+  standard engine delegates object collection to the browser and
+  schedules all Java threads within one runtime on one browser thread.
+  The review uses Sodium's published source as a design reference.
+  [Worker contexts](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkBuilder.java#L22)
+  · [Mesh buffers](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildBuffers.java#L55)
+  · [Mapped staging](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/gpu/arena/staging/MappedStagingBuffer.java)
+  · [CheerpJ runtime](https://cheerpj.com/docs/explanation/architecture)
+- **Luanti** coalesces pending mesh updates for the same cell, retains
+  the data needed for its neighborhood, and prevents simultaneous
+  builds of the same cell. **Godot Voxel Tools** documents moving input
+  copies into worker tasks to avoid making copies for every queued
+  request on the main thread. It also budgets the work that must run
+  on the main thread. Together these suggest admitting a job before
+  allocating its payload, keeping only the current queued request for
+  each cell, and bounding how much completed work the renderer adopts
+  in a frame.
+  [Luanti mesh queue](https://github.com/luanti-org/luanti/blob/master/src/client/mesh_generator_thread.cpp)
+  · [Voxel Tools performance notes](https://voxel-tools.readthedocs.io/en/latest/performance/)
+- **Lithium** reuses temporary lists and avoids repeated allocations
+  during chunk ticking. **C2ME** is a server reference for running
+  generation and I/O in parallel. For a fixed authored RSC map, use
+  the former as a comparison for repeated frame work and revisit the
+  latter if server delivery or preparation shows up in the travel
+  traces. [Lithium allocation options](https://github.com/CaffeineMC/lithium/wiki/Configuration-File/8aa578362757acb68e3ad8662889b8bab47a5b28#allocations)
+  · [C2ME](https://github.com/RelativityMC/C2ME-fabric)
+
+### First candidate for RSC
+
+Move the static scenery handoff earlier, before the client builds and
+serializes a cell's model inputs. The existing browser route already
+meshes scenery on a separate worker. It still constructs canonical
+models in the client runtime, packs them into a new byte array, copies
+that request into a transferable typed array, and decodes the response.
+The two profiled walking controls each recorded 133 scenery worker
+completions and about 97 MiB of returned data over the session, including
+startup. These counters measure completed output. They do not time
+copying or identify allocation hot spots.
+[Canonical model preparation](../../../Client_Base/src/orsc/mudclient.java#L5545)
+· [Scenery serialization](../../../Client_Base/src/orsc/graphics/three/SurfaceSceneryMeshPreparation.java#L27)
+· [Worker handoff](../../../tools/browser-gameplay/web/browser-surface-mesh-worker-client.js)
+· [Walking receipts](seamless-world-streaming-preview.md#client-loop-and-render-handoff-timing)
+
+1. Measure admission and fallback, model preparation, encoding, request
+   and response bytes, response decoding, and renderer adoption for
+   static scenery jobs. Associate the work with actual frame gaps and
+   compare new-area walking with a warmed repeat. In the existing
+   diagnostic Firefox capture, GC or cycle-collection slices overlapped
+   the 20 gaps of at least 100 ms by a median of 3.6 ms. Some overlaps
+   were much larger. Treat allocation reduction as one target alongside
+   CPU work and job scheduling.
+   [Firefox correlation](../../../output/tests/browser-gameplay-spike/live-surface-loop-gecko-profile/profile-correlation.json)
+2. If the client-side preparation is material, try one surface scenery
+   cell with a worker-owned, bounded model catalogue. Send compact
+   placement data, terrain-dependent inputs, and the cell revision.
+   Keep a current queued request per cell and validate the map, signed
+   level, source revision, and placement revision before adopting
+   the result. Reuse scratch space within its owner and give retained
+   meshes a separate lifetime.
+3. Measure request and response bytes, repeated model builds, and
+   95th- and 99th-percentile gaps on fresh Firefox and Chrome Full HD
+   walks. Require the same geometry, collision, picking, and actual
+   movement on first visits, reversals, and live scenery changes.
+   If preparation is small, use the same allocation and lifetime
+   checks on the recurring geometry draw lists and sprite batch.
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet
