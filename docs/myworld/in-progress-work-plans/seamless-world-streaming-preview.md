@@ -1805,6 +1805,31 @@ roll with 73 ms in client updates and one collector sample, and a
 samples. The untraced runs above provide the pacing comparison.
 [Follow-up Chrome profile](../../../output/tests/browser-gameplay-spike/empty-roof-removals-cpu-chrome/profile-summary.json)
 
+#### Deferred cached transform rows
+
+An isolated trial translated each carried model's bounds at the roll
+and applied the same offset to its cached rows only when a reader
+needed the vertex or face coordinates. Native checks matched the
+existing transforms, pixel and picking digest, and bounds. Separate
+checks exercised accumulated and cancelled shifts, batch reads, and
+capacity growth. Both browsers wrote 2,248 of the 136,977 vertex rows
+affected by the three rolls. Both reached `(252,609)` in one epoch with
+zero holds or input closures.
+
+| Browser | 99th percentile | Longest interval | Worst second | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 28 → 28 ms | 149 → 142 ms | 40 → 40 FPS | 24 → 19 |
+| Chrome | 25.0 → 25.6 ms | 132.5 → 135.2 ms | 49 → 49 FPS | 15 → 18 |
+
+The traced Firefox pair showed that removing the row writes affected
+some rolls. The three scene retirement and rebase phases took 21 → 17,
+15 → 5, and 5 → 5 ms. The enclosing submission intervals took 162 → 139,
+135 → 89, and 91 → 140 ms. The return roll also spent more time in
+context logging and scene capture. The full frame sequence still had
+long gaps and the browser pairs diverged. The trial was retired and
+its exact artifact remains available for comparison.
+[Native parity](../../../output/tests/seamless-world-streaming/deferred-rebase-rows-build/native-picking.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/deferred-rebase-rows-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/deferred-rebase-rows-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/deferred-rebase-rows-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/deferred-rebase-rows-chrome/chrome-result.json) · [Traced roll comparison](../../../output/tests/seamless-world-streaming/deferred-rebase-rows-build/roll-comparison.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

@@ -94,10 +94,7 @@ public final class RSModel {
 	private int minZ;
     static final boolean BROWSER_RESIDENT_CAMERA_CULL = Boolean.getBoolean("spoiledmilk.browserResidentCameraCull");
     private static final boolean BROWSER_KEEP_REBASED_MODELS = Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels");
-    private static final boolean DEFER_BROWSER_REBASE_ROWS = Boolean.getBoolean("spoiledmilk.deferBrowserRebaseRows");
     private static long preservedRebases, preservedRebaseVertices;
-    private static long deferredRebaseRows, materializedRebaseRows;
-    private int deferredRebaseX, deferredRebaseZ;
     private boolean browserProjectionRowsOwned;
     private boolean browserProjectionTopologyChecked;
 	private int rot256X;
@@ -132,7 +129,6 @@ public final class RSModel {
     /** Exact immutable publication template for private offline whole-RAM preparation. */
     public static int capturePreparedState(RSModel model,WholeRamData.Pool pool) {
         if(model==null)return -1;
-        if (DEFER_BROWSER_REBASE_ROWS) model.materializeRebasedRows();
         WholeRamData.Graph graph=new WholeRamData.Graph(pool);
         int[] scalars=new int[]{model.faceHead,model.key,model.m_cb?1:0,model.diffuseParam1,model.renderer3DModelKind.ordinal(),model.renderer3DMaterialFamily.ordinal(),model.renderer3DGlowColor,model.renderer3DGlowRadius,model.renderer3DGlowIntensity,model.pickBoundsScale,model.interactionOnly?1:0,model.m_db?1:0,model.m_dc?1:0,model.m_hc,model.m_Kb?1:0,model.m_Yb,model.vertHead,model.appliedTransform,model.diffuseDirX,model.diffuseDirY,model.diffuseDirZ,model.diffuseMag,model.diffuseParam2,model.dontComputeDiffuse?1:0,model.faceCount,model.m_b?1:0,model.m_c?1:0,model.m_hb,model.m_v?1:0,model.maxFaceDimension,model.maxX,model.maxY,model.maxZ,model.minX,model.minY,model.minZ,model.rot256X,model.rot256Y,model.rot256Z,model.rotM_xToY,model.rotM_xToZ,model.rotM_yToX,model.rotM_yToZ,model.rotM_zToX,model.rotM_zToY,model.scaleX,model.scaleY,model.scaleZ,model.translateX,model.translateY,model.translateZ,model.vertexCount2,model.renderer3DTransformVersion,model.fishingSpotClarityAnimationState};
         int[] roots=new int[]{graph.capture(model.faceDiffuseLight),graph.capture(model.faceIndexCount),graph.capture(model.faceIndices),graph.capture(model.facePickIndex),graph.capture(model.scenePolyNormalShift),graph.capture(model.scenePolyNormalMagnitude),graph.capture(model.faceTextureBack),graph.capture(model.faceTextureFront),graph.capture(model.faceTextureUStart),graph.capture(model.faceTextureUScale),graph.capture(model.m_zb),graph.capture(model.vertDiffuseLight),graph.capture(model.vertexParam2),graph.capture(model.vertexParam6),graph.capture(model.vertLightOther),graph.capture(model.vertX),graph.capture(model.vertXRot),graph.capture(model.vertYRot),graph.capture(model.vertZ),graph.capture(model.vertZRot),graph.capture(model.faceMaxX),graph.capture(model.faceMaxY),graph.capture(model.faceMaxZ),graph.capture(model.faceMinX),graph.capture(model.faceMinY),graph.capture(model.faceMinZ),graph.capture(model.faceNormX),graph.capture(model.faceNormY),graph.capture(model.faceNormZ),graph.capture(model.faceParam1),graph.capture(model.fishingSpotClarityBaseX),graph.capture(model.fishingSpotClarityBaseY),graph.capture(model.fishingSpotClarityBaseZ),graph.capture(model.fishingSpotClarityRippleGroup),graph.capture(model.vertXTransform),graph.capture(model.vertY),graph.capture(model.vertYTransform),graph.capture(model.vertZTransform)};
@@ -357,7 +353,6 @@ public final class RSModel {
 	}
 
 	void ensureCapacity(int minVertexCapacity, int minFaceCapacity) {
-		if (DEFER_BROWSER_REBASE_ROWS) materializeRebasedRows();
 		if (minVertexCapacity > this.vertexCount2) {
 			int vertexCapacity = growCapacity(this.vertexCount2, minVertexCapacity);
 			this.vertY = Arrays.copyOf(this.vertY, vertexCapacity);
@@ -605,12 +600,17 @@ public final class RSModel {
         this.translateX += x;
         this.translateZ += z;
         computeAppliedTransform();
-        if (DEFER_BROWSER_REBASE_ROWS) {
-            deferredRebaseX += x;
-            deferredRebaseZ += z;
-            deferredRebaseRows += vertHead;
-        } else {
-            shiftTransformRows(x, z);
+        for (int v = 0; v < vertHead; v++) {
+            vertXTransform[v] += x;
+            vertZTransform[v] += z;
+        }
+        if (!m_c) {
+            for (int f = 0; f < faceHead; f++) {
+                faceMinX[f] += x;
+                faceMaxX[f] += x;
+                faceMinZ[f] += z;
+                faceMaxZ[f] += z;
+            }
         }
         minX += x;
         maxX += x;
@@ -625,28 +625,6 @@ public final class RSModel {
         return true;
     }
 
-    private void materializeRebasedRows() {
-        if (deferredRebaseX == 0 && deferredRebaseZ == 0) return;
-        shiftTransformRows(deferredRebaseX, deferredRebaseZ);
-        deferredRebaseX = deferredRebaseZ = 0;
-        materializedRebaseRows += vertHead;
-    }
-
-    private void shiftTransformRows(int x, int z) {
-        for (int v = 0; v < vertHead; v++) {
-            vertXTransform[v] += x;
-            vertZTransform[v] += z;
-        }
-        if (!m_c) {
-            for (int f = 0; f < faceHead; f++) {
-                faceMinX[f] += x;
-                faceMaxX[f] += x;
-                faceMinZ[f] += z;
-                faceMaxZ[f] += z;
-            }
-        }
-    }
-
     private boolean hasFaceCapacity(int[] values) {
         return values != null && values.length >= faceHead;
     }
@@ -659,10 +637,6 @@ public final class RSModel {
 
     public static long[] getBrowserRebaseWork() {
         return new long[]{preservedRebases, preservedRebaseVertices};
-    }
-
-    public static long[] getDeferredBrowserRebaseWork() {
-        return new long[]{deferredRebaseRows, materializedRebaseRows};
     }
 
 	private static RSModel createFishingSpotClarityOverlay() {
@@ -1436,7 +1410,6 @@ public final class RSModel {
             int[][] v={m.vertX,m.vertY,m.vertZ,m.faceIndexCount,m.faceTextureBack,m.faceTextureFront,
                 m.fishingSpotClarityBaseX,m.fishingSpotClarityBaseY,m.fishingSpotClarityBaseZ,m.fishingSpotClarityRippleGroup,m.facePickIndex};
             if(!source)return v;
-            if (DEFER_BROWSER_REBASE_ROWS) m.materializeRebasedRows();
             int[][] result=Arrays.copyOf(v,v.length+6);result[v.length]=m.faceDiffuseLight;
             result[v.length+1]=m.scenePolyNormalShift;result[v.length+2]=m.scenePolyNormalMagnitude;
             result[v.length+3]=m.vertXTransform;result[v.length+4]=m.vertYTransform;result[v.length+5]=m.vertZTransform;return result;
@@ -1919,7 +1892,6 @@ public final class RSModel {
 
 	final void removeFacesAndOrVerts(int deleteVerts, int var2, int deleteFaces) {
 		try {
-			if (DEFER_BROWSER_REBASE_ROWS) materializeRebasedRows();
 
 			this.faceHead -= deleteFaces;
 
@@ -1939,7 +1911,6 @@ public final class RSModel {
 
 	final void resetFaceVertHead(int var1) {
 		try {
-			if (DEFER_BROWSER_REBASE_ROWS) materializeRebasedRows();
 			this.faceHead = 0;
 			this.vertHead = 0;
 
@@ -1950,7 +1921,6 @@ public final class RSModel {
 
 	private void resetTransformCache(int var1) {
 		try {
-			if (DEFER_BROWSER_REBASE_ROWS) materializeRebasedRows();
 			if (var1 != 7972) {
 				this.translate2(120, 57, 20);
 			}
@@ -2834,7 +2804,6 @@ public final class RSModel {
         return rows != null && rows.length >= vertHead;
     }
     final void borrowBrowserBatchArrays(int[][] rows, int offset) {
-        if (DEFER_BROWSER_REBASE_ROWS) materializeRebasedRows();
         rows[offset] = this.vertXTransform; rows[offset + 1] = this.vertYTransform;
         rows[offset + 2] = this.vertZTransform; rows[offset + 3] = this.vertexParam6;
         rows[offset + 4] = this.vertexParam2; rows[offset + 5] = this.vertXRot;
@@ -2973,7 +2942,6 @@ public final class RSModel {
 		try {
             this.browserProjectionRowsOwned = false;
             this.browserProjectionTopologyChecked = false;
-            this.deferredRebaseX = this.deferredRebaseZ = 0;
 			if (!this.m_db) {
 				this.m_zb = new byte[faceCount];
 				this.facePickIndex = new int[faceCount];

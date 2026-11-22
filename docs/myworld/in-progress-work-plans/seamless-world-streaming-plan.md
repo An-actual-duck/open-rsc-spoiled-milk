@@ -478,6 +478,14 @@ collision, walls and the same picking results. A stale or incomplete
 stage must take the existing authoritative path. Keep movement
 receipts, NPC updates and animation timing with the game update.
 
+The fresh Chrome trace adopted 271 prepared interactive object models
+at the first roll. The existing worker already prepares those clones.
+The remaining server opcode 48/91 batches carry both additions and
+retirements. Local retirement, collision updates, and fence validation
+still happen on the client at the roll. Any future staged instance
+view must preserve the fence's checks on complete scenery and wall
+identity. Retain the live deltas for edits to the overlapping cells.
+
 Long intervals also occur with zero packet and geometry upload work.
 Correlate browser CPU samples with those exact submitted frames and
 identify the compiled Java methods on the page thread before moving a
