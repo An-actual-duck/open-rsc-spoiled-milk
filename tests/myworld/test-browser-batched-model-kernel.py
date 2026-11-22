@@ -32,6 +32,7 @@ def main():
         ('scene-rejected',str(current)+':'+str(jar),'scene',['current','on','reject']),
         ('edge-baseline',str(old)+':'+str(current)+':'+str(jar),'edges',['baseline']),
         ('edge-on',str(current)+':'+str(jar),'edges',['current']),
+        ('edge-native-validation',str(current)+':'+str(jar),'edges',['current','native-validation']),
         ('edge-rejected',str(current)+':'+str(jar),'edges',['current','reject'])]:
         execute(name,['java','-Xmx768m','-Djava.awt.headless=true','-cp',cp,'orsc.graphics.three.BrowserBatchedModelKernelFixture',mode,*flags]);text=(run/(name+'.log')).read_text();outputs[name]=re.search(r'(?:SCENE|EDGE)_DIGEST=([0-9a-f]{64})',text).group(1)
     assert len({outputs[n]for n in outputs if n.startswith('scene-')})==1,outputs

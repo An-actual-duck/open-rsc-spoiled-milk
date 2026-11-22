@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 import subprocess
 import time
+import urllib.error
 import urllib.request
 
 
@@ -138,6 +139,7 @@ def summarize_frame_rate(intervals):
         'lowestFps': rates[0],
         'p10Fps': rates[math.ceil(len(rates) * .1) - 1],
         'secondsBelow50Fps': sum(rate < 50 for rate in rates),
+        'secondsBelow60Fps': sum(rate < 60 for rate in rates),
     }
 
 
@@ -191,6 +193,40 @@ try {
 """
     return json.loads(subprocess.check_output(
         ['node', '--input-type=module', '-e', script, socket, method, json.dumps(params)], timeout=25, text=True))
+
+
+def save_hot_jit_sources(run, profile, command):
+    sites = {}
+    pending = [profile['head']]
+    while pending:
+        node = pending.pop()
+        pending.extend(node.get('children', ()))
+        frame = node['callFrame']
+        name = frame['functionName']
+        if node['selfSize'] and name.startswith('J_') and frame.get('scriptId') not in (None, '0') and not frame.get('url'):
+            key = (name, frame['scriptId'])
+            sites[key] = sites.get(key, 0) + node['selfSize']
+    largest = sorted(sites.items(), key=lambda item: item[1], reverse=True)[:6]
+    if not largest:
+        return None
+    command('Debugger.enable')
+    try:
+        sources = []
+        for (name, script_id), size in largest:
+            entry = {'function': name, 'scriptId': script_id, 'estimatedBytes': size}
+            try:
+                source = command('Debugger.getScriptSource', {'scriptId': script_id})['scriptSource']
+                if source and len(source) <= 65536:
+                    entry['source'] = source
+            except (urllib.error.HTTPError, KeyError):
+                # V8 may have discarded a generated script by the end of the walk.
+                pass
+            sources.append(entry)
+    finally:
+        command('Debugger.disable')
+    path = run / 'chrome-hot-jit-sources.json'
+    path.write_text(json.dumps(sources, indent=2) + '\n')
+    return path.name
 
 
 def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_profile=False,
@@ -322,6 +358,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples, terrainWorker:p.terrainWorker,surfaceMeshWorker:p.surfaceMeshWorker,sceneryWorker:p.surfaceSceneryMeshWorker,renderWorker:p.gpu?.renderWorker,
                 graphics:{vendor:p.gpu?.vendor,renderer:p.gpu?.renderer,context:p.gpu?.contextAttributes},
                 modelBatchWork:p.batchedModelKernelWork,
+                modelBatchPreparation:p.batchedModelPreparationWork,
                 atlas:{plans:p.gpu?.spritePlanCalls,commits:p.gpu?.spriteCommitCalls,uploadedBytes:p.gpu?.spriteUploadedBytes},
                 inlineWorldProgressFrames:p.gpu?.inlineWorldProgressFrames,inlineOverlayFrames:p.gpu?.inlineOverlayFrames,
                 geometry:{uploadedBytes:p.gpu?.uploadedBytes,repacks:p.gpu?.repackedChunks},
@@ -357,6 +394,14 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 path.write_text(json.dumps(profile) + '\n')
                 result['chromeProfile'] = {'path': path.name,
                                            'scope': 'Sampled Chrome main-thread JavaScript heap allocations, including collected objects'}
+                try:
+                    result['chromeProfile']['hotJitSources'] = save_hot_jit_sources(run, profile, chrome_command)
+                except (OSError, KeyError, ValueError) as error:
+                    result['chromeProfile']['hotJitSourceError'] = str(error)
+            if fixture.get('modelBatchNativeValidation'):
+                preparation = result.get('modelBatchPreparation') or {}
+                if not preparation.get('nativeModels') or preparation.get('roleMapOperations') != 0:
+                    raise RuntimeError('The walk did not exercise native-only inter-model alias checks')
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
             server_status = json.loads((run / 'status.json').read_text())

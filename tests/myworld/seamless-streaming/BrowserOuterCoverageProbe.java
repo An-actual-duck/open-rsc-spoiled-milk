@@ -316,12 +316,10 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		verifyDetachedGameplayInstalls(client, Boolean.getBoolean("spoiledmilk.sustainedBrowserWalk") ? 3 : 2);
-		verifyCatchUpBudget(client, 0);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
 	}
 
 	private static void verifyUntracedTravel(mudclient client, Method walk, int[] before) throws Exception {
-		long catchUpBefore = catchUpBudgetYields(client);
 		Object actor = client.getLocalPlayer();
 		int[][] destinations = {{278,609}, {284,609}, {291,597}, {322,597}, {291,597}, {284,609}, {252,609}};
 		for (int[] destination : destinations) {
@@ -339,7 +337,6 @@ public final class BrowserOuterCoverageProbe {
 		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":rolled=3");
 		verifyDetachedGameplayInstalls(client, 3);
-		verifyCatchUpBudget(client, catchUpBefore);
 		if (Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements")) {
 			int verified = client.getVerifiedWorkerSceneryMeshes(), mismatched = client.getMismatchedWorkerSceneryMeshes();
 			if (verified == 0 || mismatched != 0) throw new IllegalStateException("Scenery mesh parity " + verified + "/" + mismatched
@@ -355,18 +352,6 @@ public final class BrowserOuterCoverageProbe {
 			BrowserBootstrap.report("scenery-meshing:" + row);
 		}
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
-	}
-
-	private static long catchUpBudgetYields(mudclient client) throws ReflectiveOperationException {
-		if (!Boolean.getBoolean("spoiledmilk.browserBudgetCatchUp")) return 0;
-		return (Long) mudclient.class.getMethod("getBrowserCatchUpBudgetYields").invoke(client);
-	}
-
-	private static void verifyCatchUpBudget(mudclient client, long before) throws ReflectiveOperationException {
-		if (!Boolean.getBoolean("spoiledmilk.browserBudgetCatchUp")) return;
-		long yields = catchUpBudgetYields(client) - before;
-		if (yields <= 0) throw new IllegalStateException("Catch-up budget never yielded to presentation");
-		BrowserBootstrap.report("outer-coverage:catch-up-yields:" + yields);
 	}
 
 	private static void verifyDetachedGameplayInstalls(mudclient client, int expected) {

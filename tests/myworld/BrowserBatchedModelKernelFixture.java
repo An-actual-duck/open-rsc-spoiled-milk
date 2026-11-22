@@ -23,10 +23,24 @@ public final class BrowserBatchedModelKernelFixture {
         for(int[] a:arrays(m)){if(a==null){text(d,"null-array");continue;}text(d,"length="+a.length);for(int v:a){d.update((byte)(v>>>24));d.update((byte)(v>>>16));d.update((byte)(v>>>8));d.update((byte)v);}}
     }
     static final class Oracle implements BrowserBatchedModelKernel.Backend {
-        final boolean reject,fail;int calls,models,vertices;
-        Oracle(boolean reject,boolean fail){this.reject=reject;this.fail=fail;}
+        final boolean reject,fail,rejectAliases;int calls,models,vertices,aliasRejections;
+        Oracle(boolean reject,boolean fail){this(reject,fail,false);}
+        Oracle(boolean reject,boolean fail,boolean rejectAliases){this.reject=reject;this.fail=fail;this.rejectAliases=rejectAliases;}
         public boolean transform(int size,int[][] rows,int[] counts,int[] camera,int[] trig,int[] trigSource){
             calls++;if(fail)throw new IllegalStateException("Injected backend failure");if(reject)return false;
+            if (rejectAliases) {
+                for (int at = 0; at < size * 8; at++) {
+                    if (counts[at / 8] == 0 || at % 8 < 3) continue;
+                    int[] writer = rows[at];
+                    boolean conflict = writer == trigSource;
+                    for (int other = 0; other < size * 8; other++)
+                        if (at != other && counts[other / 8] > 0 && rows[other] == writer) conflict = true;
+                    if (conflict) {
+                        aliasRejections++;
+                        return false;
+                    }
+                }
+            }
             int[] liveTable=FastMath.trigTable1024;
             int[] packetTable=liveTable==null?null:liveTable.clone();
             for(int axis=0;axis<3;axis++)if(camera[5+axis]!=0){packetTable[camera[5+axis]]=trig[axis*2];packetTable[camera[5+axis]+1024]=trig[axis*2+1];}
@@ -52,7 +66,8 @@ public final class BrowserBatchedModelKernelFixture {
     static void noReferences(BrowserBatchedModelKernel batch)throws Exception {
         for(Object x:(Object[])field(BrowserBatchedModelKernel.class,"models").get(batch))check(x==null,"Retained model");
         for(Object x:(Object[])field(BrowserBatchedModelKernel.class,"rows").get(batch))check(x==null,"Retained primitive array");
-        check(((Map<?,?>)field(BrowserBatchedModelKernel.class,"roles").get(batch)).isEmpty(),"Retained role map");
+        Map<?,?> roles = (Map<?,?>)field(BrowserBatchedModelKernel.class,"roles").get(batch);
+        check(roles == null || roles.isEmpty(),"Retained role map");
         check(field(BrowserBatchedModelKernel.class,"trigSource").get(batch)==null,"Retained trig table");
     }
     static String rotateSequence(List<RSModel> models,int[] camera,BrowserBatchedModelKernel batch)throws Exception {
@@ -67,7 +82,7 @@ public final class BrowserBatchedModelKernelFixture {
         }catch(Throwable e){return e.getClass().getName()+":"+e.getMessage();}
         finally {if(batch!=null){batch.discard();noReferences(batch);}}
     }
-    static void edges(boolean current,boolean reject)throws Exception {
+    static void edges(boolean current,boolean reject,boolean nativeValidation)throws Exception {
         MessageDigest digest=MessageDigest.getInstance("SHA-256");long packets=0,numeric=0,metadata=0,aliases=0,literal=0;
         for(int scenario=0;scenario<13;scenario++){
             int[] old=FastMath.trigTable1024;FastMath.trigTable1024=old.clone();
@@ -87,10 +102,17 @@ public final class BrowserBatchedModelKernelFixture {
                 if(scenario==10){culled(ms.get(0));camera[4]=0;arrays(ms.get(1))[2][0]=camera[2];}
                 if(scenario==11){culled(ms.get(0));camera[5]=-1;}
                 if(scenario==12)ms.get(1).setInteractionOnly(true);
-                Oracle oracle=new Oracle(reject,false);BrowserBatchedModelKernel batch=current?new BrowserBatchedModelKernel(oracle):null;
+                Oracle oracle=new Oracle(reject,false,nativeValidation);BrowserBatchedModelKernel batch=current?new BrowserBatchedModelKernel(oracle,nativeValidation):null;
                 String outcome=rotateSequence(ms,camera,batch);text(digest,scenario+":"+outcome);
                 for(RSModel m:ms)modelDigest(digest,m);
-                if(batch!=null){int[] w=batch.work();packets+=w[2];numeric+=w[3];metadata+=w[5];literal+=w[6];aliases+=w[8];if(scenario==0&&!reject){check(w[2]==3&&w[3]==300&&w[11]==128,"Large clean group was not batched128/128/44");}}
+                if(batch!=null){
+                    int[] w=batch.work();packets+=w[2];numeric+=w[3];metadata+=w[5];literal+=w[6];aliases+=w[8];
+                    if(scenario==0&&!reject)check(w[2]==3&&w[3]==300&&w[11]==128,"Large clean group was not batched128/128/44");
+                    if(nativeValidation){
+                        check(w[13]==0,"Native validation made Java role map operations");
+                        if(scenario>=5&&scenario<=9)check(oracle.aliasRejections==1&&w[7]==1,"Aliasing packet did not reach whole-packet rejection");
+                    }
+                }
             }finally{FastMath.trigTable1024=old;}
         }
         System.out.println("EDGE_DIGEST="+hex(digest));
@@ -129,7 +151,7 @@ public final class BrowserBatchedModelKernelFixture {
         System.out.println("FAILURE_CLEANUP_PASS checks="+checks);
     }
     public static void main(String[] args)throws Exception {
-        if(args[0].equals("edges"))edges(args[1].equals("current"),args.length>2&&args[2].equals("reject"));
+        if(args[0].equals("edges"))edges(args[1].equals("current"),args.length>2&&args[2].equals("reject"),args.length>2&&args[2].equals("native-validation"));
         else if(args[0].equals("scene"))scene(args[1].equals("current"),args[2].equals("on"),args.length>3&&args[3].equals("reject"));
         else failureCleanup();
     }

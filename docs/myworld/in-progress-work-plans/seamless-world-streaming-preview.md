@@ -1490,6 +1490,17 @@ the original five-update limit across successive draws. A single
 indivisible game update still runs to completion. The runtime continues
 to apply the original server receipts and interpolation rules.
 
+The first pair improved the worst second from 38 to 42 FPS in Firefox
+and from 42 to 43 FPS in Chrome. The repeat in reversed order moved the
+worst second from 39 to 37 FPS in Firefox and from 45 to 39 FPS in
+Chrome. The repeat dropped Firefox's seconds below 50 from five to four
+and Chrome's from five to three. The movement trace applied all three
+rolls, reached the authoritative destination and sampled a maximum
+visible step of 0.328 tiles through the walk. All sampled holds and
+input closures were zero. The scheduler was removed after the mixed
+repeat. Its exact source and staged candidate remain available.
+[First Firefox candidate](../../../output/tests/browser-gameplay-spike/catch-up-budget-firefox/firefox-result.json) · [First Chrome candidate](../../../output/tests/browser-gameplay-spike/catch-up-budget-chrome/chrome-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/catch-up-repeat-control-firefox/firefox-result.json) · [Firefox repeat candidate](../../../output/tests/browser-gameplay-spike/catch-up-repeat-budget-firefox/firefox-result.json) · [Chrome repeat control](../../../output/tests/browser-gameplay-spike/catch-up-repeat-control-chrome/chrome-result.json) · [Chrome repeat candidate](../../../output/tests/browser-gameplay-spike/catch-up-repeat-budget-chrome/chrome-result.json) · [Movement trace](../../../output/tests/browser-gameplay-spike/catch-up-movement-trace-firefox/firefox-result.json)
+
 The Chrome allocation sample attributed about 1 GB of transient
 allocation to the browser model projection module across the walk. Its
 largest application site was the whole-packet validation function, which

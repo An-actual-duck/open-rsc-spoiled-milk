@@ -17,7 +17,7 @@ public final class BrowserBatchedModelKernel {
     private final int[] counts = new int[MAX_MODELS], camera = new int[8], trig = new int[6];
     private final RSModel[] models = new RSModel[MAX_MODELS];
     private final boolean[] visible = new boolean[MAX_MODELS];
-    private final IdentityHashMap<int[], Boolean> roles = new IdentityHashMap<int[], Boolean>(MAX_MODELS * 8);
+    private final IdentityHashMap<int[], Boolean> roles;
     private int size, numericModels, pendingArrayRefs, pendingMapOperations;
     private long packetVertices;
     private int[] trigSource;
@@ -30,11 +30,15 @@ public final class BrowserBatchedModelKernel {
             public boolean transform(int size, int[][] rows, int[] counts, int[] camera, int[] trig, int[] trigSource) {
                 return transformPacket(size, rows, counts, camera, trig, trigSource);
             }
-        });
+        }, Boolean.getBoolean("spoiledmilk.browserModelBatchNativeValidation"));
     }
     BrowserBatchedModelKernel(Backend backend) {
+        this(backend, false);
+    }
+    BrowserBatchedModelKernel(Backend backend, boolean validateAtNativeBoundary) {
         if (backend == null) throw new NullPointerException("backend");
         this.backend = backend;
+        this.roles = validateAtNativeBoundary ? null : new IdentityHashMap<int[], Boolean>(MAX_MODELS * 8);
     }
     private static native boolean transformPacket(int size, int[][] rows, int[] counts, int[] camera, int[] trig, int[] trigSource);
 
@@ -76,20 +80,31 @@ public final class BrowserBatchedModelKernel {
         if (count > 0) {
             model.borrowBrowserBatchArrays(rows, offset); pendingArrayRefs += 8;
             if (!validRow(rows, offset, count)) { Arrays.fill(rows, offset, offset + 8, null); return false; }
-            // Coefficients are shared by this segment. A writer must not change
-            // their source table or any earlier model's reader/writer storage.
-            boolean conflict = false; pendingMapOperations += 8;
-            for (int n = 0; n < 3; n++) conflict |= Boolean.TRUE.equals(roles.get(rows[offset + n]));
-            for (int n = 3; n < 8; n++)
-                conflict |= rows[offset + n] == trigSource || roles.containsKey(rows[offset + n]);
-            if (conflict) {
-                add(8, 1); Arrays.fill(rows, offset, offset + 8, null); return false;
+            // The browser backend already checks the complete packet against
+            // actual buffer ranges, including coefficients. A rejected packet
+            // writes nothing and is replayed in Java in submission order.
+            if (roles != null && !recordRoles(offset)) {
+                add(8, 1);
+                Arrays.fill(rows, offset, offset + 8, null);
+                return false;
             }
-            for (int n = 0; n < 3; n++) roles.put(rows[offset + n], Boolean.FALSE);
-            for (int n = 3; n < 8; n++) roles.put(rows[offset + n], Boolean.TRUE);
-            pendingMapOperations += 8; numericModels++; packetVertices += count;
+            numericModels++;
+            packetVertices += count;
         }
         models[size] = model; visible[size] = inFrustum; counts[size] = count; size++;
+        return true;
+    }
+
+    private boolean recordRoles(int offset) {
+        boolean conflict = false;
+        pendingMapOperations += 8;
+        for (int n = 0; n < 3; n++) conflict |= Boolean.TRUE.equals(roles.get(rows[offset + n]));
+        for (int n = 3; n < 8; n++)
+            conflict |= rows[offset + n] == trigSource || roles.containsKey(rows[offset + n]);
+        if (conflict) return false;
+        for (int n = 0; n < 3; n++) roles.put(rows[offset + n], Boolean.FALSE);
+        for (int n = 3; n < 8; n++) roles.put(rows[offset + n], Boolean.TRUE);
+        pendingMapOperations += 8;
         return true;
     }
 
@@ -129,7 +144,9 @@ public final class BrowserBatchedModelKernel {
     void discard() {
         Arrays.fill(rows, 0, size * 8, null); Arrays.fill(models, 0, size, null);
         Arrays.fill(counts, 0, size, 0); Arrays.fill(visible, 0, size, false);
-        size = numericModels = pendingArrayRefs = pendingMapOperations = 0; packetVertices = 0; if (!roles.isEmpty()) roles.clear();
+        size = numericModels = pendingArrayRefs = pendingMapOperations = 0;
+        packetVertices = 0;
+        if (roles != null && !roles.isEmpty()) roles.clear();
         coefficientsKnown = false; trigSource = null;
     }
     public int[] work() { return work.clone(); }

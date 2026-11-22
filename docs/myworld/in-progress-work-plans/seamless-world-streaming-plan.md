@@ -430,10 +430,20 @@ frame production or resource ownership before a new pacing comparison.
 Profile the current worker baseline during the first load, steady travel
 and the return roll. Separate Java ticks and scene preparation from
 browser work before submission, worker queue time and WebGL execution.
-The latest Full HD packet trace found scene-baseline receives among the
-remaining gaps. A receive can replay several ordered packets at the
-fence. Correlate the individual context, player, and scenery stages
-before changing the publication boundary.
+Full HD packet traces found scene-baseline receives among the remaining
+gaps. A receive can replay several ordered packets at the fence. The
+prebuilt halo trial reduced context activation to 0–1 ms and revealed
+mixed pacing across whole walks. The Chrome CPU trace also captured
+135 ms with four costly game updates, scene capture and zero geometry
+uploads. Keep the baseline fence intact while investigating the recurring
+CPU and allocation work on resident frames.
+
+Use the exact per-kernel scratch and native buffer validation trials to
+test the measured model projection allocations. Compare the worst second,
+the number of seconds below 60 FPS and the tail of the frame interval
+distribution with a matched control. Attribute any gain to work saved
+in the live browser, and stop work on a hot path when repeated travel
+results give mixed or negligible gains.
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.

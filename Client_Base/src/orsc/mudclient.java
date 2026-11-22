@@ -121,9 +121,6 @@ public final class mudclient implements Runnable {
 	public static final int TRAVEL_TIMING_VALUES = 9;
 	static final boolean TRACE_BROWSER_FRAME_STAGES = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.browserFrameStageTrace");
-	private static final boolean BUDGET_BROWSER_CATCH_UP = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
-		&& Boolean.getBoolean("spoiledmilk.browserBudgetCatchUp");
-	private volatile long browserCatchUpBudgetYields;
 	private float browserUiDrawMs;
 	private float browserInventoryDrawMs;
 	private float browserMinimapDrawMs;
@@ -1791,9 +1788,6 @@ public final class mudclient implements Runnable {
 			try {
 				final int targetFps = Math.max(1, OPENGL_PRIMARY_TARGET_FPS);
 				final long frameNanos = Math.max(1L, NANOS_PER_SECOND / targetFps);
-				final boolean budgetCatchUp = BUDGET_BROWSER_CATCH_UP && Renderer3DSettings.isBrowserPresentationAvailable();
-				final long catchUpBudgetNanos = frameNanos / 4;
-				int carriedCatchUpUpdates = 0;
 				long nextUpdateNanos = System.nanoTime();
 
 				while (this.threadState >= 0) {
@@ -1847,9 +1841,8 @@ public final class mudclient implements Runnable {
 					}
 
 					int updateCount = 0;
-					int updateLimit = MODERN_LOOP_MAX_CATCH_UP_UPDATES - carriedCatchUpUpdates;
 					long browserUpdateStarted = now;
-					while (now >= nextUpdateNanos && updateCount < updateLimit) {
+					while (now >= nextUpdateNanos && updateCount < MODERN_LOOP_MAX_CATCH_UP_UPDATES) {
 						long updateStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
 						this.update();
 						if (telemetryEnabled) {
@@ -1858,22 +1851,13 @@ public final class mudclient implements Runnable {
 						nextUpdateNanos += frameNanos;
 						updateCount++;
 						now = System.nanoTime();
-						if (budgetCatchUp && now - browserUpdateStarted >= catchUpBudgetNanos) break;
 					}
 					if (TRACE_BROWSER_FRAME_STAGES) {
 						browserUpdates += updateCount;
 						browserUpdateNanos += now - browserUpdateStarted;
 					}
-					if (updateCount == updateLimit && now >= nextUpdateNanos) {
+					if (updateCount == MODERN_LOOP_MAX_CATCH_UP_UPDATES && now >= nextUpdateNanos) {
 						nextUpdateNanos = now + frameNanos;
-					}
-					if (budgetCatchUp && now >= nextUpdateNanos) {
-						// Present the current real game state before consuming the next due update.
-						// The original catch-up limit still bounds the work across successive draws.
-						carriedCatchUpUpdates += updateCount;
-						browserCatchUpBudgetYields++;
-					} else {
-						carriedCatchUpUpdates = 0;
 					}
 
 					long repositionStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
@@ -27637,10 +27621,6 @@ public final class mudclient implements Runnable {
 		target[offset + 6] = browserSceneSetupMs;
 		target[offset + 7] = browserSceneCaptureMs;
 		target[offset + 8] = browserSceneryCollectionMs;
-	}
-
-	public long getBrowserCatchUpBudgetYields() {
-		return browserCatchUpBudgetYields;
 	}
 
 	public boolean shouldRetainLastPresentedFrame() {
