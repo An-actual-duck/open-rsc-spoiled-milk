@@ -465,6 +465,24 @@ path when a model can touch the pointer or has unverified inputs. The
 current preview also keeps verified transforms through pure origin
 shifts. Scene capture used 14–21 ms less at the three traced rolls.
 [Producer trace and projection proofs](seamless-world-streaming-preview.md#remaining-client-work-after-compact-conversion)
+
+The split boundary trace shows that the terrain swap and decode are
+already small. In the Firefox control, local scenery retirement and
+rebase took 6–13 ms. The fence callback also replays local object and
+wall updates on the game thread. If that work remains a large share of
+the roll, stage the next local instance view from verified world-space
+cells. Keep overlapping scene models and collision contributors by
+identity, then apply authoritative additions, removals and edits at
+the fence. Check that the staged view reproduces instance order,
+collision, walls and the same picking results. A stale or incomplete
+stage must take the existing authoritative path. Keep movement
+receipts, NPC updates and animation timing with the game update.
+
+Long intervals also occur with zero packet and geometry upload work.
+Correlate browser CPU samples with those exact submitted frames and
+identify the compiled Java methods on the page thread before moving a
+new task into a worker. A detached worker must accept versioned inputs
+and return an exact result that the client can publish without waiting.
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.

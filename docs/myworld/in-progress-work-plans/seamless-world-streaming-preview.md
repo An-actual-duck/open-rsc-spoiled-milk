@@ -1751,6 +1751,20 @@ work or geometry uploads. The accompanying timing sample attributed
 time the browser or Java runtime can spend on other work.
 [Split Firefox trace](../../../output/tests/browser-gameplay-spike/halo-activation-details-firefox/firefox-result.json) · [Region phase breakdown](../../../output/tests/browser-gameplay-spike/halo-activation-details-firefox/region-stage-summary.json)
 
+Using the existing streaming log queue reduced the activation log
+span to under 1 ms at all three rolls. The three enclosing submission
+intervals moved from 124, 75, and 113 ms to 143, 86, and 121 ms in the
+traced pair. In the untraced Firefox pair the 99th percentile fell
+from 29 to 28 ms, the longest interval rose from 167 to 175 ms, and
+seconds below 60 FPS rose from 17 to 20. In Chrome, the 99th percentile
+fell from 28.7 to 24.7 ms, the longest interval rose from 119.3 to
+134.6 ms, and seconds below 60 FPS held at 13. Each walk completed
+the three rolls and reversal in one epoch with zero holds or input
+closures. The isolated logging change was retired after the mixed
+results. The control JAR still contained the disabled deferred-signature
+trial. The split trace remains available.
+[Queued-log Firefox trace](../../../output/tests/browser-gameplay-spike/queued-halo-log-phase-firefox/firefox-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/queued-halo-log-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/queued-halo-log-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/queued-halo-log-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/queued-halo-log-chrome/chrome-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

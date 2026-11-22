@@ -1940,7 +1940,8 @@ public class PacketHandler {
 			"NATIVE_TERRAIN_PREDICTED_HALO_ACTIVATED center="
 				+ predicted.getCurrentChunkX() + ","
 				+ predicted.getCurrentChunkY();
-		logTerrainStreaming(summary);
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
 		recordContextPhase("halo-activation-log", phaseStarted);
 		return true;
 	}
