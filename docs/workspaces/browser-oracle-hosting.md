@@ -50,11 +50,29 @@ on that connection. Ordinary browser and desktop connections retain their
 normal mode. The launcher presents the extra choice only in a release
 explicitly marked for streaming.
 
-Build the integrated release and verify both choices against a private
-server first. Activate the compatible server during an authorized
-maintenance window, then switch the static browser release pointer and
-verify both modes. The previous immutable browser release remains
-available as the static rollback.
+Use an instrumented private playtest connected to the authoritative
+Oracle game server as the release benchmark. Keep the previous browser
+build on the public page while testing. Use the exact candidate client
+and bootstrap archives, public startup preset, versioned HTTP and Range
+behavior, and the real Oracle WSS endpoint. Record any difference between
+the preview asset server and Oracle's static hosting. Loopback gameplay
+and login checks are useful for diagnosing failures.
+
+Play both loading modes after login. Start before the reported crossing
+and approach it on foot so the browser builds the same preceding terrain
+coverage. Include multiple consecutive scene changes, reversals, the
+route through Falador and the terrain seam reported near `(378,477,0)`,
+and an upstairs/downstairs round trip. Use the normal 1920×1080 display
+and compare the same camera and graphics settings in each mode. Capture
+scene packet arrivals, terrain worker completions, fresh rendered frames,
+input readiness and Oracle tick timing. Check the terrain on both sides
+of the scene change once the renderer reports ready. Treat visible seams,
+world edges, freezes and repeatable travel stops as failed crossings.
+
+Activate a required compatible server during an authorized maintenance
+window. Switch the static browser release pointer after the Oracle
+playtest passes. Preserve the previous immutable browser release for
+static rollback.
 
 The private rollout rehearsal signed in through both buttons at
 1920×1080 using keyboard and mouse. World Streaming also completed
