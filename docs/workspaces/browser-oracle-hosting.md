@@ -56,6 +56,15 @@ maintenance window, then switch the static browser release pointer and
 verify both modes. The previous immutable browser release remains
 available as the static rollback.
 
+The private rollout rehearsal signed in through both buttons at
+1920×1080 using keyboard and mouse. World Streaming also completed
+three verified scene switches and returned to `(252,609,0)` in one
+load epoch with zero frame holds or input closures. That server
+enabled only the per-connection World Streaming capability for
+surface travel. The public frontend preset and versioned WSS and
+archive paths passed the policy and Java bootstrap checks.
+[Local chooser](http://127.0.0.1:8715/?mode=webgl&physical=on&loadingchoices=on) · [Firefox travel](../../output/tests/browser-gameplay-spike/world-loading-opt-in-route-firefox/firefox-result.json)
+
 ## Why direct WSS
 
 The existing game's connection admission, packet limits, login checks and player
