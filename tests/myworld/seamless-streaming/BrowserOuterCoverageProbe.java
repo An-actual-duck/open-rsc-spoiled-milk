@@ -431,6 +431,16 @@ public final class BrowserOuterCoverageProbe {
 			if (work[0] <= 0 || work[1] <= 0) throw new IllegalStateException("No model retained its transform across the rolls");
 			BrowserBootstrap.report("outer-coverage:preserved-model-rebase:models=" + work[0] + ":vertices=" + work[1]);
 		}
+		if (Boolean.getBoolean("spoiledmilk.deferBrowserRebaseRows")) {
+			long[] work;
+			try {
+				work = (long[]) RSModel.class.getMethod("getDeferredBrowserRebaseWork").invoke(null);
+			} catch (ReflectiveOperationException error) {
+				throw new IllegalStateException("Deferred model rebase counters are unavailable", error);
+			}
+			if (work[0] <= 0) throw new IllegalStateException("No carried model deferred its rows");
+			BrowserBootstrap.report("outer-coverage:deferred-model-rows:vertices=" + work[0] + ":written=" + work[1]);
+		}
 		if (!Boolean.getBoolean("spoiledmilk.browserTravelTrace")) return;
 		int reused = client.getResidentPlacementPublicationsReused();
 		if (reused <= 0) throw new IllegalStateException("Resident scenery was never reused between placement events");

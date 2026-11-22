@@ -31,6 +31,12 @@ with (run/'current-camera-rebase.log').open('w') as log:
 results['current-camera-rebase']=(run/'current-camera-rebase.log').read_text().strip().splitlines()[-1]
 with (run/'rebase-math.log').open('w') as log:
  subprocess.run([*rebase_java,'cached-rebase'],check=True,stdout=log,stderr=subprocess.STDOUT)
+deferred_java = [*rebase_java[:4], '-Dspoiledmilk.deferBrowserRebaseRows=true', *rebase_java[4:]]
+with (run/'current-deferred-rebase.log').open('w') as log:
+ subprocess.run([*deferred_java,'current','true'], check=True, stdout=log, stderr=subprocess.STDOUT)
+results['current-deferred-rebase']=(run/'current-deferred-rebase.log').read_text().strip().splitlines()[-1]
+with (run/'deferred-rebase-math.log').open('w') as log:
+ subprocess.run([*deferred_java,'cached-rebase'], check=True, stdout=log, stderr=subprocess.STDOUT)
 assert len(set(results.values()))==1,results
 with(run/'math.log').open('w')as log:subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-cp',str(current)+':'+str(jar),'orsc.graphics.three.BrowserModelPickBoundsFixture','math'],check=True,stdout=log,stderr=subprocess.STDOUT)
 for fixture in ['SceneOwnershipCullFixture','BrowserWallRoofOwnershipFixture']:

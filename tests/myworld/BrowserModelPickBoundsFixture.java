@@ -143,6 +143,40 @@ public final class BrowserModelPickBoundsFixture {
         }
         require(cached > 100 && literal > 0, "Rebase corpus did not exercise both paths");
         System.out.println("PASS " + cached + " cached origin shifts and " + literal + " literal fallbacks");
+        if (Boolean.getBoolean("spoiledmilk.deferBrowserRebaseRows")) deferredRebaseConsumers();
+    }
+
+    private static void deferredRebaseConsumers() throws Exception {
+        RSModel model = dense();
+        model.rotate1024(0, 9, 0, (byte) -122, -1024, 113, 189, 57, 8);
+        Field xField = RSModel.class.getDeclaredField("vertXTransform");
+        xField.setAccessible(true);
+        int[] xRows = (int[]) xField.get(model);
+        int originalX = xRows[0];
+        int[] bounds = new int[6];
+        require(model.copyWorldFaceBounds(bounds), "Initial world bounds unavailable");
+        int originalMinX = bounds[0];
+
+        model.rebaseWorldOrigin(6144, 0);
+        model.rebaseWorldOrigin(6144, -128);
+        require(xRows[0] == originalX, "An unused row was rewritten");
+        require(model.copyWorldFaceBounds(bounds) && bounds[0] == originalMinX + 12288,
+            "The live world bounds did not follow the deferred rows");
+        int[][] borrowed = new int[8][];
+        model.borrowBrowserBatchArrays(borrowed, 0);
+        require(borrowed[0][0] == originalX + 12288, "The batch read an old local coordinate");
+
+        long written = RSModel.getDeferredBrowserRebaseWork()[1];
+        model.rebaseWorldOrigin(6144, 128);
+        model.rebaseWorldOrigin(-6144, -128);
+        model.borrowBrowserBatchArrays(borrowed, 0);
+        require(borrowed[0][0] == originalX + 12288 && RSModel.getDeferredBrowserRebaseWork()[1] == written,
+            "Opposite shifts should cancel before a reader needs the rows");
+
+        model.rebaseWorldOrigin(-12288, 128);
+        model.ensureCapacity(xRows.length + 1, model.faceHead);
+        require(((int[]) xField.get(model))[0] == originalX, "Capacity growth retained the old local coordinates");
+        System.out.println("PASS accumulated and cancelled row shifts, camera bounds, batch reads, and capacity growth");
     }
     static RSModel dense(){
         int side=12;RSModel m=new RSModel((side+1)*(side+1),side*side);for(int z=0;z<=side;z++)for(int x=0;x<=side;x++)m.insertVertex((x-6)*8,110,(z-6)*8);
