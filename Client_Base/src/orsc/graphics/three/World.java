@@ -148,10 +148,14 @@ public final class World {
 	private int detachedSurfaceGameplayInstalls;
 	private volatile int acceptedSurfaceTerrainWordReplies;
 	private volatile int acceptedSurfaceGameplayWordReplies;
+	private volatile int acceptedSurfaceCompatibilityReplies;
+	private volatile int localSurfaceCompatibilityBuilds;
 
 	public int getDetachedSurfaceGameplayInstalls() { return detachedSurfaceGameplayInstalls; }
 	public int getAcceptedSurfaceTerrainWordReplies() { return acceptedSurfaceTerrainWordReplies; }
 	public int getAcceptedSurfaceGameplayWordReplies() { return acceptedSurfaceGameplayWordReplies; }
+	public int getAcceptedSurfaceCompatibilityReplies() { return acceptedSurfaceCompatibilityReplies; }
+	public int getLocalSurfaceCompatibilityBuilds() { return localSurfaceCompatibilityBuilds; }
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -1087,6 +1091,7 @@ public final class World {
 
 	private static volatile SurfaceMeshWorker browserSurfaceMeshWorker;
 	private static volatile SurfaceDrawWordWorker browserSurfaceDrawWordWorker;
+	private static volatile SurfaceDrawWordWorker browserSurfaceCompatibilityWordWorker;
 	private static volatile SurfaceGameplayWordWorker browserSurfaceGameplayWordWorker;
 	private static final int SURFACE_GAMEPLAY_WORD_MAGIC = 0x52534701;
 	private static final int SURFACE_GAMEPLAY_MAX_BYTES = 24 * 1024 * 1024;
@@ -1107,6 +1112,10 @@ public final class World {
 
 	public static void installSurfaceDrawWordWorker(SurfaceDrawWordWorker worker) { browserSurfaceDrawWordWorker = worker; }
 
+	public static void installSurfaceCompatibilityWordWorker(SurfaceDrawWordWorker worker) {
+		browserSurfaceCompatibilityWordWorker = worker;
+	}
+
 	public static void installSurfaceMeshWorker(SurfaceMeshWorker worker) {
 		browserSurfaceMeshWorker = worker;
 	}
@@ -1119,7 +1128,7 @@ public final class World {
 
 	public byte[] buildSurfaceMeshPacket(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs,
 		java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
-		Renderer3DWorldChunkFrame.ChunkMesh[] meshes = buildSurfaceDrawProducts(source, offsetX, offsetZ, dx, dz, includeRoofs, prepareDrawInputs);
+		Renderer3DWorldChunkFrame.ChunkMesh[] meshes = buildSurfaceDrawProducts(source, offsetX, offsetZ, dx, dz, includeRoofs, true, prepareDrawInputs);
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
 			output.writeObject(meshes[0]);
@@ -1130,7 +1139,12 @@ public final class World {
 
 	public int[] buildSurfaceDrawWordPacket(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs,
 		java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
-		Renderer3DWorldChunkFrame.ChunkMesh[] meshes = buildSurfaceDrawProducts(source, offsetX, offsetZ, dx, dz, includeRoofs, prepareDrawInputs);
+		return buildSurfaceDrawWordPacket(source, offsetX, offsetZ, dx, dz, includeRoofs, true, prepareDrawInputs);
+	}
+
+	public int[] buildSurfaceDrawWordPacket(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs,
+		boolean includeFixed, java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
+		Renderer3DWorldChunkFrame.ChunkMesh[] meshes = buildSurfaceDrawProducts(source, offsetX, offsetZ, dx, dz, includeRoofs, includeFixed, prepareDrawInputs);
 		int[] fixed = meshes[0] == null ? new int[0] : meshes[0].writeDetachedTerrainWords();
 		int[] compatibility = meshes[1] == null ? new int[0] : meshes[1].writeDetachedTerrainWords();
 		if ((meshes[0] != null && fixed.length == 0) || (meshes[1] != null && compatibility.length == 0)) return new int[0];
@@ -1143,12 +1157,13 @@ public final class World {
 	}
 
 	private Renderer3DWorldChunkFrame.ChunkMesh[] buildSurfaceDrawProducts(byte[] source, int offsetX, int offsetZ, int dx,
-		int dz, boolean includeRoofs, java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
+		int dz, boolean includeRoofs, boolean includeFixed,
+		java.util.function.Consumer<Renderer3DWorldChunkFrame.ChunkMesh> prepareDrawInputs) throws IOException {
 		NativeLayeredTerrainSnapshot terrain = NativeLayeredTerrainSnapshot.readSurfaceWorkerSource(source);
 		int x = worldTileToSection(Math.addExact(Math.multiplyExact(terrain.getCurrentChunkX(), SECTION_SIZE), offsetX));
 		int z = worldTileToSection(Math.addExact(Math.multiplyExact(terrain.getCurrentChunkY(), SECTION_SIZE), offsetZ));
 		WorldGpuChunkMesh geometry = buildPresentationGeometry(0, x, z, terrain, offsetX, offsetZ, includeRoofs, false, null);
-		Renderer3DWorldChunkFrame.ChunkMesh fixed = geometry.toRenderer3DFixedSurfaceCell();
+		Renderer3DWorldChunkFrame.ChunkMesh fixed = includeFixed ? geometry.toRenderer3DFixedSurfaceCell() : null;
 		if (fixed != null && prepareDrawInputs != null) prepareDrawInputs.accept(fixed);
 		return new Renderer3DWorldChunkFrame.ChunkMesh[]{fixed, geometry.toRenderer3DWorldPresentationCell(dx, dz)};
 	}
@@ -1480,7 +1495,11 @@ public final class World {
 					if (!reused || fixedDraw != null && fixedCell == null) {
 						Renderer3DWorldChunkFrame.ChunkMesh[] detached = null;
 						SurfaceMeshWorker worker = browserSurfaceMeshWorker;
-						if (worker != null && predicted && fixedDraw != null && fixedCell == null) {
+						boolean compatibilityOnly = predicted && fixedCell != null && radius != 0 && !reused;
+						SurfaceDrawWordWorker drawWorker = compatibilityOnly
+							? browserSurfaceCompatibilityWordWorker : browserSurfaceDrawWordWorker;
+						if (worker != null && predicted && fixedDraw != null
+							&& (fixedCell == null || compatibilityOnly && drawWorker != null)) {
 							try {
 								boolean traceReply = SurfaceSceneryMeshPreparation.isTracing();
 								long startedAt = traceReply ? System.currentTimeMillis() : 0L;
@@ -1488,23 +1507,25 @@ public final class World {
 								byte[] source = haloTerrain.surfaceWorkerSource(haloTerrain.getCurrentChunkX() + deltaX,
 									haloTerrain.getCurrentChunkY() + deltaY);
 								boolean compatibility = radius != 0 && !reused;
-								SurfaceDrawWordWorker drawWorker = browserSurfaceDrawWordWorker;
 								if (drawWorker != null) {
 									int[] words = drawWorker.build(source, worldOffsetX, worldOffsetZ, compatibility ? deltaX : 0,
 										compatibility ? deltaY : 0, includeRoofGeometry, Config.S_WANT_CUSTOM_SPRITES);
-									if (words != null && words.length != 0) {
+									if (words != null && words.length != 0 && (!compatibilityOnly || words[0] == 0)) {
 										long receivedAt = traceReply ? System.nanoTime() : 0L;
 										try {
 											detached = readSurfaceDrawWords(words, sectionX, sectionY);
 										} catch (IllegalStateException invalidWords) {
 											detached = null;
 										}
-										if (detached != null) acceptedSurfaceTerrainWordReplies++;
+										if (detached != null) {
+											acceptedSurfaceTerrainWordReplies++;
+											if (compatibilityOnly) acceptedSurfaceCompatibilityReplies++;
+										}
 										if (traceReply) SurfaceSceneryMeshPreparation.traceTerrainReply("terrain-words", startedAt, sectionX,
 											sectionY, words.length * 4, receivedAt - began, System.nanoTime() - receivedAt, compatibility);
 									}
 								}
-								byte[] result = detached == null ? worker.build(source, worldOffsetX, worldOffsetZ, deltaX, deltaY,
+								byte[] result = detached == null && !compatibilityOnly ? worker.build(source, worldOffsetX, worldOffsetZ, deltaX, deltaY,
 									includeRoofGeometry, Config.S_WANT_CUSTOM_SPRITES, false) : null;
 								if (result != null) {
 									long receivedAt = traceReply ? System.nanoTime() : 0L;
@@ -1520,6 +1541,7 @@ public final class World {
 							? buildPresentationGeometry(plane, sectionX, sectionY, haloTerrain,
 								worldOffsetX, worldOffsetZ, includeRoofGeometry, terrainOnly, slice) : null;
 						if (radius != 0 && !reused) {
+							if (compatibilityOnly && detached == null) localSurfaceCompatibilityBuilds++;
 							presentation = detached == null ? mesh.toRenderer3DWorldPresentationCell(deltaX, deltaY) : detached[1];
 							builtCells++;
 						}

@@ -27,9 +27,9 @@ self.onmessage = async ({data}) => {
         words = await builder.buildSceneryWords(cache, data.bytes);
       } else {
         const [x, z, dx, dz, roofs, sprites, gameplay] = data.args;
-        words = gameplay
-          ? await builder.buildGameplayWords(cache, data.bytes, x, z, roofs, sprites)
-          : await builder.buildDrawWords(cache, data.bytes, x, z, dx, dz, roofs, sprites);
+        if (gameplay) words = await builder.buildGameplayWords(cache, data.bytes, x, z, roofs, sprites);
+        else if (data.compatibilityOnly) words = await builder.buildCompatibilityWords(cache, data.bytes, x, z, dx, dz, roofs, sprites);
+        else words = await builder.buildDrawWords(cache, data.bytes, x, z, dx, dz, roofs, sprites);
       }
       const result = new Int32Array(words);
       self.postMessage({result: result.buffer}, [result.buffer]);

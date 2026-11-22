@@ -97,6 +97,12 @@ public final class SurfaceMeshSourceFixture {
 			if (!Arrays.equals(buffer.toByteArray(), serialized)) {
 				throw new AssertionError("Primitive terrain changed the draw meshes or prepared lighting at " + x + "," + z);
 			}
+			int[] compatibility = world.buildSurfaceDrawWordPacket(footprint, 0, 0, cell[0], cell[1], true, false, null);
+			if (compatibility.length != words[1] + 2 || compatibility[0] != 0 || compatibility[1] != words[1]
+				|| !Arrays.equals(Arrays.copyOfRange(compatibility, 2, compatibility.length),
+					Arrays.copyOfRange(words, 2 + words[0], words.length))) {
+				throw new AssertionError("Compatibility-only reply changed terrain at " + x + "," + z);
+			}
 			try {
 				World.readSurfaceDrawWords(Arrays.copyOf(words, words.length - 1), x, z);
 				throw new AssertionError("Truncated terrain words were accepted");
@@ -106,6 +112,7 @@ public final class SurfaceMeshSourceFixture {
 			if (fixedCell != null) verifyOcclusionCell(fixedCell, (Renderer3DWorldChunkFrame.ChunkMesh) full.invoke(mesh));
 		}
 		System.out.println("PASS signed fixed and compatibility meshes match across byte and primitive worker transports");
+		System.out.println("PASS compatibility-only words match the full reply without the fixed draw mesh");
 		verifyGameplayProduct(world, field.toAtomicActivationInnerWindow(), slice);
 		verifySceneryProduct();
 	}

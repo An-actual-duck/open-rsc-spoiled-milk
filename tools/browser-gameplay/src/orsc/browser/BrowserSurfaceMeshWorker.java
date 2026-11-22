@@ -36,6 +36,12 @@ public final class BrowserSurfaceMeshWorker {
             BrowserWebGLBridge::prepareWorkerSurfaceLighting);
     }
 
+    public static int[] buildCompatibilityWords(String cacheDir, byte[] source, int offsetX, int offsetZ,
+                                                int dx, int dz, boolean withRoofs, boolean customSprites) throws IOException {
+        return terrain(cacheDir, customSprites).buildSurfaceDrawWordPacket(source, offsetX, offsetZ, dx, dz, withRoofs,
+            false, null);
+    }
+
     public static int[] buildGameplayWords(String cacheDir, byte[] source, int offsetX, int offsetZ,
                                            boolean withRoofs, boolean customSprites) throws IOException {
         return terrain(cacheDir, customSprites).buildSurfaceGameplayWordPacket(source, offsetX, offsetZ, withRoofs);

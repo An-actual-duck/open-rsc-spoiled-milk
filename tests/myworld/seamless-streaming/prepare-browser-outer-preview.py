@@ -75,6 +75,7 @@ def main():
     parser.add_argument('--verify-worker-scenery-placements', action='store_true', help='Compare detached placement meshes byte for byte with the installed builder')
     parser.add_argument('--scenery-words', action='store_true', help='Transfer exact scenery triangles as a bounded primitive array')
     parser.add_argument('--terrain-words', action='store_true', help='Transfer exact terrain draw geometry as bounded primitive arrays')
+    parser.add_argument('--compatibility-mesh-worker', action='store_true', help='Prepare missing compatibility meshes when the fixed draw cell is already resident')
     parser.add_argument('--terrain-gameplay-words', action='store_true', help='Transfer exact gameplay terrain as bounded primitive arrays')
     parser.add_argument('--reuse-detached-scenery', action='store_true', help='Keep exact worker meshes for verified revisits')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
@@ -84,6 +85,8 @@ def main():
     parser.add_argument('--dependency-jar', type=Path, help='Use an explicit immutable client build for a matched comparison')
     parser.add_argument('--client-source-commit', help='Record the source commit of the supplied client build')
     args = parser.parse_args()
+    if args.compatibility_mesh_worker and not (args.terrain_words and args.surface_mesh_worker and args.fixed_surface_draw):
+        parser.error('Compatibility mesh preparation requires worker terrain words and fixed surface drawing')
     sustained_trace = args.sustained_walk and args.travel_trace
     if args.sustained_walk and (args.manual or not (args.travel_trace or args.presentation_only)):
         parser.error('The automated sustained walk requires travel or presentation sampling')
@@ -223,6 +226,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserVerifyWorkerSceneryPlacements", "{str(args.verify_worker_scenery_placements).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceSceneryWords", "{str(args.scenery_words).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceTerrainWords", "{str(args.terrain_words).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserSurfaceCompatibilityWorker", "{str(args.compatibility_mesh_worker).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceGameplayWords", "{str(args.terrain_gameplay_words).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserReuseDetachedScenery", "{str(args.reuse_detached_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
@@ -349,6 +353,7 @@ def main():
         'verifyWorkerSceneryPlacements': args.verify_worker_scenery_placements,
         'sceneryWords': args.scenery_words,
         'terrainWords': args.terrain_words,
+        'compatibilityMeshWorker': args.compatibility_mesh_worker,
         'terrainGameplayWords': args.terrain_gameplay_words,
         'reuseDetachedScenery': args.reuse_detached_scenery,
         'surfaceDrawWorker': args.surface_draw_worker,

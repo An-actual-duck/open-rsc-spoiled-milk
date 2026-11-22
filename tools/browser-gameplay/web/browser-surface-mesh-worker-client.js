@@ -47,7 +47,7 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = f
 
   return {
     stats,
-    build(source, args, words = false) {
+    build(source, args, words = false, compatibilityOnly = false) {
       if (closed) return Promise.resolve(null);
       if (pending) {
         stats.busy++;
@@ -58,7 +58,7 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = f
         stats.inputBytes += bytes.byteLength;
         pending = {resolve, gameplay: args[args.length - 1] === true, words};
         try {
-          worker.postMessage({bytes, args, words}, [bytes.buffer]);
+          worker.postMessage({bytes, args, words, compatibilityOnly}, [bytes.buffer]);
         } catch (error) {
           close(String(error));
         }

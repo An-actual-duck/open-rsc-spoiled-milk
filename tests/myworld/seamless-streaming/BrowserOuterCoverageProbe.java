@@ -448,6 +448,12 @@ public final class BrowserOuterCoverageProbe {
 			int preparedTerrain = client.getWorld().getAcceptedSurfaceTerrainWordReplies();
 			if (preparedTerrain == 0) throw new IllegalStateException("No primitive terrain reply was accepted");
 			BrowserBootstrap.report("outer-coverage:terrain-word-replies:" + preparedTerrain);
+			int compatibility = client.getWorld().getAcceptedSurfaceCompatibilityReplies();
+			int local = client.getWorld().getLocalSurfaceCompatibilityBuilds();
+			BrowserBootstrap.report("outer-coverage:compatibility-meshes:worker=" + compatibility + ":local=" + local);
+			if (Boolean.getBoolean("spoiledmilk.browserSurfaceCompatibilityWorker") && compatibility == 0) {
+				throw new IllegalStateException("No compatibility-only mesh came back from the terrain worker");
+			}
 		}
 		int scenery = client.getDetachedSurfaceSceneryMeshes();
 		if (scenery <= 0) throw new IllegalStateException("No scenery mesh came back from the detached worker");

@@ -358,6 +358,10 @@ const natives = {
     if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
     return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, false], true);
   },
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceCompatibilityWords(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites) {
+    if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, false], true, true);
+  },
   async Java_orsc_browser_BrowserBootstrap_buildSurfaceGameplayWords(lib, source, offsetX, offsetZ, withRoofs, customSprites) {
     if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
     return surfaceMeshWorker.build(source, [offsetX, offsetZ, 0, 0, withRoofs, customSprites, true], true);

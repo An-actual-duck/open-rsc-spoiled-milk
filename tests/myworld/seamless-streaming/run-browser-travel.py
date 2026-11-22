@@ -238,10 +238,12 @@ def profile_gaps_between_rolls(result, profile, anchors):
     if len(rolls) != 3 or len(presentation['intervals']) + 1 != presentation['frames']:
         return None, None
     windows = [(start - result['timeOrigin'], end - result['timeOrigin']) for _, start, end in rolls]
-    offsets = [(row['beforeMs'] + row['afterMs']) / 2 - row['pageMs'] for row in anchors]
-    offset = sum(offsets) / len(offsets)
-    uncertainty = max(abs(row[field] - row['pageMs'] - offset)
-                      for row in anchors for field in ('beforeMs', 'afterMs'))
+    first_offset = max(row['beforeMs'] - row['pageMs'] for row in anchors)
+    last_offset = min(row['afterMs'] - row['pageMs'] for row in anchors)
+    if last_offset < first_offset:
+        raise ValueError('CPU profile clock anchors do not overlap')
+    offset = (first_offset + last_offset) / 2
+    uncertainty = last_offset - offset
     timestamps = []
     timestamp = profile['startTime']
     for delta in profile['timeDeltas']:
