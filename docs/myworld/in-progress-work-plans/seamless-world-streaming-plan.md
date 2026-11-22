@@ -591,6 +591,18 @@ room available in system memory. Use the new CPU sample windows between
 verified rolls to choose the next change.
 [Prepared model list trial](seamless-world-streaming-preview.md#prepared-scenery-and-terrain-model-membership) · [Controls after idle backends exited](seamless-world-streaming-preview.md#same-build-controls-after-archiving-idle-test-backends)
 
+The focused capture saw local terrain cropping and array conversion on
+the page thread between verified replays. The compatibility-only trial
+moves a missing crop to the worker when the fixed WebGL surface is
+already resident. The native fixture matched the full worker reply.
+The first matched walks replaced three local crops in each browser and
+reduced the longest submission intervals away from replay below 57 ms.
+Repeat with the order reversed before updating the player preview. The
+slowest windows now include the verified rolls. Separate work before,
+inside, and after each replay so its packet duration is one part of the
+frame delay measurement.
+[Terrain geometry preparation between rolls](seamless-world-streaming-preview.md#terrain-geometry-preparation-between-rolls)
+
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
 TeaVM can ahead-of-time compile a detached Java library, with limited

@@ -2198,6 +2198,48 @@ They leave stable 60 FPS unverified and give the next diagnostic a quieter
 machine.
 [Private backend archive receipt](../../../output/diagnostics/private-preview-residency/2026-11-22/archive-receipt.json) · [Chrome repeat](../../../output/tests/browser-gameplay-spike/preview-residency-control-chrome/chrome-result.json) · [Firefox repeat](../../../output/tests/browser-gameplay-spike/preview-residency-control-firefox/firefox-result.json)
 
+#### Terrain geometry preparation between rolls
+
+A scoped Chrome CPU capture on the same route matched browser samples to
+the fresh WebGL frame intervals using clock anchors with 1.2 ms
+uncertainty. The 128.5 ms interval on the return leg included 16
+collector samples. The 100.9 ms early interval included 14. The 73.5 ms
+interval on the diagonal leg included 7 samples of terrain mesh cropping,
+6 of boxed-list to primitive-array conversion, and 6 in the collector.
+These are sampled stacks. The unprofiled repeats provide the pacing
+figures.
+[Focused Chrome CPU capture](../../../output/tests/browser-gameplay-spike/preview-residency-gap-profile-chrome/chrome-between-rolls-cpu.json) · [Compiled method sources](../../../output/tests/browser-gameplay-spike/preview-residency-gap-profile-chrome/chrome-hot-jit-sources.json)
+
+A predicted cell can reuse its fixed WebGL surface while still requiring
+a new compatibility crop. The previous worker dispatch only covered
+missing fixed surfaces. The trial asks the worker for the missing crop
+alone and keeps the local builder as a fallback. Native comparisons at
+three route cells matched the compatibility words from the full worker
+reply exactly. The same fixture verified collision, minimap, roof and
+picking products.
+[Native terrain and gameplay equivalence](../../../output/tests/seamless-world-streaming/compatibility-mesh-worker-build/native-compatibility.log)
+
+The first matched walks replaced exactly three client-thread crops
+with three worker replies in each browser. Controls used the same JAR
+and built those three crops locally. Each run verified three rolls,
+the reversal to `(252,609)`, one load epoch, and zero holds or input
+closures at 1920×1080 with the original 960×540 logical surface.
+
+| Browser | Longest frame interval away from replay | 99th percentile | Lowest one-second FPS | Longest interval at a roll |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 127.9 → 52.3 ms | 24.7 → 23.3 ms | 42 → 47 | 129.8 → 134.1 ms |
+| Firefox | 163 → 56 ms | 28 → 25 ms | 44 → 53 | 116 → 144 ms |
+
+The first pair narrows the regular stutter to the scene changes and a
+shorter frame tail. Replaying the same routes with the run order reversed
+checks whether the benefit persists. The first verified roll still
+spans several frame budgets. Correlate CPU samples before, during and
+after its replay rather than treating the packet duration as the entire
+interval. On the existing Chrome control the 123.2 ms first-roll gap
+included 52 ms of replay followed by another 64.5 ms before the next
+fresh frame.
+[Chrome control](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-control-chrome/chrome-result.json) · [Chrome worker](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-control-firefox/firefox-result.json) · [Firefox worker](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-trial-firefox/firefox-result.json) · [Replay CPU alignment from the scoped control](../../../output/tests/browser-gameplay-spike/preview-residency-gap-profile-chrome/chrome-roll-cpu-offline.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

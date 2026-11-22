@@ -2,7 +2,7 @@
 """Run a staged sustained walk in a fresh browser WebDriver session."""
 
 import argparse
-from bisect import bisect_left, bisect_right
+from bisect import bisect_left
 from collections import Counter
 import contextlib
 import json
@@ -228,8 +228,8 @@ try {
         ['node', '--input-type=module', '-e', script, socket, method, json.dumps(params)], timeout=25, text=True))
 
 
-def profile_gaps_between_rolls(result, profile, anchors):
-    """Find main-thread samples inside observed frame gaps away from scene replay."""
+def profile_scene_frame_gaps(result, profile, anchors):
+    """Match main-thread samples with fresh frame gaps through a verified roll and between rolls."""
     presentation = result.get('presentation') or {}
     if not presentation.get('intervals') or presentation.get('unobservedIntervals'):
         return None, None
@@ -237,7 +237,7 @@ def profile_gaps_between_rolls(result, profile, anchors):
              for event in result['events'] if event['message'].startswith('outer-coverage:roll-timing:')]
     if len(rolls) != 3 or len(presentation['intervals']) + 1 != presentation['frames']:
         return None, None
-    windows = [(start - result['timeOrigin'], end - result['timeOrigin']) for _, start, end in rolls]
+    windows = [(context, start - result['timeOrigin'], end - result['timeOrigin']) for context, start, end in rolls]
     first_offset = max(row['beforeMs'] - row['pageMs'] for row in anchors)
     last_offset = min(row['afterMs'] - row['pageMs'] for row in anchors)
     if last_offset < first_offset:
@@ -255,21 +255,36 @@ def profile_gaps_between_rolls(result, profile, anchors):
     end = presentation['lastFrameAt']
     for interval in reversed(presentation['intervals']):
         start = end - interval
-        if (interval >= 40 and timestamps[0] <= start <= end <= timestamps[-1]
-                and all(end < first - 2000 or start > last + 2000 for first, last in windows)):
+        if timestamps[0] <= start <= end <= timestamps[-1]:
             frames.append((interval, start, end))
         end = start
+
     nodes = {node['id']: node['callFrame'] for node in profile['nodes']}
     total = Counter()
-    gaps = []
-    for interval, start, end in sorted(frames, reverse=True)[:12]:
-        counts = Counter(profile['samples'][bisect_left(timestamps, start):bisect_right(timestamps, end)])
+
+    def sample_range(start, end):
+        counts = Counter(profile['samples'][bisect_left(timestamps, start):bisect_left(timestamps, end)])
         total.update(counts)
-        gaps.append({'fromWalkStartMs': round(start - presentation['startedAt'], 1), 'intervalMs': round(interval, 1),
-                     'sampleCount': sum(counts.values()),
-                     'topMethods': [{'method': nodes[node]['functionName'], 'script': nodes[node].get('url'),
-                                     'samples': count} for node, count in counts.most_common(12)]})
-    return {'clockUncertaintyMs': round(uncertainty, 3), 'gaps': gaps}, total
+        return {'fromWalkStartMs': round(start - presentation['startedAt'], 1), 'intervalMs': round(end - start, 1),
+                'sampleCount': sum(counts.values()),
+                'topMethods': [{'method': nodes[node]['functionName'], 'script': nodes[node].get('url'),
+                                'samples': count} for node, count in counts.most_common(12)]}
+
+    ordinary = [(interval, start, end) for interval, start, end in frames if interval >= 40
+                and all(end < first - 2000 or start > last + 2000 for _, first, last in windows)]
+    gaps = [sample_range(start, end) for _, start, end in sorted(ordinary, reverse=True)[:12]]
+    scenes = []
+    for context, first, last in windows:
+        overlap = [(interval, start, end) for interval, start, end in frames if start < last and end > first]
+        if not overlap:
+            continue
+        _, start, end = max(overlap)
+        parts = [('beforeReplay', start, min(first, end)), ('duringReplay', max(start, first), min(end, last)),
+                 ('afterReplay', max(start, last), end)]
+        scenes.append({'context': context, 'frameGapMs': round(end - start, 1),
+                       'replayMs': round(last - first, 1),
+                       'samples': {name: sample_range(begin, finish) for name, begin, finish in parts if begin < finish}})
+    return {'clockUncertaintyMs': round(uncertainty, 3), 'gaps': gaps, 'sceneRolls': scenes}, total
 
 
 def save_hot_jit_sources(run, profile, command, sample_counts=None):
@@ -500,7 +515,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 try:
                     counts = None
                     if chrome_profile == 'cpu' and fixture.get('rollTimings'):
-                        gaps, counts = profile_gaps_between_rolls(result, profile, chrome_anchors)
+                        gaps, counts = profile_scene_frame_gaps(result, profile, chrome_anchors)
                         if gaps is not None:
                             path = run / 'chrome-between-rolls-cpu.json'
                             path.write_text(json.dumps(gaps, indent=2) + '\n')
