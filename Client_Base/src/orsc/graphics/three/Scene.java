@@ -142,8 +142,6 @@ public final class Scene {
         return new long[]{browserOmittedModels, browserOmittedVertices};
     }
 	private int modelCount;
-	private static final boolean TRACK_MODEL_MEMBERSHIP = Boolean.getBoolean("spoiledmilk.prepareSurfaceSceneModels");
-	private long modelMembershipRevision;
 	private RSModel[] models;
 	private Renderer3DFrame renderer3DFrame;
 	private Renderer3DTextureData[] renderer3DTextures = new Renderer3DTextureData[0];
@@ -2484,7 +2482,6 @@ public final class Scene {
 			this.ensureModelCapacity(this.modelCount + 1);
 			this.m_jb[this.modelCount] = 0;
 			this.models[this.modelCount++] = mod;
-			if (TRACK_MODEL_MEMBERSHIP) this.modelMembershipRevision++;
 
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "lb.NA(" + "null" + ',' + 118 + ')');
@@ -3924,7 +3921,6 @@ public final class Scene {
 			}
 
 			this.modelCount = 0;
-			if (TRACK_MODEL_MEMBERSHIP) this.modelMembershipRevision++;
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "lb.GA(" + var1 + ')');
 		}
@@ -3938,7 +3934,6 @@ public final class Scene {
 			for (int i = 0; i < this.modelCount; ++i) {
 				if (this.models[i] == var1) {
 					--this.modelCount;
-					if (TRACK_MODEL_MEMBERSHIP) this.modelMembershipRevision++;
 
 					for (int j = i; j < this.modelCount; ++j) {
 						this.models[j] = this.models[j + 1];
@@ -3999,53 +3994,7 @@ public final class Scene {
 		}
 		Arrays.fill(this.models, retained, this.modelCount, null);
 		Arrays.fill(this.m_jb, retained, this.modelCount, 0);
-		if (TRACK_MODEL_MEMBERSHIP && this.modelCount != retained) this.modelMembershipRevision++;
 		this.modelCount = retained;
-	}
-
-	static final class PreparedModels {
-		private final Scene owner;
-		private final long revision;
-		private final RSModel[] models;
-		private final int[] metadata;
-		private final int count;
-
-		private PreparedModels(Scene owner, long revision, RSModel[] models, int[] metadata, int count) {
-			this.owner = owner;
-			this.revision = revision;
-			this.models = models;
-			this.metadata = metadata;
-			this.count = count;
-		}
-	}
-
-	PreparedModels prepareModelReplacement(IdentityHashMap<RSModel, Boolean> departing,
-		RSModel[] walls, RSModel[] roofs) {
-		// Leave space for the renderer's synthetic model after the active prefix.
-		int needed = modelCount + walls.length + (roofs == null ? 0 : roofs.length) + 1;
-		int capacity = needed <= models.length ? models.length : growSceneCapacity(models.length, needed);
-		RSModel[] next = new RSModel[capacity];
-		int[] metadata = new int[capacity];
-		int count = 0;
-		for (int i = 0; i < modelCount; i++) {
-			if (!departing.containsKey(models[i])) {
-				next[count] = models[i];
-				metadata[count++] = m_jb[i];
-			}
-		}
-		for (RSModel model : walls) if (model != null) next[count++] = model;
-		if (roofs != null) for (RSModel model : roofs) if (model != null) next[count++] = model;
-		return new PreparedModels(this, modelMembershipRevision, next, metadata, count);
-	}
-
-	boolean installPreparedModels(PreparedModels prepared) {
-		if (!TRACK_MODEL_MEMBERSHIP || prepared.owner != this || prepared.revision != modelMembershipRevision) return false;
-		models = prepared.models;
-		m_jb = prepared.metadata;
-		m_u = models.length;
-		modelCount = prepared.count;
-		modelMembershipRevision++;
-		return true;
 	}
 
     /** Render metadata only; never mutates map or server location authority. */

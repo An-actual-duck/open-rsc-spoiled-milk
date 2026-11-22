@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -1928,7 +1927,7 @@ public final class World {
 			sectionToLocalBaseTile(sectionZ) - syntheticDeepFixtureOffsetZ, collisionFlags);
 	}
 
-	private boolean installPreparedLocalTerrain(int plane, int sectionX, int sectionY, boolean modelsInstalled) {
+	private boolean installPreparedLocalTerrain(int plane, int sectionX, int sectionY) {
 		PreparedLocalTerrain prepared = pendingLocalTerrain;
 		pendingLocalTerrain = null;
 		if (!matchesPreparedLocalTerrain(prepared, plane, sectionX, sectionY)) return false;
@@ -1951,10 +1950,8 @@ public final class World {
 		prepared.roofInput.copyElevationsInto(tileElevationCache);
 		modelWallGrid[plane] = prepared.walls;
 		modelRoofGrid[plane] = prepared.roofs;
-		if (!modelsInstalled) {
-			for (RSModel model : prepared.walls) scene.addModel(model);
-			if (prepared.includeRoofs) for (RSModel model : prepared.roofs) scene.addModel(model);
-		}
+		for (RSModel model : prepared.walls) scene.addModel(model);
+		if (prepared.includeRoofs) for (RSModel model : prepared.roofs) scene.addModel(model);
 		nativeLayeredTerrainAppliedTiles = prepared.appliedTiles;
 		nativeLayeredTerrainNonVoidTiles = prepared.nonVoidTiles;
 		nativeLayeredTerrainAppliedSectionX = sectionX;
@@ -1976,46 +1973,6 @@ public final class World {
 			&& surfaceCollision.hasIncomingWindow(sectionToLocalBaseTile(sectionX) - syntheticDeepFixtureOffsetX,
 				sectionToLocalBaseTile(sectionZ) - syntheticDeepFixtureOffsetZ)
 			&& WholeOverworldRamRegistry.forWorld(this, nativeLayeredTerrainSnapshot) == null;
-	}
-
-	/** Scene membership from one prediction, with the model objects still owned by the live scene. */
-	public static final class PreparedSurfaceScene {
-		private final PreparedLocalTerrain terrain;
-		private final RSModel[] departing;
-		private final Scene.PreparedModels models;
-
-		private PreparedSurfaceScene(PreparedLocalTerrain terrain, RSModel[] departing, Scene.PreparedModels models) {
-			this.terrain = terrain;
-			this.departing = departing;
-			this.models = models;
-		}
-	}
-
-	public PreparedSurfaceScene prepareSurfaceScene(NativeLayeredTerrainHaloPrebuildResult result,
-		RSModel[] departing, int count) {
-		PreparedLocalTerrain terrain = result.localTerrain;
-		if (terrain == null || terrain.includeRoofs != !Config.C_HIDE_ROOFS) return null;
-		IdentityHashMap<RSModel, Boolean> removals = new IdentityHashMap<>();
-		for (int i = 0; i < count; i++) removals.put(departing[i], Boolean.TRUE);
-		markDepartingTerrain(removals, modelLandscapeGrid);
-		for (int plane = 0; plane < 4; plane++) {
-			markDepartingTerrain(removals, modelWallGrid[plane]);
-			markDepartingTerrain(removals, modelRoofGrid[plane]);
-		}
-		return new PreparedSurfaceScene(terrain, Arrays.copyOf(departing, count),
-			scene.prepareModelReplacement(removals, terrain.walls, terrain.includeRoofs ? terrain.roofs : null));
-	}
-
-	private static void markDepartingTerrain(IdentityHashMap<RSModel, Boolean> removals, RSModel[] models) {
-		for (RSModel model : models) if (model != null) removals.put(model, Boolean.TRUE);
-	}
-
-	private boolean installPreparedSurfaceScene(PreparedSurfaceScene prepared, RSModel[] departing, int count,
-		int plane, int sectionX, int sectionZ) {
-		if (prepared == null || prepared.terrain != pendingLocalTerrain || count != prepared.departing.length
-			|| !matchesPreparedLocalTerrain(pendingLocalTerrain, plane, sectionX, sectionZ)) return false;
-		for (int i = 0; i < count; i++) if (prepared.departing[i] != departing[i]) return false;
-		return scene.installPreparedModels(prepared.models);
 	}
 
 	private static final class PreparedLocalTerrain {
@@ -3553,7 +3510,7 @@ public final class World {
 			long phaseStartNanos = transitionStartNanos;
 			int chunkX = activeSectionXForWorldTile(var1);
 			int chunkZ = activeSectionYForWorldTile(var5);
-			if (showWallOnMinimap && installPreparedLocalTerrain(plane, chunkX, chunkZ, false)) return;
+			if (showWallOnMinimap && installPreparedLocalTerrain(plane, chunkX, chunkZ)) return;
 			boolean bridgeDecorationsApplied = this.loadSectionWindow(sectors, plane, chunkX, chunkZ);
 			long sectionWindowNanos =
 				System.nanoTime() - phaseStartNanos;
@@ -5852,48 +5809,27 @@ public final class World {
 	}
 
 	public void loadSections(int worldX, int worldZ, int plane, boolean retainScenery) {
-		loadSections(worldX, worldZ, plane, retainScenery, null, null, 0);
-	}
-
-	public boolean loadPreparedSurfaceSections(int worldX, int worldZ, int plane, PreparedSurfaceScene prepared,
-		RSModel[] departing, int count) {
-		return loadSections(worldX, worldZ, plane, true, prepared, departing, count);
-	}
-
-	private boolean loadSections(int worldX, int worldZ, int plane, boolean retainScenery,
-		PreparedSurfaceScene prepared, RSModel[] departing, int count) {
 		try {
 			if (surfaceCollision != null) surfaceCollision.detachView();
             WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forWorld(this,nativeLayeredTerrainSnapshot);
             if(ram!=null&&ram.activate(this,plane,activeSectionXForWorldTile(worldX),activeSectionYForWorldTile(worldZ))){
                 installSurfaceCollisionView(activeSectionXForWorldTile(worldX),activeSectionYForWorldTile(worldZ));
-                return false;
+                return;
             }
 			long loadStart = WorldStreamManager.now();
 			long transitionStart = System.nanoTime();
 			long phaseStart = System.nanoTime();
-			int x = activeSectionXForWorldTile(worldX);
-			int z = activeSectionYForWorldTile(worldZ);
-			boolean modelsInstalled = installPreparedSurfaceScene(prepared, departing, count, plane, x, z);
-			if (modelsInstalled) {
-				clearTerrainModelGrids();
-			} else {
-				if (departing != null) scene.removeModels(departing, count);
-				if (retainScenery) this.retireTerrainModels();
-				else this.resetModels();
-			}
+			if (retainScenery) this.retireTerrainModels();
+			else this.resetModels();
 			this.nativeTerrainAuthorityOnlyActive =
 				this.shouldUseNativeTerrainAuthorityOnly();
 			long resetNanos = System.nanoTime() - phaseStart;
 
+			int x = activeSectionXForWorldTile(worldX);
+			int z = activeSectionYForWorldTile(worldZ);
+
 			phaseStart = System.nanoTime();
-			if (modelsInstalled) {
-				if (!installPreparedLocalTerrain(plane, x, z, true)) {
-					throw new IllegalStateException("Surface terrain changed during model publication");
-				}
-			} else {
-				this.generateLandscapeModel(worldX, 122, true, plane, worldZ);
-			}
+			this.generateLandscapeModel(worldX, 122, true, plane, worldZ);
 			long activePlaneNanos = System.nanoTime() - phaseStart;
 			long upperPlanesNanos = 0L;
 			long bridgeNanos = 0L;
@@ -5967,7 +5903,6 @@ public final class World {
 			installSurfaceCollisionView(x, z);
 			RenderTelemetry.recordBoundaryPhase("world-section", "collision-view", collisionStart,
 				collisionStart == 0L ? 0L : System.nanoTime() - collisionStart);
-			return modelsInstalled;
 
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');

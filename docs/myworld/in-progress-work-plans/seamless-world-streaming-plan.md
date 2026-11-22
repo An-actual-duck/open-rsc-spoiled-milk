@@ -579,6 +579,18 @@ Keep the actor update on its current ordered packet path. Assess frame
 pacing throughout the route as well as across the three roll windows.
 [Per-packet and scene installation timings](seamless-world-streaming-preview.md#packet-costs-inside-a-verified-scene-roll)
 
+The staged model list combined departing scenery and terrain membership
+with prepared walls and roofs. It passed exact order and metadata checks
+and published on all six measured rolls. Firefox replay took less time
+and whole-walk pacing was mixed. Preserve that proof for a future
+world-addressed scene with fewer changes at activation.
+
+The same-build controls repeated after sixteen idle private backends
+exited. Both browsers still produced long submission intervals with
+room available in system memory. Use the new CPU sample windows between
+verified rolls to choose the next change.
+[Prepared model list trial](seamless-world-streaming-preview.md#prepared-scenery-and-terrain-model-membership) · [Controls after idle backends exited](seamless-world-streaming-preview.md#same-build-controls-after-archiving-idle-test-backends)
+
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
 TeaVM can ahead-of-time compile a detached Java library, with limited

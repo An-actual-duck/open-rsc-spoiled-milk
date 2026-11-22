@@ -1885,10 +1885,6 @@ public class PacketHandler {
 			readyPredictedLayeredTerrainHalo = result;
 			readyPredictedLayeredTerrainStructureStage =
 				pendingLayeredTerrainStage;
-			if (mudclient.PREPARE_SURFACE_SCENE_MODELS) {
-				mc.prepareSurfaceSceneModels(result, pendingLayeredTerrainStage.getCurrentChunkX(),
-					pendingLayeredTerrainStage.getCurrentChunkY());
-			}
 			readyPredictionDecodeNanos +=
 				pendingLayeredTerrainDecodeNanos;
 			readyPredictionBuildNanos +=

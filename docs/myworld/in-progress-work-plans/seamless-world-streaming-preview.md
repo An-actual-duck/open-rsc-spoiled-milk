@@ -2151,6 +2151,53 @@ in Chrome and 152 ms in Firefox, so the pacing criterion also needs
 separate work between rolls.
 [Chrome installation phases](../../../output/tests/browser-gameplay-spike/scene-roll-region-cost-chrome/region-cost-summary.json) · [Firefox installation phases](../../../output/tests/browser-gameplay-spike/scene-roll-region-cost-firefox/region-cost-summary.json)
 
+#### Prepared scenery and terrain model membership
+
+The candidate builds one replacement scene list from the current retained
+models and the prepared terrain walls and roofs. It uses the list at the
+roll only when the terrain product, scene membership revision, and departing
+scenery references agree. Collision and actor updates follow the existing
+ordered packet path. The native comparison checked exact surviving model
+order and metadata, duplicate removals, and rejection of stale proposals.
+[Native scene membership proof](../../../output/tests/seamless-world-streaming/prepared-scene-model-list-build/native-scene-models.log)
+
+Both trials used the prepared list for all three rolls. All four runs
+reached the same server-confirmed destination in one load epoch with
+zero holds or input closures at 1920×1080 with the 960×540 logical UI.
+
+| Browser | Packet replay | 99th-percentile interval | Longest interval away from replay | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 51, 30, 31 → 49, 30, 32 ms | 26.7 → 26.5 ms | 122.7 → 118 ms | 13 → 13 |
+| Firefox | 60, 36, 52 → 56, 35, 43 ms | 29 → 29 ms | 181 → 191 ms | 20 → 19 |
+
+The Firefox replay got shorter. Whole-walk frame pacing stayed close
+in both browsers, with the longest Firefox interval increasing. The
+trial is kept in history as an exactness reference for scene membership
+publication.
+[Chrome control](../../../output/tests/browser-gameplay-spike/prepared-scene-model-list-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/prepared-scene-model-list-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/prepared-scene-model-list-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/prepared-scene-model-list-trial-firefox/firefox-result.json)
+
+#### Same-build controls after archiving idle test backends
+
+Sixteen superseded loopback fixtures shut down through their private stop
+markers after the model membership runs. Available memory rose from 6.5
+to 18.4 GiB. The current player preview and comparison on ports 8593 and
+8579 both returned HTTP 200. The historical stage files and databases are
+available for a repeat.
+
+The next walks disabled the prepared membership trial and used the same
+JAR, route, and resolution as the earlier controls. Both reproduced three
+verified rolls with no frame holds or input closures.
+
+| Browser | 99th-percentile interval | Longest interval away from replay | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: |
+| Chrome | 26.7 → 24.6 ms | 122.7 → 91.2 ms | 13 → 14 |
+| Firefox | 29 → 28 ms | 181 → 142 ms | 20 → 18 |
+
+These repeats measured shorter long gaps under the new host conditions.
+They leave stable 60 FPS unverified and give the next diagnostic a quieter
+machine.
+[Private backend archive receipt](../../../output/diagnostics/private-preview-residency/2026-11-22/archive-receipt.json) · [Chrome repeat](../../../output/tests/browser-gameplay-spike/preview-residency-control-chrome/chrome-result.json) · [Firefox repeat](../../../output/tests/browser-gameplay-spike/preview-residency-control-firefox/firefox-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

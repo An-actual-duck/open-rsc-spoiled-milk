@@ -349,11 +349,6 @@ public final class BrowserOuterCoverageProbe {
 				+ Arrays.toString(before) + " to " + Arrays.toString(after));
 		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":rolled=3");
-		if (Boolean.getBoolean("spoiledmilk.prepareSurfaceSceneModels")) {
-			int installs = (int) mudclient.class.getMethod("getPreparedSurfaceSceneInstalls").invoke(client);
-			BrowserBootstrap.report("outer-coverage:prepared-scene-models:" + installs);
-			if (installs < 1) throw new IllegalStateException("The walk installed no staged scenery and terrain model lists");
-		}
 		if (Boolean.getBoolean("spoiledmilk.browserPresentationRollTimings")) {
 			long[] timing = (long[]) PacketHandler.class.getMethod("getSurfaceRollTiming").invoke(client.packetHandler);
 			if (timing.length != 9) throw new IllegalStateException("Expected timestamps for three verified scene rolls");
