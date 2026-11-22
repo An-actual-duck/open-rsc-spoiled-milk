@@ -1484,6 +1484,12 @@ player preview continues to use CheerpJ 5.0, which reached 40 and 43 FPS
 in the prior matched Firefox and Chrome repeats.
 [Firefox 4.3 walk](../../../output/tests/browser-gameplay-spike/runtime-43-firefox/firefox-result.json) · [Chrome 4.3 walk](../../../output/tests/browser-gameplay-spike/runtime-43-chrome/chrome-result.json)
 
+With the same JAR and CheerpJ 5.0, Java 17 completed in Chrome with a
+39 FPS worst second, a 29 ms 99th percentile, zero holds, and a
+server-confirmed arrival. Firefox stopped before login. The player
+preview and compact packing comparison use Java 8.
+[Chrome Java 17 result](../../../output/tests/browser-gameplay-spike/runtime-java17-chrome/chrome-result.json) · [Firefox Java 17 result](../../../output/tests/browser-gameplay-spike/runtime-java17-firefox/firefox-result.json)
+
 The private catch-up trial presents the actual game state when the
 accumulated update work reaches one quarter of a frame. It carries
 the original five-update limit across successive draws. A single
@@ -1551,6 +1557,17 @@ tables. The Java renderer reuses one input block for these calls and
 still calculates the original material, lighting and UV values.
 Unsupported or inexact inputs run through the existing Java encoder
 and its legacy fallback. The GPU receives the same compact layout.
+
+The build passed the native renderer's 85 UV and material checks and the
+browser geometry suite's 7,252 layout and contract checks. With every
+accepted word compared to the literal Java encoder, Firefox verified
+3,076,116 vertices across 24,127 blocks and Chrome verified 3,055,868
+vertices across 23,968 blocks. Neither browser rejected a block. Both
+walks finished at the server-confirmed destination after three rolls
+at 1920×1080 and logical 960×540. Holds and sampled input closures were
+zero. The comparison runs include the Java encoding cost for verification
+and are separate from the frame-pacing controls.
+[Firefox exact walk](../../../output/tests/browser-gameplay-spike/compact-parity-firefox/firefox-result.json) · [Chrome exact walk](../../../output/tests/browser-gameplay-spike/compact-parity-chrome/chrome-result.json) · [Native renderer suite](../../../output/tests/seamless-world-streaming/compact-vertex-blocks-build/native-variants.log) · [Browser geometry suite](../../../output/tests/seamless-world-streaming/compact-vertex-blocks-build/compact-layout.json)
 
 #### Java client worker feasibility
 
