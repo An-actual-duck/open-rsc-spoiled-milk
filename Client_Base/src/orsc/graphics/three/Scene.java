@@ -125,6 +125,13 @@ public final class Scene {
     public int[] getBrowserBatchedModelKernelWork() {
         return browserBatchedModelKernel == null ? new int[14] : browserBatchedModelKernel.work();
     }
+    private final int[] browserProjectionDemand =
+        Boolean.getBoolean("spoiledmilk.browserProjectionDemand") ? new int[7] : null;
+    private int browserProjectionDemandSequence;
+
+    public int[] getBrowserProjectionDemand() {
+        return browserProjectionDemand == null ? new int[7] : browserProjectionDemand.clone();
+    }
 	private int modelCount;
 	private RSModel[] models;
 	private Renderer3DFrame renderer3DFrame;
@@ -3046,6 +3053,10 @@ public final class Scene {
 			int var13;
 			int var14;
 			long worldCullStart = RenderTelemetry.now();
+            boolean sampleProjectionDemand = browserProjectionDemand != null && earlyResidentFaceCull
+                && useModelPickBounds && skipProjectedWorldCapture && !forceLegacyWorldRaster
+                && (++browserProjectionDemandSequence & 7) == 0;
+            if (sampleProjectionDemand) browserProjectionDemand[0]++;
 			for (var9 = 0; var9 < this.modelCount; ++var9) {
 				var2 = this.models[var9];
 				if (var2.m_dc) {
@@ -3058,6 +3069,10 @@ public final class Scene {
                         && !forceLegacyWorldRaster && this.m_K
                         && (this.interactionOnlyPickActive || !var2.m_db && var2.m_zb != null && var2.facePickIndex != null)
                         && !ProjectedModelPickBounds.couldContainMouse(var2, this.m_Nb, this.m_j, this.m_Wb);
+                    boolean countResident = sampleProjectionDemand && residentPickModel && !var2.isInteractionOnly();
+                    boolean allFacesRejected = countResident;
+                    if (sampleProjectionDemand) browserProjectionDemand[1] += var2.vertHead;
+                    if (countResident) browserProjectionDemand[2] += var2.vertHead;
 					for (var3 = 0; var3 < var2.faceHead; ++var3) {
 						var10 = var2.faceIndexCount[var3];
 						var11 = var2.faceIndices[var3];
@@ -3067,6 +3082,7 @@ public final class Scene {
                                 : shouldSkipResidentOwnedProjectedFace(
                                     var2.getRenderer3DModelKind(),var2,var3,var11,var10,
                                     skipProjectedWorldCapture,forceLegacyWorldRaster,browserFullResidentOwnership))) continue;
+                        allFacesRejected = false;
 						boolean var5 = false;
 
 						int var4;
@@ -3171,6 +3187,13 @@ public final class Scene {
 							}
 						}
 					}
+                    if (allFacesRejected) {
+                        browserProjectionDemand[3] += var2.vertHead;
+                        if (pickModelKind == Renderer3DModelKind.TERRAIN) browserProjectionDemand[4] += var2.vertHead;
+                        else if (pickModelKind == Renderer3DModelKind.WALL || pickModelKind == Renderer3DModelKind.ROOF)
+                            browserProjectionDemand[5] += var2.vertHead;
+                        else browserProjectionDemand[6] += var2.vertHead;
+                    }
 				}
 			}
 			worldCullNanos = RenderTelemetry.elapsedSince(worldCullStart);

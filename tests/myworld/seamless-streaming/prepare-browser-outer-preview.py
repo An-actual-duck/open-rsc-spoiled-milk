@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--travel-trace', action='store_true', help='Record real submitted frames and server positions through extended travel')
     parser.add_argument('--presentation-only', action='store_true', help='Check sustained travel without detailed Java or server tracing')
     parser.add_argument('--frame-stages', action='store_true', help='Sample individual renderer stages during the presentation control')
+    parser.add_argument('--projection-demand', action='store_true', help='Count resident model vertices whose faces all fail the existing early CPU cull')
     parser.add_argument('--profile-panels', action='store_true', help='Sample closed UI, inventory and minimap before walking')
     parser.add_argument('--profile-minimap-walk', action='store_true', help='Keep the minimap open for the profiled walk')
     parser.add_argument('--sustained-walk', action='store_true', help='Walk past multiple handoffs and then reverse')
@@ -86,6 +87,8 @@ def main():
         parser.error('Presentation-only sampling requires untraced sustained live-surface travel')
     if args.frame_stages and not (args.presentation_only or sustained_trace):
         parser.error('Frame stage timing requires the presentation control or a sustained travel trace')
+    if args.projection_demand and not args.presentation_only:
+        parser.error('Projection demand sampling requires the sustained presentation fixture')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -178,6 +181,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserTravelTrace", "{str(args.travel_trace).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPresentationOnly", "{str(args.presentation_only).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserFrameStageTrace", "{str(args.frame_stages).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserProjectionDemand", "{str(args.projection_demand).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfilePanels", "{str(args.profile_panels).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserProfileMinimapWalk", "{str(args.profile_minimap_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSlicePreupload", "{str(args.slice_preupload).lower()}");\n'
@@ -299,6 +303,7 @@ def main():
         'travelTrace': args.travel_trace,
         'presentationOnly': args.presentation_only,
         'frameStages': args.frame_stages,
+        'projectionDemand': args.projection_demand,
         'profilePanels': args.profile_panels,
         'profileMinimapWalk': args.profile_minimap_walk,
         'slicePreupload': args.slice_preupload,

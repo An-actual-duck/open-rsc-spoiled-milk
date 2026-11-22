@@ -201,6 +201,8 @@ public final class BrowserOuterCoverageProbe {
 
 	private static void runPersistentMovementWalk(mudclient client) throws Exception {
 		Method walk = fieldWalk();
+		int[] projectionStart = Boolean.getBoolean("spoiledmilk.browserProjectionDemand")
+			? projectionDemand(client) : null;
 		if (Boolean.getBoolean("spoiledmilk.browserTravelTrace")) reportAnimatedScenery(client);
 		walkLeg(client, walk, 257, 609);
 		int[] before = client.packetHandler.getPersistentMovementReceipt();
@@ -220,7 +222,7 @@ public final class BrowserOuterCoverageProbe {
 			verifyIncomingSceneryMutations(client, walk, before[3]);
 		}
 		if (Boolean.getBoolean("spoiledmilk.browserPresentationOnly")) {
-			verifyUntracedTravel(client, walk, before);
+			verifyUntracedTravel(client, walk, before, projectionStart);
 			return;
 		}
 		boolean fixedDraw = Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
@@ -319,7 +321,11 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
 	}
 
-	private static void verifyUntracedTravel(mudclient client, Method walk, int[] before) throws Exception {
+	private static int[] projectionDemand(mudclient client) throws ReflectiveOperationException {
+		return (int[]) client.getScene().getClass().getMethod("getBrowserProjectionDemand").invoke(client.getScene());
+	}
+
+	private static void verifyUntracedTravel(mudclient client, Method walk, int[] before, int[] projectionStart) throws Exception {
 		Object actor = client.getLocalPlayer();
 		int[][] destinations = {{278,609}, {284,609}, {291,597}, {322,597}, {291,597}, {284,609}, {252,609}};
 		for (int[] destination : destinations) {
@@ -337,6 +343,16 @@ public final class BrowserOuterCoverageProbe {
 		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":rolled=3");
 		verifyDetachedGameplayInstalls(client, 3);
+		if (projectionStart != null) {
+			int[] demand = projectionDemand(client);
+			for (int n = 0; n < demand.length; n++) demand[n] -= projectionStart[n];
+			if (demand[0] == 0 || demand[2] == 0 || demand[3] != demand[4] + demand[5] + demand[6]) {
+				throw new IllegalStateException("Invalid resident projection demand " + Arrays.toString(demand));
+			}
+			BrowserBootstrap.report("outer-coverage:projection-demand:samples=" + demand[0]
+				+ ":projected=" + demand[1] + ":resident=" + demand[2] + ":rejected=" + demand[3]
+				+ ":terrain=" + demand[4] + ":structures=" + demand[5] + ":scenery=" + demand[6]);
+		}
 		if (Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements")) {
 			int verified = client.getVerifiedWorkerSceneryMeshes(), mismatched = client.getMismatchedWorkerSceneryMeshes();
 			if (verified == 0 || mismatched != 0) throw new IllegalStateException("Scenery mesh parity " + verified + "/" + mismatched

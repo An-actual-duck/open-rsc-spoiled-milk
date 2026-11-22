@@ -1622,6 +1622,25 @@ pacing results led to removal of the trial. The player build uses
 compact conversion with the established draw keys.
 [Native draw checks](../../../output/tests/seamless-world-streaming/stable-draw-key-build/animated-chunks.log) · [Chrome control](../../../output/tests/browser-gameplay-spike/stable-draw-keys-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/stable-draw-keys-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/stable-draw-keys-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/stable-draw-keys-firefox/firefox-result.json)
 
+#### Remaining client work after compact conversion
+
+The Chrome CPU profile of the updated preview captured a 145 ms frame
+interval with zero geometry uploads. Five client updates took 68 ms,
+Java scene capture took 35 ms, and the WebGL worker spent 3.5 ms
+submitting the next frame. Chrome recorded zero idle or garbage
+collector samples during the interval. A second zero-upload gap of
+106 ms spent 42 ms in client updates and 27 ms capturing the scene.
+Some gaps included both upload work and garbage collection. The test
+crossed all three rolls with one epoch and finished at `(252,609)`.
+[Profile summary](../../../output/tests/browser-gameplay-spike/compact-resident-cpu-profile/profile-summary.json)
+
+The private projection-demand capture counts the vertices of visible
+resident models whose faces all fail the existing CPU cull after
+projection. It measures the possible scope of moving rejection ahead of
+projection. A candidate would still need to establish the same result
+before any skip, while preserving picking, sprite anchors, near-plane
+handling and the literal fallback.
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
