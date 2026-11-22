@@ -164,7 +164,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         && Boolean.getBoolean("spoiledmilk.browserTravelTrace");
     private static final boolean FRAME_STAGE_TRACE = mudclient.TRACE_BROWSER_FRAME_STAGES;
     // Sprite stages, presentation, sprite packing, UI, and the client loop leading up to the bridge.
-    private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[24] : null;
+    private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[30] : null;
     private static final long PREDICTED_BUFFER_BUDGET = (COMPACT_SCENERY ? 64L : 48L) * 1024 * 1024;
     private static final long PREDICTED_UPLOAD_INTERVAL_NANOS = 75_000_000L;
     private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
@@ -997,9 +997,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         skyFrame(sky.values,sky.palette);
     }
     private void exportLighting(Renderer3DFrame frame, List<Renderer3DWorldChunkFrame.ChunkMesh> surfaceDraw) {
-        BrowserLightingData.Frame light=lightingData.prepare(frame,maxTextureSize,surfaceDraw);
+        BrowserLightingData.Frame light=lightingData.prepare(frame,maxTextureSize,surfaceDraw,frameStageWork,24);
+        long exportStarted = FRAME_STAGE_TRACE ? System.nanoTime() : 0L;
         for(BrowserLightingData.Mask mask:light.changes)uploadLightingMask(mask.unit,mask.width,mask.height,mask.rgba,mask.bounds);
         lightingFrame(light.values);
+        if (FRAME_STAGE_TRACE) frameStageWork[29] = (System.nanoTime() - exportStarted) / 1_000_000f;
     }
     private int uploadSprites(Renderer3DFrame frame) {
         long start=FRAME_STAGE_TRACE ? System.nanoTime() : 0L;

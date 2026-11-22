@@ -3,6 +3,7 @@ package orsc;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import orsc.graphics.three.Renderer3DFrame;
@@ -56,6 +57,11 @@ public final class BrowserLightingData {
         return prepare(frame, maxTextureSize, Collections.emptyList());
     }
     public Frame prepare(Renderer3DFrame frame, int maxTextureSize, List<Renderer3DWorldChunkFrame.ChunkMesh> surfaceDraw) {
+        return prepare(frame, maxTextureSize, surfaceDraw, null, 0);
+    }
+    Frame prepare(Renderer3DFrame frame, int maxTextureSize, List<Renderer3DWorldChunkFrame.ChunkMesh> surfaceDraw,
+                  float[] timings, int timingOffset) {
+        if (timings != null) Arrays.fill(timings, timingOffset, timingOffset + 5, 0f);
         List<Mask> changes=new ArrayList<Mask>(3);
         Renderer3DWorldChunkFrame world=frame==null?null:frame.getWorldChunkFrame();
         boolean populated=world!=null&&world.getChunkCount()>0;
@@ -71,8 +77,11 @@ public final class BrowserLightingData {
         values[9]=offX;values[10]=offZ;
         boolean directional=RendererLightingSettings.getMode()==RendererLightingSettings.Mode.DIRECTIONAL;
         boolean terrainDefinition = directional && RendererTerrainDefinitionSettings.getMode().shaderId >= 2;
+        long started = timings == null ? 0L : System.nanoTime();
         boolean residentTerrain = terrainDefinition && terrain.updateResident(surfaceDraw, frame.getActivePlane());
-        if (terrainDefinition && (residentTerrain || terrain.update(frame))) {
+        boolean terrainReady = terrainDefinition && (residentTerrain || terrain.update(frame));
+        started = recordPhase(timings, timingOffset, started);
+        if (terrainReady) {
             values[13]=1;putBounds(values,24,terrain.minX,terrain.minZ,1f/terrain.width,1f/terrain.height);
             if (terrainRevision != terrain.revision) {
                 changes.add(new Mask(7, terrain.width, terrain.height, terrain.pixels(), bounds(values, 24)));
@@ -80,11 +89,13 @@ public final class BrowserLightingData {
                 if (residentTerrain) residentTerrainFields++;
             }
         }
+        started = recordPhase(timings, timingOffset + 1, started);
         RemasterGlowMaskBuild built=directional?glow.build(world):null;
         if(built!=null&&built.mask!=null) {
             RemasterGlowMask mask=built.mask;values[14]=1;putBounds(values,28,mask.minX,mask.minZ,mask.invSpanX,mask.invSpanZ);
             if(glowSignature!=mask.signature){changes.add(new Mask(2,mask.width,mask.height,mask.pixels(),bounds(values,28)));glowSignature=mask.signature;}
         }
+        recordPhase(timings, timingOffset + 2, started);
         RendererShadowSettings.Quality next=RendererShadowSettings.getQuality();
         if(quality!=next){near=far=previousFar=null;farAge=blendAge=0;}quality=next;
         values[2]=next.ordinal();
@@ -94,6 +105,7 @@ public final class BrowserLightingData {
         if(maxTextureSize<next.nearSize)throw new IllegalArgumentException("Browser texture limit cannot preserve selected shadow quality");
         int farSize=OpenGLGeometryShadows.supportedFarSize(maxTextureSize);
         if(next==RendererShadowSettings.Quality.HIGH&&maxTextureSize<farSize)throw new IllegalArgumentException("Browser cannot allocate production far shadow resolution");
+        started = timings == null ? 0L : System.nanoTime();
         double x=(double)frame.getCameraOffsetX()+offX,y=frame.getCameraOffsetY(),z=(double)frame.getCameraOffsetZ()+offZ;
         float lx=RendererRemasterLightSettings.getLightDirectionX(),ly=RendererRemasterLightSettings.getLightDirectionY(),lz=RendererRemasterLightSettings.getLightDirectionZ();
         long context=frame.getShadowContextEpoch();int plane=frame.getActivePlane();
@@ -103,11 +115,14 @@ public final class BrowserLightingData {
             ?new DirectionalShadowProjection(x,y,z,lx,ly,lz,next.nearRadiusTiles*128f,next.nearSize,near,Double.isFinite(reference)?reference:y)
             :new DirectionalShadowProjection(x,y,z,lx,ly,lz,next.nearRadiusTiles*128f,next.nearSize,near);
         nearContext=context;nearPlane=plane;
+        long roofStarted = timings == null ? 0L : System.nanoTime();
         GeometryShadowRoofMask roof=roofs.get(world,plane);
         if(!roof.isEmpty()) {
             values[11]=1;values[12]=roof.plane;putBounds(values,20,roof.minX,roof.minZ,1f/(roof.width*128),1f/(roof.height*128));
             if(roofSignature!=roof.signature){changes.add(new Mask(5,roof.width,roof.height,roof.pixels(),bounds(values,20)));roofSignature=roof.signature;}
         }
+        long roofFinished = recordPhase(timings, timingOffset + 3, roofStarted);
+        started += roofFinished - roofStarted;
         long signature=staticSignature(frame);
         if(previousFar!=null&&++blendAge>=OpenGLGeometryShadows.FAR_BLEND_FRAMES)previousFar=null;
         farAge++;
@@ -123,7 +138,15 @@ public final class BrowserLightingData {
         float t=Math.min(1f,(float)blendAge/OpenGLGeometryShadows.FAR_BLEND_FRAMES);values[8]=t*t*(3-2*t);
         values[16]=1f/next.nearSize;values[17]=far==null?0:1f/farSize;values[18]=near.worldTexel;values[19]=far==null?0:far.worldTexel;
         System.arraycopy(near.matrix,0,values,32,16);if(far!=null)System.arraycopy(far.matrix,0,values,48,16);if(previousFar!=null)System.arraycopy(previousFar.matrix,0,values,64,16);
+        recordPhase(timings, timingOffset + 4, started);
         return new Frame(values,changes);
+    }
+
+    private static long recordPhase(float[] timings, int at, long started) {
+        if (timings == null) return 0L;
+        long now = System.nanoTime();
+        timings[at] = (now - started) / 1_000_000f;
+        return now;
     }
     private static long staticSignature(Renderer3DFrame frame) {
         long hash=1469598103934665603L;
