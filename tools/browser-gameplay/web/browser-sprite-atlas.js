@@ -5,6 +5,7 @@ export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,ma
   if(!Number.isInteger(extent)||extent<1||extent>2048||!Number.isInteger(maxSprites)||maxSprites<1||maxSprites>1024)throw new Error('Invalid sprite atlas bounds');
   const MAX_RESIDENT=4096;
   let entries=new Map(),free=[{x:0,y:0,w:extent,h:extent}],epoch=0,sequence=0,pending=null,failed=false,disposed=false;
+  let membershipRevision=0;
   Object.assign(stats,{spriteResidentImages:0,spriteDrawReuses:0,spriteUploadedImages:0,spriteUploadedBytes:0,spriteCompactions:0,spriteEvictions:0,spriteDescriptorUploads:0,spritePlanCalls:0,spriteCommitCalls:0,spriteSourceImageBytes:0,spriteDescriptorBytes:0});
   function alive(){if(disposed||failed)throw new Error('Sprite atlas unavailable; restart session');}
   function check(){const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('Sprite atlas GL error '+error);}
@@ -55,11 +56,26 @@ export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,ma
     try{gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);let offset=0;for(const id of pending.missing){const r=pending.next.get(id),length=r.w*r.h*4;gl.texSubImage2D(gl.TEXTURE_2D,0,r.x,r.y,r.w,r.h,gl.RGBA,gl.UNSIGNED_BYTE,pixels.subarray(offset,offset+length));offset+=length;}gl.bindBuffer(gl.ARRAY_BUFFER,vbo);if(quads.length)gl.bufferSubData(gl.ARRAY_BUFFER,0,quads);if(deferOrCheck)deferOrCheck(check);else check();}
     finally{if(!ownedFrame?.active){gl.bindBuffer(gl.ARRAY_BUFFER,array);gl.bindTexture(gl.TEXTURE_2D,binding);gl.pixelStorei(gl.UNPACK_ALIGNMENT,alignment);gl.activeTexture(active);}else gl.activeTexture(gl.TEXTURE0);}
     if(measureUpload)stats.spriteUploadStageMs=performance.now()-uploadStart;
+    if(e!==epoch||pending.missing.length||pending.evictions||pending.compacted)membershipRevision++;
     entries=pending.next;free=pending.rectangles;epoch=e;sequence=s;
     stats.spriteDrawReuses+=pending.hits;stats.spriteUploadedImages+=pending.missing.length;stats.spriteUploadedBytes+=pending.bytes;stats.spriteCompactions+=pending.compacted?1:0;stats.spriteEvictions+=pending.evictions;stats.spriteDescriptorUploads++;stats.spriteCommitCalls++;stats.spriteDescriptorBytes+=quads.byteLength;stats.spriteSourceImageBytes+=pending.sourceBytes;stats.spriteFrameGroups=pending.order.length;stats.spriteResidentImages=entries.size;
     const count=pending.order.length;pending=null;return count;
   }catch(error){failed=true;throw error;}}
+  function residencyAfter(previousRevision) {
+    if(!epoch)return null;
+    let rows=null;
+    if(previousRevision!==membershipRevision) {
+      rows=new Int32Array(entries.size*3);
+      let at=0;
+      for(const [id,rect] of entries) {
+        rows[at++]=id;
+        rows[at++]=rect.w;
+        rows[at++]=rect.h;
+      }
+    }
+    return {epoch,sequence,revision:membershipRevision,rows};
+  }
   function assertCommitted(){alive();if(pending){failed=true;throw new Error('Sprite plan was not committed before presentation');}}
   function dispose(){if(disposed)return;disposed=true;entries.clear();free=[];pending=null;stats.spriteResidentImages=0;}
-  return{plan,commit,assertCommitted,dispose};
+  return{plan,commit,residencyAfter,assertCommitted,dispose};
 }

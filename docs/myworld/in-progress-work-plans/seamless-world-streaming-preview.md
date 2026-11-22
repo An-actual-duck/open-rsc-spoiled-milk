@@ -1315,6 +1315,27 @@ elapsed time grew from 36, 16 and 15 ms to 62, 25 and 34 ms. The
 bounded yield experiment was removed after this result.
 [Paced decode trace](../../../output/tests/browser-gameplay-spike/gameplay-reply-paced-trace/firefox-result.json)
 
+#### WebGL worker at Full HD
+
+After the terrain reply changes, the existing WebGL worker improved the
+full walking route in both browsers. These runs used the normal applet
+client and its existing input path. Each finished all three scene rolls
+and the reversal with zero holds or sampled input closures.
+
+| Browser | p99 frame interval, direct → worker | Lowest full second | Seconds below 50 FPS |
+| --- | ---: | ---: | ---: |
+| Firefox | 37 → 32 ms | 29 → 34 FPS | 23 → 6 |
+| Chrome | 34.7 → 27.6 ms | 28 → 41 FPS | 8 → 5 |
+
+The Firefox worker completed 4,204 atlas plans and 5,543 frames across
+startup and travel. It moved 20.75 GB through its transferable-buffer
+pool and recorded 841 backpressure waits. The next comparison uses
+the worker's confirmed sprite atlas inventory to batch resident-only
+plans with their commits. The worker still validates every plan and
+receives fresh quads in the original order. Missing pixels and epoch
+changes use the existing round trip.
+[Firefox render worker](../../../output/tests/browser-gameplay-spike/awt-client-render-worker-firefox/firefox-result.json) · [Chrome render worker](../../../output/tests/browser-gameplay-spike/awt-client-render-worker-chrome/chrome-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
@@ -1327,6 +1348,13 @@ six framebuffers had the same RGB digest. This proves worker startup,
 private transport and login frame generation. Gameplay, GPU frame
 pacing, interactive input and the audio path are separate checks.
 [Firefox client worker startup](../../../output/tests/browser-gameplay-spike/worker-client-port-proof/firefox-worker-result.json) · [Chrome client worker startup](../../../output/tests/browser-gameplay-spike/worker-client-port-proof/chrome-worker-result.json) · [CheerpJ architecture](https://cheerpj.com/docs/explanation/architecture)
+
+The welcome packet asked the desktop window to revalidate its size.
+Moving that callback onto ClientPort lets the applet keep its existing
+viewport behavior. A worker can supply its own viewport. The next
+private run uses the same client JAR, browser terrain workers and
+WebGL drawing code, with direct OffscreenCanvas rendering from the
+client worker.
 
 ## Reproduce the private preview
 

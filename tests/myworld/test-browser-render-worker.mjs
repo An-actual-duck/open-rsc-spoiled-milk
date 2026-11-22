@@ -22,7 +22,8 @@ class FakeWorker {
       const sizer=createWorkerOutputSizer(),self=this;
       const natives={};
       natives[endpoint('initialize')]=async()=>8192;
-      natives[endpoint('planWorldSprites')]=async()=>Int32Array.of(7);
+      natives[endpoint('planWorldSprites')]=async(_lib,epoch,sequence,rows)=>this.planSprites?.(epoch,sequence,rows)??Int32Array.of(7);
+      natives[endpoint('commitWorldSprites')]=async(_lib,epoch,sequence)=>this.commitSprites?.(epoch,sequence);
       natives[endpoint('worldProgress')]=async()=>{};
       natives[endpoint('lightingFrame')]=async(lib,v)=>{self.bufferWords.push(Array.from(new Uint32Array(v.buffer,v.byteOffset,v.length)));};
       natives[endpoint('overlayFrame')]=async()=>{};
@@ -41,6 +42,8 @@ class FakeWorker {
     const owned=structuredClone(message,{transfer:buffers});this.sent.push(owned);
     queueMicrotask(async()=>{
       const ack=await this.replay.execute(owned);ack.stats={value:{...this.stats},samples:{},timeOrigin:performance.timeOrigin};ack.buffers=[];
+      const spriteResidency=this.spriteReceipt?.();
+      if(spriteResidency)ack.spriteResidency=spriteResidency;
       for(const c of owned.commands)for(const a of c.args)if(ArrayBuffer.isView(a))ack.buffers.push(a.buffer);
       const returned=structuredClone(ack,{transfer:ack.buffers});this.emit(returned);
     });
@@ -96,5 +99,33 @@ await loadingFrame();check(rectReads===2&&earlyWorker.output.width===1843&&early
 await loadingFrame();check(rectReads===2,'Positive steady canvas metrics remain cached');
 metrics={width:1440,height:810};early.invalidateLayout();await loadingFrame();check(rectReads===3&&earlyWorker.output.width===1440&&earlyWorker.output.height===810);
 await early.disposeAndConfirm();
+
+const atlasWorker=new FakeWorker();
+let committed=null,fullReceipt=false;
+atlasWorker.planSprites=(_epoch,_sequence,rows)=>Int32Array.from(committed&&rows[0]===7?[]:[rows[0]]);
+atlasWorker.commitSprites=(epoch,sequence)=>{
+  fullReceipt=!committed;
+  committed={epoch,sequence,revision:1};
+};
+atlasWorker.spriteReceipt=()=>{
+  if(!committed)return null;
+  const rows=fullReceipt?Int32Array.of(7,2,3):null;
+  fullReceipt=false;
+  return {...committed,rows};
+};
+const atlas=await createBrowserRenderWorker(canvas,()=>{},{workerFactory:()=>atlasWorker,oracle:true,spriteResidencyProof:true});
+const plan=atlas.natives[endpoint('planWorldSprites')],commit=atlas.natives[endpoint('commitWorldSprites')];
+assert.deepEqual(await plan(null,1,1,Int32Array.of(7,2,3)),Int32Array.of(7));checks++;
+await commit(null,1,1,new Uint8Array(24),new Float32Array(20));
+await atlas.drain();
+const packets=atlas.stats.renderWorker.submittedPackets;
+assert.deepEqual(plan(null,1,2,Int32Array.of(7,2,3)),new Int32Array(0));checks++;
+check(atlas.stats.renderWorker.submittedPackets===packets,'Confirmed resident plan does not flush an IPC packet');
+await commit(null,1,2,new Uint8Array(0),new Float32Array(20));
+await atlas.drain();
+assert.deepEqual(atlasWorker.sent.at(-1).commands.map(c=>c.name),['planWorldSprites','commitWorldSprites']);checks++;
+assert.deepEqual(await plan(null,1,3,Int32Array.of(8,2,3)),Int32Array.of(8));checks++;
+check(atlas.stats.renderWorker.acknowledgedSpritePlans===1,'New identity preserves the authoritative missing-image query');
+atlas.dispose();
 globalThis.window=oldWindow;
 console.log(JSON.stringify({passed:true,checks,scope:'CPU facade/transfer/replay only; no browser or GPU'}));

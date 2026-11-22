@@ -33,7 +33,7 @@ export function createRenderWorkerTransport({postMessage,layout,now=()=>performa
       return result?await done:undefined;
     }catch(error){fail(error);throw error;}finally{flushing=false;}
   }
-  function capture(name,args){
+  function capture(name,args,residentSprites){
     alive();if(flushing)throw new Error('Render producer during backpressure');const shape=inspectRenderCommand(name,args);
     // Never cross await while retaining live Java args: oversize producer batch is
     // rejected rather than auto-flushed with borrowed input still on its stack.
@@ -46,9 +46,10 @@ export function createRenderWorkerTransport({postMessage,layout,now=()=>performa
     }
     if(name==='frameWork'){if(!worldPending){const e=new Error('frameWork without world presentation');fail(e);throw e;}worldPending=false;return flush({frame:true});}
     if(name==='holdWorld')return flush({frame:true});
+    if(name==='planWorldSprites'&&residentSprites===true)return new Int32Array(0);
     if(name==='initialize'||name==='initializeWholeZone'||name==='planWorldSprites')return flush({result:true});
   }
-  function enqueue(name,args){try{return capture(name,args);}catch(error){fail(error);throw error;}}
+  function enqueue(name,args,residentSprites){try{return capture(name,args,residentSprites);}catch(error){fail(error);throw error;}}
   function receive(message){
     if(disposed||failed)return;
     try{

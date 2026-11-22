@@ -502,5 +502,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   }
   function queuePhysicalOutput(enabled){alive();if(!physicalControl||typeof enabled!=='boolean')throw new Error('Private physical output control unavailable');pendingPhysicalOutput=enabled;stats.pendingPhysicalOutput=enabled;return {queued:enabled,active:physicalOutput};}
   function queueStreamUploadValidation(enabled){alive();if(options.benchmarkControl!==true)throw new Error('Private benchmark control unavailable');uploadValidation.queue(enabled);}
-  return {natives,stats,dispose,canvas,...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
+  return {natives,stats,dispose,canvas,
+    ...(options.spriteResidencyProof===true?{spriteResidencyAfter:revision=>spriteAtlas?.residencyAfter(revision)}:{}),
+    ...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
 }

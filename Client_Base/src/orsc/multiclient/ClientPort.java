@@ -54,6 +54,8 @@ public interface ClientPort {
 
 	void resized();
 
+	default void validateViewportOnLogin() { }
+
 	Sprite getSpriteFromByteArray(ByteArrayInputStream byteArrayInputStream);
 
 	/**

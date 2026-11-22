@@ -353,6 +353,8 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 completed = (result.get('sceneryWorker') or {}).get('wordReplies', 0) > 0
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
+            if completed and fixture.get('spriteResidencyProof'):
+                completed = (result.get('renderWorker') or {}).get('acknowledgedSpritePlans', 0) > 0
             if completed and output != 'default':
                 width, height = (1920, 1080) if output == 'full-hd' else (960, 540)
                 completed = (result.get('presentation') or {}).get('outputSizes') == [
