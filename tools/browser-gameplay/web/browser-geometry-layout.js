@@ -69,7 +69,6 @@ export function packCompactVertexBlock(input,count,output,outputAt){
   if(input.buffer===output.buffer&&input.byteOffset<outputOffset+count*48
       &&outputOffset<input.byteOffset+count*112)return false;
   const words=new Uint32Array(input.buffer,input.byteOffset,count*28);
-  const bytes=new Uint8Array(output.buffer,outputOffset,count*48);
   for(let n=0;n<count;n++){
     const from=n*28,to=outputAt+n*12;
     for(let c=0;c<FLOAT_COMPONENTS.length;c++){
@@ -77,16 +76,17 @@ export function packCompactVertexBlock(input,count,output,outputAt){
       // Java Float.floatToIntBits canonicalizes NaNs, preserving signed zero.
       output[to+c]=(word&0x7fffffff)>0x7f800000?0x7fc00000:word;
     }
+    output.fill(0,to+8,to+12);
     for(const attribute of BYTE_ATTRIBUTES){
       const size=attribute[1],offset=attribute[2],target=attribute[3];
       const codes=attribute[5]?UNORM8:UINT8;
       for(let c=0;c<size;c++){
         const byte=codes.get(words[from+offset+c]);
         if(byte===undefined)return false;
-        bytes[n*48+target+c]=byte;
+        const at=target+c;
+        output[to+(at>>>2)]|=byte<<((at&3)*8);
       }
     }
-    bytes[n*48+47]=0;
   }
   return true;
 }
