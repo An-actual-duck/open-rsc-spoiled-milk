@@ -1373,6 +1373,29 @@ resource retention after reusing the transfer buffers. All RGBA bytes
 matched.
 [Firefox walking capture](../../../output/tests/browser-gameplay-spike/local-atlas-plan-firefox/firefox-result.json) · [Chrome walking capture](../../../output/tests/browser-gameplay-spike/local-atlas-plan-chrome/chrome-result.json) · [Firefox pixel proof](../../../output/tests/browser-render-worker-oracle/local-atlas-plan-parity/firefox-hardware-result.json) · [Chrome pixel proof](../../../output/tests/browser-render-worker-oracle/local-atlas-plan-parity/chrome-hardware-result.json)
 
+The Firefox repeat improved the worst second from 36 to 40 FPS and
+the 99th percentile from 33 to 30 ms. The Chrome repeat improved its
+worst second from 41 to 43 FPS and the 99th percentile from 29.7 to
+26.5 ms. Its longest individual gap increased from 160.1 to 175.4 ms.
+A separate trace with the local
+planner found that the largest gaps spent at most 1 ms in the plan call.
+The 171 ms gap spent 86 ms in five client updates and 33 ms capturing the
+scene, with zero terrain or scenery uploads. A 170 ms gap included
+132 ms around the readiness declaration. A 133 ms gap included 116 ms
+around the call that queues the frame on the worker. These are elapsed
+times across the Java-to-browser boundary. The matching worker draw
+stage took 5 to 6 ms around those three gaps.
+[Firefox repeat control](../../../output/tests/browser-gameplay-spike/atlas-recheck-control-firefox/firefox-result.json) · [Firefox repeat candidate](../../../output/tests/browser-gameplay-spike/atlas-recheck-local-firefox/firefox-result.json) · [Chrome repeat control](../../../output/tests/browser-gameplay-spike/atlas-recheck-control-chrome/chrome-result.json) · [Chrome repeat candidate](../../../output/tests/browser-gameplay-spike/atlas-recheck-local-chrome/chrome-result.json) · [Local planner stage trace](../../../output/tests/browser-gameplay-spike/atlas-local-profile-firefox/profile-phase-summary.json)
+
+The same Full HD route with packet timing found 67, 46, and 35 ms in
+opcode 143 receives inside gaps of 165, 144, and 102 ms. A receive can
+replay the context and player packets that precede the static fence, so
+this timing covers more than the fence hash. Other large gaps recorded
+zero packet work. The stage trace also checks visible displacement and
+server position. Its largest sampled player step was 0.336 tiles and the
+server confirmed `(252,609)` after the reversal.
+[Full HD packet capture](../../../output/tests/browser-gameplay-spike/atlas-local-packet-trace-firefox/firefox-result.json) · [Packet and frame stage correlation](../../../output/tests/browser-gameplay-spike/atlas-local-packet-trace-firefox/packet-stage-summary.json)
+
 The player preview uses the original applet input and the separate
 WebGL worker on loopback port 8469. It stages the same primitive
 terrain and scenery replies as the measured route. A normal mouse and

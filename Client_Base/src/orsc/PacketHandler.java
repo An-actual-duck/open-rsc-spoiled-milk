@@ -3755,11 +3755,13 @@ public class PacketHandler {
 				throw new IllegalStateException(
 					"Atomic scene fence carried paged scene records");
 			}
+			long phaseStart = BoundaryLoadingDiagnostics.now();
 			sceneBaselineState.pruneLegacyListsOutsideAtomicFenceRange(
 				mc,
 				localX,
 				localY,
 				objectViewDistance);
+			phaseStart = finishSceneBaselinePhase("fence-prune", phaseStart);
 			final SceneBaselineState.AtomicFenceResult fenceResult =
 				sceneBaselineState.matchAtomicFence(
 					mc,
@@ -3767,6 +3769,7 @@ public class PacketHandler {
 					walls,
 					sceneryHash,
 					wallsHash);
+			phaseStart = finishSceneBaselinePhase("fence-hash", phaseStart);
 			final String fenceSummary =
 				"ATOMIC_SCENE_FENCE seq "
 					+ locationContextSequence + " "
@@ -3785,6 +3788,7 @@ public class PacketHandler {
 					mc.beginLayeredSceneActivation(true, true);
 				}
 			}
+			finishSceneBaselinePhase("fence-publication", phaseStart);
 			/*
 			 * The fence proves that the gameplay-owned inner scene agrees
 			 * with the server. It is not the complete protocol-v8 visual
@@ -3796,6 +3800,7 @@ public class PacketHandler {
 			packetsIncoming.packetEnd = length;
 			return;
 		}
+		long phaseStart = BoundaryLoadingDiagnostics.now();
 		sceneBaselineState.recordPacket(
 			protocolVersion,
 			serverTick,
@@ -3823,12 +3828,23 @@ public class PacketHandler {
 			pageTotal,
 			recordsRead,
 			pageRecords);
+		phaseStart = finishSceneBaselinePhase("page-records", phaseStart);
 		sceneBaselineState.pruneLegacyListsOutsideSyncRange(mc);
+		phaseStart = finishSceneBaselinePhase("page-prune", phaseStart);
 		applyCompleteSceneBaselineToLegacyLists();
 		applyCompleteStaticPresentation();
 		acceptCompleteAtomicSceneBaseline();
+		phaseStart = finishSceneBaselinePhase("page-apply", phaseStart);
 		sceneBaselineState.recordSceneDiagnostics(mc);
+		finishSceneBaselinePhase("page-diagnostics", phaseStart);
 		packetsIncoming.packetEnd = length;
+	}
+
+	private static long finishSceneBaselinePhase(String phase, long started) {
+		if (started == 0L) return 0L;
+		long finished = System.nanoTime();
+		BoundaryLoadingDiagnostics.recordPhase("baseline", phase, started, finished - started);
+		return finished;
 	}
 
 	private static void validateSceneBaselinePageHeader(

@@ -415,6 +415,8 @@ try {
     gpuOptions.measureFrameStages=!deployment.publicAlpha&&window.browserPrivateTestRoute?.frameStages===true;
     gpuOptions.localSpritePlan=!deployment.publicAlpha&&renderWorker.enabled
       &&window.browserPrivateTestRoute?.localSpritePlan===true;
+    const localFrameQueue=!deployment.publicAlpha&&renderWorker.enabled
+      &&window.browserPrivateTestRoute?.localFrameQueue===true;
     ensureStarting();
     if(renderWorker.enabled){
       const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;
@@ -467,7 +469,26 @@ try {
     if(nativeCallDispatch==='sync') {
       natives[progressName]=synchronousNative((lib,metadata)=>{const blocked=worldCover.blocksWorldInput;const result=progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();return result;},{name:'frontend worldProgress',failure:synchronousFailure});
     } else {
-    natives[progressName]=async(lib,metadata)=>{const blocked=worldCover.blocksWorldInput;await progress(lib,metadata);if(!renderWorker.enabled||Number(metadata[1])===0)awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();};
+      function finishProgress(metadata,blocked) {
+        if(!renderWorker.enabled||Number(metadata[1])===0)awaitingGameFrame=false;
+        if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));
+        else updateWorldCover();
+        if(blocked!==worldCover.blocksWorldInput)publish();
+      }
+      if(localFrameQueue) {
+        gpu.stats.renderWorker.localProgressCalls=0;
+        natives[progressName]=(lib,metadata)=>{
+          const blocked=worldCover.blocksWorldInput;
+          const result=progress(lib,metadata);
+          finishProgress(metadata,blocked);
+          gpu.stats.renderWorker.localProgressCalls++;
+          return result;
+        };
+      } else natives[progressName]=async(lib,metadata)=>{
+        const blocked=worldCover.blocksWorldInput;
+        await progress(lib,metadata);
+        finishProgress(metadata,blocked);
+      };
     }
     for(const name of ['Java_orsc_BrowserWebGLBridge_regionTransition','Java_orsc_BrowserWebGLBridge_holdWorld']) {
       const callback=natives[name];if(typeof callback!=='function')throw new Error('WebGL bridge has no streaming protocol');
@@ -489,16 +510,30 @@ try {
         return result;
       },{name:'frontend present',failure:synchronousFailure});
     } else {
-    natives[presentName] = async (...args) => {
-      const blocked=worldCover.blocksWorldInput;
-      if(renderWorker.enabled)alignWorldSurface(Number(args[1]),Number(args[2]));
-      const result = await present(...args);
-      // Preserve ordinary AWT input; the loading cover shares the game bounds.
-      if(!renderWorker.enabled)alignWorldSurface(Number(args[1]),Number(args[2]));
-      if(blocked!==worldCover.blocksWorldInput)publish();
-      gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
-      return result;
-    };
+      function finishPresent(args,blocked,result) {
+        // Preserve ordinary AWT input; the loading cover shares the game bounds.
+        if(!renderWorker.enabled)alignWorldSurface(Number(args[1]),Number(args[2]));
+        if(blocked!==worldCover.blocksWorldInput)publish();
+        gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
+        return result;
+      }
+      async function presentAsync(...args) {
+        const blocked=worldCover.blocksWorldInput;
+        if(renderWorker.enabled)alignWorldSurface(Number(args[1]),Number(args[2]));
+        return finishPresent(args,blocked,await present(...args));
+      }
+      if(localFrameQueue) {
+        gpu.stats.renderWorker.localWorldEnqueues=0;
+        const enqueueWorld=(...args)=>{
+          const blocked=worldCover.blocksWorldInput;
+          alignWorldSurface(Number(args[1]),Number(args[2]));
+          // A world present only queues data. frameWork owns the frame boundary and backpressure.
+          const result=finishPresent(args,blocked,present(...args));
+          gpu.stats.renderWorker.localWorldEnqueues++;
+          return result;
+        };
+        natives[presentName]=(...args)=>args[3]===true?enqueueWorld(...args):presentAsync(...args);
+      } else natives[presentName]=presentAsync;
     }
   }
   startupProgress.update('runtime-download');

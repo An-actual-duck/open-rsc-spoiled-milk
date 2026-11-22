@@ -360,6 +360,9 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 plans = (result.get('renderWorker') or {}).get('localSpritePlans', 0)
                 replayed = (result.get('atlas') or {}).get('plans', 0)
                 completed = replayed > 0 and 0 <= plans - replayed <= 3
+            if completed and fixture.get('localFrameQueue'):
+                worker = result.get('renderWorker') or {}
+                completed = worker.get('localProgressCalls', 0) > 0 and worker.get('localWorldEnqueues', 0) > 0
             if completed and java_version != 8:
                 completed = any(event['message'] == f'outer-coverage:java-runtime:{java_version}'
                                 for event in result['events'])

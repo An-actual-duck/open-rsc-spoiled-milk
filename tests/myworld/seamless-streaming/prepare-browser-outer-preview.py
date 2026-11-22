@@ -61,6 +61,7 @@ def main():
     parser.add_argument('--steady-walk', action='store_true', help='Repeat the approach inside the installed area after its prediction is ready')
     parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
     parser.add_argument('--local-sprite-plan', action='store_true', help='Plan sprites without a render-worker round trip')
+    parser.add_argument('--local-frame-queue', action='store_true', help='Enqueue worker readiness and world draw calls without yielding')
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
     parser.add_argument('--worker-scenery-placements', action='store_true', help='Build canonical scenery inputs from placements in the detached worker')
     parser.add_argument('--verify-worker-scenery-placements', action='store_true', help='Compare detached placement meshes byte for byte with the installed builder')
@@ -74,14 +75,15 @@ def main():
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
     parser.add_argument('--dependency-jar', type=Path, help='Use an explicit immutable client build for a matched comparison')
     args = parser.parse_args()
+    sustained_trace = args.sustained_walk and args.travel_trace
     if args.sustained_walk and (args.manual or not (args.travel_trace or args.presentation_only)):
         parser.error('The automated sustained walk requires travel or presentation sampling')
     if args.safe_walk_fixture and not args.sustained_walk:
         parser.error('Test character protection requires the automated sustained walk')
     if args.presentation_only and (not (args.sustained_walk and args.live_surface_handoff) or args.trace or args.travel_trace):
         parser.error('Presentation-only sampling requires untraced sustained live-surface travel')
-    if args.frame_stages and not args.presentation_only:
-        parser.error('Frame stage timing requires the presentation control')
+    if args.frame_stages and not (args.presentation_only or sustained_trace):
+        parser.error('Frame stage timing requires the presentation control or a sustained travel trace')
     if args.profile_panels and (not args.frame_stages or args.surface_draw_worker):
         parser.error('Panel profiling requires frame-stage sampling on the direct renderer')
     if args.profile_minimap_walk and not args.profile_panels:
@@ -116,10 +118,12 @@ def main():
         parser.error('Surface workers require live surface handoff')
     if args.local_sprite_plan and not args.surface_draw_worker:
         parser.error('The local atlas planner requires the WebGL worker')
+    if args.local_frame_queue and not args.surface_draw_worker:
+        parser.error('The local frame queue requires the WebGL worker')
     if args.worker_scenery_placements and not args.surface_mesh_worker:
         parser.error('Scenery placement requests require the surface mesher')
-    if args.worker_scenery_placements and not (args.manual or args.presentation_only):
-        parser.error('Automated scenery placement checks require the sustained presentation route')
+    if args.worker_scenery_placements and not (args.manual or args.presentation_only or sustained_trace):
+        parser.error('Automated scenery placement checks require a sustained capture')
     if args.verify_worker_scenery_placements and not (args.worker_scenery_placements and args.presentation_only):
         parser.error('Scenery parity requires the automated scenery placement route')
     if args.scenery_words and not args.worker_scenery_placements:
@@ -199,6 +203,7 @@ def main():
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/', "
            f"surfaceDrawWorker:{str(args.surface_draw_worker).lower()}, frameStages:{str(args.frame_stages).lower()}, "
+           f"localFrameQueue:{str(args.local_frame_queue).lower()}, "
            f"localSpritePlan:{str(args.local_sprite_plan).lower()}}};")
     if args.manual and args.travel_trace:
         (web / 'travel-report.js').write_bytes(Path(__file__).with_name('travel-report.js').read_bytes())
@@ -307,6 +312,7 @@ def main():
         'reuseDetachedScenery': args.reuse_detached_scenery,
         'surfaceDrawWorker': args.surface_draw_worker,
         'localSpritePlan': args.local_sprite_plan,
+        'localFrameQueue': args.local_frame_queue,
         'sustainedWalk': args.sustained_walk,
         'safeWalkFixture': args.retarget_walk or args.safe_walk_fixture,
         'retargetWalk': args.retarget_walk,

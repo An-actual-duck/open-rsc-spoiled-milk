@@ -428,10 +428,23 @@ frame production or resource ownership before a new pacing comparison.
 Profile the current worker baseline during the first load, steady travel
 and the return roll. Separate Java ticks and scene preparation from
 browser work before submission, worker queue time and WebGL execution.
+The latest Full HD packet trace found scene-baseline receives among the
+remaining gaps. A receive can replay several ordered packets at the
+fence. Correlate the individual context, player, and scenery stages
+before changing the publication boundary.
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.
 [Scenery and terrain captures](seamless-world-streaming-preview.md#flat-scenery-replies-and-worker-packed-draws)
+
+CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
+runtime overhead. The private Firefox trial stopped during startup.
+TeaVM can ahead-of-time compile a detached Java library, with limited
+JDK coverage and Java-to-JavaScript array copies by default. A bounded
+kernel with measured cost and an existing native parity fixture is a
+testable entry point for that approach. The current client still reaches
+desktop APIs through AWT and its core classes.
+[CheerpJ 5.0 release notes](https://labs.leaningtech.com/blog/cheerpj-5.0) · [TeaVM overview](https://www.teavm.org/docs/intro/overview.html) · [TeaVM JavaScript interop](https://teavm.org/docs/runtime/jso.html)
 
 ## Stop conditions and follow-up decisions
 
