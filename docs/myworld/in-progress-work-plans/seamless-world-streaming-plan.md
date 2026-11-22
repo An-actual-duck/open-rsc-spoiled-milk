@@ -600,9 +600,11 @@ submission intervals away from replay below 57 ms in each browser. The
 private player preview uses the worker. Its remaining intervals over
 100 ms include the verified rolls. In both browsers, preparing lighting
 consumed up to 20–30 ms on the first frame after a switch, alongside
-packet replay and scene capture. Measure the terrain field, glow, roof
-and shadow costs independently before moving the expensive preparation
-off the submission path.
+packet replay and scene capture. The per-stage capture isolated 10–18 ms
+of glow-mask work on each browser's first two cold rolls. Test rasterizing
+the exact mask on the existing render worker from the Java builder's
+ordered input. Check the texture bytes, renderer completion intervals
+and authoritative travel before advancing the preview again.
 [Terrain geometry preparation between rolls](seamless-world-streaming-preview.md#terrain-geometry-preparation-between-rolls)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java

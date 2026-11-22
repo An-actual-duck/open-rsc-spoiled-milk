@@ -2284,6 +2284,21 @@ with the instrumented build. The per-mask timings will determine which
 lighting work to prepare before the scene changes.
 [Chrome frame stages](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-roll-stages-chrome/chrome-result.json) · [Firefox frame stages](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-roll-stages-firefox/firefox-result.json) · [Native lighting checks](../../../output/tests/seamless-world-streaming/lighting-roll-phases-build/native-lighting.log)
 
+The detailed lighting capture placed most of that time in glow-mask
+generation. The first two rolls spent 10.0 and 10.3 ms there in Chrome
+and 13 and 18 ms in Firefox. The third roll reused a mask and spent at
+most 0.2 ms. Terrain field assembly, roof coverage, shadow projections
+and bridge calls each took only a small part of the first two samples.
+
+The private glow trial sends the render worker the ordered emitter and
+bounds input that keys the Java cache. The worker rasterizes the same
+RGBA texture before drawing that frame. The Java source remains the
+reference for the world bounds and the fallback for larger inputs.
+The independent oracle matched 128 cases at four dimensions, including
+negative coordinates, overlapping and repeated lights, and a mask
+with zero visible pixels.
+[Chrome lighting breakdown](../../../output/tests/browser-gameplay-spike/lighting-phase-breakdown-chrome/chrome-result.json) · [Firefox lighting breakdown](../../../output/tests/browser-gameplay-spike/lighting-phase-breakdown-firefox/firefox-result.json) · [Pixel and bounds parity](../../../output/tests/seamless-world-streaming/worker-glow-mask-build/worker-glow-parity.log)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
