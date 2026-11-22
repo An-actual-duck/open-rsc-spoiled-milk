@@ -348,6 +348,7 @@ public class PacketHandler {
 		quarantinedSceneDeltaCount = 0;
 		layeredSceneActivationState.reset();
 		if (mc != null) {
+			mc.clearBrowserFloorScenery();
 			mc.resetLayeredSceneActivationPresentation();
 			mc.resetDetachedSceneryReuse();
 			mc.clearStaticScenePresentation();
@@ -1161,6 +1162,7 @@ public class PacketHandler {
 			 * safely retain records from another level or world space.
 			 */
 			if (result.isScopeChanged()) {
+				mc.retainBrowserFloorScenery(result.getNativeTerrainSnapshot());
 				mc.clearStaticScenePresentation();
 			}
 		}

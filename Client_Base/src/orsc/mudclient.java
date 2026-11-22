@@ -959,6 +959,8 @@ public final class mudclient implements Runnable {
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Long, ResidentObjectChunkCacheEntry>();
+	private String retainedFloorSceneryScope;
+	private final Map<Long, ResidentObjectChunkCacheEntry> retainedFloorScenery = new HashMap<>();
 	private final Map<Long, PendingResidentObjectChunkBuild> predictedSceneryCells = new HashMap<>();
 	private final Map<IncomingSceneryPlacement, IncomingSceneryModel> preparedIncomingScenery = new HashMap<>();
 	private int requestedIncomingScenery;
@@ -4575,6 +4577,7 @@ public final class mudclient implements Runnable {
 			pendingDistantScenery = null;
 		}
 		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
+		restoreBrowserFloorScenery();
         if(orsc.graphics.three.WholeOverworldZoneRegistry.isEnabled())captureWholeOverworldObjectCells(objectInputs);
 		long inputNanos = System.nanoTime() - inputStartNanos;
 		boolean traceHandoffScenery = BrowserRegionHandoffTrace.ENABLED
@@ -5888,6 +5891,44 @@ public final class mudclient implements Runnable {
 		this.cachedResidentObjectChunkPreviousViewCells.clear();
 		this.cachedResidentObjectChunkViewBaseX = Integer.MIN_VALUE;
 		this.cachedResidentObjectChunkViewBaseZ = Integer.MIN_VALUE;
+	}
+
+	void retainBrowserFloorScenery(NativeLayeredTerrainSnapshot destination) {
+		if (!BrowserWorldStreaming.enabled() || world == null) return;
+		NativeLayeredTerrainSnapshot current = world.getWholeOverworldSourceSnapshot();
+		if (current == null || destination == null || WorldEditorBuildSettings.isEnabled() || world.hasWholeOverworldTerrainPatches()
+			|| !current.packageIdentity().equals(destination.packageIdentity())
+			|| !"global".equals(current.getWorldSpace()) || !"global".equals(destination.getWorldSpace())) {
+			clearBrowserFloorScenery();
+			return;
+		}
+		if (current.getLevel() != 0 || destination.getLevel() == 0) return;
+		clearBrowserFloorScenery();
+		retainedFloorSceneryScope = current.scopeIdentity();
+		for (Long key : cachedResidentObjectChunkCurrentViewCells) {
+			ResidentObjectChunkCacheEntry entry = cachedResidentObjectChunks.get(key);
+			if (entry != null && entry.chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) {
+				retainedFloorScenery.put(key, entry);
+			}
+		}
+	}
+
+	private void restoreBrowserFloorScenery() {
+		if (retainedFloorSceneryScope == null || !isRenderer3DWorldReady()) return;
+		NativeLayeredTerrainSnapshot current = world.getWholeOverworldSourceSnapshot();
+		if (current == null || current.getLevel() != 0) return;
+		if (!WorldEditorBuildSettings.isEnabled() && !world.hasWholeOverworldTerrainPatches()
+			&& retainedFloorSceneryScope.equals(current.scopeIdentity())) {
+			// The normal cache lookup still validates each cell against the current
+			// authoritative scenery and elevation. Only immutable draw meshes are retained.
+			retainedFloorScenery.forEach(cachedResidentObjectChunks::putIfAbsent);
+		}
+		clearBrowserFloorScenery();
+	}
+
+	void clearBrowserFloorScenery() {
+		retainedFloorSceneryScope = null;
+		retainedFloorScenery.clear();
 	}
 
 	private int getDebugPlayerWorldTileX() {
