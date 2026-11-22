@@ -562,12 +562,22 @@ reply decoding and collector work. The packed tile trial matched
 20,736 direct reads and the full gameplay product. Timing pairs and
 reversed-order repeats gave mixed pacing. The trial was retired.
 The reply also carries a full 144×144 compatibility mesh. The next trial
-read its vertex planes directly from the validated reply. It matched all 136,797 vertex
-records and stayed packed through publication in both browsers. The
-measured pace diverged and the trial was retired. Measure actual packet
-dispatch during the three verified rolls before moving larger pieces of
-scenery and wall work out of activation.
+read its vertex planes directly from the validated reply. It matched
+all 136,797 vertex records and stayed packed through publication in
+both browsers. The measured pace diverged and the trial was retired.
 [CPU capture between rolls](seamless-world-streaming-preview.md#cpu-capture-between-scene-rolls) · [Packed tile results](seamless-world-streaming-preview.md#packed-gameplay-terrain-tiles) · [Packed mesh proof](seamless-world-streaming-preview.md#packed-gameplay-terrain-mesh-vertices)
+
+The verified packet capture put the largest span in the player-position
+packet. At the first roll, local scene installation took 28–30 ms.
+Retiring and rebasing scenery consumed 17–18 ms, and terrain and
+structure installation consumed 8–9 ms. Actor rebasing took at most
+1 ms on any roll. Prepare and publish the local scene membership and
+terrain structures together. Retain the already installed world cells
+and stage only the changes in membership before activation. Verify the
+target window, placement and collision revisions at the existing fence.
+Keep the actor update on its current ordered packet path. Assess frame
+pacing throughout the route as well as across the three roll windows.
+[Per-packet and scene installation timings](seamless-world-streaming-preview.md#packet-costs-inside-a-verified-scene-roll)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.

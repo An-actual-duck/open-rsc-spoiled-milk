@@ -2132,11 +2132,24 @@ walk. Both browsers observed three verified rolls at 1920×1080 with a
 
 The player-position packet is seven bytes and invokes the local scene
 transition before applying the player update. It was the largest
-packet span at every roll. Capture the existing phase timers for
-scenery retirement, terrain installation and local publication
-without enabling detailed logging. NPC coordinate updates took
-1–3 ms per roll.
+packet span at every roll. NPC coordinate updates took 1–3 ms per roll.
 [Chrome packet costs](../../../output/tests/browser-gameplay-spike/scene-roll-packet-cost-chrome/packet-cost-summary.json) · [Firefox packet costs](../../../output/tests/browser-gameplay-spike/scene-roll-packet-cost-firefox/packet-cost-summary.json)
+
+The next captures reused the local installation phase clocks. Both
+finished at the same server-confirmed position through three verified
+rolls with no holds or input closures. Each row lists the phases for the
+same three rolls in order.
+
+| Browser | Full local installation | Scenery retirement and rebase | Install terrain and structure | Actor rebase |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 28, 16.6, 14.4 ms | 17.3, 10, 6.2 ms | 7.8, 6.2, 7.7 ms | 0.4, 0.1, 0.1 ms |
+| Firefox | 30, 10, 12 ms | 18, 5, 6 ms | 9, 4, 4 ms | 0, 0, 1 ms |
+
+The first roll's local installation used roughly two frame budgets in
+both browsers. The longest frame intervals away from replay were 128 ms
+in Chrome and 152 ms in Firefox, so the pacing criterion also needs
+separate work between rolls.
+[Chrome installation phases](../../../output/tests/browser-gameplay-spike/scene-roll-region-cost-chrome/region-cost-summary.json) · [Firefox installation phases](../../../output/tests/browser-gameplay-spike/scene-roll-region-cost-firefox/region-cost-summary.json)
 
 #### Java client worker feasibility
 
