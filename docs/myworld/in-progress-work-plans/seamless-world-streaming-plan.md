@@ -497,6 +497,14 @@ that requests to remove missing roofs scan the live scene model list
 every frame. Skipping those requests improved the longest intervals in
 both browsers. The 60 FPS target remains open. Use the separate roll
 and ordinary-gap evidence to select the next change.
+The integer camera bounds trial brought the largest sampled Java
+rounding allocation site from 3.22 GB to 111 MB over the Chrome walk
+while preserving the picking digest. Firefox's worst interval and
+Chrome's rate of gaps over 100 ms improved in the paired walks. The
+deferred model row trial saved nearly all row writes and produced
+mixed pacing. The preview retains the integer bounds trial. The next
+authority change should address the repeated local scene work at the
+fence, using the staged cell data already available before the roll.
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.

@@ -2,14 +2,15 @@
 
 ## Current Full HD browser preview
 
-The loopback preview on port 8579 skips scene removals for empty roof
-slots. It carries the compact scenery conversion, resident projection
-omission, and cached transforms through translation-only scene rolls.
-The separate WebGL worker presents at 1920×1080 with the original 960×540
-logical UI. The disposable account is `browserdemo` / `BrowserProof13`.
-Normal keyboard and mouse login reached the playable scene at `(239,609)`.
-Port 8563 offers the previous build for comparison.
-[Play the updated preview](http://127.0.0.1:8579/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/empty-roof-removals-player-preview/manual-login-result.json) · [Pacing results](#remaining-client-work-after-compact-conversion) · [Compare on port 8563](http://127.0.0.1:8563/?mode=webgl&physical=on)
+The loopback preview on port 8593 uses exact integer rounding in the
+resident camera bounds check. It carries compact scenery conversion,
+the empty roof removal guard, and cached transforms through
+translation-only scene rolls. The separate WebGL worker presents at
+1920×1080 with the original 960×540 logical UI. The disposable account
+is `browserdemo` / `BrowserProof13`. Normal keyboard and mouse login
+reached the playable scene at `(239,609)`. Port 8579 offers the previous
+build for comparison.
+[Play the updated preview](http://127.0.0.1:8593/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-player-preview/manual-login-result.json) · [Pacing results](#integer-camera-bounds) · [Compare on port 8579](http://127.0.0.1:8579/?mode=webgl&physical=on)
 
 ## Early covered walking fixtures
 
@@ -1829,6 +1830,40 @@ context logging and scene capture. The full frame sequence still had
 long gaps and the browser pairs diverged. The trial was retired and
 its exact artifact remains available for comparison.
 [Native parity](../../../output/tests/seamless-world-streaming/deferred-rebase-rows-build/native-picking.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/deferred-rebase-rows-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/deferred-rebase-rows-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/deferred-rebase-rows-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/deferred-rebase-rows-chrome/chrome-result.json) · [Traced roll comparison](../../../output/tests/seamless-world-streaming/deferred-rebase-rows-build/roll-comparison.json)
+
+#### Integer camera bounds
+
+The Chrome allocation capture of the roof-guard build estimated
+14.58 GB of transient main-thread JavaScript allocations over the
+walk. The largest named leaf accounted for 3.22 GB and its generated
+code matches Java's floating-point floor and ceiling helper. The
+camera bounds check uses that helper for fixed-point rotations and
+projected bounds. The trial keeps the overflow checks and uses signed
+integer shifts and exactly rounded integer quotients after those
+checks. The native rejection digest matched across 6,000 cases, along
+with the native picking and pixel digest.
+[Allocation summary](../../../output/tests/browser-gameplay-spike/post-roof-guard-allocations-chrome/allocation-summary.json) · [Native camera and scene parity](../../../output/tests/seamless-world-streaming/integer-camera-bounds-build/native-picking.json)
+
+Each browser pair used the same client JAR and Full HD display
+configuration. Both browsers completed the three rolls and reversal
+with one epoch, zero holds or input closures, and a server-confirmed
+arrival at `(252,609)`.
+
+| Browser | 99th percentile | Longest interval | Gaps ≥100 ms | Worst second | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Firefox | 28 → 28 ms | 200 → 165 ms | 5 → 6 | 37 → 40 FPS | 14 → 16 |
+| Chrome | 27.1 → 26.7 ms | 129.7 → 130.8 ms | 4 → 2 | 45 → 45 FPS | 21 → 11 |
+
+[Firefox control](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-chrome/chrome-result.json)
+
+The follow-up Chrome capture estimated 110.7 MB at the same rounding
+helper and 10.54 GB across all sampled sites. The control estimated
+3.22 GB at the helper and 14.58 GB overall. The reduction is in
+temporary allocations over the walk. The untraced pairs provide the
+pacing comparison. The traced candidate still recorded a 127 ms
+boundary interval with 58 ms of packet work and a 106 ms ordinary
+interval with zero packet work. Stable 60 FPS remains open.
+[Follow-up allocation summary](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-allocations-chrome/allocation-summary.json) · [Traced candidate walk](../../../output/tests/browser-gameplay-spike/integer-camera-bounds-allocations-chrome/chrome-result.json)
 
 #### Java client worker feasibility
 
