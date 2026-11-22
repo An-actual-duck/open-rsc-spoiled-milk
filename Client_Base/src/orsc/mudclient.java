@@ -1036,12 +1036,15 @@ public final class mudclient implements Runnable {
 		System.getProperty("spoiledmilk.browserResidentInputCache", "true"));
 	private static final boolean NATIVE_RESIDENT_INPUT_CACHE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.nativeResidentInputCache", "true"));
+	private static final boolean PREPARED_RESIDENT_INPUTS = Boolean.getBoolean("spoiledmilk.browserPreparedResidentInputs");
+	private static final boolean VERIFY_PREPARED_RESIDENT_INPUTS = Boolean.getBoolean("spoiledmilk.browserVerifyPreparedResidentInputs");
 	private static final int MAX_RESIDENT_INPUT_DESCRIPTOR_INTS = 1024 * 1024;
 	private ResidentStaticInputCache residentStaticInputCache;
 	private int[] residentStaticInputProbe;
 	private int[] residentAnimatedInputIndices;
 	private int residentAnimatedInputCount;
 	private int residentPlacementPublicationsReused;
+	private final int[] preparedResidentInputWork = PREPARED_RESIDENT_INPUTS ? new int[4] : null;
 	private final LinkedHashMap<ResidentFishingPoseKey, ResidentFishingPose> residentFishingPoses =
 		new LinkedHashMap<>(32, 0.75f, true);
 	private long residentFishingPoseBytes;
@@ -4423,6 +4426,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private static boolean matchingStaticPlacements(ResidentObjectCanonicalIdentity[] a, ResidentObjectCanonicalIdentity[] b) {
+		if (a == b) return true;
 		if (a.length != b.length) return false;
 		for (int i = 0; i < a.length; i++) {
 			if (a[i].compareTo(b[i]) != 0) return false;
@@ -5006,7 +5010,9 @@ public final class mudclient implements Runnable {
 			int used = captureResidentStaticInputs();
 			if (cached == null || !cached.matches(anchor, midRegionBaseX, midRegionBaseZ, tileSize,
 				staticPresentationRevision, residentStaticInputProbe, used)) {
-				List<ResidentObjectChunkInput> all = buildResidentObjectChunkInputsUncached(baseFrame);
+				List<ResidentObjectChunkInput> all = PREPARED_RESIDENT_INPUTS && publishedPlacement
+					&& packetHandler.getVerifiedLiveSurfaceContext() > 0
+					? buildCapturedResidentInputs(baseFrame, cached, used) : buildResidentObjectChunkInputsUncached(baseFrame);
 				List<ResidentObjectChunkInput> statics = new ArrayList<>();
 				for (ResidentObjectChunkInput input : all) {
 					if (input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) statics.add(input);
@@ -5039,6 +5045,154 @@ public final class mudclient implements Runnable {
 		while (s < cached.inputs.size()) merged.add(cached.inputs.get(s++));
 		while (a < animated.size()) merged.add(animated.get(a++));
 		return merged;
+	}
+
+	public int[] getPreparedResidentInputWork() {
+		return preparedResidentInputWork == null ? new int[0] : preparedResidentInputWork.clone();
+	}
+
+	/** The capture contains live elevations and placements in literal source order. */
+	private List<ResidentObjectChunkInput> buildCapturedResidentInputs(Renderer3DWorldChunkFrame baseFrame,
+			ResidentStaticInputCache cached, int used) {
+		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
+		int role = Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+		int size = residentObjectChunkTileSize(role);
+		Map<Long, CapturedResidentCell> cells = new TreeMap<>();
+		for (int at = 0; at < used; at += 8) {
+			int x = Math.floorDiv(residentStaticInputProbe[at + 1], size);
+			int z = Math.floorDiv(residentStaticInputProbe[at + 2], size);
+			long key = residentObjectChunkCellKey(x, z, role);
+			CapturedResidentCell cell = cells.get(key);
+			if (cell == null) {
+				cell = new CapturedResidentCell(x, z);
+				cells.put(key, cell);
+			} else if (cell.x != x || cell.z != z) {
+				return buildResidentObjectChunkInputsUncached(baseFrame);
+			}
+			cell.add(at, residentStaticInputProbe[at + 7] != 0);
+		}
+		if (cached != null) {
+			for (ResidentObjectChunkInput previous : cached.inputs) {
+				CapturedResidentCell cell = cells.get(previous.cellKey);
+				if (cell != null) cell.previous = previous;
+			}
+		}
+		Map<Long, ResidentObjectChunkInput> finished = new TreeMap<>();
+		int reused = 0, staged = 0, rebuilt = 0;
+		for (Map.Entry<Long, CapturedResidentCell> entry : cells.entrySet()) {
+			long key = entry.getKey();
+			CapturedResidentCell cell = entry.getValue();
+			int originX = cell.x * size, originZ = cell.z * size;
+			int localX = originX - midRegionBaseX, localZ = originZ - midRegionBaseZ;
+			ResidentObjectChunkInput input = cell.previous;
+			if (cell.matches(input, anchor, tileSize, residentStaticInputProbe)) {
+				reused++;
+			} else {
+				input = null;
+				if (adoptSurfaceScenery) {
+					SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(
+						Math.floorDiv(originX, World.SECTION_SIZE), Math.floorDiv(originZ, World.SECTION_SIZE)));
+					if (work != null && work.prepared != null) {
+						for (PreparedSceneryDraw draw : work.prepared.draws) {
+							if (draw.input.cellKey == key && cell.matches(draw.input, anchor, tileSize, residentStaticInputProbe)) {
+								input = draw.input;
+								staged++;
+								break;
+							}
+						}
+					}
+				}
+			}
+			if (input == null) {
+				ResidentObjectChunkInputBuilder builder = new ResidentObjectChunkInputBuilder(anchor, key, localX, localZ,
+					cell.x, cell.z, role, size, midRegionBaseX, midRegionBaseZ, tileSize);
+				builder.liveModelCount = cell.count - cell.presentation;
+				builder.presentationModelCount = cell.presentation;
+				for (int n = 0; n < cell.count; n++) {
+					int at = cell.offsets[n];
+					int[] rows = residentStaticInputProbe;
+					builder.canonicalIdentities.add(new ResidentObjectCanonicalIdentity(rows[at], rows[at + 1], rows[at + 2],
+						rows[at + 3], rows[at + 4], rows[at + 5], rows[at + 6]));
+				}
+				input = builder.build();
+				rebuilt++;
+			} else {
+				input = new ResidentObjectChunkInput(anchor, key, midRegionBaseX, midRegionBaseZ, tileSize, localX, localZ, role,
+					input.models, input.canonicalIdentities, cell.count, input.cacheKey, input.canonicalContentKey,
+					cell.count - cell.presentation, cell.presentation, 0, "");
+			}
+			finished.put(key, input);
+		}
+		Map<Long, ResidentObjectChunkInputBuilder> animated = new TreeMap<>();
+		for (int n = 0; n < residentAnimatedInputCount; n++) {
+			int i = residentAnimatedInputIndices[n];
+			addResidentObjectChunkModel(animated, anchor, getGameObjectInstanceX(i), getGameObjectInstanceZ(i),
+				Renderer3DModelKind.GAME_OBJECT, i, getGameObjectInstanceID(i), getGameObjectInstanceDir(i),
+				getGameObjectInstanceModel(i), false);
+		}
+		for (ResidentObjectChunkInputBuilder builder : animated.values()) {
+			if (finished.put(builder.cellKey, builder.build()) != null) return buildResidentObjectChunkInputsUncached(baseFrame);
+		}
+		List<ResidentObjectChunkInput> result = new ArrayList<>(finished.values());
+		if (VERIFY_PREPARED_RESIDENT_INPUTS) verifyCapturedResidentInputs(result, buildResidentObjectChunkInputsUncached(baseFrame));
+		preparedResidentInputWork[0]++;
+		preparedResidentInputWork[1] += reused;
+		preparedResidentInputWork[2] += staged;
+		preparedResidentInputWork[3] += rebuilt;
+		return result;
+	}
+
+	private static void verifyCapturedResidentInputs(List<ResidentObjectChunkInput> actual, List<ResidentObjectChunkInput> reference) {
+		if (actual.size() != reference.size()) throw new IllegalStateException("Resident input count changed");
+		for (int i = 0; i < actual.size(); i++) {
+			ResidentObjectChunkInput a = actual.get(i), b = reference.get(i);
+			if (a.anchor != b.anchor || a.cellKey != b.cellKey || a.baseX != b.baseX || a.baseZ != b.baseZ
+				|| a.localOriginTileX != b.localOriginTileX || a.localOriginTileZ != b.localOriginTileZ
+				|| a.chunkRole != b.chunkRole || a.tileSize != b.tileSize || a.modelCount != b.modelCount
+				|| a.liveModelCount != b.liveModelCount || a.presentationModelCount != b.presentationModelCount
+				|| a.cacheKey != b.cacheKey || a.canonicalContentKey != b.canonicalContentKey
+				|| !Arrays.equals(a.models, b.models) || !matchingStaticPlacements(a.canonicalIdentities, b.canonicalIdentities)) {
+				throw new IllegalStateException("Resident input differs at draw cell " + a.cellKey);
+			}
+		}
+	}
+
+	private static final class CapturedResidentCell {
+		private final int x, z;
+		private int[] offsets = new int[16];
+		private int count, presentation;
+		private ResidentObjectChunkInput previous;
+
+		private CapturedResidentCell(int x, int z) {
+			this.x = x;
+			this.z = z;
+		}
+
+		private void add(int offset, boolean presentationOnly) {
+			if (count == offsets.length) offsets = Arrays.copyOf(offsets, count * 2);
+			offsets[count++] = offset;
+			if (presentationOnly) presentation++;
+		}
+
+		private boolean matches(ResidentObjectChunkInput input, Renderer3DWorldChunkFrame.ChunkMesh anchor,
+				int tileSize, int[] rows) {
+			if (input == null || input.anchor.getPlane() != anchor.getPlane() || input.tileSize != tileSize
+				|| input.canonicalIdentities.length != count) return false;
+			ResidentObjectCanonicalIdentity[] candidates = input.canonicalIdentities;
+			boolean[] used = new boolean[count];
+			for (int n = 0; n < count; n++) {
+				int row = offsets[n], start = 0, end = count;
+				while (start < end) {
+					int middle = (start + end) >>> 1;
+					if (candidates[middle].compareDescriptor(rows, row) < 0) start = middle + 1;
+					else end = middle;
+				}
+				while (start < count && used[start] && candidates[start].compareDescriptor(rows, row) == 0) start++;
+				if (start == count || candidates[start].compareDescriptor(rows, row) != 0) return false;
+				used[start] = true;
+			}
+			return true;
+		}
 	}
 
 	/** Exact canonical values include freshly sampled terrain elevations. Incomplete
@@ -6411,38 +6565,41 @@ public final class mudclient implements Runnable {
 		}
 
 		@Override
-		public int compareTo(
-			ResidentObjectCanonicalIdentity other) {
-			int comparison = Integer.compare(
-				this.worldTileX, other.worldTileX);
+		public int compareTo(ResidentObjectCanonicalIdentity other) {
+			return compare(other.worldTileX, other.worldTileZ, other.kind, other.direction,
+				other.objectId, other.elevation1, other.elevation2);
+		}
+
+		private int compareDescriptor(int[] values, int at) {
+			return compare(values[at + 1], values[at + 2], values[at], values[at + 4],
+				values[at + 3], values[at + 5], values[at + 6]);
+		}
+
+		private int compare(int x, int z, int kind, int direction, int id, int elevation1, int elevation2) {
+			int comparison = Integer.compare(worldTileX, x);
 			if (comparison != 0) {
 				return comparison;
 			}
-			comparison = Integer.compare(
-				this.worldTileZ, other.worldTileZ);
+			comparison = Integer.compare(worldTileZ, z);
 			if (comparison != 0) {
 				return comparison;
 			}
-			comparison = Integer.compare(this.kind, other.kind);
+			comparison = Integer.compare(this.kind, kind);
 			if (comparison != 0) {
 				return comparison;
 			}
-			comparison = Integer.compare(
-				this.direction, other.direction);
+			comparison = Integer.compare(this.direction, direction);
 			if (comparison != 0) {
 				return comparison;
 			}
-			comparison = Integer.compare(
-				this.objectId, other.objectId);
+			comparison = Integer.compare(objectId, id);
 			if (comparison != 0) {
 				return comparison;
 			}
-			comparison = Integer.compare(
-				this.elevation1, other.elevation1);
+			comparison = Integer.compare(this.elevation1, elevation1);
 			return comparison != 0
 				? comparison
-				: Integer.compare(
-					this.elevation2, other.elevation2);
+				: Integer.compare(this.elevation2, elevation2);
 		}
 	}
 
