@@ -9,8 +9,9 @@ export function batchedModelKernelPolicy(mode, options) {
   return {properties: ['spoiledmilk.browserBatchedModelKernel=' + (value === 'on')], requested: value === 'on'};
 }
 
-function transformRow(count, sx, sy, sz, px, py, rx, ry, rz, camera, trig) {
-  const [ox,oy,oz,shift,near,rotZ,rotY,rotX] = camera;
+function transformRow(count, sx, sy, sz, px, py, rx, ry, rz, camera, trig, offsetX, offsetZ) {
+  const [cx,oy,cz,shift,near,rotZ,rotY,rotX] = camera;
+  const ox = (cx - offsetX) | 0, oz = (cz - offsetZ) | 0;
   const [sinZ,cosZ,sinY,cosY,sinX,cosX] = trig;
   for (let n = 0; n < count; n++) {
     let x = (sx[n] - ox) | 0, y = (sy[n] - oy) | 0, z = (sz[n] - oz) | 0, tmp;
@@ -52,6 +53,7 @@ export function transformModelBatch(size, rows, counts, camera, trig, trigSource
   }
   touch(counts,false); touch(camera,false); touch(trig,false); if (trigSource !== null) touch(trigSource,false);
   let numeric = 0, vertices = 0;
+  const surfaceOrigins = counts.length === 3 * 128;
   for (let row = 0; row < size; row++) {
     const count = counts[row];
     if (count < 0) return false;
@@ -69,7 +71,8 @@ export function transformModelBatch(size, rows, counts, camera, trig, trigSource
     const count = lengths[row]; if (count === 0) continue;
     const at = row * 8;
     transformRow(count,borrowed[at],borrowed[at+1],borrowed[at+2],borrowed[at+3],borrowed[at+4],
-      borrowed[at+5],borrowed[at+6],borrowed[at+7],camera,trig);
+      borrowed[at+5],borrowed[at+6],borrowed[at+7],camera,trig,
+      surfaceOrigins ? counts[128 + row] : 0, surfaceOrigins ? counts[256 + row] : 0);
   }
   if (stats) {
     stats.packets++; stats.models += numeric; stats.vertices += vertices; stats.metadata += size - numeric;

@@ -146,6 +146,10 @@ public final class mudclient implements Runnable {
 		&& Boolean.getBoolean("spoiledmilk.surfaceSceneryDraw");
 	static final boolean LIVE_SURFACE_HANDOFF = SURFACE_SCENERY_DRAW
 		&& Boolean.getBoolean("spoiledmilk.liveSurfaceHandoff");
+	private static final boolean WORLD_SPACE_SCENERY = LIVE_SURFACE_HANDOFF
+		&& Boolean.getBoolean("spoiledmilk.browserWorldSpaceScenery");
+	private final RSModel.SurfaceOrigin surfaceSceneryOrigin = WORLD_SPACE_SCENERY ? new RSModel.SurfaceOrigin() : null;
+	private int retainedWorldSpaceModels;
 	private int rollingSurfaceWindows;
 	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
 		&& Boolean.getBoolean("spoiledmilk.browserPrepareIncomingScenery");
@@ -3790,6 +3794,9 @@ public final class mudclient implements Runnable {
 			applyExpandedGameObjectPickBounds(objectID, model);
 			this.scene.addModel(model);
 			model.setTranslate(x, -elevation, z);
+		if (canKeepSurfaceSceneryOrigin() && isBrowserBaselineStaticObject(objectID)) {
+			model.keepSurfaceOrigin(surfaceSceneryOrigin);
+		}
 		if (!this.world.updateSurfaceObjectCollision(objectID, xTile, zTile, this.getGameObjectInstanceDir(index), true)) {
 			this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
 		}
@@ -3825,6 +3832,7 @@ public final class mudclient implements Runnable {
 			this.world.removeGameObject_CollisonFlags(id, x, z);
 		}
 		this.setGameObjectInstanceMaterialized(index, false);
+		if (WORLD_SPACE_SCENERY && model != null) model.releaseSurfaceOrigin();
 		return model;
 	}
 
@@ -3848,6 +3856,7 @@ public final class mudclient implements Runnable {
 		RSModel model = this.createWallObjectModel(x, z, id, dir, index);
 		this.setWallObjectInstanceModel(index, model);
 		this.scene.addModel(model);
+		if (canKeepSurfaceSceneryOrigin()) model.keepSurfaceOrigin(surfaceSceneryOrigin);
 		this.world.applyWallToCollisionFlags(id, x, z, dir);
 		this.setWallObjectInstanceMaterialized(index, true);
 		debugSceneWallObjectEvent("materialize", index, "");
@@ -3878,11 +3887,19 @@ public final class mudclient implements Runnable {
 			this.getWallObjectInstanceX(index),
 			this.getWallObjectInstanceID(index));
 		this.setWallObjectInstanceMaterialized(index, false);
+		if (WORLD_SPACE_SCENERY && model != null) model.releaseSurfaceOrigin();
 		return model;
 	}
 
 	void removeSceneModels(RSModel[] removals, int removalCount) {
 		this.scene.removeModels(removals, removalCount);
+	}
+
+	private boolean canKeepSurfaceSceneryOrigin() {
+		if (!WORLD_SPACE_SCENERY || WorldEditorBuildSettings.isEnabled() || world.hasWholeOverworldTerrainPatches())
+			return false;
+		NativeLayeredTerrainSnapshot terrain = world.getWholeOverworldSourceSnapshot();
+		return terrain != null && terrain.getLevel() == 0 && "global".equals(terrain.getWorldSpace());
 	}
 
 	private void materializeLoadedTerrainScenery() {
@@ -22602,6 +22619,10 @@ public final class mudclient implements Runnable {
 						System.nanoTime() - phaseStartNanos;
 					this.midRegionBaseX = nextBaseX;
 					this.midRegionBaseZ = nextBaseZ;
+					if (WORLD_SPACE_SCENERY) {
+						sceneInstanceStore.publishWorldOrigin(nextBaseX, nextBaseZ);
+						surfaceSceneryOrigin.moveTo(nextBaseX * tileSize, nextBaseZ * tileSize);
+					}
 					if (ROLLING_SURFACE_WINDOW) this.world.clearIncomingSurfaceScenery();
 
 					if (hardAreaLoad || heightOffsetChanged) {
@@ -22610,7 +22631,7 @@ public final class mudclient implements Runnable {
 
 					phaseStartNanos = System.nanoTime();
 					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
-						if (!rolling) {
+						if (!rolling && !WORLD_SPACE_SCENERY) {
 							this.setGameObjectInstanceX(i, this.getGameObjectInstanceX(i) - baseDX);
 							this.setGameObjectInstanceZ(i, this.getGameObjectInstanceZ(i) - baseDZ);
 						}
@@ -22633,8 +22654,10 @@ public final class mudclient implements Runnable {
 
 					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
 						if (!rolling) {
-							this.setWallObjectInstanceX(i, this.getWallObjectInstanceX(i) - baseDX);
-							this.setWallObjectInstanceZ(i, this.getWallObjectInstanceZ(i) - baseDZ);
+							if (!WORLD_SPACE_SCENERY) {
+								this.setWallObjectInstanceX(i, this.getWallObjectInstanceX(i) - baseDX);
+								this.setWallObjectInstanceZ(i, this.getWallObjectInstanceZ(i) - baseDZ);
+							}
 							this.setWallObjectInstanceModel(i, null);
 						}
 						int xTile = this.getWallObjectInstanceX(i);
@@ -22759,6 +22782,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public int getRollingSurfaceWindows() { return rollingSurfaceWindows; }
+	public int getRetainedWorldSpaceModels() { return retainedWorldSpaceModels; }
 
 	private void rollSurfaceScenery(int dx, int dz) {
 		RSModel[] retired = new RSModel[getGameObjectInstanceCount() + getWallObjectInstanceCount()];
@@ -22775,9 +22799,13 @@ public final class mudclient implements Runnable {
 				if (!World.isLocalFaceTile(x - dx, z - dz)) {
 					world.updateSurfaceObjectCollision(getGameObjectInstanceID(i), x, z, getGameObjectInstanceDir(i), false);
 				}
-				getGameObjectInstanceModel(i).rebaseWorldOrigin(pixelX, pixelZ);
+				RSModel model = getGameObjectInstanceModel(i);
+				if (model.hasSurfaceOrigin()) retainedWorldSpaceModels++;
+				else model.rebaseWorldOrigin(pixelX, pixelZ);
 			}
-			sceneInstanceStore.moveGameObject(i, retained++, x - dx, z - dz);
+			if (!WORLD_SPACE_SCENERY) sceneInstanceStore.moveGameObject(i, retained, x - dx, z - dz);
+			else if (i != retained) sceneInstanceStore.moveGameObject(i, retained, x, z);
+			retained++;
 		}
 		setGameObjectInstanceCount(retained);
 		retained = 0;
@@ -22792,9 +22820,13 @@ public final class mudclient implements Runnable {
 				if (!World.isLocalFaceTile(x - dx, z - dz)) {
 					world.removeWallObject_CollisionFlags(true, getWallObjectInstanceDir(i), z, x, getWallObjectInstanceID(i));
 				}
-				getWallObjectInstanceModel(i).translate2(pixelX, 0, pixelZ);
+				RSModel model = getWallObjectInstanceModel(i);
+				if (model.hasSurfaceOrigin()) retainedWorldSpaceModels++;
+				else model.translate2(pixelX, 0, pixelZ);
 			}
-			sceneInstanceStore.moveWallObject(i, retained++, x - dx, z - dz);
+			if (!WORLD_SPACE_SCENERY) sceneInstanceStore.moveWallObject(i, retained, x - dx, z - dz);
+			else if (i != retained) sceneInstanceStore.moveWallObject(i, retained, x, z);
+			retained++;
 		}
 		setWallObjectInstanceCount(retained);
 		scene.removeModels(retired, removed);

@@ -152,22 +152,85 @@ public final class BrowserModelPickBoundsFixture {
         for(int z=0;z<side;z++)for(int x=0;x<side;x++){int at=z*(side+1)+x;m.insertFace(4,new int[]{at,at+1,at+side+2,at+side+1},-12345,-12345,false);}
         m.key=77;m.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);return m;
     }
+    private static void worldSpaceParity() throws Exception {
+        referenceTrig();
+        wideFrustum();
+        Field vertexX = RSModel.class.getDeclaredField("vertXTransform");
+        Field vertexZ = RSModel.class.getDeclaredField("vertZTransform");
+        vertexX.setAccessible(true);
+        vertexZ.setAccessible(true);
+        int[][] origins = {{0, 0}, {6144, 0}, {6144, -6144}, {-6144, -6144}, {0, 0}};
+        for (int trial = 0; trial < 24; trial++) {
+            RSModel reference = dense(), model = dense();
+            RSModel.SurfaceOrigin origin = new RSModel.SurfaceOrigin();
+            int baseX = trial * 48 * 128, baseZ = -trial * 48 * 128;
+            origin.moveTo(baseX, baseZ);
+            for (RSModel row : new RSModel[]{reference, model}) {
+                row.setTranslate(trial * 79 - 650, -85, trial * 53 - 770);
+                row.setRot256(33, 13, 25);
+                row.setRenderer3DGlowEmitter(0x45afe3, 220, 180);
+                row.rotate1024(31, 9, -123, (byte)-122, -898, 125, 0, 62, 8);
+            }
+            model.keepSurfaceOrigin(origin);
+            int[] storedX = ((int[]) vertexX.get(model)).clone(), storedZ = ((int[]) vertexZ.get(model)).clone();
+            int oldX = baseX, oldZ = baseZ;
+            for (int[] step : origins) {
+                int nextX = baseX + step[0], nextZ = baseZ + step[1];
+                if (nextX != oldX || nextZ != oldZ) reference.rebaseWorldOrigin(oldX - nextX, oldZ - nextZ);
+                origin.moveTo(nextX, nextZ);
+                oldX = nextX;
+                oldZ = nextZ;
+                reference.rotate1024(31, 9, -123, (byte)-122, -898, 125, 0, 62, 8);
+                model.rotateForScene(31, 9, -123, (byte)-122, -898, 125, 0, 62, 8);
+                require(Arrays.equals(reference.vertXRot, model.vertXRot)
+                    && Arrays.equals(reference.vertYRot, model.vertYRot)
+                    && Arrays.equals(reference.vertZRot, model.vertZRot)
+                    && Arrays.equals(reference.vertexParam2, model.vertexParam2)
+                    && Arrays.equals(reference.vertexParam6, model.vertexParam6), "Fixed model projection changed");
+                int[] literalBounds = new int[6], fixedBounds = new int[6];
+                require(reference.copyWorldFaceBounds(literalBounds) && model.copyWorldFaceBounds(fixedBounds)
+                    && Arrays.equals(literalBounds, fixedBounds), "Fixed model camera bounds changed");
+                Renderer3DWorldChunkFrame.ChunkMesh a = RSModel.buildRenderer3DObjectChunkMesh(0, 4, 10, 0, 0,
+                    new RSModel[]{reference}, 1);
+                Renderer3DWorldChunkFrame.ChunkMesh b = RSModel.buildRenderer3DObjectChunkMesh(0, 4, 10, 0, 0,
+                    new RSModel[]{model}, 1);
+                require(a != null && b != null && a.getSignature() == b.getSignature()
+                    && a.getGlowEmitterCount() == 1 && a.getShadowCasterCount() == 1, "Fixed model mesh or lighting changed");
+                require(Arrays.equals(storedX, (int[]) vertexX.get(model)) && Arrays.equals(storedZ, (int[]) vertexZ.get(model)),
+                    "Changing the origin rewrote the model's geometry");
+                require(reference.getRenderer3DTransformVersion() == model.getRenderer3DTransformVersion(),
+                    "Fixed model transform revision changed");
+            }
+        }
+        System.out.println("PASS " + checks + " fixed-origin checks for projection, bounds, meshes, lights, and retained geometry");
+    }
     public static void main(String[] args)throws Exception{
         if(args[0].equals("math")){math();return;}
         if(args[0].equals("cached-rebase")){cachedRebaseParity();return;}
+        if(args[0].equals("world-space-model")){worldSpaceParity();return;}
         boolean defaults=args[1].equals("default"),enabled=defaults||Boolean.parseBoolean(args[1]),current=args[0].equals("current");if(defaults)System.clearProperty("spoiledmilk.browserModelPickBounds");else System.setProperty("spoiledmilk.browserModelPickBounds",String.valueOf(enabled));
         for(String name:new String[]{"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster","browserOverlayCoverage"})System.setProperty("spoiledmilk."+name,"true");System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
         MessageDigest hash=MessageDigest.getInstance("SHA-256");
+        boolean fixedOrigin = args.length > 2 && args[2].equals("world-space");
         long omitted = 0;
         for(int mode=0;mode<4;mode++)for(boolean early:new boolean[]{false,true}){
             BrowserFrameSinkRegistry.install(null);if(mode<3)BrowserFrameSinkRegistry.install(BrowserWallRoofOwnershipFixture.sink(mode==2));System.setProperty("spoiledmilk.browserEarlyFaceCull",String.valueOf(early));
             BrowserWallRoofOwnershipFixture.View view=new BrowserWallRoofOwnershipFixture.View(mode!=1);RSModel dense=dense();view.s.addModel(dense);
             RSModel fixed = dense();
             fixed.setTranslate(96, 0, 128);
+            RSModel.SurfaceOrigin origin = new RSModel.SurfaceOrigin();
+            if (fixedOrigin) fixed.keepSurfaceOrigin(origin);
+            int originX = 0;
             view.s.addModel(fixed);
             require(active(view.s)==(current&&enabled&&mode==0),"Actual feature gate changed native/software/mixed ownership");
             for(int frame=0;frame<72;frame++){
-                if (frame > 0 && frame % 18 == 0) fixed.rebaseWorldOrigin(frame % 36 == 0 ? -128 : 128, 0);
+                if (frame > 0 && frame % 18 == 0) {
+                    int dx = frame % 36 == 0 ? -128 : 128;
+                    if (fixedOrigin) {
+                        originX -= dx;
+                        origin.moveTo(originX, 0);
+                    } else fixed.rebaseWorldOrigin(dx, 0);
+                }
                 int scale=new int[]{1,2,3,14,Integer.MAX_VALUE}[frame%5];view.front.setPickBoundsScale(scale);view.models[2].setPickBoundsScale(scale);dense.setPickBoundsScale(scale);dense.setTranslate((frame%5-2)*120,frame%3*5,(frame%7-3)*90);dense.setRenderer3DModelKind(Renderer3DModelKind.values()[frame%Renderer3DModelKind.values().length]);dense.faceIndices[frame%dense.faceHead]=frame%2==0?new int[]{0,1,14,13}:new int[]{13,14,1,0};
                 BrowserWallRoofOwnershipFixture.Result value=view.draw(frame%4==0?0:frame%4==1?511:256,frame%4==0?0:frame%4==1?383:192,new int[]{20,100,600}[frame%3],new int[]{640,768,900}[frame%3],frame%2*256,new int[]{-12345,0,Scene.TRANSPARENT}[frame%3],frame%11==0);
                 text(hash,value.picks);text(hash,value.anchors);text(hash,value.faces);text(hash,value.resident);ByteBuffer pixels=ByteBuffer.allocate(value.pixels.length*4);for(int p:value.pixels)pixels.putInt(p);hash.update(pixels.array());

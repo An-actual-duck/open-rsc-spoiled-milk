@@ -29,6 +29,16 @@ public final class ScenePlacementRevisionFixture {
 		changed(store, () -> store.moveWallObject(1, 0, 22, 60));
 		changed(store, () -> store.setWallObjectModel(0, null));
 		changed(store, () -> store.setWallObjectCount(1));
+		changed(store, () -> store.publishWorldOrigin(48, -48));
+		if (store.getGameObjectX(0) != -34 || store.getGameObjectZ(0) != 77
+			|| store.getWallObjectX(0) != -26 || store.getWallObjectZ(0) != 108)
+			throw new AssertionError("Published origin changed a world tile");
+		store.setWallObjectX(0, -12);
+		store.setWallObjectZ(0, 4);
+		changed(store, () -> store.publishWorldOrigin(0, 0));
+		if (store.getGameObjectX(0) != 14 || store.getGameObjectZ(0) != 29
+			|| store.getWallObjectX(0) != 36 || store.getWallObjectZ(0) != -44)
+			throw new AssertionError("Return origin changed a retained or edited tile");
 		System.out.println("PASS game-object and wall placement publication follows actual edits and compaction");
 	}
 

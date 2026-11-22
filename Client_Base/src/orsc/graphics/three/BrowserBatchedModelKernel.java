@@ -9,12 +9,14 @@ import orsc.util.FastMath;
  * No model metadata changes until a whole validated packet has completed. */
 public final class BrowserBatchedModelKernel {
     static final int MAX_MODELS = 128;
+    private static final boolean SURFACE_ORIGINS = Boolean.getBoolean("spoiledmilk.browserWorldSpaceScenery");
     interface Backend {
         boolean transform(int size, int[][] rows, int[] counts, int[] camera, int[] trig, int[] trigSource);
     }
     private final Backend backend;
     private final int[][] rows = new int[MAX_MODELS * 8][];
-    private final int[] counts = new int[MAX_MODELS], camera = new int[8], trig = new int[6];
+    // When enabled, the second and third planes carry the model's X/Z offset.
+    private final int[] counts = new int[MAX_MODELS * (SURFACE_ORIGINS ? 3 : 1)], camera = new int[8], trig = new int[6];
     private final RSModel[] models = new RSModel[MAX_MODELS];
     private final boolean[] visible = new boolean[MAX_MODELS];
     private final IdentityHashMap<int[], Boolean> roles = new IdentityHashMap<int[], Boolean>(MAX_MODELS * 8);
@@ -89,7 +91,12 @@ public final class BrowserBatchedModelKernel {
             for (int n = 3; n < 8; n++) roles.put(rows[offset + n], Boolean.TRUE);
             pendingMapOperations += 8; numericModels++; packetVertices += count;
         }
-        models[size] = model; visible[size] = inFrustum; counts[size] = count; size++;
+        models[size] = model; visible[size] = inFrustum; counts[size] = count;
+        if (SURFACE_ORIGINS) {
+            counts[MAX_MODELS + size] = model.surfaceOffsetX();
+            counts[2 * MAX_MODELS + size] = model.surfaceOffsetZ();
+        }
+        size++;
         return true;
     }
 
@@ -112,7 +119,10 @@ public final class BrowserBatchedModelKernel {
                 used = backend.transform(size, rows, counts, camera, trig, trigSource);
             }
             if (used) {
-                for (int n = 0; n < size; n++) models[n].m_dc = visible[n];
+                for (int n = 0; n < size; n++) {
+                    if (SURFACE_ORIGINS) models[n].refreshSurfaceProjection();
+                    models[n].m_dc = visible[n];
+                }
                 add(3, numericModels); add(4, packetVertices); add(5, size - numericModels);
             } else {
                 // Native representation rejection promises ZERO writes. Replay
@@ -120,7 +130,7 @@ public final class BrowserBatchedModelKernel {
                 add(7, 1);
                 for (int n = 0; n < size; n++) {
                     literalModel();
-                    models[n].rotate1024(camera[1], camera[3], camera[0], (byte)-122,
+                    models[n].rotateForScene(camera[1], camera[3], camera[0], (byte)-122,
                         camera[2], camera[6], camera[5], camera[7], camera[4]);
                 }
             }

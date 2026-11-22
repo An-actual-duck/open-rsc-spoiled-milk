@@ -3052,7 +3052,7 @@ public final class Scene {
                 }
                 if (batchModels && browserBatchedModelKernel.enqueue(this.models[var3])) continue;
                 if (batchModels) { browserBatchedModelKernel.flush(); browserBatchedModelKernel.literalModel(); }
-				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
+				this.models[var3].rotateForScene(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
 					this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
                 RSModel rotated = this.models[var3];
                 if (this.m_K && !this.interactionOnlyPickActive && rotated.m_dc && rotated.isInteractionOnly()) {

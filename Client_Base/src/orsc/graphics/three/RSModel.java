@@ -116,6 +116,8 @@ public final class RSModel {
 	private int renderer3DTransformVersion;
 	private int fishingPoseUpdates;
 	private int worldOriginUpdates;
+	private SurfaceOrigin surfaceOrigin;
+	private int surfaceBasisX, surfaceBasisZ, surfaceBasisRevision, projectedSurfaceRevision;
 	private int fishingSpotClarityAnimationState = -1;
 	private int[] fishingSpotClarityBaseX;
 	private int[] fishingSpotClarityBaseY;
@@ -129,6 +131,7 @@ public final class RSModel {
     /** Exact immutable publication template for private offline whole-RAM preparation. */
     public static int capturePreparedState(RSModel model,WholeRamData.Pool pool) {
         if(model==null)return -1;
+        model.releaseSurfaceOrigin();
         WholeRamData.Graph graph=new WholeRamData.Graph(pool);
         int[] scalars=new int[]{model.faceHead,model.key,model.m_cb?1:0,model.diffuseParam1,model.renderer3DModelKind.ordinal(),model.renderer3DMaterialFamily.ordinal(),model.renderer3DGlowColor,model.renderer3DGlowRadius,model.renderer3DGlowIntensity,model.pickBoundsScale,model.interactionOnly?1:0,model.m_db?1:0,model.m_dc?1:0,model.m_hc,model.m_Kb?1:0,model.m_Yb,model.vertHead,model.appliedTransform,model.diffuseDirX,model.diffuseDirY,model.diffuseDirZ,model.diffuseMag,model.diffuseParam2,model.dontComputeDiffuse?1:0,model.faceCount,model.m_b?1:0,model.m_c?1:0,model.m_hb,model.m_v?1:0,model.maxFaceDimension,model.maxX,model.maxY,model.maxZ,model.minX,model.minY,model.minZ,model.rot256X,model.rot256Y,model.rot256Z,model.rotM_xToY,model.rotM_xToZ,model.rotM_yToX,model.rotM_yToZ,model.rotM_zToX,model.rotM_zToY,model.scaleX,model.scaleY,model.scaleZ,model.translateX,model.translateY,model.translateZ,model.vertexCount2,model.renderer3DTransformVersion,model.fishingSpotClarityAnimationState};
         int[] roots=new int[]{graph.capture(model.faceDiffuseLight),graph.capture(model.faceIndexCount),graph.capture(model.faceIndices),graph.capture(model.facePickIndex),graph.capture(model.scenePolyNormalShift),graph.capture(model.scenePolyNormalMagnitude),graph.capture(model.faceTextureBack),graph.capture(model.faceTextureFront),graph.capture(model.faceTextureUStart),graph.capture(model.faceTextureUScale),graph.capture(model.m_zb),graph.capture(model.vertDiffuseLight),graph.capture(model.vertexParam2),graph.capture(model.vertexParam6),graph.capture(model.vertLightOther),graph.capture(model.vertX),graph.capture(model.vertXRot),graph.capture(model.vertYRot),graph.capture(model.vertZ),graph.capture(model.vertZRot),graph.capture(model.faceMaxX),graph.capture(model.faceMaxY),graph.capture(model.faceMaxZ),graph.capture(model.faceMinX),graph.capture(model.faceMinY),graph.capture(model.faceMinZ),graph.capture(model.faceNormX),graph.capture(model.faceNormY),graph.capture(model.faceNormZ),graph.capture(model.faceParam1),graph.capture(model.fishingSpotClarityBaseX),graph.capture(model.fishingSpotClarityBaseY),graph.capture(model.fishingSpotClarityBaseZ),graph.capture(model.fishingSpotClarityRippleGroup),graph.capture(model.vertXTransform),graph.capture(model.vertY),graph.capture(model.vertYTransform),graph.capture(model.vertZTransform)};
@@ -582,6 +585,54 @@ public final class RSModel {
 		return renderer3DTransformVersion - fishingPoseUpdates - worldOriginUpdates;
 	}
 
+	/** The shared view origin changes only when a server scene is installed. */
+	public static final class SurfaceOrigin {
+		private int x, z, revision;
+
+		public void moveTo(int nextX, int nextZ) {
+			if (x == nextX && z == nextZ) return;
+			x = nextX;
+			z = nextZ;
+			revision++;
+		}
+	}
+
+	public void keepSurfaceOrigin(SurfaceOrigin origin) {
+		if (m_v || interactionOnly || origin == null) return;
+		releaseSurfaceOrigin();
+		surfaceOrigin = origin;
+		surfaceBasisX = origin.x;
+		surfaceBasisZ = origin.z;
+		surfaceBasisRevision = projectedSurfaceRevision = origin.revision;
+	}
+
+	public boolean hasSurfaceOrigin() { return surfaceOrigin != null; }
+
+	public void releaseSurfaceOrigin() {
+		if (surfaceOrigin == null) return;
+		int x = surfaceOffsetX(), z = surfaceOffsetZ();
+		int shifts = surfaceOrigin.revision - surfaceBasisRevision;
+		surfaceOrigin = null;
+		renderer3DTransformVersion += shifts;
+		worldOriginUpdates += shifts;
+		if (shifts == 0) return;
+		translateX += x;
+		translateZ += z;
+		computeAppliedTransform();
+		m_Yb = 1;
+	}
+
+	final int surfaceOffsetX() { return surfaceOrigin == null ? 0 : surfaceBasisX - surfaceOrigin.x; }
+	final int surfaceOffsetZ() { return surfaceOrigin == null ? 0 : surfaceBasisZ - surfaceOrigin.z; }
+
+	final void refreshSurfaceProjection() {
+		if (surfaceOrigin == null || surfaceOrigin.revision == projectedSurfaceRevision) return;
+		if ((!dontComputeDiffuse || !m_c) && hasFaceCapacity(scenePolyNormalShift)) {
+			Arrays.fill(scenePolyNormalShift, 0, faceHead, -1);
+		}
+		projectedSurfaceRevision = surfaceOrigin.revision;
+	}
+
 	/** Changes the local carrier for a retained model within the same signed surface. */
 	public void rebaseWorldOrigin(int x, int z) {
 		if (!BROWSER_KEEP_REBASED_MODELS || !shiftCachedWorldOrigin(x, z)) translate2(x, 0, z);
@@ -816,7 +867,7 @@ public final class RSModel {
 	}
 
 	public int getRenderer3DTransformVersion() {
-		return renderer3DTransformVersion;
+		return renderer3DTransformVersion + (surfaceOrigin == null ? 0 : surfaceOrigin.revision - surfaceBasisRevision);
 	}
 
 	public static Renderer3DWorldChunkFrame.ChunkMesh buildRenderer3DObjectChunkMesh(
@@ -874,6 +925,7 @@ public final class RSModel {
 
 	public String debugTransformedBoundsSummary(int faceIndex) {
 		this.resetTransformCache(7972);
+		int shiftX = surfaceOffsetX(), shiftZ = surfaceOffsetZ();
 		int minX = Integer.MAX_VALUE;
 		int maxX = Integer.MIN_VALUE;
 		int minY = Integer.MAX_VALUE;
@@ -892,9 +944,9 @@ public final class RSModel {
 		builder.append("verts=").append(this.vertHead)
 			.append(" faces=").append(this.faceHead)
 			.append(" bounds=")
-			.append(minX).append("..").append(maxX).append(',')
+			.append(minX + shiftX).append("..").append(maxX + shiftX).append(',')
 			.append(minY).append("..").append(maxY).append(',')
-			.append(minZ).append("..").append(maxZ);
+			.append(minZ + shiftZ).append("..").append(maxZ + shiftZ);
 		if (faceIndex >= 0 && faceIndex < this.faceHead) {
 			appendDebugFaceBounds(builder, faceIndex);
 		}
@@ -923,9 +975,9 @@ public final class RSModel {
 			if (vertex > 0) {
 				builder.append(';');
 			}
-			int x = this.vertXTransform[modelVertex];
+			int x = this.vertXTransform[modelVertex] + surfaceOffsetX();
 			int y = this.vertYTransform[modelVertex];
-			int z = this.vertZTransform[modelVertex];
+			int z = this.vertZTransform[modelVertex] + surfaceOffsetZ();
 			builder.append(modelVertex).append(':').append(x).append(',').append(y).append(',').append(z);
 			minX = Math.min(minX, x);
 			maxX = Math.max(maxX, x);
@@ -1448,6 +1500,7 @@ public final class RSModel {
 
 	private void commitTransform(byte var1) {
 		try {
+			this.releaseSurfaceOrigin();
 			this.resetTransformCache((int) 7972);
 
 
@@ -1647,9 +1700,9 @@ public final class RSModel {
 			}
 
 
-			this.translateX = model.translateX;
+			this.translateX = model.translateX + model.surfaceOffsetX() - surfaceOffsetX();
 			this.translateY = model.translateY;
-			this.translateZ = model.translateZ;
+			this.translateZ = model.translateZ + model.surfaceOffsetZ() - surfaceOffsetZ();
 			this.rot256X = model.rot256X;
 			this.rot256Y = model.rot256Y;
 			this.rot256Z = model.rot256Z;
@@ -2087,6 +2140,7 @@ public final class RSModel {
 					return;
 				}
 				model.resetTransformCache(7972);
+				int shiftX = model.surfaceOffsetX(), shiftZ = model.surfaceOffsetZ();
 				addModelShadowCaster(kind, model);
 				addModelGlowEmitter(kind, model);
 				for (int face = 0; face < model.faceHead; face++) {
@@ -2100,9 +2154,9 @@ public final class RSModel {
 				for (int vertex = 0; vertex < vertexCount; vertex++) {
 					int modelVertex = model.faceIndices[face][vertex];
 					int coord = vertex * 3;
-					faceVertexCoords[coord] = model.vertXTransform[modelVertex];
+					faceVertexCoords[coord] = model.vertXTransform[modelVertex] + shiftX;
 					faceVertexCoords[coord + 1] = model.vertYTransform[modelVertex];
-					faceVertexCoords[coord + 2] = model.vertZTransform[modelVertex];
+					faceVertexCoords[coord + 2] = model.vertZTransform[modelVertex] + shiftZ;
 					frontVertexLights[vertex] = objectLegacyLightForVertex(model, face, modelVertex, true);
 					backVertexLights[vertex] = objectLegacyLightForVertex(model, face, modelVertex, false);
 				}
@@ -2273,8 +2327,9 @@ public final class RSModel {
 			if (!isPlausibleModelShadowCaster(kind, spanX, spanZ)) {
 				return;
 			}
+			int shiftX = model.surfaceOffsetX(), shiftZ = model.surfaceOffsetZ();
 			shadowCasters.add(Renderer3DWorldChunkFrame.ShadowCaster.fromObjectFootprint(
-				kind, minX, maxX, minY, height, minZ, maxZ));
+				kind, minX + shiftX, maxX + shiftX, minY, height, minZ + shiftZ, maxZ + shiftZ));
 		}
 
 		private boolean isPlausibleModelShadowCaster(Renderer3DModelKind kind, int spanX, int spanZ) {
@@ -2308,11 +2363,12 @@ public final class RSModel {
 			int spanX = maxX - minX;
 			int spanZ = maxZ - minZ;
 			int footprintRadius = Math.max(spanX, spanZ) / 2 + model.getRenderer3DGlowRadius();
+			int shiftX = model.surfaceOffsetX(), shiftZ = model.surfaceOffsetZ();
 			glowEmitters.add(new Renderer3DWorldChunkFrame.GlowEmitter(
 				kind,
-				(minX + maxX) / 2,
+				(minX + shiftX + maxX + shiftX) / 2,
 				(minY + maxY) / 2,
-				(minZ + maxZ) / 2,
+				(minZ + shiftZ + maxZ + shiftZ) / 2,
 				Math.max(model.getRenderer3DGlowRadius(), footprintRadius),
 				model.getRenderer3DGlowColor(),
 				model.getRenderer3DGlowIntensity()));
@@ -2771,22 +2827,50 @@ public final class RSModel {
 		}
 	}
 
+	/** Project a fixed model in its stored basis using the current scene camera. */
+	final void rotateForScene(int yOffset, int shift, int xOffset, byte mode, int zOffset,
+		int yaw, int roll, int pitch, int near) {
+		if (surfaceOrigin == null) {
+			rotate1024(yOffset, shift, xOffset, mode, zOffset, yaw, roll, pitch, near);
+			return;
+		}
+		resetTransformCache(7972);
+		refreshSurfaceProjection();
+		int dx = surfaceOffsetX(), dz = surfaceOffsetZ();
+		// The legacy projection reads scene-relative bounds and camera coordinates.
+		// Its vertex rows stay in the model's original basis.
+		minX += dx;
+		maxX += dx;
+		minZ += dz;
+		maxZ += dz;
+		try {
+			rotate1024(yOffset, shift, xOffset - dx, mode, zOffset - dz, yaw, roll, pitch, near);
+		} finally {
+			minX -= dx;
+			maxX -= dx;
+			minZ -= dz;
+			maxZ -= dz;
+		}
+	}
+
     // These helpers only inspect cache-clean model state. The batch producer
     // must flush earlier work before invoking any dirty/unsupported model.
     final boolean isBrowserBatchCacheClean() { return this.m_Yb == 0 && !this.interactionOnly; }
     final boolean isBrowserBatchFrustumVisible() {
-        return this.minZ <= MiscFunctions.frustumMinX && this.maxZ >= MiscFunctions.frustumMaxX
-            && this.minX <= MiscFunctions.frustumMinY && this.maxX >= MiscFunctions.frustumMaxY
+        int shiftX = surfaceOffsetX(), shiftZ = surfaceOffsetZ();
+        return this.minZ + shiftZ <= MiscFunctions.frustumMinX && this.maxZ + shiftZ >= MiscFunctions.frustumMaxX
+            && this.minX + shiftX <= MiscFunctions.frustumMinY && this.maxX + shiftX >= MiscFunctions.frustumMaxY
             && this.minY <= MiscFunctions.frustumNearZ && this.maxY >= MiscFunctions.frustumFarZ;
     }
     final boolean copyWorldFaceBounds(int[] bounds) {
         if (m_Yb != 0 || faceHead == 0 || vertHead == 0) return false;
-        bounds[0] = minX;
-        bounds[1] = maxX;
+        int shiftX = surfaceOffsetX(), shiftZ = surfaceOffsetZ();
+        bounds[0] = minX + shiftX;
+        bounds[1] = maxX + shiftX;
         bounds[2] = minY;
         bounds[3] = maxY;
-        bounds[4] = minZ;
-        bounds[5] = maxZ;
+        bounds[4] = minZ + shiftZ;
+        bounds[5] = maxZ + shiftZ;
         return true;
     }
     final boolean canUseResidentCameraCull() {
@@ -3042,8 +3126,8 @@ public final class RSModel {
 	public final void setTranslate(int tX, int tY, int tZ) {
 		try {
 			this.translateY = tY;
-			this.translateX = tX;
-			this.translateZ = tZ;
+			this.translateX = tX - surfaceOffsetX();
+			this.translateZ = tZ - surfaceOffsetZ();
 
 			this.computeAppliedTransform();
 			this.m_Yb = 1;
