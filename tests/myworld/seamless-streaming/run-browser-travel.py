@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[3]
 PROOF = "const w=document.querySelector('#runtime')?.contentWindow||window;const p=w.browserProof||{};"
 ROUTE_EVENTS = "p.events?.filter(e=>e.message.startsWith('outer-coverage:'))||[]"
 OUTPUT_DIMENSIONS = ('logicalWidth', 'logicalHeight', 'width', 'height')
+PROJECTION_POINTERS = ((.25, .3), (.5, .5), (.7, .6), (.3, .68), (.52, .37), (.72, .28))
 
 
 WATCH_BROWSER_FRAMES = """
@@ -323,6 +324,8 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             reported_events = 0
             profiler_active = False
             chrome_anchors = []
+            pointer_moves = 0
+            next_pointer_move = 0.0
             watch = WATCH_PRESENTATION if fixture.get('presentationOnly') else WATCH_BROWSER_FRAMES
             while time.monotonic() < deadline:
                 snap = evaluate(watch + 'return {state:p.state?.mode,reason:p.stopReason,events:' + ROUTE_EVENTS + '};')
@@ -333,6 +336,20 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 for event in snap['events'][reported_events:]:
                     print(event, flush=True)
                 reported_events = len(snap['events'])
+                if (fixture.get('projectionDemand') and pointer_moves < len(PROJECTION_POINTERS)
+                        and time.monotonic() >= next_pointer_move
+                        and any(event['message'].startswith('outer-coverage:walking:') for event in snap['events'])):
+                    x, y = PROJECTION_POINTERS[pointer_moves]
+                    point = evaluate("""
+                        const canvas=w.document.querySelector('#browser-webgl');
+                        const rect=canvas.getBoundingClientRect(), iframe=w.frameElement.getBoundingClientRect();
+                        return [iframe.left+rect.left+rect.width*%s,iframe.top+rect.top+rect.height*%s];
+                        """ % (x, y))
+                    request(prefix + '/actions', {'actions': [{'type': 'pointer', 'id': 'projection-pointer',
+                        'parameters': {'pointerType': 'mouse'}, 'actions': [{'type': 'pointerMove',
+                            'origin': 'viewport', 'x': round(point[0]), 'y': round(point[1]), 'duration': 70}]}]})
+                    pointer_moves += 1
+                    next_pointer_move = time.monotonic() + 6
                 if firefox_profile and not profiler_active and any(
                         event['message'].startswith('outer-coverage:walking:') for event in snap['events']):
                     firefox_profiler_command(started['capabilities']['webSocketUrl'], 'moz:profiler.start', {
@@ -417,6 +434,9 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 else:
                     completed = False
             result['serverStatus'] = server_status
+            if fixture.get('projectionDemand'):
+                result['projectionPointerMoves'] = pointer_moves
+                completed = completed and pointer_moves == len(PROJECTION_POINTERS)
             result['browser'] = {key: started['capabilities'].get(key) for key in ('browserName', 'browserVersion')}
             result['walkingSummary'] = summarize_walking(result)
             if completed and fixture.get('liveSurfaceHandoff'):
