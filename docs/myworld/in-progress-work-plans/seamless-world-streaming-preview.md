@@ -2388,6 +2388,27 @@ pacing was mixed and the largest Firefox switch regressed. The trial
 was retired at the first matched comparison.
 [Native frame parity](../../../output/tests/seamless-world-streaming/terrain-structure-order-build/native-terrain-structure-order.log) · [Chrome control](../../../output/tests/browser-gameplay-spike/terrain-structure-order-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/terrain-structure-order-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/terrain-structure-order-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/terrain-structure-order-trial-firefox/firefox-result.json)
 
+#### Java 11 runtime comparison on the current preview
+
+The fresh Java 11 walks used the same preview JAR and CheerpJ 5.0
+release as the two existing Java 8 comparisons. Both browsers
+completed all three verified switches and the authoritative reversal
+with one load epoch, zero holds, and zero input closures. The Full HD
+framebuffer and original logical surface matched throughout.
+
+| Browser | Java 8 longest switch interval | Java 11 longest switch interval | Java 8 p99 | Java 11 p99 |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 117.2–134.1 ms | 129.5 ms | 23.3–23.6 ms | 23.7 ms |
+| Firefox | 144–150 ms | 137 ms | 24–25 ms | 25 ms |
+
+The longest Java 11 intervals away from a switch were 59.5 ms in Chrome
+and 58 ms in Firefox. The Java 8 pairs measured 48.9–52.3 ms and
+55–56 ms respectively. Run-to-run switch timing varied. Retain Java 8
+on the private preview and keep the Java 11 traversal results as a
+compatibility reference. Leaning Tech's current 5.0 release still
+describes its alternate WasmGC backend as experimental.
+[Chrome Java 11 walk](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-java11-chrome/chrome-result.json) · [Firefox Java 11 walk](../../../output/tests/browser-gameplay-spike/compatibility-mesh-worker-java11-firefox/firefox-result.json) · [CheerpJ 5.0 release notes](https://labs.leaningtech.com/blog/cheerpj-5.0)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

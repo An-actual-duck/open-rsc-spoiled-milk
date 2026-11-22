@@ -616,6 +616,13 @@ are preserved as exactness references. Redirect effort from model
 coordinates and roof membership to the largest live frame costs.
 [World-space trial](seamless-world-streaming-preview.md#world-space-scenery-at-the-switch) · [Terrain structure trial](seamless-world-streaming-preview.md#terrain-roof-and-upper-wall-order)
 
+The Java 11 comparison ran the current preview JAR successfully in
+Chrome and Firefox. It left switch intervals above 100 ms and did not
+improve the two browsers' frame tails. Keep Java 8 on the player
+preview. Measure the remaining cost of publishing world state and
+producing the new frame on the normal runtime.
+[Java 11 comparison](seamless-world-streaming-preview.md#java-11-runtime-comparison-on-the-current-preview)
+
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java
 runtime overhead. The private Firefox trial stopped during startup.
 TeaVM can ahead-of-time compile a detached Java library, with limited
