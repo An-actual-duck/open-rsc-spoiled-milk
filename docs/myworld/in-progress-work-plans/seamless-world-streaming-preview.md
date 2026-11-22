@@ -1,5 +1,18 @@
 # Covered Walking Preview
 
+## Current Full HD browser preview
+
+The loopback preview on port 8535 uses the verified compact scenery
+conversion, the separate WebGL worker, and the original 960×540 logical
+UI. The disposable account is `browserdemo` / `BrowserProof13`.
+Normal keyboard and mouse login reached a playable 1920×1080 scene
+at `(239,609)` and converted 1,426,572 scenery vertices during startup.
+The current pacing results and the remaining long intervals are recorded
+under compact scenery conversion. Port 8482 remains available for comparison.
+[Play the updated preview](http://127.0.0.1:8535/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/compact-block-player-preview/manual-login-result.json) · [Pacing results](#compact-scenery-conversion)
+
+## Early covered walking fixtures
+
 This is the first private step in the [active seamless streaming plan](seamless-world-streaming-plan.md).
 It exercises ordinary walking across the middle of an already installed 3×3
 surface scene. The server keeps the same center while the player stays within
@@ -1577,6 +1590,24 @@ profile identified about 436 MB under the draw key's hash computation.
 The Java renderer constructs these keys several times per resident mesh
 each frame, including when it orders required draws and looks up buffers.
 [Compact conversion allocation capture](../../../output/tests/browser-gameplay-spike/compact-block-allocations/allocation-summary.json)
+
+The untraced comparisons used the same JAR and Full HD output, with
+verification disabled. The second pair reversed the order. All eight
+walks reached the authoritative destination after three rolls, with one
+epoch, zero holds and zero sampled input closures.
+
+| Browser and pair | 99th-percentile frame interval | Gaps of at least 100 ms | Lowest one-second FPS | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox first | 32 → 28 ms | 7 → 5 | 38 → 36 | 23 → 22 |
+| Firefox repeat | 32 → 29 ms | 7 → 5 | 37 → 38 | 20 → 19 |
+| Chrome first | 29.0 → 27.7 ms | 2 → 1 | 45 → 46 | 14 → 13 |
+| Chrome repeat | 28.9 → 28.3 ms | 4 → 3 | 37 → 45 | 17 → 18 |
+
+The compact converter reduced the tail in both browsers. The longest
+individual interval still reached 173 ms in Firefox and 150.4 ms in
+Chrome with the change enabled. Stable 60 FPS through the entire walk
+remains the target.
+[Firefox first control](../../../output/tests/browser-gameplay-spike/compact-block-control-firefox/firefox-result.json) · [Firefox first candidate](../../../output/tests/browser-gameplay-spike/compact-block-firefox/firefox-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/compact-block-repeat-control-firefox/firefox-result.json) · [Firefox repeat candidate](../../../output/tests/browser-gameplay-spike/compact-block-repeat-firefox/firefox-result.json) · [Chrome first control](../../../output/tests/browser-gameplay-spike/compact-block-control-chrome/chrome-result.json) · [Chrome first candidate](../../../output/tests/browser-gameplay-spike/compact-block-chrome/chrome-result.json) · [Chrome repeat control](../../../output/tests/browser-gameplay-spike/compact-block-repeat-control-chrome/chrome-result.json) · [Chrome repeat candidate](../../../output/tests/browser-gameplay-spike/compact-block-repeat-chrome/chrome-result.json)
 
 The separate draw key trial keeps a bounded weak map per browser
 renderer, keyed by static mesh instance. Each stored key owns an

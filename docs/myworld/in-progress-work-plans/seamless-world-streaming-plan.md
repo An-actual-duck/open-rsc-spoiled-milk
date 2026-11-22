@@ -439,13 +439,21 @@ uploads. Keep the baseline fence intact while investigating the recurring
 CPU and allocation work on resident frames.
 
 The allocation samples isolated roughly 7 GB of transient allocation
-under compact scenery conversion across the Chrome walk. Test bounded
-typed-array conversion of the existing compact format. Require exact
-Java parity and compare both browsers with the same source JAR.
-Use the worst second, seconds below 60 FPS and the frame interval tails.
-The separate projection scratch trial gave divergent pacing across
-browsers and was removed.
+under compact scenery conversion across the Chrome walk. The current
+Full HD player preview uses bounded typed-array conversion of the
+existing compact format. Each browser verified more than 3 million
+vertices word for word against Java. Matched pairs and repeats reduced
+the frame interval tail across both browsers. Long individual intervals
+and seconds below 60 FPS remain. The projection scratch trial gave
+divergent pacing and was removed.
+[Current player preview](seamless-world-streaming-preview.md#current-full-hd-browser-preview)
 [Compact conversion evidence](seamless-world-streaming-preview.md#compact-scenery-conversion)
+
+The current profile identifies repeated renderer draw key computation
+on resident scenes. Test reuse of static mesh identities while preserving
+draw order, exact buffer selection, signed levels and animated poses.
+Use the worst second, seconds below 60 FPS and the frame interval tails
+in both browsers to decide whether to keep it.
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.
