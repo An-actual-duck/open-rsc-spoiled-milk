@@ -1533,7 +1533,6 @@ public class PacketHandler {
 	}
 
 	private static void logTerrainStreaming(String summary) {
-		if (BrowserStreamingLog.append(summary)) return;
 		if (mudclient.LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()) {
 			ClientRuntimeLogger.logStreaming(summary);
 		} else {
@@ -1548,7 +1547,6 @@ public class PacketHandler {
 		clearSurfaceSceneryPrediction();
 		int dx = x - activeTerrain.getCurrentChunkX(), dz = z - activeTerrain.getCurrentChunkY();
 		surfaceScenery.begin(stage, context, persistentMovement.generation(), x, z, dx, dz, mudclient.SURFACE_SCENERY_DRAW);
-		mc.prepareSurfaceInstanceRoll(dx, dz);
 	}
 
 	private void cancelPredictedTerrainDecode() {
@@ -1942,10 +1940,8 @@ public class PacketHandler {
 			"NATIVE_TERRAIN_PREDICTED_HALO_ACTIVATED center="
 				+ predicted.getCurrentChunkX() + ","
 				+ predicted.getCurrentChunkY();
-		if (!BrowserStreamingLog.append(summary)) {
-			System.out.println(summary);
-			ClientRuntimeLogger.log(summary);
-		}
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
 		recordContextPhase("halo-activation-log", phaseStarted);
 		return true;
 	}

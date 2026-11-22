@@ -1878,6 +1878,49 @@ under 1 ms at each roll. The enclosing submission intervals went from
 time retiring and installing the local scene in the trial.
 [Traced roll comparison](../../../output/tests/seamless-world-streaming/browser-streaming-log-build/roll-comparison.json) · [Browser journal receipt](../../../output/tests/browser-gameplay-spike/browser-streaming-log-trace-firefox/firefox-result.json)
 
+| Browser | 99th percentile | Longest interval | Worst second | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 27 → 29 ms | 153 → 162 ms | 41 → 40 FPS | 15 → 14 |
+| Chrome | 25.2 → 24.8 ms | 136.6 → 131.5 ms | 49 → 47 FPS | 15 → 11 |
+
+All four untraced walks completed three rolls with one epoch, zero holds
+and input closures. The journal reduced a specific blocking phase. The
+browser pacing results were mixed, so the player build keeps its
+established logging.
+[Firefox control](../../../output/tests/browser-gameplay-spike/browser-streaming-log-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/browser-streaming-log-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/browser-streaming-log-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/browser-streaming-log-trial-chrome/chrome-result.json)
+
+#### Prepared scenery placement window
+
+The placement trial builds retained object and wall rows during
+prediction, including their translated positions and collision-edge
+classifications. The live roll checks the placement revision and exact
+shift before publishing the rows. It carries the latest model references
+and preserves the order of retained instances. Native checks covered
+stale-plan refusal, a same-slot model replacement, pick keys, and the
+difference between the final face tile and the final local tile.
+
+Firefox's detailed run installed the prepared rows at all three rolls.
+Layout preparation took 2, 1, and under 1 ms. The retirement and rebase
+phases went from 21, 6, and 7 ms to 17, 5, and 6 ms. The enclosing
+submission intervals went from 159, 93, and 122 ms to 187, 88, and 119
+ms. Preparing the rows moved a small amount of work off the critical
+path. Model rebasing, collision mutation and the server delta replay
+still ran at activation.
+[Native placement proof](../../../output/tests/seamless-world-streaming/prepared-scene-rows-build/native-scene-store.log) · [Traced roll comparison](../../../output/tests/seamless-world-streaming/prepared-scene-rows-build/roll-comparison.json)
+
+All four untraced walks confirmed the same server destination and zero
+holds or input closures. Both candidate walks adopted all three layouts.
+
+| Browser | 99th percentile | Longest interval | Worst second | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 29 → 28 ms | 147 → 159 ms | 39 → 40 FPS | 17 → 16 |
+| Chrome | 26.1 → 29.4 ms | 137.6 → 141 ms | 48 → 42 FPS | 14 → 15 |
+
+The pacing results led to retirement of the placement trial. Its native
+parity and browser captures remain available. The current player preview
+uses the integer camera bounds build on port 8593.
+[Firefox control](../../../output/tests/browser-gameplay-spike/prepared-scene-rows-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/prepared-scene-rows-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/prepared-scene-rows-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/prepared-scene-rows-chrome/chrome-result.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

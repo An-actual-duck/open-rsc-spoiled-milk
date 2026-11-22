@@ -31,7 +31,6 @@ public final class ClientSceneInstanceStoreFixture {
 		defaultsAndGrowth();
 		identityFlagsAndShrinkCleanup();
 		pendingCompactionAndFrameMarks();
-		preparedSurfacePlacementRows();
 	}
 
 	private static void defaultsAndGrowth() {
@@ -196,67 +195,6 @@ public final class ClientSceneInstanceStoreFixture {
 		store.clearPendingAreaLoadMarks();
 		assertTrue(!store.isGameObjectPendingAreaLoad(0), "game pending bulk reset");
 		assertTrue(!store.isWallObjectPendingAreaLoad(0), "wall pending bulk reset");
-	}
-
-	private static void preparedSurfacePlacementRows() {
-		ClientSceneInstanceStore store = new ClientSceneInstanceStore(4, 4);
-		int[] x = {47, 190, 191, 192};
-		RSModel[] game = {model(), model(), model(), model()};
-		RSModel[] walls = {model(), model(), model(), model()};
-		for (int i = 0; i < x.length; i++) {
-			store.setGameObjectX(i, x[i]);
-			store.setGameObjectZ(i, 32);
-			store.setGameObjectId(i, 100 + i);
-			store.setGameObjectDirection(i, i + 1);
-			store.setGameObjectModel(i, game[i]);
-			store.setGameObjectMaterialized(i, true);
-			store.setGameObjectPendingAreaLoad(i, i == 2);
-			store.setWallObjectX(i, x[i]);
-			store.setWallObjectZ(i, 32);
-			store.setWallObjectId(i, 200 + i);
-			store.setWallObjectDirection(i, i);
-			store.setWallObjectModel(i, walls[i]);
-			store.setWallObjectMaterialized(i, i == 1);
-			store.setWallObjectPendingAreaLoad(i, i == 2);
-		}
-		store.setGameObjectCount(4);
-		store.setWallObjectCount(4);
-		ClientSceneInstanceStore.SurfaceRoll stale = store.prepareSurfaceRoll(48, -48, 144, 143);
-		store.setGameObjectId(1, 123);
-		assertTrue(!store.matchesSurfaceRoll(stale, 48, -48), "overlapping-object change invalidates prepared rows");
-		ClientSceneInstanceStore.SurfaceRoll roll = store.prepareSurfaceRoll(48, -48, 144, 143);
-		assertTrue(!store.matchesSurfaceRoll(roll, 0, 48), "different prediction invalidates prepared rows");
-		assertTrue(store.matchesSurfaceRoll(roll, 48, -48), "matching preparation available");
-		assertEquals((byte) 0, roll.game.membership[0], "outgoing row retires");
-		assertEquals((byte) 1, roll.game.membership[1], "inside row stays");
-		assertEquals((byte) 2, roll.wall.membership[2], "edge row keeps model and retires local collision");
-		assertEquals((byte) 0, roll.wall.membership[3], "outermost row retires");
-
-		// A same-slot animated model replacement preserves placement and must be carried live.
-		RSModel animated = model();
-		store.setGameObjectModel(2, animated);
-		assertTrue(store.matchesSurfaceRoll(roll, 48, -48), "visual pose can change while rows are prepared");
-		store.installSurfaceGameObjects(roll.game);
-		store.installSurfaceWallObjects(roll.wall);
-		assertEquals(2, store.getGameObjectCount(), "prepared game count");
-		assertEquals(2, store.getWallObjectCount(), "prepared wall count");
-		assertEquals(142, store.getGameObjectX(0), "game coordinate follows origin");
-		assertEquals(80, store.getGameObjectZ(1), "signed game coordinate follows origin");
-		assertEquals(143, store.getWallObjectX(1), "retained wall edge");
-		assertEquals(123, store.getGameObjectId(0), "placement identity carried");
-		assertEquals(2, store.getWallObjectDirection(1), "wall direction carried");
-		assertSame(game[1], store.getGameObjectModel(0), "game model order");
-		assertSame(animated, store.getGameObjectModel(1), "latest animated model carried");
-		assertSame(walls[2], store.getWallObjectModel(1), "wall model order");
-		assertEquals(1, animated.key, "game pick key matches installed order");
-		assertEquals(ClientSceneInstanceStore.WALL_OBJECT_KEY_BASE + 1, walls[2].key,
-			"wall pick key matches installed order");
-		assertTrue(store.isGameObjectMaterialized(1) && !store.isWallObjectMaterialized(1),
-			"materialization flags survive installation");
-		assertTrue(store.isGameObjectPendingAreaLoad(1) && store.isWallObjectPendingAreaLoad(1),
-			"pending marks follow placement");
-		assertEquals(null, store.getGameObjectModel(2), "retired model references cleared");
-		assertTrue(!store.matchesSurfaceRoll(roll, 48, -48), "published placement invalidates previous plan");
 	}
 
 	private static RSModel model() {

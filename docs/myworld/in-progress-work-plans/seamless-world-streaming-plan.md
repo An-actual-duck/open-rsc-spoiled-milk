@@ -486,6 +486,17 @@ still happen on the client at the roll. Any future staged instance
 view must preserve the fence's checks on complete scenery and wall
 identity. Retain the live deltas for edits to the overlapping cells.
 
+The prepared placement trial built the ordering and new local coordinates
+of retained scenery during prediction. It installed all three layouts
+and shortened Firefox's retirement phase by 1–4 ms. Chrome's untraced
+walk had worse pacing, and the trial was retired. A browser-side log
+journal removed the halo log wait with mixed frame pacing and was also
+retired. Both trials expose the remaining work at the fence, where
+collision mutation, live model rebasing and server delta application
+still run together. A detached authority preparation needs to handle
+those world-state changes before publication to make a larger impact.
+[Placement trial](seamless-world-streaming-preview.md#prepared-scenery-placement-window) · [Browser journal trial](seamless-world-streaming-preview.md#browser-streaming-diagnostics)
+
 Long intervals also occur with zero packet and geometry upload work.
 Correlate browser CPU samples with those exact submitted frames and
 identify the compiled Java methods on the page thread before moving a

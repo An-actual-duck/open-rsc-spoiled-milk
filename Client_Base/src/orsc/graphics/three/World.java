@@ -6419,7 +6419,7 @@ public final class World {
 			return;
 		}
 		nativeLayeredTerrainActivationSummary = summary;
-		if (!orsc.BrowserStreamingLog.append(summary)) System.out.println(summary);
+		System.out.println(summary);
 	}
 
 	private static String tileSummary(Tile tile) {

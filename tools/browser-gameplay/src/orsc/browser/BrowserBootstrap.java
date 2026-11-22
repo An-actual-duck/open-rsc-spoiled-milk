@@ -42,7 +42,6 @@ public final class BrowserBootstrap {
     public static native void reportWholeRamWork(int[] counters);
     public static native void reportWholeRamRoofSelection(int[] counters);
     public static native void reportRegionHandoffTrace(String phases,double[] values);
-    private static native void reportStreamingLog(String lines);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
@@ -244,8 +243,6 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field modeField = orsc.mudclient.class.getDeclaredField("currentViewMode"); modeField.setAccessible(true);
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
                     java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
-                    java.lang.reflect.Method drainStreamingLog = !publicAlpha && Boolean.getBoolean("spoiledmilk.browserStreamingLog")
-                        ? Class.forName("orsc.BrowserStreamingLog").getMethod("drain") : null;
                     int inputDiagnosticSamples=0;
                     double lastHandoffRevision=-1;
                     boolean modelPickReported=false,candidatePoliciesReported=false,optimizedDefaultsReported=false;
@@ -341,10 +338,6 @@ public final class BrowserBootstrap {
                                     reportRegionHandoffTrace(phases,trace);
                                     lastHandoffRevision=trace[2];
                                 }
-                            }
-                            if (drainStreamingLog != null) {
-                                String lines = (String) drainStreamingLog.invoke(null);
-                                if (lines != null) reportStreamingLog(lines);
                             }
                             reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
                         }

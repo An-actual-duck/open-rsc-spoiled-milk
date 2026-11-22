@@ -205,12 +205,6 @@ const natives = {
   },
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
-  Java_orsc_browser_BrowserBootstrap_reportStreamingLog(lib,lines){
-    if(stopped||deployment.publicAlpha)return;
-    const entries=window.browserProof.streamingLog||=[];
-    entries.push(...String(lines).split('\n'));
-    if(entries.length>256)entries.splice(0,entries.length-256);
-  },
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
   Java_orsc_OpenGLWorldChunkRenderer_packBrowserCompactBlock(lib,input,count,output,outputAt){
     if(deployment.publicAlpha)return false;
