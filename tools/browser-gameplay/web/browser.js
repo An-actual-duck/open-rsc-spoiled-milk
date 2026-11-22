@@ -427,6 +427,7 @@ try {
     }
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
     const gpuOptions={wholeZone:wholeZone.enabled,liveCells:wholeZone.liveCells,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
+    if(deployment.streaming)gpuOptions.compactScene=true;
     gpuOptions.measureFrameStages=!deployment.publicAlpha&&window.browserPrivateTestRoute?.frameStages===true;
     gpuOptions.localSpritePlan=renderWorker.enabled
       &&(deployment.streaming||!deployment.publicAlpha&&window.browserPrivateTestRoute?.localSpritePlan===true);

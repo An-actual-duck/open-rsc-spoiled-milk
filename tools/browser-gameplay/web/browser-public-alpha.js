@@ -14,7 +14,8 @@ const STREAMING_PROPERTIES=Object.freeze([
   'browserSurfaceSceneryWords','browserSurfaceTerrainWords','browserSurfaceGameplayWords',
   'browserSurfaceCompatibilityWorker','browserCompactScenery','browserCompactVertexBlocks',
   'browserResidentCameraCull','browserKeepRebasedModels','browserSkipEmptyModelRemovals','browserIntegerCameraBounds'
-].map(name=>'spoiledmilk.'+name+'=true'));
+].map(name=>'spoiledmilk.'+name+'=true').concat(
+  'spoiledmilk.browserWholeZone=false','spoiledmilk.browserWholeRam=false'));
 export function resolveBrowserDeployment(config,location,mode='chunks'){
   if(mode!=='chunks'&&mode!=='streaming')throw new Error('Unknown world loading mode.');
   if(config===null){
