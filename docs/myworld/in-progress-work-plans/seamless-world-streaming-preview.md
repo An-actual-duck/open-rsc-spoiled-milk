@@ -1029,6 +1029,59 @@ walking. Add `--profile-minimap-walk` to leave the minimap pinned across
 the route. Pass `--dependency-jar` to stage a specific client build
 and use `--output full-hd` when running the browser capture.
 
+#### Client-loop and render handoff timing
+
+The current performance investigation uses ordinary travel with the
+side panels closed. UI modernization is tracked with Rebirth. The
+private frame-stage trace now records requested and actual client-loop
+wait, completed updates, Java scene preparation, time in the browser
+bridge before presentation, and WebGL submission. It saves the timing
+of each slow submission from the renderer's own frame counter. These
+receipts survive a delayed browser animation callback. Nested phase
+times and elapsed times around native calls can overlap.
+
+At Full HD, a 190 ms Firefox submission interval had 166 ms of Java
+bridge time before presentation and 4 ms of JavaScript submission
+time. It had zero geometry uploads. A 229 ms Chrome interval had
+162 ms in the Java bridge before presentation, 2.9 ms submitting
+WebGL work, and zero geometry uploads. Other long frames accumulated
+work in game updates and scene capture. The long intervals generally
+occurred without a requested wait from the frame scheduler.
+[Firefox trace](../../../output/tests/browser-gameplay-spike/live-surface-loop-trace-firefox/firefox-result.json) · [Chrome trace](../../../output/tests/browser-gameplay-spike/live-surface-loop-trace-chrome/chrome-result.json)
+
+An environment bundling trial moved lighting and sky declarations
+into the already verified live frame submission. It eliminated two
+separate native calls per bundled frame, on 3,155 Firefox frames and
+3,409 Chrome frames. The 95th and 99th-percentile intervals moved from
+34 and 68 ms to 33 and 65 ms in Firefox, and from 23.9 and 67.2 ms to
+24.3 and 64.3 ms in Chrome. The number of intervals of at least 100 ms
+rose from 14 to 17 in Firefox and from 15 to 16 in Chrome. There was no
+consistent pacing gain, and the trial was removed. Both controls and
+both trials completed three streaming rolls and a reversal with zero
+loading holds or sampled input closures.
+[Firefox trial](../../../output/tests/browser-gameplay-spike/live-surface-environment-bundle-firefox/firefox-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/live-surface-environment-bundle-chrome/chrome-result.json)
+
+An additional Firefox run used the Gecko profiler over the same real
+walk. It was a diagnostic run and recorded longer gaps than the
+unprofiled control. The 336 ms interval contained 164 CheerpJ runtime
+stacks out of 168 content-main-thread samples, 43 ms intersecting
+garbage collection or cycle collection slices, and 3 ms intersecting
+WebGL message spans. In the 271 ms interval with zero geometry uploads,
+131 of 136 samples contained CheerpJ runtime frames. These overlaps do
+not identify a particular Java method or account for the entire gap.
+CheerpJ schedules Java threads on a single browser thread in the same
+runtime. Java jobs using an executor can still compete with rendering
+there. Actual browser workers already handle the detached terrain and
+scenery mesh paths. Time the remaining Java work feeding the renderer
+by job category before choosing a worker or allocation change.
+[Firefox profile correlation](../../../output/tests/browser-gameplay-spike/live-surface-loop-gecko-profile/profile-correlation.json) · [Gecko capture route](../../../output/tests/browser-gameplay-spike/live-surface-loop-gecko-profile/firefox-result.json) · [CheerpJ threading](https://cheerpj.com/docs/explanation/architecture)
+
+Add `--firefox-profile` to the private travel runner for a separate
+browser diagnostic capture. It starts when the first walk leg is
+observed and saves the profile in the private run directory before
+closing Firefox. Use a separate unprofiled run for the pacing
+comparison.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

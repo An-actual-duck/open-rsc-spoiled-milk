@@ -330,10 +330,11 @@ input and authoritative movement. [Physical output and UI evidence](seamless-wor
   streaming, separate the cost of delivery, preparation, publication, and GPU
   upload. Change the responsible stage and repeat the independent delay checks.
 - If choppiness persists with resident cells, measure ordinary frame
-  production, including sprites, the Java-to-browser handoff, and GPU
-  composition. Use those measurements to decide whether a retained UI
-  layer is worth prototyping. Require parity for UI size, legibility,
-  input targets, and scaling before considering a broader redesign.
+  production with the panels closed. Match individual presentation gaps
+  to client-loop waits, game updates, scene preparation, sprite and
+  geometry work, and WebGL submission. Prioritize work that materially
+  contributes to the gaps in both browsers. UI modernization and text
+  legibility belong to the Rebirth UI work.
 - Consider a cell-backed pathfinder only if the derived grid cannot support
   continuous coverage with correct paths and picking. Consider changing the
   package layout or splitting the transport only if measured delivery or

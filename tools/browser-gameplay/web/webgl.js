@@ -84,7 +84,9 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   let cachedMaxTextureSize=0;
   let spriteAtlas,spriteDraws=[];const SPRITE_ATLAS=2048;
   const frameStageSamples=options.measureFrameStages?(stats.frameStageSamples=[]):null;
+  const slowFrameStages=frameStageSamples?(stats.slowFrameStages=[]):null;
   let spriteStage=null;
+  let stageFrameIntervalMs=0, stageGeometryBytes=0, stagePreviousGeometryBytes=0;
   const uniforms=new Map();
   function alive(){if(disposed||stats.contextLost||stats.backendFailed)throw new Error('Browser GPU backend unavailable; restart the private session');}
   function lost(event){event.preventDefault();stats.contextLost=true;boundedResidency?.dispose();if(capacity.enabled){zoneController?.abort();stats.wholeZone.ready=false;stats.wholeZone.startupGpuCompleted=false;stats.wholeZone.phase='lost';}uploadValidation.fail(new Error('Graphics context lost'));worldReady.fail('Graphics context lost. Stop and restart to retry.');report('WebGL context lost; stop and restart the private session');}
@@ -418,6 +420,11 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(alphaProof){const final=new Uint8Array(outputWidth*outputHeight*4);gl.readPixels(0,0,outputWidth,outputHeight,gl.RGBA,gl.UNSIGNED_BYTE,final);let count=0;for(let n=3;n<final.length;n+=4)if(final[n]!==255)count++;stats.opaqueAlphaProof.finalNonOpaque=count;check();}
       if(timerQuery){gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);pendingQueries.push(timerQuery);activeTimerQuery=null;}
       const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
+      if(frameStageSamples&&world&&!retainedWorld){
+        stageFrameIntervalMs=lastWorld?now-lastWorld:0;
+        stageGeometryBytes=stats.uploadedBytes-stagePreviousGeometryBytes;
+        stagePreviousGeometryBytes=stats.uploadedBytes;
+      }
       if(world&&!retainedWorld){boundedFrameGap?.resumed(now);if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
       worldReady.presented({world:world&&!retainedWorld,width,height,textures:textures.size,sprites:spriteDraws.length,lighting:!!lightingValues});
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
@@ -426,12 +433,23 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_frameWork(lib,values,poseInput){
       alive();const p=typed(poseInput,Int32Array);
       if(p.length!==14&&!(travel&&p.length===18))throw new Error("Invalid frame pose schema");
-      if(frameStageSamples&&spriteStage&&values.length===37&&stats.javaWorldFrames>stats.javaBridgeReportedWorldFrames){
-        frameStageSamples.push({worldFrame:stats.javaWorldFrames,submittedAt:lastWorld,...spriteStage,
+      if(frameStageSamples&&spriteStage&&values.length===47&&stats.javaWorldFrames>stats.javaBridgeReportedWorldFrames){
+        const stages={worldFrame:stats.javaWorldFrames,submittedAt:lastWorld,...spriteStage,
           javaGatherMs:values[24],javaPlanMs:values[25]-values[31],javaCommitMs:values[26]-values[32],
           javaDescriptorPackMs:values[31],javaCommitPackMs:values[32],
-          uiDrawMs:values[33],inventoryDrawMs:values[34],minimapDrawMs:values[35],minimapRasterMs:values[36]});
+          uiDrawMs:values[33],inventoryDrawMs:values[34],minimapDrawMs:values[35],minimapRasterMs:values[36],
+          intervalMs:stageFrameIntervalMs,geometryUploadBytes:stageGeometryBytes,
+          parkRequestedMs:values[37],parkMs:values[38],updateMs:values[39],repositionMs:values[40],updates:values[41],
+          drawBeforeBridgeMs:values[42],sceneSetupMs:values[43],sceneCaptureMs:values[44],sceneryCollectionMs:values[45],
+          bridgeBeforePresentMs:values[46],javaPresentMs:values[30],jsPresentMs:stats.jsSubmissionSamples.at(-1),
+          bridgeTextureMs:values[1],bridgeGeometryMs:values[2],bridgeSpritesMs:values[3],
+          bridgeLightingMs:values[8],bridgeSkyMs:values[9]};
+        frameStageSamples.push(stages);
         if(frameStageSamples.length>600)frameStageSamples.shift();
+        if(stages.intervalMs>=50){
+          slowFrameStages.push(stages);
+          if(slowFrameStages.length>256)slowFrameStages.shift();
+        }
         spriteStage=null;
       }
       if(travel&&p.length===18&&stats.javaBridgeReportedWorldFrames<stats.javaWorldFrames&&lastWorld>0){

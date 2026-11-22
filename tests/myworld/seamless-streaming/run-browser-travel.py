@@ -43,9 +43,13 @@ if (p.state?.mode === 'GAME' && !w.travelPresentation) {
         const events = p.events || [];
         if (first === undefined) {
             const walking = events.find(event => event.message.startsWith('outer-coverage:walking:'));
-            if (walking) first = p.started + walking.milliseconds;
+            if (walking) samples.startedAt = first = p.started + walking.milliseconds;
         }
-        if (events.some(event => event.message.startsWith('outer-coverage:complete:'))) return;
+        const complete = events.find(event => event.message.startsWith('outer-coverage:complete:'));
+        if (complete) {
+            samples.endedAt = p.started + complete.milliseconds;
+            return;
+        }
         const gpu = p.gpu;
         if (first === undefined && gpu?.frameStageSamples?.length) {
             const marker = events.findLast(event => event.message.startsWith('outer-coverage:ui-profile:'));
@@ -144,7 +148,31 @@ def summarize_walking(result):
             'slowestFrameGaps': intervals[:8]}
 
 
-def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
+def firefox_profiler_command(socket, method, params):
+    script = """
+const [url, method, params] = process.argv.slice(1);
+const socket = new WebSocket(url);
+try {
+  await new Promise((resolve, reject) => {socket.onopen = resolve; socket.onerror = reject;});
+  const reply = await new Promise((resolve, reject) => {
+    socket.onmessage = event => {
+      const response = JSON.parse(event.data);
+      if (response.id === 1) resolve(response);
+    };
+    socket.onerror = reject;
+    socket.send(JSON.stringify({id:1, method, params:JSON.parse(params)}));
+  });
+  if (reply.type !== 'success') throw new Error(JSON.stringify(reply));
+  process.stdout.write(JSON.stringify(reply.result));
+} finally {
+  socket.close();
+}
+"""
+    return json.loads(subprocess.check_output(
+        ['node', '--input-type=module', '-e', script, socket, method, json.dumps(params)], timeout=25, text=True))
+
+
+def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_profile=False):
     server = json.loads((run / 'server-command.json').read_text())
     stage = json.loads((run / 'stage.json').read_text())
     fixture = json.loads((run / 'outer-coverage-fixture.json').read_text())
@@ -191,6 +219,10 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
             if browser == 'firefox':
                 capabilities['moz:firefoxOptions'] = {'args': ['-headless'],
                     'prefs': {'webgl.force-enabled': True, 'layout.css.devPixelsPerPx': '1'}}
+                if firefox_profile:
+                    capabilities['webSocketUrl'] = True
+                    capabilities['moz:firefoxOptions']['prefs'].update({
+                        'browser.download.folderList': 2, 'browser.download.dir': str(run)})
             else:
                 capabilities['goog:chromeOptions'] = {'args': ['--headless', '--window-size=1280,900',
                     '--use-gl=angle', '--use-angle=gl']}
@@ -209,6 +241,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
             deadline = time.monotonic() + 228
             previous_state = None
             reported_events = 0
+            profiler_active = False
             watch = WATCH_PRESENTATION if fixture.get('presentationOnly') else WATCH_BROWSER_FRAMES
             while time.monotonic() < deadline:
                 snap = evaluate(watch + 'return {state:p.state?.mode,reason:p.stopReason,events:' + ROUTE_EVENTS + '};')
@@ -219,6 +252,12 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
                 for event in snap['events'][reported_events:]:
                     print(event, flush=True)
                 reported_events = len(snap['events'])
+                if firefox_profile and not profiler_active and any(
+                        event['message'].startswith('outer-coverage:walking:') for event in snap['events']):
+                    firefox_profiler_command(started['capabilities']['webSocketUrl'], 'moz:profiler.start', {
+                        'entries': 4000000, 'interval': 2, 'features': ['js', 'stackwalk', 'cpu'],
+                        'threads': ['GeckoMain', 'Compositor', 'DOM Worker', 'CanvasRenderer']})
+                    profiler_active = True
                 if snap.get('reason') or any(event['message'].startswith(('outer-coverage:failed', 'outer-coverage:complete'))
                                              for event in snap['events']):
                     break
@@ -238,8 +277,17 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default'):
                     coverageBytes:p.gpu?.overlayCoverageBytes,retainedBytes:p.gpu?.retainedResourceBytes,
                     retainedCaptures:p.gpu?.retainedCaptures},
                 timingWindow:{gpu:p.gpu?.gpuWorkSamples,submission:p.gpu?.jsSubmissionSamples,
-                    bridge:p.gpu?.javaBridgeWorkSamples,overlay:p.gpu?.overlayStageSamples,stages:p.gpu?.frameStageSamples},
+                    bridge:p.gpu?.javaBridgeWorkSamples,overlay:p.gpu?.overlayStageSamples,stages:p.gpu?.frameStageSamples,
+                    slowStages:p.gpu?.slowFrameStages},
                 presentation:w.travelPresentation,timeOrigin:w.performance.timeOrigin};''')
+            if profiler_active:
+                receipt = firefox_profiler_command(started['capabilities']['webSocketUrl'], 'moz:profiler.stop', {})
+                if not receipt.get('path'):
+                    raise RuntimeError('Firefox profiler returned no capture')
+                profile = Path(receipt['path']).resolve()
+                if profile.parent != run or not profile.is_file():
+                    raise RuntimeError('Firefox profile was not saved in the private test run')
+                result['firefoxProfile'] = profile.name
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
             server_status = json.loads((run / 'status.json').read_text())
@@ -323,11 +371,14 @@ def main():
     parser.add_argument('--browser', choices=('firefox', 'chrome'), default='firefox')
     parser.add_argument('--driver-port', type=int, help='Port of the local WebDriver')
     parser.add_argument('--wasmgc', action='store_true', help='Test the experimental CheerpJ 5.0 engine')
+    parser.add_argument('--firefox-profile', action='store_true', help='Save a separate Firefox browser profiler capture in the test run')
     parser.add_argument('--output', choices=('default', 'logical', 'full-hd'), default='default',
                         help='Compare 960x540 and 1920x1080 WebGL output with the same 960x540 UI')
     args = parser.parse_args()
+    if args.firefox_profile and args.browser != 'firefox':
+        parser.error('The Firefox profiler requires Firefox')
     driver_port = args.driver_port if args.driver_port is not None else {'firefox': 44495, 'chrome': 9515}[args.browser]
-    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc, args.output)
+    return run_walk(args.run.resolve(), driver_port, args.browser, args.wasmgc, args.output, args.firefox_profile)
 
 
 if __name__ == '__main__':

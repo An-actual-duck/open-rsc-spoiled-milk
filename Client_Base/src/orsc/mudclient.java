@@ -138,6 +138,15 @@ public final class mudclient implements Runnable {
 	private float browserInventoryDrawMs;
 	private float browserMinimapDrawMs;
 	private float browserMinimapRasterMs;
+	private long browserParkRequestedNanos;
+	private long browserParkNanos;
+	private long browserUpdateNanos;
+	private long browserRepositionNanos;
+	private long browserDrawStartedNanos;
+	private int browserUpdates;
+	private float browserSceneSetupMs;
+	private float browserSceneCaptureMs;
+	private float browserSceneryCollectionMs;
 	private final long[] travelWorkNanos = TRACE_BROWSER_TRAVEL ? new long[7] : null;
 	private long slowestTravelPacketNanos;
 	private int slowestTravelPacketOpcode = -1;
@@ -1807,7 +1816,12 @@ public final class mudclient implements Runnable {
 						if (telemetryEnabled) {
 							loopSleepNanos = RenderTelemetry.elapsedSince(sleepStart);
 						}
-						now = System.nanoTime();
+						long woke = System.nanoTime();
+						if (TRACE_BROWSER_FRAME_STAGES) {
+							browserParkRequestedNanos += sleepNanos;
+							browserParkNanos += woke - now;
+						}
+						now = woke;
 						if (now < nextUpdateNanos) {
 							if (telemetryEnabled) {
 								RenderTelemetry.recordClientLoop(
@@ -1826,6 +1840,7 @@ public final class mudclient implements Runnable {
 					}
 
 					int updateCount = 0;
+					long browserUpdateStarted = now;
 					while (now >= nextUpdateNanos && updateCount < MODERN_LOOP_MAX_CATCH_UP_UPDATES) {
 						long updateStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
 						this.update();
@@ -1835,6 +1850,10 @@ public final class mudclient implements Runnable {
 						nextUpdateNanos += frameNanos;
 						updateCount++;
 						now = System.nanoTime();
+					}
+					if (TRACE_BROWSER_FRAME_STAGES) {
+						browserUpdates += updateCount;
+						browserUpdateNanos += now - browserUpdateStarted;
 					}
 					if (updateCount == MODERN_LOOP_MAX_CATCH_UP_UPDATES && now >= nextUpdateNanos) {
 						nextUpdateNanos = now + frameNanos;
@@ -1847,6 +1866,7 @@ public final class mudclient implements Runnable {
 					if (telemetryEnabled) {
 						loopRepositionNanos = RenderTelemetry.elapsedSince(repositionStart);
 					}
+					if (TRACE_BROWSER_FRAME_STAGES) browserRepositionNanos += System.nanoTime() - now;
 					if (skippedDraw) {
 						if (this.currentViewMode == GameMode.LOGIN) {
 							this.createLoginPanels(3845);
@@ -1869,7 +1889,13 @@ public final class mudclient implements Runnable {
 					}
 
 					long drawStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+					if (TRACE_BROWSER_FRAME_STAGES) browserDrawStartedNanos = System.nanoTime();
 					this.draw();
+					if (TRACE_BROWSER_FRAME_STAGES) {
+						browserDrawStartedNanos = 0;
+						browserParkRequestedNanos = browserParkNanos = browserUpdateNanos = browserRepositionNanos = 0;
+						browserUpdates = 0;
+					}
 					if (telemetryEnabled) {
 						loopDrawNanos = RenderTelemetry.elapsedSince(drawStart);
 					}
@@ -9417,7 +9443,7 @@ public final class mudclient implements Runnable {
 						this.drawLoadingPleaseWaitFrame();
 					} else if (this.world.playerAlive) {
 						long drawPreparationStart = RenderTelemetry.now();
-						long travelDrawStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
+						long travelDrawStart = TRACE_BROWSER_TRAVEL || TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
 						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
@@ -9885,14 +9911,19 @@ public final class mudclient implements Runnable {
 					BrowserRegionHandoffTrace.finishFramePhase("world-frame", handoffPhaseStart);
 					long beforeSceneNanos = RenderTelemetry.elapsedSince(drawPreparationStart);
 					long sceneRenderStart = RenderTelemetry.now();
-					long travelSceneStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
+					long travelSceneStart = TRACE_BROWSER_TRAVEL || TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 					if (TRACE_BROWSER_TRAVEL) travelWorkNanos[1] += travelSceneStart - travelDrawStart;
+					if (TRACE_BROWSER_FRAME_STAGES) {
+						browserSceneSetupMs = (travelSceneStart - travelDrawStart) / 1_000_000f;
+						browserSceneryCollectionMs = 0;
+					}
 					handoffPhaseStart = traceHandoffFrame ? System.nanoTime() : 0L;
 					this.scene.setRendererSignedWorldLevel(this.packetHandler.getLogicalWorldLevel(
 						this.midRegionBaseZ + (this.localPlayer == null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize)));
 					this.scene.endScene(-113);
-					long travelObjectsStart = TRACE_BROWSER_TRAVEL ? System.nanoTime() : 0L;
+					long travelObjectsStart = TRACE_BROWSER_TRAVEL || TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 					if (TRACE_BROWSER_TRAVEL) travelWorkNanos[2] += travelObjectsStart - travelSceneStart;
+					if (TRACE_BROWSER_FRAME_STAGES) browserSceneCaptureMs = (travelObjectsStart - travelSceneStart) / 1_000_000f;
 					BrowserRegionHandoffTrace.finishFramePhase("scene-render", handoffPhaseStart);
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					long residentObjectsStart = RenderTelemetry.now();
@@ -9906,6 +9937,7 @@ public final class mudclient implements Runnable {
 						renderer3DFrame.setWorldChunkFrame(
 							presentedWorldChunkFrame);
 						if (TRACE_BROWSER_TRAVEL) travelWorkNanos[3] += System.nanoTime() - travelObjectsStart;
+						if (TRACE_BROWSER_FRAME_STAGES) browserSceneryCollectionMs = (System.nanoTime() - travelObjectsStart) / 1_000_000f;
 						BrowserRegionHandoffTrace.finishFramePhase("object-frame", handoffPhaseStart);
 						this.completeLayeredSceneActivationFreshFrame(
 							presentedWorldChunkFrame);
@@ -27581,6 +27613,18 @@ public final class mudclient implements Runnable {
 		target[offset + 1] = browserInventoryDrawMs;
 		target[offset + 2] = browserMinimapDrawMs;
 		target[offset + 3] = browserMinimapRasterMs;
+	}
+
+	void copyBrowserLoopTimings(float[] target, int offset, long bridgeStarted) {
+		target[offset] = browserParkRequestedNanos / 1_000_000f;
+		target[offset + 1] = browserParkNanos / 1_000_000f;
+		target[offset + 2] = browserUpdateNanos / 1_000_000f;
+		target[offset + 3] = browserRepositionNanos / 1_000_000f;
+		target[offset + 4] = browserUpdates;
+		target[offset + 5] = browserDrawStartedNanos == 0 ? -1 : (bridgeStarted - browserDrawStartedNanos) / 1_000_000f;
+		target[offset + 6] = browserSceneSetupMs;
+		target[offset + 7] = browserSceneCaptureMs;
+		target[offset + 8] = browserSceneryCollectionMs;
 	}
 
 	public boolean shouldRetainLastPresentedFrame() {

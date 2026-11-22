@@ -163,8 +163,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final boolean TRAVEL_TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
         && Boolean.getBoolean("spoiledmilk.browserTravelTrace");
     private static final boolean FRAME_STAGE_TRACE = mudclient.TRACE_BROWSER_FRAME_STAGES;
-    // Sprite gather/plan/submit, overlay, world progress, draw list, present, sprite packing and UI.
-    private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[13] : null;
+    // Sprite stages, presentation, sprite packing, UI, and the client loop leading up to the bridge.
+    private final float[] frameStageWork = FRAME_STAGE_TRACE ? new float[23] : null;
     private static final long PREDICTED_BUFFER_BUDGET = (COMPACT_SCENERY ? 64L : 48L) * 1024 * 1024;
     private static final long PREDICTED_UPLOAD_INTERVAL_NANOS = 75_000_000L;
     private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
@@ -455,6 +455,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 frameStageWork[4]=(progressSubmitted-overlayDeclared)/1000000f;
                 frameStageWork[5]=(submitStart-progressSubmitted)/1000000f;
                 frameStageWork[6]=(System.nanoTime()-submitStart)/1000000f;
+                frameStageWork[22]=(submitStart-frameStart)/1000000f;
             }
             acknowledgeOverlay(preparedOverlay);
             loadState.presented(OVERLAY_COVERAGE&&authority,requiredSources,readySources,remainingRepacks);
@@ -476,7 +477,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             }
             if(FRAME_STAGE_TRACE){
                 int offset=15+mudclient.TRAVEL_TIMING_VALUES;
-                if(client!=null)client.copyBrowserUiTimings(frameStageWork,9);
+                if(client!=null){
+                    client.copyBrowserUiTimings(frameStageWork,9);
+                    client.copyBrowserLoopTimings(frameStageWork,13,frameStart);
+                }
                 frameStats=Arrays.copyOf(frameStats,offset+frameStageWork.length);
                 System.arraycopy(frameStageWork,0,frameStats,offset,frameStageWork.length);
             }
