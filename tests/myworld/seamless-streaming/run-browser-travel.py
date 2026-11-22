@@ -505,7 +505,13 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             (run / 'STOP').touch()
             web.terminate()
             web.wait(timeout=10)
-            private.wait(timeout=30)
+            try:
+                private.wait(timeout=45)
+            except subprocess.TimeoutExpired:
+                # This is the disposable subprocess launched above in this run,
+                # with its own database and ports. The route receipt is saved.
+                private.terminate()
+                private.wait(timeout=10)
 
 
 def main():
