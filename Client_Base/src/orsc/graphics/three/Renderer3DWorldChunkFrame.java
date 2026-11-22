@@ -1,7 +1,5 @@
 package orsc.graphics.three;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -262,7 +260,7 @@ public final class Renderer3DWorldChunkFrame {
 		private final int originWorldZ;
 		private boolean residentFishingPose;
 		private byte[] surfaceOcclusion;
-		private int[] vertexCoords;
+		private final int[] vertexCoords;
 		private final int vertexOffsetX;
 		private final int vertexOffsetZ;
 		private transient int cachedSceneryOffsetX, cachedSceneryOffsetZ;
@@ -271,16 +269,15 @@ public final class Renderer3DWorldChunkFrame {
 		private int maxVertexX;
 		private int minVertexZ;
 		private int maxVertexZ;
-		private float[] vertexTextureU;
-		private float[] vertexTextureV;
-		private int[] vertexLights;
-		private int[] vertexNormalX;
-		private int[] vertexNormalY;
-		private int[] vertexNormalZ;
+		private final float[] vertexTextureU;
+		private final float[] vertexTextureV;
+		private final int[] vertexLights;
+		private final int[] vertexNormalX;
+		private final int[] vertexNormalY;
+		private final int[] vertexNormalZ;
 		private final int[] vertexTerrainBlendColors;
 		private final int[] vertexTerrainBlendStrengths;
-		private int[] indices;
-		private transient volatile PackedTerrainVertices packedTerrainVertices;
+		private final int[] indices;
 		private final int[] triangleTextures;
 		private final int[] triangleFallbackColors;
 		private final int[] referencedTextureIds;
@@ -339,7 +336,6 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		private int[] writeDetachedSurfaceWords(long revision, boolean terrain) {
-			materializePackedTerrainVertices();
 			int vertices = getVertexCount(), triangles = getTriangleCount();
 			int role = terrain ? CHUNK_ROLE_WORLD : CHUNK_ROLE_STATIC_OBJECTS;
 			if (plane != 0 || chunkRole != role || vertexOffsetX != 0 || vertexOffsetZ != 0
@@ -425,20 +421,15 @@ public final class Renderer3DWorldChunkFrame {
 				|| words.length != surfaceWordCount(words[7], words[8], words[9], words[10], words[11], false, 0, 0)) {
 				throw new IllegalStateException("Detached scenery word identity or size");
 			}
-			return new ChunkMesh(words, 0, false, false);
+			return new ChunkMesh(words, 0, false);
 		}
 
 		static ChunkMesh readDetachedTerrainWords(int[] words, int start, int length, int x, int z) {
-			return readDetachedTerrainWords(words, start, length, x, z, false);
-		}
-
-		/** A packed mesh takes ownership of the immutable worker reply. */
-		static ChunkMesh readDetachedTerrainWords(int[] words, int start, int length, int x, int z, boolean keepPackedVertices) {
 			if (length < SURFACE_WORD_HEADER || start < 0 || start > words.length - length || words[start] != TERRAIN_WORD_MAGIC
 				|| words[start + 3] != x || words[start + 4] != z
 				|| length != surfaceWordCount(words[start + 7], words[start + 8], words[start + 9], words[start + 10],
 					words[start + 11], true, words[start + 1], words[start + 2])) throw new IllegalStateException("Detached terrain word identity or size");
-			return new ChunkMesh(words, start, true, keepPackedVertices);
+			return new ChunkMesh(words, start, true);
 		}
 
 		private static int surfaceWordCount(int vertices, int triangles, int textures, int shadows, int glows, boolean terrain, int flags, int axes) {
@@ -466,7 +457,7 @@ public final class Renderer3DWorldChunkFrame {
 			return (words[offset] & 0xffffffffL) | (long) words[offset + 1] << 32;
 		}
 
-		private ChunkMesh(int[] words, int start, boolean terrain, boolean keepPackedVertices) {
+		private ChunkMesh(int[] words, int start, boolean terrain) {
 			plane = 0;
 			centerSectionX = words[start + 3]; centerSectionY = words[start + 4];
 			originWorldX = words[start + 5]; originWorldZ = words[start + 6];
@@ -476,27 +467,18 @@ public final class Renderer3DWorldChunkFrame {
 			hasVertexBounds = vertices != 0;
 			vertexOffsetX = vertexOffsetZ = 0;
 			SurfaceWordInput input = new SurfaceWordInput(words, start + SURFACE_WORD_HEADER);
-			int coordinateStart = input.offset;
-			if (keepPackedVertices) {
-				input.offset += vertices * 7;
-			} else {
-				vertexCoords = input.ints(vertices * 3);
-				vertexLights = input.ints(vertices);
-				vertexNormalX = input.ints(vertices);
-				vertexNormalY = input.ints(vertices);
-				vertexNormalZ = input.ints(vertices);
-			}
+			vertexCoords = input.ints(vertices * 3);
+			vertexLights = input.ints(vertices);
+			vertexNormalX = input.ints(vertices);
+			vertexNormalY = input.ints(vertices);
+			vertexNormalZ = input.ints(vertices);
 			triangleTextures = input.ints(triangles);
 			triangleFallbackColors = input.ints(triangles);
 			referencedTextureIds = input.ints(words[start + 9]);
-			if (keepPackedVertices) {
-				packedTerrainVertices = new PackedTerrainVertices(words, vertices, coordinateStart, input.offset);
-				input.offset += vertices * 2;
-			} else {
-				vertexTextureU = input.floats(vertices);
-				vertexTextureV = input.floats(vertices);
-				indices = sequentialIndices(vertices);
-			}
+			vertexTextureU = input.floats(vertices);
+			vertexTextureV = input.floats(vertices);
+			indices = new int[vertices];
+			for (int i = 0; i < vertices; i++) indices[i] = i;
 			triangleModelKinds = new Renderer3DModelKind[triangles];
 			triangleMaterialFamilies = new Renderer3DMaterialFamily[triangles];
 			Renderer3DModelKind[] kinds = Renderer3DModelKind.values();
@@ -565,59 +547,6 @@ public final class Renderer3DWorldChunkFrame {
 			}
 		}
 
-		public boolean hasPackedTerrainVertices() {
-			return packedTerrainVertices != null;
-		}
-
-		private static int[] sequentialIndices(int count) {
-			int[] indices = new int[count];
-			for (int i = 0; i < count; i++) indices[i] = i;
-			return indices;
-		}
-
-		private synchronized void materializePackedTerrainVertices() {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			if (packed == null) return;
-			SurfaceWordInput input = new SurfaceWordInput(packed.words, packed.coords);
-			vertexCoords = input.ints(packed.count * 3);
-			vertexLights = input.ints(packed.count);
-			vertexNormalX = input.ints(packed.count);
-			vertexNormalY = input.ints(packed.count);
-			vertexNormalZ = input.ints(packed.count);
-			input.offset = packed.textureU;
-			vertexTextureU = input.floats(packed.count);
-			vertexTextureV = input.floats(packed.count);
-			indices = sequentialIndices(packed.count);
-			packedTerrainVertices = null;
-		}
-
-		private void writeObject(ObjectOutputStream output) throws IOException {
-			materializePackedTerrainVertices();
-			output.defaultWriteObject();
-		}
-
-		private static final class PackedTerrainVertices {
-			private final int[] words;
-			private final int count, coords, lights, normalX, normalY, normalZ, textureU, textureV;
-
-			private PackedTerrainVertices(int[] words, int count, int coords, int textureU) {
-				this.words = words;
-				this.count = count;
-				this.coords = coords;
-				this.lights = coords + count * 3;
-				this.normalX = lights + count;
-				this.normalY = normalX + count;
-				this.normalZ = normalY + count;
-				this.textureU = textureU;
-				this.textureV = textureU + count;
-			}
-
-			private int word(int start, int index, int length) {
-				if (index < 0 || index >= length) throw new ArrayIndexOutOfBoundsException(index);
-				return words[start + index];
-			}
-		}
-
 		private static final class SurfaceWordInput {
 			private final int[] words;
 			private int offset;
@@ -644,7 +573,6 @@ public final class Renderer3DWorldChunkFrame {
 
         /** Canonical non-overlapping CPU query cell. Visual triangles stay in the GPU catalog. */
         public int captureWholeRamCell(WholeRamData.Pool pool) {
-            materializePackedTerrainVertices();
             int selected=0;boolean[] take=new boolean[getTriangleCount()];
             for(int t=0;t<take.length;t++){long x=0,z=0;for(int c=0;c<3;c++){int v=indices[t*3+c]*3;x+=vertexCoords[v];z+=vertexCoords[v+2];}if(x>=48L*128*3&&x<96L*128*3&&z>=48L*128*3&&z<96L*128*3){take[t]=true;selected++;}}
             int n=selected*3;int[] coords=new int[n*3],lights=new int[n],nx=new int[n],ny=new int[n],nz=new int[n],colors=new int[n],strengths=new int[n],idx=new int[n],textures=new int[selected],fallback=new int[selected],kinds=new int[selected],families=new int[selected],variation=new int[selected];float[] u=new float[n],v=new float[n];int at=0,terrain=0,wall=0,roof=0;
@@ -1319,7 +1247,6 @@ public final class Renderer3DWorldChunkFrame {
 			this.centerSectionY = nextCenterSectionY;
 			this.originWorldX = Math.addExact(source.originWorldX,carrierUnitsX);
 			this.originWorldZ = Math.addExact(source.originWorldZ,carrierUnitsZ);
-			this.packedTerrainVertices = source.packedTerrainVertices;
 			this.vertexCoords = source.vertexCoords;
 			this.vertexOffsetX = Math.addExact(
 				source.vertexOffsetX, additionalOffsetX);
@@ -1881,8 +1808,7 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public int getVertexCount() {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			return packed == null ? vertexCoords.length / 3 : packed.count;
+			return vertexCoords.length / 3;
 		}
 
 		public boolean hasVertexBounds() {
@@ -1906,8 +1832,7 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public int getIndexCount() {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			return packed == null ? indices.length : packed.count;
+			return indices.length;
 		}
 
 		public int getTriangleCount() {
@@ -2106,8 +2031,7 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public int getVertexCoord(int coordIndex) {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			int value = packed == null ? vertexCoords[coordIndex] : packed.word(packed.coords, coordIndex, packed.count * 3);
+			int value = vertexCoords[coordIndex];
 			int axis = coordIndex % 3;
 			return axis == 0
 				? Math.addExact(value, vertexOffsetX)
@@ -2117,35 +2041,27 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public float getVertexTextureU(int vertexIndex) {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			return packed == null ? vertexTextureU[vertexIndex]
-				: Float.intBitsToFloat(packed.word(packed.textureU, vertexIndex, packed.count));
+			return vertexTextureU[vertexIndex];
 		}
 
 		public float getVertexTextureV(int vertexIndex) {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			return packed == null ? vertexTextureV[vertexIndex]
-				: Float.intBitsToFloat(packed.word(packed.textureV, vertexIndex, packed.count));
+			return vertexTextureV[vertexIndex];
 		}
 
 		public int getVertexLight(int vertexIndex) {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			return packed == null ? vertexLights[vertexIndex] : packed.word(packed.lights, vertexIndex, packed.count);
+			return vertexLights[vertexIndex];
 		}
 
 		public int getVertexNormalX(int vertexIndex) {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			return packed == null ? vertexNormalX[vertexIndex] : packed.word(packed.normalX, vertexIndex, packed.count);
+			return vertexNormalX[vertexIndex];
 		}
 
 		public int getVertexNormalY(int vertexIndex) {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			return packed == null ? vertexNormalY[vertexIndex] : packed.word(packed.normalY, vertexIndex, packed.count);
+			return vertexNormalY[vertexIndex];
 		}
 
 		public int getVertexNormalZ(int vertexIndex) {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			return packed == null ? vertexNormalZ[vertexIndex] : packed.word(packed.normalZ, vertexIndex, packed.count);
+			return vertexNormalZ[vertexIndex];
 		}
 
 		public int getVertexTerrainBlendColor(int vertexIndex) {
@@ -2157,10 +2073,7 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public int getIndex(int indexOffset) {
-			PackedTerrainVertices packed = packedTerrainVertices;
-			if (packed == null) return indices[indexOffset];
-			if (indexOffset < 0 || indexOffset >= packed.count) throw new ArrayIndexOutOfBoundsException(indexOffset);
-			return indexOffset;
+			return indices[indexOffset];
 		}
 
 		public int getTriangleTexture(int triangleIndex) {
@@ -2199,7 +2112,6 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public int[] copyVertexCoords() {
-			materializePackedTerrainVertices();
 			int[] copy = vertexCoords.clone();
 			for (int coord = 0; coord < copy.length; coord += 3) {
 				copy[coord] = Math.addExact(copy[coord], vertexOffsetX);
@@ -2210,32 +2122,26 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public float[] copyVertexTextureU() {
-			materializePackedTerrainVertices();
 			return vertexTextureU.clone();
 		}
 
 		public float[] copyVertexTextureV() {
-			materializePackedTerrainVertices();
 			return vertexTextureV.clone();
 		}
 
 		public int[] copyVertexLights() {
-			materializePackedTerrainVertices();
 			return vertexLights.clone();
 		}
 
 		public int[] copyVertexNormalX() {
-			materializePackedTerrainVertices();
 			return vertexNormalX.clone();
 		}
 
 		public int[] copyVertexNormalY() {
-			materializePackedTerrainVertices();
 			return vertexNormalY.clone();
 		}
 
 		public int[] copyVertexNormalZ() {
-			materializePackedTerrainVertices();
 			return vertexNormalZ.clone();
 		}
 
@@ -2248,7 +2154,6 @@ public final class Renderer3DWorldChunkFrame {
 		}
 
 		public int[] copyIndices() {
-			materializePackedTerrainVertices();
 			return indices.clone();
 		}
 

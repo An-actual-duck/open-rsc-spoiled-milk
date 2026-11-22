@@ -2101,7 +2101,22 @@ the vertex planes on demand using the existing array layout.
 The signed native fixture matched all 136,797 vertex records by field
 and verified that those reads left the reply packed. Serialized mesh
 bytes, gameplay collision, minimap and roof data also matched.
-[Signed mesh proof](../../../output/tests/seamless-world-streaming/packed-gameplay-mesh-build/native-packed-mesh.log)
+[Signed mesh proof](../../../output/tests/seamless-world-streaming/packed-gameplay-mesh-pacing-build/native-packed-mesh.log)
+
+Both browsers installed all three packed meshes, with the last mesh still packed
+at the end of the walk. Every run confirmed `(252,609)` on the server
+after three rolls, with one load epoch, zero holds and zero sampled input
+closures at 1920×1080 with the original 960×540 logical output.
+
+| Browser | 99th-percentile interval | Longest frame interval | Longest interval away from replay | Lowest one-second FPS | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Chrome | 24.6 → 25.3 ms | 134.4 → 137.5 ms | 126.8 → 127.2 ms | 48 → 45 | 13 → 14 |
+| Firefox | 27 → 28 ms | 170 → 145 ms | 157 → 132 ms | 41 → 32 | 16 → 23 |
+
+The Firefox maximum decreased while slow seconds increased. Chrome
+showed a similar longest interval and a slightly longer frame tail.
+The private mesh mode was retired after the matched comparisons.
+[Chrome control](../../../output/tests/browser-gameplay-spike/packed-gameplay-mesh-control-chrome/chrome-result.json) · [Chrome packed](../../../output/tests/browser-gameplay-spike/packed-gameplay-mesh-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/packed-gameplay-mesh-control-firefox/firefox-result.json) · [Firefox packed](../../../output/tests/browser-gameplay-spike/packed-gameplay-mesh-trial-firefox/firefox-result.json)
 
 #### Java client worker feasibility
 

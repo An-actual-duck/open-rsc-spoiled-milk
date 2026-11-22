@@ -561,10 +561,12 @@ The fresh Chrome capture linked a return-leg gap to gameplay terrain
 reply decoding and collector work. The packed tile trial matched
 20,736 direct reads and the full gameplay product. Timing pairs and
 reversed-order repeats gave mixed pacing. The trial was retired.
-The same reply also carries a full 144×144 compatibility mesh. Keep its
-vertex planes in the validated primitive reply and use exact reads for
-queries or fallback drawing. In the normal fixed-cell path, check that
-the mesh stays packed through publication and run matched Full HD walks.
+The reply also carries a full 144×144 compatibility mesh. The next trial
+read its vertex planes directly from the validated reply. It matched all 136,797 vertex
+records and stayed packed through publication in both browsers. The
+measured pace diverged and the trial was retired. Measure actual packet
+dispatch during the three verified rolls before moving larger pieces of
+scenery and wall work out of activation.
 [CPU capture between rolls](seamless-world-streaming-preview.md#cpu-capture-between-scene-rolls) · [Packed tile results](seamless-world-streaming-preview.md#packed-gameplay-terrain-tiles) · [Packed mesh proof](seamless-world-streaming-preview.md#packed-gameplay-terrain-mesh-vertices)
 
 CheerpJ 5.0 offers an experimental WasmGC JIT that could reduce Java

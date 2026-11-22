@@ -61,8 +61,6 @@ public final class World {
 		&& Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision");
 	private static final boolean FIXED_SURFACE_DRAW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.fixedSurfaceDraw");
-	private static final boolean KEEP_PACKED_GAMEPLAY_VERTICES = FIXED_SURFACE_DRAW
-		&& Boolean.getBoolean("spoiledmilk.browserPackedGameplayVertices");
 	private volatile SurfaceTerrainDrawField fixedSurfaceDraw;
 	private volatile SurfaceDrawPreparation preparedSurfaceDraw;
 	private SurfaceDrawPreparation activeSurfaceDrawPreparation;
@@ -148,16 +146,10 @@ public final class World {
 	private PreparedLocalTerrain pendingLocalTerrain;
 	private PreparedLocalTerrain installedDetachedTerrain;
 	private int detachedSurfaceGameplayInstalls;
-	private int installedPackedGameplayMeshes;
 	private volatile int acceptedSurfaceTerrainWordReplies;
 	private volatile int acceptedSurfaceGameplayWordReplies;
 
 	public int getDetachedSurfaceGameplayInstalls() { return detachedSurfaceGameplayInstalls; }
-	public int getInstalledPackedGameplayMeshes() { return installedPackedGameplayMeshes; }
-	public boolean hasCurrentPackedGameplayMesh() {
-		PreparedLocalTerrain current = installedDetachedTerrain;
-		return current != null && current.detachedDrawMesh.hasPackedTerrainVertices();
-	}
 	public int getAcceptedSurfaceTerrainWordReplies() { return acceptedSurfaceTerrainWordReplies; }
 	public int getAcceptedSurfaceGameplayWordReplies() { return acceptedSurfaceGameplayWordReplies; }
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
@@ -1222,7 +1214,7 @@ public final class World {
 		}
 		int meshStart = 5 + words[1];
 		Renderer3DWorldChunkFrame.ChunkMesh mesh = Renderer3DWorldChunkFrame.ChunkMesh.readDetachedTerrainWords(
-			words, meshStart, words[3], x, z, KEEP_PACKED_GAMEPLAY_VERTICES);
+			words, meshStart, words[3], x, z);
 		PreparedLocalTerrain ready = PreparedLocalTerrain.readWordProduct(words, meshStart + words[3], words.length,
 			scope, revision, x, z, includeRoofs);
 		ready.detachedDrawMesh = mesh;
@@ -1940,10 +1932,7 @@ public final class World {
 		pendingLocalTerrain = null;
 		if (!matchesPreparedLocalTerrain(prepared, plane, sectionX, sectionY)) return false;
 		installedDetachedTerrain = prepared.detachedDrawMesh == null ? null : prepared;
-		if (installedDetachedTerrain != null) {
-			detachedSurfaceGameplayInstalls++;
-			if (prepared.detachedDrawMesh.hasPackedTerrainVertices()) installedPackedGameplayMeshes++;
-		}
+		if (installedDetachedTerrain != null) detachedSurfaceGameplayInstalls++;
 		long started = RenderTelemetry.boundaryDiagnosticsNow();
 		int[] palette = new int[PreparedLocalTerrain.PALETTE_START + prepared.resources.length * 2];
 		palette[PreparedLocalTerrain.WALL_PIXEL] = 6316128;
