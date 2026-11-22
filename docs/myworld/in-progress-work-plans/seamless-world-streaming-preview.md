@@ -2286,8 +2286,8 @@ lighting work to prepare before the scene changes.
 
 The detailed lighting capture placed most of that time in glow-mask
 generation. The first two rolls spent 10.0 and 10.3 ms there in Chrome
-and 13 and 18 ms in Firefox. The third roll reused a mask and spent at
-most 0.2 ms. Terrain field assembly, roof coverage, shadow projections
+and 13 and 18 ms in Firefox. The third roll spent at most 0.2 ms
+on glow. Terrain field assembly, roof coverage, shadow projections
 and bridge calls each took only a small part of the first two samples.
 
 The private glow trial sends the render worker the ordered emitter and
@@ -2298,6 +2298,22 @@ The independent oracle matched 128 cases at four dimensions, including
 negative coordinates, overlapping and repeated lights, and a mask
 with zero visible pixels.
 [Chrome lighting breakdown](../../../output/tests/browser-gameplay-spike/lighting-phase-breakdown-chrome/chrome-result.json) · [Firefox lighting breakdown](../../../output/tests/browser-gameplay-spike/lighting-phase-breakdown-firefox/firefox-result.json) · [Pixel and bounds parity](../../../output/tests/seamless-world-streaming/worker-glow-mask-build/worker-glow-parity.log)
+
+In the first matched pair, both browsers accepted five worker glow
+recipes. The first two switch intervals were shorter with the worker.
+The longest intervals away from replay grew in both browsers. No
+additional interval over 35 ms followed any switch within two seconds
+in the candidate walks. The reversed-order pair checks whether those
+differences persist.
+
+| Browser | First three switch intervals | 99th percentile | Longest interval away from replay | Lowest one-second FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 114.7, 84.4, 77 → 105.4, 71.8, 77.2 ms | 22.8 → 22.4 ms | 48.2 → 57.6 ms | 55 → 53 |
+| Firefox | 151, 89, 136 → 132, 77, 112 ms | 25 → 24 ms | 62 → 77 ms | 52 → 53 |
+
+All four walks completed three verified rolls and the authoritative
+reversal with no holds or input closures at the same display sizes.
+[Chrome control](../../../output/tests/browser-gameplay-spike/worker-glow-mask-control-chrome/chrome-result.json) · [Chrome worker](../../../output/tests/browser-gameplay-spike/worker-glow-mask-trial-chrome/chrome-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/worker-glow-mask-control-firefox/firefox-result.json) · [Firefox worker](../../../output/tests/browser-gameplay-spike/worker-glow-mask-trial-firefox/firefox-result.json)
 
 #### Java client worker feasibility
 
