@@ -2,6 +2,7 @@
 """Run a staged sustained walk in a fresh browser WebDriver session."""
 
 import argparse
+from bisect import bisect_left, bisect_right
 from collections import Counter
 import contextlib
 import json
@@ -227,7 +228,49 @@ try {
         ['node', '--input-type=module', '-e', script, socket, method, json.dumps(params)], timeout=25, text=True))
 
 
-def save_hot_jit_sources(run, profile, command):
+def profile_gaps_between_rolls(result, profile, anchors):
+    """Find main-thread samples inside observed frame gaps away from scene replay."""
+    presentation = result.get('presentation') or {}
+    if not presentation.get('intervals') or presentation.get('unobservedIntervals'):
+        return None, None
+    rolls = [tuple(map(int, event['message'].rsplit(':', 1)[1].split(',')))
+             for event in result['events'] if event['message'].startswith('outer-coverage:roll-timing:')]
+    if len(rolls) != 3 or len(presentation['intervals']) + 1 != presentation['frames']:
+        return None, None
+    windows = [(start - result['timeOrigin'], end - result['timeOrigin']) for _, start, end in rolls]
+    offsets = [(row['beforeMs'] + row['afterMs']) / 2 - row['pageMs'] for row in anchors]
+    offset = sum(offsets) / len(offsets)
+    uncertainty = max(abs(row[field] - row['pageMs'] - offset)
+                      for row in anchors for field in ('beforeMs', 'afterMs'))
+    timestamps = []
+    timestamp = profile['startTime']
+    for delta in profile['timeDeltas']:
+        timestamp += delta
+        timestamps.append(timestamp / 1000 - offset)
+    if not timestamps or len(timestamps) != len(profile['samples']):
+        raise ValueError('CPU profile sample times do not match its samples')
+    frames = []
+    end = presentation['lastFrameAt']
+    for interval in reversed(presentation['intervals']):
+        start = end - interval
+        if (interval >= 40 and timestamps[0] <= start <= end <= timestamps[-1]
+                and all(end < first - 2000 or start > last + 2000 for first, last in windows)):
+            frames.append((interval, start, end))
+        end = start
+    nodes = {node['id']: node['callFrame'] for node in profile['nodes']}
+    total = Counter()
+    gaps = []
+    for interval, start, end in sorted(frames, reverse=True)[:12]:
+        counts = Counter(profile['samples'][bisect_left(timestamps, start):bisect_right(timestamps, end)])
+        total.update(counts)
+        gaps.append({'fromWalkStartMs': round(start - presentation['startedAt'], 1), 'intervalMs': round(interval, 1),
+                     'sampleCount': sum(counts.values()),
+                     'topMethods': [{'method': nodes[node]['functionName'], 'script': nodes[node].get('url'),
+                                     'samples': count} for node, count in counts.most_common(12)]})
+    return {'clockUncertaintyMs': round(uncertainty, 3), 'gaps': gaps}, total
+
+
+def save_hot_jit_sources(run, profile, command, sample_counts=None):
     if 'head' in profile:
         weight_label = 'estimatedBytes'
         pending = [profile['head']]
@@ -238,7 +281,7 @@ def save_hot_jit_sources(run, profile, command):
             pending.extend(node.get('children', ()))
     else:
         weight_label = 'samples'
-        counts = Counter(profile['samples'])
+        counts = Counter(profile['samples']) if sample_counts is None else sample_counts
         nodes = [(node, counts[node['id']]) for node in profile['nodes']]
     sites = {}
     for node, weight in nodes:
@@ -453,7 +496,14 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                                            'scope': 'Sampled Chrome main-thread JavaScript heap allocations, including collected objects'}
             if 'chromeProfile' in result:
                 try:
-                    result['chromeProfile']['hotJitSources'] = save_hot_jit_sources(run, profile, chrome_command)
+                    counts = None
+                    if chrome_profile == 'cpu' and fixture.get('rollTimings'):
+                        gaps, counts = profile_gaps_between_rolls(result, profile, chrome_anchors)
+                        if gaps is not None:
+                            path = run / 'chrome-between-rolls-cpu.json'
+                            path.write_text(json.dumps(gaps, indent=2) + '\n')
+                            result['chromeProfile']['betweenRolls'] = path.name
+                    result['chromeProfile']['hotJitSources'] = save_hot_jit_sources(run, profile, chrome_command, counts)
                 except (OSError, KeyError, ValueError) as error:
                     result['chromeProfile']['hotJitSourceError'] = str(error)
             if fixture.get('compactVertexBlocks'):
