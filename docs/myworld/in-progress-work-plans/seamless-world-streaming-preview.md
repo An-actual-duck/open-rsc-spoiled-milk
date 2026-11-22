@@ -2,14 +2,14 @@
 
 ## Current Full HD browser preview
 
-The loopback preview on port 8535 uses the verified compact scenery
-conversion, the separate WebGL worker, and the original 960×540 logical
-UI. The disposable account is `browserdemo` / `BrowserProof13`.
-Normal keyboard and mouse login reached a playable 1920×1080 scene
-at `(239,609)` and converted 1,426,572 scenery vertices during startup.
-The current pacing results and the remaining long intervals are recorded
-under compact scenery conversion. Port 8482 remains available for comparison.
-[Play the updated preview](http://127.0.0.1:8535/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/compact-block-player-preview/manual-login-result.json) · [Pacing results](#compact-scenery-conversion)
+The loopback preview on port 8555 uses the verified compact scenery
+converter and omits CPU projection on resident models whose bounds miss
+the pointer. It uses the separate WebGL worker and retains the original
+960×540 logical UI. The disposable account is `browserdemo` /
+`BrowserProof13`. Normal keyboard and mouse login reached a playable
+1920×1080 scene at `(239,609)`. Port 8535 runs the compact converter
+with the established projection path for comparison.
+[Play the updated preview](http://127.0.0.1:8555/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/resident-camera-player-preview/manual-login-result.json) · [Pacing results](#remaining-client-work-after-compact-conversion) · [Compare on port 8535](http://127.0.0.1:8535/?mode=webgl&physical=on)
 
 ## Early covered walking fixtures
 
@@ -1669,6 +1669,31 @@ projections in Firefox and 69.33 million in Chrome. Both reached the
 server-confirmed destination after three rolls and sampled zero loading
 holds or input closures.
 [Exact native proof](../../../output/tests/seamless-world-streaming/resident-camera-cull-build/native-picking-expanded.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/resident-camera-cull-firefox/firefox-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/resident-camera-cull-chrome/chrome-result.json)
+
+The same-JAR pairs kept the compact converter enabled. The camera
+cull improved the 99th-percentile interval in both directions of
+test order. The Chrome repeat had more individual 100 ms gaps and a
+slower worst second. The remaining dips still miss the 60 FPS goal.
+
+| Browser and pair | 99th-percentile frame interval | Lowest one-second FPS | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: |
+| Firefox first | 29 → 27 ms | 38 → 41 | 16 → 15 |
+| Firefox repeat | 32 → 28 ms | 37 → 44 | 17 → 15 |
+| Chrome first | 30.6 → 26.8 ms | 42 → 48 | 15 → 13 |
+| Chrome repeat | 27.3 → 24.8 ms | 46 → 43 | 15 → 15 |
+
+[Firefox first control](../../../output/tests/browser-gameplay-spike/resident-camera-cull-control-firefox/firefox-result.json) · [Firefox repeat control](../../../output/tests/browser-gameplay-spike/resident-camera-cull-repeat-control-firefox/firefox-result.json) · [Firefox repeat candidate](../../../output/tests/browser-gameplay-spike/resident-camera-cull-repeat-firefox/firefox-result.json) · [Chrome first control](../../../output/tests/browser-gameplay-spike/resident-camera-cull-control-chrome/chrome-result.json) · [Chrome repeat control](../../../output/tests/browser-gameplay-spike/resident-camera-cull-repeat-control-chrome/chrome-result.json) · [Chrome repeat candidate](../../../output/tests/browser-gameplay-spike/resident-camera-cull-repeat-chrome/chrome-result.json)
+
+The separate Firefox movement trace captured 4,192 fresh frames, three
+rolls, zero holds and zero sampled input closures. The largest sampled
+player step was 0.422 tiles. Its 160 ms gap near `(264,609)` included
+63 ms around the scene-baseline receive, which replayed the pending
+context and player packets. A 149 ms gap had zero packet work.
+In Chrome the new build still recorded a 137 ms interval with zero
+geometry uploads, 64 ms in four updates and 33 ms in scene capture.
+The worker submitted in 3.1 ms. These diagnostic traces distinguish
+lingering client CPU gaps from terrain draws and movement continuity.
+[Firefox movement](../../../output/tests/browser-gameplay-spike/resident-camera-cull-movement/firefox-result.json) · [Chrome CPU profile](../../../output/tests/browser-gameplay-spike/resident-camera-cull-cpu/profile-summary.json)
 
 #### Java client worker feasibility
 
