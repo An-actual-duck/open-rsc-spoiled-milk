@@ -422,14 +422,14 @@ public final class BrowserOuterCoverageProbe {
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
 		if (Boolean.getBoolean("spoiledmilk.prepareSurfaceInstanceRoll")) {
-			int installed;
+			int installedRolls;
 			try {
-				installed = (Integer) client.getClass().getMethod("getPreparedSurfaceInstanceInstalls").invoke(client);
+				installedRolls = (Integer) client.getClass().getMethod("getPreparedSurfaceInstanceInstalls").invoke(client);
 			} catch (ReflectiveOperationException error) {
 				throw new IllegalStateException("Prepared scenery roll receipt unavailable", error);
 			}
-			if (installed != expected) throw new IllegalStateException("Prepared scenery rolls=" + installed + ", expected=" + expected);
-			BrowserBootstrap.report("outer-coverage:prepared-scenery-rolls:" + installed);
+			if (installedRolls != expected) throw new IllegalStateException("Prepared scenery rolls=" + installedRolls + ", expected=" + expected);
+			BrowserBootstrap.report("outer-coverage:prepared-scenery-rolls:" + installedRolls);
 		}
 		if (Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels")) {
 			long[] work;
