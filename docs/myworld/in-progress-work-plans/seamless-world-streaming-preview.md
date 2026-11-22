@@ -1082,6 +1082,65 @@ observed and saves the profile in the private run directory before
 closing Firefox. Use a separate unprofiled run for the pacing
 comparison.
 
+#### Move canonical scenery preparation into the worker
+
+The matched control timed 133 detached scenery requests per browser. All jobs
+together sent 9.80 MiB of prepared models and returned 96.80 MiB of meshes.
+The response for the same dense cell exceeded the 4 MiB acceptance limit twice
+per run and used local meshing. Successful scenery adoption through the
+resident cache took at most 1 ms in Firefox.
+
+| Browser | Build canonical models p50 / p95 | Encode request p50 / p95 | Decode response p50 / p95 |
+| --- | ---: | ---: | ---: |
+| Firefox | 6 / 39 ms | 6 / 20 ms | 7 / 22 ms |
+| Chrome | 13.6 / 68.4 ms | 4.2 / 14 ms | 3.2 / 13 ms |
+
+Canonical model preparation or request encoding overlapped 9 of the 16
+sampled Firefox gaps of at least 100 ms, and 13 of the 15 Chrome gaps. These
+are elapsed-time overlaps. The timings can include runtime scheduling and
+garbage collection. The separate native-call duration includes waiting for
+the worker and should not be counted as client-thread CPU time.
+[Firefox control](../../../output/tests/browser-gameplay-spike/scenery-handoff-baseline-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/scenery-handoff-baseline-chrome/chrome-result.json)
+
+The private placement candidate sends canonical placements, elevations, and
+their content revision before constructing models. The scenery worker matches
+the installed model archive by SHA-256, then keeps at most 64 source templates.
+It uses the same model construction as the installed builder. Existing cell
+revision and placement checks govern publication. Unsupported models and
+worker refusals use the existing builders.
+
+Firefox and Chrome each matched 127 complete serialized cell meshes,
+including geometry, materials, shadows, and glow data. Both checked live
+anvil revisions before the first roll and completed three rolls and a
+reversal with zero loading holds or input closures. The parity runs build
+each checked cell twice. The timed checks run separately.
+[Firefox mesh parity](../../../output/tests/browser-gameplay-spike/scenery-handoff-parity-firefox/firefox-result.json) · [Chrome mesh parity](../../../output/tests/browser-gameplay-spike/scenery-handoff-parity-chrome/chrome-result.json)
+
+In both timing runs, 127 of 133 jobs used placements. Total request size
+fell from 9.80 to 1.28 MiB. Placement packing took 1 ms in Firefox and
+0.3 ms in Chrome at the 95th percentile. Response size stayed at 96.80
+MiB, and the dense cell still required local meshing. The first worker
+call took about 2 seconds with the catalog cold, up from 0.54 seconds in
+Firefox and 0.59 seconds in Chrome in the control. Warm median worker
+turnaround was 19.5 ms in Firefox and 16.6 ms in Chrome, including the
+response transfer.
+
+| Browser | p95 interval | p99 interval | Longest interval | Intervals at least 100 ms |
+| --- | ---: | ---: | ---: | ---: |
+| Firefox | 36 → 29 ms | 73 → 49 ms | 211 → 245 ms | 16 → 11 |
+| Chrome | 26.8 → 22.2 ms | 63.5 → 43.1 ms | 211.5 → 191.8 ms | 15 → 12 |
+
+Both matched pairs used 1920×1080 world output and the 960×540 logical
+UI. The candidate completed every route with one movement generation,
+three rolls, and the server-confirmed return to `(252,609)`. The count of
+intervals at least 100 ms fell from six to three on the return leg in
+Firefox and from five to three in Chrome. These are single matched pairs.
+The 245 ms Firefox outlier still spent 142 ms in the Java bridge before
+presentation and 3 ms in JavaScript submission. No canonical model build
+or packet packing was measured during that gap. The candidate is
+available through `--worker-scenery-placements` for the private preview.
+[Firefox placement timing](../../../output/tests/browser-gameplay-spike/scenery-handoff-candidate-firefox/firefox-result.json) · [Chrome placement timing](../../../output/tests/browser-gameplay-spike/scenery-handoff-candidate-chrome/chrome-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

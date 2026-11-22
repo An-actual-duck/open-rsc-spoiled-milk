@@ -13,9 +13,10 @@ import java.io.IOException;
 public final class BrowserSurfaceMeshWorker {
     private static World world;
     private static boolean custom;
+    private static final SurfaceSceneryMeshPreparation.PlacementMesher scenery = new SurfaceSceneryMeshPreparation.PlacementMesher();
 
-    public static byte[] buildScenery(byte[] source) throws IOException {
-        return SurfaceSceneryMeshPreparation.buildPacket(source);
+    public static byte[] buildScenery(String cacheDir, byte[] source) throws IOException {
+        return scenery.build(source, cacheDir + "/video/models.orsc");
     }
 
     public static byte[] build(String cacheDir, byte[] source, int offsetX, int offsetZ,

@@ -34,13 +34,13 @@ import orsc.graphics.three.CollisionFlag;
 import orsc.graphics.three.Renderer3DDepthFrame;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DMeshFrame;
-import orsc.graphics.three.Renderer3DMaterialClassifier;
 import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.Renderer3DRoofVisibility;
 import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.Scene;
+import orsc.graphics.three.StaticSceneryModels;
 import orsc.graphics.three.SurfaceSceneryMeshPreparation;
 import orsc.graphics.three.World;
 import orsc.graphics.three.WorldEditorTerrainGrid;
@@ -102,20 +102,7 @@ public final class mudclient implements Runnable {
 	private static final long SCENE_OBJECT_DEBUG_HOVER_THROTTLE_MILLIS = 1000L;
 	private static final int GROUND_ITEM_NAMEPLATE_LINE_HEIGHT = 12;
 	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
-	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
-	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
-	private static final int DRAGON_SULFUR_ROCK_OBJECT_ID = 1328;
-	private static final int DRAGON_SULFUR_ROCK_COLOR_RESOURCE = GenUtil.colorToResource(255, 112, 16);
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
-	private static final String WATCHTOWER_MODEL_NAME = "watchtower";
-	private static final int WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE = 2048;
-	private static final int REMASTER_FIRE_GLOW_COLOR = 0xff661c;
-	private static final int REMASTER_TORCH_GLOW_RADIUS = 256;
-	private static final int REMASTER_TORCH_GLOW_INTENSITY = 132;
-	private static final int REMASTER_FIRE_GLOW_RADIUS = 320;
-	private static final int REMASTER_FIRE_GLOW_INTENSITY = 170;
-	private static final int REMASTER_FURNACE_GLOW_RADIUS = 384;
-	private static final int REMASTER_FURNACE_GLOW_INTENSITY = 130;
 	private static final long FISHING_SPOT_RIPPLE_FRAME_MILLIS = 70L;
 	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
@@ -985,6 +972,14 @@ public final class mudclient implements Runnable {
 	private NativeLayeredTerrainSnapshot surfaceSceneryTerrain;
 	private SurfaceSceneryWork activeSurfaceSceneryWork;
 	private volatile int detachedSurfaceSceneryMeshes;
+	private static final boolean WORKER_SCENERY_PLACEMENTS = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.browserWorkerSceneryPlacements");
+	private static final boolean VERIFY_WORKER_SCENERY_PLACEMENTS = WORKER_SCENERY_PLACEMENTS
+		&& Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements");
+	private volatile byte[] sceneryModelArchiveDigest;
+	private int[] sceneryArchiveModelVersions;
+	private volatile int verifiedWorkerSceneryMeshes;
+	private volatile int mismatchedWorkerSceneryMeshes;
 	private int lateSurfaceSceneryMeshes;
 	private int retainedSurfaceSceneryMeshes;
 	private Future<PreparedSurfaceScenery> activeSurfaceSceneryBuild;
@@ -3740,7 +3735,7 @@ public final class mudclient implements Runnable {
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
 		model.key = index + ClientSceneInstanceStore.WALL_OBJECT_KEY_BASE;
-		applyRenderer3DMaterialMetadata(
+		StaticSceneryModels.applyRenderer3DMaterialMetadata(
 			Renderer3DModelKind.WALL_OBJECT,
 			type,
 			model);
@@ -4043,6 +4038,8 @@ public final class mudclient implements Runnable {
 
 	public int getAdoptedSurfaceSceneryDraws() { return adoptedSurfaceScenery; }
 	public int getDetachedSurfaceSceneryMeshes() { return detachedSurfaceSceneryMeshes; }
+	public int getVerifiedWorkerSceneryMeshes() { return verifiedWorkerSceneryMeshes; }
+	public int getMismatchedWorkerSceneryMeshes() { return mismatchedWorkerSceneryMeshes; }
 	public int getResidentPlacementPublicationsReused() { return residentPlacementPublicationsReused; }
 
 	public int getResidentFishingPoseRebases() { return residentFishingPoseRebases; }
@@ -4174,6 +4171,9 @@ public final class mudclient implements Runnable {
 
 	private Renderer3DWorldChunkFrame.ChunkMesh takeSurfaceSceneryDraw(ResidentObjectChunkInput actual) {
 		if (!adoptSurfaceScenery || actual.chunkRole != Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) return null;
+		boolean trace = SurfaceSceneryMeshPreparation.isTracing();
+		long at = trace ? System.currentTimeMillis() : 0;
+		long start = trace ? System.nanoTime() : 0;
 		int sectorX = Math.floorDiv(actual.localOriginTileX + actual.baseX, World.SECTION_SIZE);
 		int sectorZ = Math.floorDiv(actual.localOriginTileZ + actual.baseZ, World.SECTION_SIZE);
 		SurfaceSceneryWork work = surfaceSceneryWork.get(SurfaceSceneryCells.key(sectorX, sectorZ));
@@ -4182,9 +4182,13 @@ public final class mudclient implements Runnable {
 			ResidentObjectChunkInput built = draw.input;
 			if (built.cellKey != actual.cellKey || !matchingStaticScenery(actual, built)) continue;
 			adoptedSurfaceScenery++;
-			return draw.mesh.rebaseStaticObjectPresentation(actual.anchor.getCenterSectionX(), actual.anchor.getCenterSectionY(),
+			Renderer3DWorldChunkFrame.ChunkMesh rebased = draw.mesh.rebaseStaticObjectPresentation(
+				actual.anchor.getCenterSectionX(), actual.anchor.getCenterSectionY(),
 				(built.baseX - actual.baseX) * actual.tileSize, (built.baseZ - actual.baseZ) * actual.tileSize);
+			if (trace) SurfaceSceneryMeshPreparation.traceAdoption(at, System.nanoTime() - start, actual.cellKey, true);
+			return rebased;
 		}
+		if (trace) SurfaceSceneryMeshPreparation.traceAdoption(at, System.nanoTime() - start, actual.cellKey, false);
 		return null;
 	}
 
@@ -4416,103 +4420,15 @@ public final class mudclient implements Runnable {
 	}
 
 	private RSModel createStaticPresentationGameObjectModel(
-		ResidentObjectChunkInput input,
-		SceneBaselineState.Record record,
-		int index,
-		int elevation) {
-		GameObjectDef def = EntityHandler.getObjectDef(record.id);
-		if (def == null
-			|| def.modelID < 0
-			|| elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
+		ResidentObjectChunkInput input, ResidentObjectCanonicalIdentity identity, int index) {
+		GameObjectDef def = EntityHandler.getObjectDef(identity.objectId);
+		if (def == null || def.modelID < 0 || identity.elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
 			return null;
 		}
-		int localX = record.x - input.baseX;
-		int localZ = record.y - input.baseZ;
-		int xSize;
-		int zSize;
-		if (record.direction == 0 || record.direction == 4) {
-			xSize = def.getWidth();
-			zSize = def.getHeight();
-		} else {
-			xSize = def.getHeight();
-			zSize = def.getWidth();
-		}
-		int x = (2 * localX + xSize) * input.tileSize / 2;
-		int z = (2 * localZ + zSize) * input.tileSize / 2;
-		RSModel model = cloneBrowserPresentationGameObject(record.id, BrowserPresentationCloneCache.CANONICAL);
-		model.key = -1 - index;
-		model.addRotation(0, record.direction * 32, 0);
-		model.setDiffuseLightAndColor(
-			-50, -10, -50, 48, 48, true, 117);
-		model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
-		model.setTranslate(x, -elevation, z);
-		if (record.id == 74) {
-			model.translate2(0, -480, 0);
-		}
-		return prepareGameObjectInstanceModel(
-			record.id, model);
-	}
-
-	private RSModel createStaticPresentationWallObjectModel(
-		ResidentObjectChunkInput input,
-		SceneBaselineState.Record record,
-		int index,
-		int elevation1,
-		int elevation2) {
-		DoorDef definition = EntityHandler.getDoorDef(record.id);
-		if (definition == null
-			|| elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE
-			|| elevation2 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
-			return null;
-		}
-		int x1 = record.x - input.baseX;
-		int x2 = x1;
-		int y1 = record.y - input.baseZ;
-		int y2 = y1;
-		if (record.direction == 1) {
-			y2++;
-		}
-		if (record.direction == 0) {
-			x2++;
-		}
-		if (record.direction == 2) {
-			x1++;
-			y2++;
-		}
-		if (record.direction == 3) {
-			x2++;
-			y2++;
-		}
-		int x1World = x1 * input.tileSize;
-		int y1World = y1 * input.tileSize;
-		int x2World = x2 * input.tileSize;
-		int y2World = y2 * input.tileSize;
-		int height = definition.getWallObjectHeight();
-		RSModel model = new RSModel(4, 1);
-		int v1 = model.insertVertex(
-			x1World, -elevation1, y1World);
-		int v2 = model.insertVertex(
-			x1World, -elevation1 - height, y1World);
-		int v3 = model.insertVertex(
-			x2World, -height - elevation2, y2World);
-		int v4 = model.insertVertex(
-			x2World, -elevation2, y2World);
-		model.insertFace(
-			4,
-			new int[] {v1, v2, v3, v4},
-			definition.getModelVar2(),
-			definition.getModelVar3(),
-			false);
-		model.setRenderer3DModelKind(
-			Renderer3DModelKind.WALL_OBJECT);
-		model.setDiffuseLightAndColor(
-			-50, -10, -50, 60, 24, false, -95);
-		model.key = -1 - index;
-		applyRenderer3DMaterialMetadata(
-			Renderer3DModelKind.WALL_OBJECT,
-			record.id,
-			model);
-		return model;
+		RSModel model = cloneBrowserPresentationGameObject(identity.objectId, BrowserPresentationCloneCache.CANONICAL);
+		return StaticSceneryModels.gameObject(model, def, identity.objectId,
+			identity.worldTileX - input.baseX, identity.worldTileZ - input.baseZ, identity.direction,
+			input.tileSize, index, identity.elevation1);
 	}
 
 	private static int residentObjectBuildWorkerCount() {
@@ -5311,59 +5227,6 @@ public final class mudclient implements Runnable {
 			: RESIDENT_OBJECT_CHUNK_TILE_SIZE;
 	}
 
-	private void applyRenderer3DMaterialMetadata(Renderer3DModelKind kind, int objectId, RSModel model) {
-		if (model == null) {
-			return;
-		}
-		model.clearRenderer3DGlowEmitter();
-		GameObjectDef def = kind == Renderer3DModelKind.GAME_OBJECT
-			? EntityHandler.getObjectDef(objectId)
-			: null;
-		Renderer3DGlowSpec glowSpec = renderer3DGlowSpecFor(def);
-		model.setRenderer3DMaterialFamily(
-			Renderer3DMaterialClassifier.classifyObject(kind, def, glowSpec != null));
-		if (glowSpec == null) {
-			return;
-		}
-		model.setRenderer3DGlowEmitter(
-			glowSpec.color,
-			glowSpec.radius,
-			glowSpec.intensity);
-	}
-
-	private Renderer3DGlowSpec renderer3DGlowSpecFor(GameObjectDef def) {
-		if (def == null) {
-			return null;
-		}
-		String modelName = lowerOrEmpty(def.getObjectModel());
-		String objectName = lowerOrEmpty(def.getName());
-		if (modelName.startsWith("torcha") || modelName.startsWith("skulltorcha")) {
-			return new Renderer3DGlowSpec(
-				REMASTER_FIRE_GLOW_COLOR,
-				REMASTER_TORCH_GLOW_RADIUS,
-				REMASTER_TORCH_GLOW_INTENSITY);
-		}
-		if (modelName.startsWith("firea")
-			|| modelName.startsWith("fireplacea")
-			|| modelName.startsWith("firespell")
-			|| objectName.equals("flames")) {
-			return new Renderer3DGlowSpec(
-				REMASTER_FIRE_GLOW_COLOR,
-				REMASTER_FIRE_GLOW_RADIUS,
-				REMASTER_FIRE_GLOW_INTENSITY);
-		}
-		if (modelName.equals("furnace")
-			|| modelName.equals("cave furnace")
-			|| objectName.contains("furnace")
-			|| objectName.contains("lava forge")) {
-			return new Renderer3DGlowSpec(
-				REMASTER_FIRE_GLOW_COLOR,
-				REMASTER_FURNACE_GLOW_RADIUS,
-				REMASTER_FURNACE_GLOW_INTENSITY);
-		}
-		return null;
-	}
-
 	private static String lowerOrEmpty(String value) {
 		return value == null ? "" : value.toLowerCase(Locale.ROOT);
 	}
@@ -5530,34 +5393,38 @@ public final class mudclient implements Runnable {
 			: World.getPredictedPresentationElevation(terrain, localPixelX + baseX * scale, localPixelZ + baseZ * scale);
 	}
 
-	private static final class Renderer3DGlowSpec {
-		private final int color;
-		private final int radius;
-		private final int intensity;
-
-		private Renderer3DGlowSpec(int color, int radius, int intensity) {
-			this.color = color;
-			this.radius = radius;
-			this.intensity = intensity;
-		}
-	}
-
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
 		return buildResidentObjectChunkMesh(input, false);
 	}
 
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input, boolean detach) {
+		boolean useWorker = detach && input.anchor.getPlane() == 0 && SurfaceSceneryMeshPreparation.isAvailable();
+		boolean trace = useWorker && SurfaceSceneryMeshPreparation.isTracing();
+		long at = trace ? System.currentTimeMillis() : 0;
+		long start = trace ? System.nanoTime() : 0;
+		int originX = input.anchor.getOriginWorldX() + input.localOriginTileX * input.tileSize;
+		int originZ = input.anchor.getOriginWorldZ() + input.localOriginTileZ * input.tileSize;
+		if (useWorker && WORKER_SCENERY_PLACEMENTS && input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) {
+			Renderer3DWorldChunkFrame.ChunkMesh placed = buildWorkerSceneryPlacements(input, originX, originZ, at, start);
+			if (placed != null) {
+				detachedSurfaceSceneryMeshes++;
+				return placed;
+			}
+			if (trace) {
+				at = System.currentTimeMillis();
+				start = System.nanoTime();
+			}
+		}
 		RSModel[] models = input.models;
 		if (input.chunkRole
 				== Renderer3DWorldChunkFrame
 					.CHUNK_ROLE_STATIC_OBJECTS) {
 			models = buildCanonicalResidentObjectModels(input);
 		}
-		int originX = input.anchor.getOriginWorldX() + input.localOriginTileX * input.tileSize;
-		int originZ = input.anchor.getOriginWorldZ() + input.localOriginTileZ * input.tileSize;
-		if (detach && input.anchor.getPlane() == 0 && SurfaceSceneryMeshPreparation.isAvailable()) {
+		if (useWorker) {
 			Renderer3DWorldChunkFrame.ChunkMesh prepared = SurfaceSceneryMeshPreparation.prepare(
-				input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(), originX, originZ, models);
+				input.anchor.getCenterSectionX(), input.anchor.getCenterSectionY(), originX, originZ, models,
+				input.cellKey, at, trace ? System.nanoTime() - start : 0);
 			if (prepared != null) {
 				detachedSurfaceSceneryMeshes++;
 				return prepared;
@@ -5572,6 +5439,53 @@ public final class mudclient implements Runnable {
 			models,
 			input.modelCount,
 			input.chunkRole);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh buildWorkerSceneryPlacements(ResidentObjectChunkInput input,
+		int originX, int originZ, long at, long start) {
+		byte[] digest = sceneryModelArchiveDigest;
+		ResidentObjectCanonicalIdentity[] identities = input.canonicalIdentities;
+		if (digest == null || identities == null || identities.length == 0 || input.tileSize != 128) return null;
+		for (ResidentObjectCanonicalIdentity identity : identities) {
+			if (identity.kind == Renderer3DModelKind.WALL_OBJECT.ordinal()) continue;
+			if (identity.kind != Renderer3DModelKind.GAME_OBJECT.ordinal() || !hasArchivedScenerySource(identity.objectId)) return null;
+		}
+		int[] placements = new int[identities.length * 7];
+		int i = 0;
+		for (ResidentObjectCanonicalIdentity identity : identities) {
+			placements[i++] = identity.kind;
+			placements[i++] = identity.objectId;
+			placements[i++] = identity.worldTileX;
+			placements[i++] = identity.worldTileZ;
+			placements[i++] = identity.direction;
+			placements[i++] = identity.elevation1;
+			placements[i++] = identity.elevation2;
+		}
+		int sectionX = input.anchor.getCenterSectionX(), sectionZ = input.anchor.getCenterSectionY();
+		Renderer3DWorldChunkFrame.ChunkMesh result = SurfaceSceneryMeshPreparation.preparePlacements(sectionX, sectionZ,
+			originX, originZ, input.baseX, input.baseZ, input.tileSize, input.canonicalContentKey, digest, placements,
+			input.cellKey, at, start);
+		if (result == null || digest != sceneryModelArchiveDigest) return null;
+		for (ResidentObjectCanonicalIdentity identity : identities) {
+			if (identity.kind == Renderer3DModelKind.GAME_OBJECT.ordinal() && !hasArchivedScenerySource(identity.objectId)) return null;
+		}
+		if (VERIFY_WORKER_SCENERY_PLACEMENTS) {
+			Renderer3DWorldChunkFrame.ChunkMesh expected = RSModel.buildRenderer3DObjectChunkMesh(0, sectionX, sectionZ,
+				originX, originZ, buildCanonicalResidentObjectModels(input), input.modelCount, input.chunkRole);
+			if (!SurfaceSceneryMeshPreparation.sameGeometry(expected, result)) {
+				mismatchedWorkerSceneryMeshes++;
+				return null;
+			}
+			verifiedWorkerSceneryMeshes++;
+		}
+		return result;
+	}
+
+	private boolean hasArchivedScenerySource(int id) {
+		GameObjectDef def = EntityHandler.getObjectDef(id);
+		if (def == null || def.modelID < 0 || def.modelID >= sceneryArchiveModelVersions.length) return false;
+		RSModel source = getModelCacheItem(def.modelID);
+		return id != 74 && source != null && source.getRenderer3DTransformVersion() == sceneryArchiveModelVersions[def.modelID];
 	}
 
 	private ResidentObjectChunkBuildResult buildResidentObjectChunkMeshForPresentation(ResidentObjectChunkInput input) {
@@ -5621,29 +5535,11 @@ public final class mudclient implements Runnable {
 		for (int index = 0; index < models.length; index++) {
 			ResidentObjectCanonicalIdentity identity =
 				identities[index];
-			SceneBaselineState.Record record =
-				new SceneBaselineState.Record(
-					identity.objectId,
-					identity.worldTileX,
-					identity.worldTileZ,
-					identity.direction,
-					identity.kind
-						== Renderer3DModelKind.WALL_OBJECT.ordinal()
-							? 1 : 0);
-			models[index] =
-				identity.kind
-						== Renderer3DModelKind.GAME_OBJECT.ordinal()
-					? createStaticPresentationGameObjectModel(
-						input,
-						record,
-						index,
-						identity.elevation1)
-					: createStaticPresentationWallObjectModel(
-						input,
-						record,
-						index,
-						identity.elevation1,
-						identity.elevation2);
+			models[index] = identity.kind == Renderer3DModelKind.GAME_OBJECT.ordinal()
+				? createStaticPresentationGameObjectModel(input, identity, index)
+				: StaticSceneryModels.wallObject(identity.objectId, identity.worldTileX - input.baseX,
+					identity.worldTileZ - input.baseZ, identity.direction, input.tileSize, index,
+					identity.elevation1, identity.elevation2);
 		}
 		return models;
 	}
@@ -22429,6 +22325,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadModels() {
+		sceneryModelArchiveDigest = null;
 		byte[] models = unpackData("video" + File.separator + "models.orsc", "3d models", 60);
 
 		String[] modelNames = {"torcha2", "torcha3", "torcha4", "skulltorcha2", "skulltorcha3", "skulltorcha4",
@@ -22443,6 +22340,10 @@ public final class mudclient implements Runnable {
 			return;
 		}
 
+		if (WORKER_SCENERY_PLACEMENTS) {
+			sceneryArchiveModelVersions = new int[EntityHandler.getModelCount()];
+			Arrays.fill(sceneryArchiveModelVersions, -1);
+		}
 		for (int j = 0; j < EntityHandler.getModelCount(); j++) {
 			String modelName = EntityHandler.getModelName(j);
 			int k = DataOperations.getDataFileOffset(modelName + ".ob3", models);
@@ -22451,25 +22352,11 @@ public final class mudclient implements Runnable {
 			} else {
 				modelCache[j] = new RSModel(models, k, true);
 			}
-			modelCache[j] = normalizeLoadedModel(modelName, modelCache[j]);
+			modelCache[j] = StaticSceneryModels.normalizeLoadedModel(modelName, modelCache[j]);
 			modelCache[j].m_cb = modelName.equals("giantcrystal");
+			if (WORKER_SCENERY_PLACEMENTS && k != 0) sceneryArchiveModelVersions[j] = modelCache[j].getRenderer3DTransformVersion();
 		}
-	}
-
-	private RSModel normalizeLoadedModel(String modelName, RSModel model) {
-		if (TIN_ROCK_MODEL_NAME.equals(modelName)) {
-			model.hideBackFacesMatching(TIN_ROCK_LEGACY_RED_BACK_FACE);
-		}
-		if (WATCHTOWER_MODEL_NAME.equals(modelName)) {
-			model.hideFacesUsingVerticesOutsideLocalBounds(
-				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE,
-				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE,
-				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE);
-		}
-		if (FISHING_SPOT_MODEL_NAME.equals(modelName)) {
-			return model.withFishingSpotClarityOverlay();
-		}
-		return model;
+		if (WORKER_SCENERY_PLACEMENTS) sceneryModelArchiveDigest = SurfaceSceneryMeshPreparation.archiveDigest(models);
 	}
 
 	private RSModel createGeneratedModel(String modelName) {
@@ -27211,7 +27098,7 @@ public final class mudclient implements Runnable {
 
 	public void setGameObjectInstanceModel(int i, RSModel m) {
 		ensureGameObjectInstanceCapacity(i + 1);
-		RSModel preparedModel = prepareGameObjectInstanceModel(getGameObjectInstanceID(i), m);
+		RSModel preparedModel = StaticSceneryModels.prepareGameObjectInstanceModel(getGameObjectInstanceID(i), m);
 		this.sceneInstanceStore.setGameObjectModel(i, preparedModel);
 	}
 
@@ -27237,24 +27124,6 @@ public final class mudclient implements Runnable {
 
 	public void setGameObjectInstanceID(int i, int n) {
 		this.sceneInstanceStore.setGameObjectId(i, n);
-	}
-
-	private RSModel prepareGameObjectInstanceModel(int objectId, RSModel model) {
-		if (model == null) {
-			return null;
-		}
-
-		GameObjectDef definition = EntityHandler.getObjectDef(objectId);
-		model.setInteractionOnly(definition != null && definition.isInteractionOnly());
-
-		if (objectId == DRAGON_SULFUR_ROCK_OBJECT_ID) {
-			model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE);
-		}
-		applyRenderer3DMaterialMetadata(
-			Renderer3DModelKind.GAME_OBJECT,
-			objectId,
-			model);
-		return model;
 	}
 
 	public int getGameObjectInstanceID(int i) {

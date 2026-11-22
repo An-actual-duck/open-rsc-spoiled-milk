@@ -21,7 +21,7 @@ self.onmessage = async ({data}) => {
     }
     const builder = await loading;
     const result = new Int8Array(scenery
-      ? await builder.buildScenery(data.bytes)
+      ? await builder.buildScenery(clientRoot + 'Cache', data.bytes)
       : await builder.build(clientRoot + 'Cache', data.bytes, ...data.args));
     self.postMessage({result: result.buffer}, [result.buffer]);
   } catch (error) {

@@ -395,6 +395,13 @@ copying or identify allocation hot spots.
    If preparation is small, use the same allocation and lifetime
    checks on the recurring geometry draw lists and sprite batch.
 
+The private placement candidate reduced scenery request traffic and improved
+95th- and 99th-percentile frame pacing in both Full HD walking controls.
+Large gaps still occur, with the worst Firefox candidate frame spending
+142 ms in the Java render bridge before presentation. The placement route
+and its cold-worker cost are recorded in the preview notes.
+[Scenery worker results](seamless-world-streaming-preview.md#move-canonical-scenery-preparation-into-the-worker)
+
 ## Stop conditions and follow-up decisions
 
 - If movement still waits with coverage installed, trace the server hold, packet

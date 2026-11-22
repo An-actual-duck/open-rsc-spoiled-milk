@@ -1,7 +1,7 @@
 export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = false) {
   const worker = new Worker(new URL('./browser-surface-mesh-worker.js', import.meta.url),
     {name: scenery ? 'Spoiled Milk scenery mesher' : 'Spoiled Milk terrain mesher'});
-  const stats = {ready: false, completed: 0, gameplay: 0, bytes: 0, error: null};
+  const stats = {ready: false, completed: 0, gameplay: 0, bytes: 0, inputBytes: 0, busy: 0, refused: 0, error: null};
   let pending;
   let closed = false;
 
@@ -21,8 +21,11 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = f
       stats.ready = true;
     } else if (pending) {
       const result = new Int8Array(data.result);
-      stats.completed++;
-      if (pending.gameplay) stats.gameplay++;
+      if (result.byteLength === 0) stats.refused++;
+      else {
+        stats.completed++;
+        if (pending.gameplay) stats.gameplay++;
+      }
       stats.bytes += result.byteLength;
       const request = pending;
       pending = undefined;
@@ -36,12 +39,13 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = f
     stats,
     build(source, args) {
       if (closed) return Promise.resolve(null);
+      if (pending) {
+        stats.busy++;
+        return Promise.resolve(null);
+      }
       const bytes = new Int8Array(source);
       return new Promise(resolve => {
-        if (pending) {
-          resolve(null);
-          return;
-        }
+        stats.inputBytes += bytes.byteLength;
         pending = {resolve, gameplay: args[args.length - 1]};
         try {
           worker.postMessage({bytes, args}, [bytes.buffer]);

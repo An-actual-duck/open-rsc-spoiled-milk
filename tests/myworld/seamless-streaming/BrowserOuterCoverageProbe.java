@@ -336,6 +336,14 @@ public final class BrowserOuterCoverageProbe {
 		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":rolled=3");
 		verifyDetachedGameplayInstalls(client, 3);
+		if (Boolean.getBoolean("spoiledmilk.browserVerifyWorkerSceneryPlacements")) {
+			int verified = client.getVerifiedWorkerSceneryMeshes(), mismatched = client.getMismatchedWorkerSceneryMeshes();
+			if (verified == 0 || mismatched != 0) throw new IllegalStateException("Scenery mesh parity " + verified + "/" + mismatched);
+			BrowserBootstrap.report("outer-coverage:placement-mesh-parity:" + verified);
+		}
+		for (String row : orsc.graphics.three.SurfaceSceneryMeshPreparation.traceSnapshot()) {
+			BrowserBootstrap.report("scenery-meshing:" + row);
+		}
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
 	}
 

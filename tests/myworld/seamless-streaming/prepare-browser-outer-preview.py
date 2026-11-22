@@ -61,6 +61,8 @@ def main():
     parser.add_argument('--steady-walk', action='store_true', help='Repeat the approach inside the installed area after its prediction is ready')
     parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
+    parser.add_argument('--worker-scenery-placements', action='store_true', help='Build canonical scenery inputs from placements in the detached worker')
+    parser.add_argument('--verify-worker-scenery-placements', action='store_true', help='Compare detached placement meshes byte for byte with the installed builder')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
@@ -107,6 +109,12 @@ def main():
         parser.error('Live surface handoff requires independent scenery draws')
     if (args.surface_mesh_worker or args.surface_draw_worker) and not args.live_surface_handoff:
         parser.error('Surface workers require live surface handoff')
+    if args.worker_scenery_placements and not args.surface_mesh_worker:
+        parser.error('Scenery placement requests require the surface mesher')
+    if args.worker_scenery_placements and not (args.manual or args.frame_stages):
+        parser.error('Automated scenery placement checks require frame stage receipts')
+    if args.verify_worker_scenery_placements and not (args.worker_scenery_placements and args.presentation_only):
+        parser.error('Scenery parity requires the automated scenery placement route')
     if args.retarget_walk and (args.manual or not args.live_surface_handoff or args.sustained_walk):
         parser.error('Retarget walking requires the separate automated live surface route')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
@@ -161,6 +169,8 @@ def main():
            f'        System.setProperty("spoiledmilk.retargetSurfaceWalk", "{str(args.retarget_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.steadySurfaceWalk", "{str(args.steady_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceMeshWorker", "{str(args.surface_mesh_worker).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserWorkerSceneryPlacements", "{str(args.worker_scenery_placements).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserVerifyWorkerSceneryPlacements", "{str(args.verify_worker_scenery_placements).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
@@ -268,6 +278,8 @@ def main():
         'surfaceSceneryDraw': args.surface_scenery_draw,
         'liveSurfaceHandoff': args.live_surface_handoff,
         'surfaceMeshWorker': args.surface_mesh_worker,
+        'workerSceneryPlacements': args.worker_scenery_placements,
+        'verifyWorkerSceneryPlacements': args.verify_worker_scenery_placements,
         'surfaceDrawWorker': args.surface_draw_worker,
         'sustainedWalk': args.sustained_walk,
         'safeWalkFixture': args.retarget_walk or args.safe_walk_fixture,

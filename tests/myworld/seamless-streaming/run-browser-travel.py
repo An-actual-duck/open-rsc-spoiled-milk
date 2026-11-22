@@ -317,6 +317,11 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
             if completed and fixture.get('surfaceMeshWorker'):
                 detached = result.get('surfaceMeshWorker') or {}
                 completed = detached.get('completed', 0) > 0 and detached.get('error') is None
+            if completed and fixture.get('workerSceneryPlacements'):
+                worker = result.get('sceneryWorker') or {}
+                completed = (worker.get('completed', 0) > 0 and worker.get('error') is None
+                             and any(event['message'].startswith('scenery-meshing:placements,')
+                                     and event['message'].endswith(',true') for event in result['browserEvents']))
             if completed and fixture.get('surfaceDrawWorker'):
                 completed = (result.get('renderWorker') or {}).get('lastCompletedFrame', 0) > 0
             if completed and output != 'default':
