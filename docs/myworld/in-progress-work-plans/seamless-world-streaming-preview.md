@@ -2,14 +2,14 @@
 
 ## Current Full HD browser preview
 
-The loopback preview on port 8563 includes compact scenery conversion,
-resident projection omission, and cached model transforms through
-translation-only scene rolls. It uses the separate WebGL worker and
-retains the original 960×540 logical UI. The disposable account is
-`browserdemo` / `BrowserProof13`. Normal keyboard and mouse login
-reached a playable 1920×1080 scene at `(239,609)`. Port 8555 offers the
-previous renderer for comparison.
-[Play the updated preview](http://127.0.0.1:8563/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/cached-origin-rebase-player-preview/manual-login-result.json) · [Pacing results](#remaining-client-work-after-compact-conversion) · [Compare on port 8555](http://127.0.0.1:8555/?mode=webgl&physical=on)
+The loopback preview on port 8579 skips scene removals for empty roof
+slots. It carries the compact scenery conversion, resident projection
+omission, and cached transforms through translation-only scene rolls.
+The separate WebGL worker presents at 1920×1080 with the original 960×540
+logical UI. The disposable account is `browserdemo` / `BrowserProof13`.
+Normal keyboard and mouse login reached the playable scene at `(239,609)`.
+Port 8563 offers the previous build for comparison.
+[Play the updated preview](http://127.0.0.1:8579/?mode=webgl&physical=on) · [Manual login proof](../../../output/tests/browser-gameplay-spike/empty-roof-removals-player-preview/manual-login-result.json) · [Pacing results](#remaining-client-work-after-compact-conversion) · [Compare on port 8563](http://127.0.0.1:8563/?mode=webgl&physical=on)
 
 ## Early covered walking fixtures
 
@@ -1764,6 +1764,46 @@ closures. The isolated logging change was retired after the mixed
 results. The control JAR still contained the disabled deferred-signature
 trial. The split trace remains available.
 [Queued-log Firefox trace](../../../output/tests/browser-gameplay-spike/queued-halo-log-phase-firefox/firefox-result.json) · [Firefox control](../../../output/tests/browser-gameplay-spike/queued-halo-log-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/queued-halo-log-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/queued-halo-log-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/queued-halo-log-chrome/chrome-result.json)
+
+A Chrome CPU capture aligned main-thread samples with the submitted
+frames to within 1.4 ms. A 134 ms gap with no geometry uploads or
+packets had 20 garbage-collector samples out of 65. A 133 ms boundary
+gap had one garbage-collector sample, 69 ms of client update time,
+and a 54 ms fence packet span inside that update. The capture started
+the profiler while approaching the first boundary and uses the queued
+log JAR. Its timing is diagnostic.
+
+The largest named compiled Java leaf was the identity scan in
+`Scene.removeModel`, with 1,026 samples during the walk. The roof
+loop calls it for unpopulated upper-plane slots each frame. The
+existing whole-zone experiment guards this case. The walking trial
+uses the same no-op for a missing model and preserves the existing
+nonnull removals. Its native same-JAR comparison passed 6,251
+operations, covering the full model array, parallel metadata, sentinel,
+and duplicate behavior. The older whole-zone mode also passed its
+6,251 operations.
+[Chrome CPU and gap analysis](../../../output/tests/browser-gameplay-spike/resident-after-rebase-cpu-chrome/profile-summary.json) · [Sampled compiled methods](../../../output/tests/browser-gameplay-spike/resident-after-rebase-cpu-chrome/chrome-hot-jit-sources.json) · [Chrome Profiler API](https://chromedevtools.github.io/devtools-protocol/tot/Profiler/) · [Walking parity](../../../output/tests/seamless-world-streaming/empty-roof-removals-build/native-walking.json)
+
+The Full HD controls and trials used the same JAR and configuration,
+with the empty-removal guard toggled. Each completed three rolls and
+the reversal to `(252,609)` in one epoch with zero holds or input
+closures. The trial reduced intervals over 100 ms in both browsers.
+
+| Browser | 99th percentile | Longest interval | Gaps ≥100 ms | Worst second | Seconds below 60 FPS |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Firefox | 28 → 28 ms | 166 → 157 ms | 6 → 5 | 41 → 41 FPS | 16 → 14 |
+| Chrome | 26.2 → 24.4 ms | 138.1 → 116.2 ms | 3 → 1 | 47 → 50 FPS | 18 → 19 |
+
+These results measure fresh submissions over the private walking route.
+The guard reduced a measured steady-state CPU cost and left the 60 FPS
+target open. [Firefox control](../../../output/tests/browser-gameplay-spike/empty-roof-removals-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/empty-roof-removals-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/empty-roof-removals-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/empty-roof-removals-chrome/chrome-result.json)
+
+The guard's follow-up Chrome CPU capture no longer placed the removal
+scan among the hottest compiled methods. It still recorded a 144 ms
+roll with 73 ms in client updates and one collector sample, and a
+119 ms ordinary interval with zero geometry uploads and 16 collector
+samples. The untraced runs above provide the pacing comparison.
+[Follow-up Chrome profile](../../../output/tests/browser-gameplay-spike/empty-roof-removals-cpu-chrome/profile-summary.json)
 
 #### Java client worker feasibility
 

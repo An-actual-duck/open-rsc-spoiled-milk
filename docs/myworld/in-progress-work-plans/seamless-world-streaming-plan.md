@@ -483,6 +483,12 @@ Correlate browser CPU samples with those exact submitted frames and
 identify the compiled Java methods on the page thread before moving a
 new task into a worker. A detached worker must accept versioned inputs
 and return an exact result that the client can publish without waiting.
+The latest Chrome capture found both collector-heavy ordinary gaps and
+packet-heavy rolls with almost no collector samples. It also revealed
+that requests to remove missing roofs scan the live scene model list
+every frame. Skipping those requests improved the longest intervals in
+both browsers. The 60 FPS target remains open. Use the separate roll
+and ordinary-gap evidence to select the next change.
 Only advance a candidate that improves the continuous frame sequence in
 both browsers. Keep the original UI layout, visual quality and server
 movement authority in every candidate.
