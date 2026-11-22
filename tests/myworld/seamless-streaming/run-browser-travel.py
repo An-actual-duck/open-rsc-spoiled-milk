@@ -2,6 +2,7 @@
 """Run a staged sustained walk in a fresh browser WebDriver session."""
 
 import argparse
+from collections import Counter
 import contextlib
 import json
 import math
@@ -197,24 +198,33 @@ try {
 
 
 def save_hot_jit_sources(run, profile, command):
+    if 'head' in profile:
+        weight_label = 'estimatedBytes'
+        pending = [profile['head']]
+        nodes = []
+        while pending:
+            node = pending.pop()
+            nodes.append((node, node['selfSize']))
+            pending.extend(node.get('children', ()))
+    else:
+        weight_label = 'samples'
+        counts = Counter(profile['samples'])
+        nodes = [(node, counts[node['id']]) for node in profile['nodes']]
     sites = {}
-    pending = [profile['head']]
-    while pending:
-        node = pending.pop()
-        pending.extend(node.get('children', ()))
+    for node, weight in nodes:
         frame = node['callFrame']
         name = frame['functionName']
-        if node['selfSize'] and name.startswith('J_') and frame.get('scriptId') not in (None, '0') and not frame.get('url'):
+        if weight and name.startswith('J_') and frame.get('scriptId') not in (None, '0') and not frame.get('url'):
             key = (name, frame['scriptId'])
-            sites[key] = sites.get(key, 0) + node['selfSize']
-    largest = sorted(sites.items(), key=lambda item: item[1], reverse=True)[:6]
+            sites[key] = sites.get(key, 0) + weight
+    largest = sorted(sites.items(), key=lambda item: item[1], reverse=True)[:12]
     if not largest:
         return None
     command('Debugger.enable')
     try:
         sources = []
-        for (name, script_id), size in largest:
-            entry = {'function': name, 'scriptId': script_id, 'estimatedBytes': size}
+        for (name, script_id), weight in largest:
+            entry = {'function': name, 'scriptId': script_id, weight_label: weight}
             try:
                 source = command('Debugger.getScriptSource', {'scriptId': script_id})['scriptSource']
                 if source and len(source) <= 65536:
@@ -411,6 +421,7 @@ def run_walk(run, driver_port, browser, wasmgc=False, output='default', firefox_
                 path.write_text(json.dumps(profile) + '\n')
                 result['chromeProfile'] = {'path': path.name,
                                            'scope': 'Sampled Chrome main-thread JavaScript heap allocations, including collected objects'}
+            if 'chromeProfile' in result:
                 try:
                     result['chromeProfile']['hotJitSources'] = save_hot_jit_sources(run, profile, chrome_command)
                 except (OSError, KeyError, ValueError) as error:

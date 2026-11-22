@@ -1741,6 +1741,16 @@ rose from 45 to 51 FPS, while its 99th-percentile interval rose from
 The mixed results did not justify carrying the experiment forward.
 [Firefox control](../../../output/tests/browser-gameplay-spike/deferred-world-signatures-control-firefox/firefox-result.json) · [Firefox trial](../../../output/tests/browser-gameplay-spike/deferred-world-signatures-firefox/firefox-result.json) · [Chrome control](../../../output/tests/browser-gameplay-spike/deferred-world-signatures-control-chrome/chrome-result.json) · [Chrome trial](../../../output/tests/browser-gameplay-spike/deferred-world-signatures-chrome/chrome-result.json)
 
+The split Firefox boundary trace put halo publication at 0–1 ms and
+the synchronous activation log at 6–7 ms on each of three rolls. The
+local scenery retirement and rebase took 13, 6, and 6 ms. Layered
+terrain decode was 1 ms each time, with terrain installation at 1–2 ms.
+The longest ordinary submission interval was 155 ms with zero packet
+work or geometry uploads. The accompanying timing sample attributed
+93 ms to elapsed time around the sky bridge call. This span includes
+time the browser or Java runtime can spend on other work.
+[Split Firefox trace](../../../output/tests/browser-gameplay-spike/halo-activation-details-firefox/firefox-result.json) · [Region phase breakdown](../../../output/tests/browser-gameplay-spike/halo-activation-details-firefox/region-stage-summary.json)
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the
