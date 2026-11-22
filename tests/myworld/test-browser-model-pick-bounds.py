@@ -23,6 +23,14 @@ with (run/'current-camera-cull.log').open('w') as log:
   '-cp',str(current)+':'+str(jar),'orsc.graphics.three.BrowserModelPickBoundsFixture','current','true'],
   check=True,stdout=log,stderr=subprocess.STDOUT)
 results['current-camera-cull']=(run/'current-camera-cull.log').read_text().strip().splitlines()[-1]
+rebase_java=['java','-Xmx768m','-Djava.awt.headless=true','-Dspoiledmilk.browserResidentCameraCull=true',
+ '-Dspoiledmilk.browserKeepRebasedModels=true','-cp',str(current)+':'+str(jar),
+ 'orsc.graphics.three.BrowserModelPickBoundsFixture']
+with (run/'current-camera-rebase.log').open('w') as log:
+ subprocess.run([*rebase_java,'current','true'],check=True,stdout=log,stderr=subprocess.STDOUT)
+results['current-camera-rebase']=(run/'current-camera-rebase.log').read_text().strip().splitlines()[-1]
+with (run/'rebase-math.log').open('w') as log:
+ subprocess.run([*rebase_java,'cached-rebase'],check=True,stdout=log,stderr=subprocess.STDOUT)
 assert len(set(results.values()))==1,results
 with(run/'math.log').open('w')as log:subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-cp',str(current)+':'+str(jar),'orsc.graphics.three.BrowserModelPickBoundsFixture','math'],check=True,stdout=log,stderr=subprocess.STDOUT)
 for fixture in ['SceneOwnershipCullFixture','BrowserWallRoofOwnershipFixture']:
@@ -48,4 +56,4 @@ assert probe_results['current']['TEST_MODEL_REJECTIONS']>0 and probe_results['cu
 bootstrap=run/'bootstrap';bootstrap.mkdir()
 with(run/'bootstrap-compile.log').open('w')as log:subprocess.run(['javac','-source','8','-target','8','-cp',str(current)+':'+str(jar),'-d',str(bootstrap),*[str(p)for p in sorted((ROOT/'tools/browser-gameplay/src/orsc/browser').rglob('*.java'))]],check=True,stdout=log,stderr=subprocess.STDOUT)
 meta={'passed':True,'baseline':BASE,'sourceCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'sourceSha256':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()for p in sources},'jarSha256':hashlib.sha256(jar.read_bytes()).hexdigest(),'outputs':results,'testOnlyWorkCounters':probe_results,'scope':'576 real Scene frames each baseline/current, OFF/ON; frozen pick/order/resident/pixel digest;200000 conservative integer/scale cases;no browser/GPU/FPS claim'}
-(run/'result.json').write_text(json.dumps(meta,indent=2)+'\n');print(json.dumps({'passed':True,'run':str(run),'outputs':results,'math':(run/'math.log').read_text().strip(),'testOnlyWorkCounters':probe_results},indent=2))
+(run/'result.json').write_text(json.dumps(meta,indent=2)+'\n');print(json.dumps({'passed':True,'run':str(run),'outputs':results,'math':(run/'math.log').read_text().strip(),'rebase':(run/'rebase-math.log').read_text().strip(),'testOnlyWorkCounters':probe_results},indent=2))

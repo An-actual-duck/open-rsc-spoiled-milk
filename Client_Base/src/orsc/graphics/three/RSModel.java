@@ -93,6 +93,8 @@ public final class RSModel {
 	private int minY;
 	private int minZ;
     static final boolean BROWSER_RESIDENT_CAMERA_CULL = Boolean.getBoolean("spoiledmilk.browserResidentCameraCull");
+    private static final boolean BROWSER_KEEP_REBASED_MODELS = Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels");
+    private static long preservedRebases, preservedRebaseVertices;
     private boolean browserProjectionRowsOwned;
     private boolean browserProjectionTopologyChecked;
 	private int rot256X;
@@ -582,9 +584,60 @@ public final class RSModel {
 
 	/** Changes the local carrier for a retained model within the same signed surface. */
 	public void rebaseWorldOrigin(int x, int z) {
-		translate2(x, 0, z);
+		if (!BROWSER_KEEP_REBASED_MODELS || !shiftCachedWorldOrigin(x, z)) translate2(x, 0, z);
 		worldOriginUpdates++;
 	}
+
+    private boolean shiftCachedWorldOrigin(int x, int z) {
+        // Aliased source storage and stale or unsupported caches keep the
+        // literal transform rebuild, including its validation and lighting.
+        if (m_v || !hasStableProjectionCache()
+            || !canShiftBounds(minX, maxX, x) || !canShiftBounds(minZ, maxZ, z)) return false;
+        boolean invalidateCameraNormals = !dontComputeDiffuse || !m_c;
+        if (!m_c && (!hasFaceCapacity(faceMinX) || !hasFaceCapacity(faceMaxX)
+            || !hasFaceCapacity(faceMinZ) || !hasFaceCapacity(faceMaxZ))) return false;
+        if (invalidateCameraNormals && !hasFaceCapacity(scenePolyNormalShift)) return false;
+        this.translateX += x;
+        this.translateZ += z;
+        computeAppliedTransform();
+        for (int v = 0; v < vertHead; v++) {
+            vertXTransform[v] += x;
+            vertZTransform[v] += z;
+        }
+        if (!m_c) {
+            for (int f = 0; f < faceHead; f++) {
+                faceMinX[f] += x;
+                faceMaxX[f] += x;
+                faceMinZ[f] += z;
+                faceMaxZ[f] += z;
+            }
+        }
+        minX += x;
+        maxX += x;
+        minZ += z;
+        maxZ += z;
+        // Edge differences and diffuse lighting are translation-invariant.
+        // Camera polygon normals still use the literal invalidation rule.
+        if (invalidateCameraNormals) Arrays.fill(scenePolyNormalShift, 0, faceHead, -1);
+        renderer3DTransformVersion++;
+        preservedRebases++;
+        preservedRebaseVertices += vertHead;
+        return true;
+    }
+
+    private boolean hasFaceCapacity(int[] values) {
+        return values != null && values.length >= faceHead;
+    }
+
+    private static boolean canShiftBounds(int low, int high, int shift) {
+        // calculateBoundingBoxes begins with finite sentinel extrema.
+        return low <= high && low > -999999 && high < 999999
+            && (double) low + shift > -999999 && (double) high + shift < 999999;
+    }
+
+    public static long[] getBrowserRebaseWork() {
+        return new long[]{preservedRebases, preservedRebaseVertices};
+    }
 
 	private static RSModel createFishingSpotClarityOverlay() {
 		RSModel model = new RSModel(96, 40);
@@ -2737,8 +2790,11 @@ public final class RSModel {
         return true;
     }
     final boolean canUseResidentCameraCull() {
+        return hasStableProjectionCache() && isBrowserBatchFrustumVisible();
+    }
+    private boolean hasStableProjectionCache() {
         return isBrowserBatchCacheClean() && browserProjectionRowsOwned && browserProjectionTopologyChecked
-            && faceHead > 0 && vertHead > 0 && isBrowserBatchFrustumVisible()
+            && faceHead > 0 && vertHead > 0
             && hasProjectionCapacity(vertXTransform) && hasProjectionCapacity(vertYTransform)
             && hasProjectionCapacity(vertZTransform) && hasProjectionCapacity(vertexParam6)
             && hasProjectionCapacity(vertexParam2) && hasProjectionCapacity(vertXRot)

@@ -1695,6 +1695,22 @@ The worker submitted in 3.1 ms. These diagnostic traces distinguish
 lingering client CPU gaps from terrain draws and movement continuity.
 [Firefox movement](../../../output/tests/browser-gameplay-spike/resident-camera-cull-movement/firefox-result.json) · [Chrome CPU profile](../../../output/tests/browser-gameplay-spike/resident-camera-cull-cpu/profile-summary.json)
 
+The detailed handoff run saw 16–20 ms dispatches of the context
+packet, 10–23 ms dispatches of the player packet, and 2–3 ms at
+the fence itself. The context spent 14–18 ms in prediction and
+activation. The region load spent up to 10 ms dematerializing and
+rebasing scenery, while the prepared terrain installation took at most
+2 ms. Retained models marked dirty at the roll also have to refresh
+their transforms before projection can omit them on a later frame.
+[Handoff phase detail](../../../output/tests/browser-gameplay-spike/resident-camera-cull-handoff/region-stage-summary.json)
+
+The private rebase candidate preserves a verified transform cache for
+translation-only shifts of retained game-object models. It shifts X/Z
+coordinates and bounds, retains translation-invariant lighting, and
+invalidates the camera polygon-normal cache as before. Models with
+aliased storage, dirty transforms or unsupported bounds use the literal
+rebuild path.
+
 #### Java client worker feasibility
 
 The existing browser renderer worker moves WebGL submissions off the

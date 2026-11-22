@@ -421,6 +421,16 @@ public final class BrowserOuterCoverageProbe {
 		int lighting = BrowserWebGLBridge.getResidentTerrainLightingFields();
 		if (lighting <= 0) throw new IllegalStateException("No terrain lighting field came from the resident cells");
 		BrowserBootstrap.report("outer-coverage:resident-lighting-fields:" + lighting);
+		if (Boolean.getBoolean("spoiledmilk.browserKeepRebasedModels")) {
+			long[] work;
+			try {
+				work = (long[]) RSModel.class.getMethod("getBrowserRebaseWork").invoke(null);
+			} catch (ReflectiveOperationException error) {
+				throw new IllegalStateException("Cached model rebase counters are unavailable", error);
+			}
+			if (work[0] <= 0 || work[1] <= 0) throw new IllegalStateException("No model retained its transform across the rolls");
+			BrowserBootstrap.report("outer-coverage:preserved-model-rebase:models=" + work[0] + ":vertices=" + work[1]);
+		}
 		if (!Boolean.getBoolean("spoiledmilk.browserTravelTrace")) return;
 		int reused = client.getResidentPlacementPublicationsReused();
 		if (reused <= 0) throw new IllegalStateException("Resident scenery was never reused between placement events");

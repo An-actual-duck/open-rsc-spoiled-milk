@@ -46,14 +46,8 @@ public final class BrowserModelPickBoundsFixture {
     }
 
     private static void cameraBoundsMath(Scene scene, Method literalPick) throws Exception {
-        int[] trig = FastMath.trigTable1024 = new int[2048];
-        for (int i = 0; i < 1024; i++) {
-            double angle = i * Math.PI / 512;
-            trig[i] = (int) (Math.sin(angle) * 32768);
-            trig[i + 1024] = (int) (Math.cos(angle) * 32768);
-        }
-        MiscFunctions.frustumMinX = MiscFunctions.frustumMinY = MiscFunctions.frustumNearZ = Integer.MAX_VALUE;
-        MiscFunctions.frustumMaxX = MiscFunctions.frustumMaxY = MiscFunctions.frustumFarZ = Integer.MIN_VALUE;
+        int[] trig = referenceTrig();
+        wideFrustum();
         ProjectedModelPickBounds.CameraBounds bounds = new ProjectedModelPickBounds.CameraBounds();
         Random random = new Random(473231);
         int misses = 0, hits = 0;
@@ -88,6 +82,68 @@ public final class BrowserModelPickBoundsFixture {
         require(hits > 500 && misses > 500, "Vacuous camera bounds corpus");
         System.out.println("PASS camera bounds 6000 fixed-point projection cases, literal hits=" + hits + " proven misses=" + misses);
     }
+
+    private static void wideFrustum() {
+        MiscFunctions.frustumMinX = MiscFunctions.frustumMinY = MiscFunctions.frustumNearZ = Integer.MAX_VALUE;
+        MiscFunctions.frustumMaxX = MiscFunctions.frustumMaxY = MiscFunctions.frustumFarZ = Integer.MIN_VALUE;
+    }
+
+    private static int[] referenceTrig() {
+        int[] trig = FastMath.trigTable1024 = new int[2048];
+        for (int i = 0; i < 1024; i++) {
+            double angle = i * Math.PI / 512;
+            trig[i] = (int) (Math.sin(angle) * 32768);
+            trig[i + 1024] = (int) (Math.cos(angle) * 32768);
+        }
+        return trig;
+    }
+
+    private static void cachedRebaseParity() throws Exception {
+        referenceTrig();
+        List<Field> arrays = new ArrayList<>();
+        for (String name : new String[]{"vertXTransform", "vertYTransform", "vertZTransform", "vertexParam6",
+                "vertexParam2", "vertXRot", "vertYRot", "vertZRot", "faceMinX", "faceMaxX", "faceMinY", "faceMaxY",
+                "faceMinZ", "faceMaxZ", "faceNormX", "faceNormY", "faceNormZ", "faceDiffuseLight",
+                "vertDiffuseLight", "scenePolyNormalShift"}) {
+            Field field = RSModel.class.getDeclaredField(name);
+            field.setAccessible(true);
+            arrays.add(field);
+        }
+        List<Field> bounds = new ArrayList<>();
+        for (String name : new String[]{"minX", "maxX", "minY", "maxY", "minZ", "maxZ", "maxFaceDimension",
+                "appliedTransform", "translateX", "translateY", "translateZ"}) {
+            Field field = RSModel.class.getDeclaredField(name);
+            field.setAccessible(true);
+            bounds.add(field);
+        }
+        wideFrustum();
+        int cached = 0, literal = 0;
+        for (int trial = 0; trial < 64; trial++) {
+            RSModel reference = dense(), candidate = dense();
+            int x = trial % 8 == 0 ? 999900 : trial * 19 - 600;
+            for (RSModel model : new RSModel[]{reference, candidate}) {
+                model.setTranslate(x, trial * 3, -x / 2);
+                model.setRot256(trial & 31, 31 - (trial & 31), trial * 3);
+                model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, trial % 2 == 0, -74);
+                model.rotate1024(0, 9, 0, (byte) -122, -1024, 113, 189, 57, 8);
+            }
+            for (int step = 0; step < 5; step++) {
+                reference.scenePolyNormalShift[0] = candidate.scenePolyNormalShift[0] = 3;
+                int dx = step % 2 == 0 ? 6144 : -6144, dz = (step - 2) * 128;
+                reference.translate2(dx, 0, dz);
+                candidate.rebaseWorldOrigin(dx, dz);
+                if (candidate.m_Yb == 0) cached++; else literal++;
+                reference.rotate1024(19, 9, -43, (byte) -122, -1024, 113, 189, 57, 8);
+                candidate.rotate1024(19, 9, -43, (byte) -122, -1024, 113, 189, 57, 8);
+                require(reference.m_dc == candidate.m_dc, "Rebase changed visibility");
+                for (Field field : bounds) require(field.getInt(reference) == field.getInt(candidate), "Rebase changed " + field.getName());
+                for (Field field : arrays) require(Arrays.equals((int[]) field.get(reference), (int[]) field.get(candidate)),
+                    "Rebase changed " + field.getName());
+            }
+        }
+        require(cached > 100 && literal > 0, "Rebase corpus did not exercise both paths");
+        System.out.println("PASS " + cached + " cached origin shifts and " + literal + " literal fallbacks");
+    }
     static RSModel dense(){
         int side=12;RSModel m=new RSModel((side+1)*(side+1),side*side);for(int z=0;z<=side;z++)for(int x=0;x<=side;x++)m.insertVertex((x-6)*8,110,(z-6)*8);
         for(int z=0;z<side;z++)for(int x=0;x<side;x++){int at=z*(side+1)+x;m.insertFace(4,new int[]{at,at+1,at+side+2,at+side+1},-12345,-12345,false);}
@@ -95,6 +151,7 @@ public final class BrowserModelPickBoundsFixture {
     }
     public static void main(String[] args)throws Exception{
         if(args[0].equals("math")){math();return;}
+        if(args[0].equals("cached-rebase")){cachedRebaseParity();return;}
         boolean defaults=args[1].equals("default"),enabled=defaults||Boolean.parseBoolean(args[1]),current=args[0].equals("current");if(defaults)System.clearProperty("spoiledmilk.browserModelPickBounds");else System.setProperty("spoiledmilk.browserModelPickBounds",String.valueOf(enabled));
         for(String name:new String[]{"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster","browserOverlayCoverage"})System.setProperty("spoiledmilk."+name,"true");System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
         MessageDigest hash=MessageDigest.getInstance("SHA-256");
@@ -107,6 +164,7 @@ public final class BrowserModelPickBoundsFixture {
             view.s.addModel(fixed);
             require(active(view.s)==(current&&enabled&&mode==0),"Actual feature gate changed native/software/mixed ownership");
             for(int frame=0;frame<72;frame++){
+                if (frame > 0 && frame % 18 == 0) fixed.rebaseWorldOrigin(frame % 36 == 0 ? -128 : 128, 0);
                 int scale=new int[]{1,2,3,14,Integer.MAX_VALUE}[frame%5];view.front.setPickBoundsScale(scale);view.models[2].setPickBoundsScale(scale);dense.setPickBoundsScale(scale);dense.setTranslate((frame%5-2)*120,frame%3*5,(frame%7-3)*90);dense.setRenderer3DModelKind(Renderer3DModelKind.values()[frame%Renderer3DModelKind.values().length]);dense.faceIndices[frame%dense.faceHead]=frame%2==0?new int[]{0,1,14,13}:new int[]{13,14,1,0};
                 BrowserWallRoofOwnershipFixture.Result value=view.draw(frame%4==0?0:frame%4==1?511:256,frame%4==0?0:frame%4==1?383:192,new int[]{20,100,600}[frame%3],new int[]{640,768,900}[frame%3],frame%2*256,new int[]{-12345,0,Scene.TRANSPARENT}[frame%3],frame%11==0);
                 text(hash,value.picks);text(hash,value.anchors);text(hash,value.faces);text(hash,value.resident);ByteBuffer pixels=ByteBuffer.allocate(value.pixels.length*4);for(int p:value.pixels)pixels.putInt(p);hash.update(pixels.array());
