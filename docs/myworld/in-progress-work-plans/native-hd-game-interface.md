@@ -10,7 +10,8 @@ Use the existing Classic bitmap lettering and approved assets for development. S
 | --- | --- |
 | In-game HUD | Chat history, text entry, filters, scrollbar and message actions. Sidebar launchers and pinned panels. Minimap, compass, zoom, menu hints, inventory count, combat and gathering styles, wilderness indicators, timers and experience displays. |
 | Sidebar panels | Inventory, equipment, stats, quests and tasks, spellbook, prayers, summoning, friends, ignores, clan and options. Include tooltips, item grids, sub-tabs, scroll and dragging. |
-| World interaction | Ground and entity context menus, overhead speech and status bars, item labels, action feedback, NPC responses and keyboard shortcuts. |
+| Right-click menus | Inventory, Equipment, ground items, objects and characters. Scale the menu frame, text, row spacing and hit targets. |
+| World interaction | Overhead speech and status bars, item labels, action feedback, NPC responses and keyboard shortcuts. |
 | Gameplay windows | Bank and PIN, shop, auction house, trade and duel through confirmation. Crafting and other skill actions, guides, social and party management, achievements, rewards, point configuration, account options, death and recovery, territory and minigame displays. |
 | Session screens and modal states | Login and registration, appearance, loading and reconnect, welcome and notices, reporting, input prompts, confirmations, password and recovery pages, sleep, and logout. |
 | In-game developer tools | World Builder panels, definitions browser and selection controls. Check their hit regions against terrain picking in the same viewport. |
@@ -52,6 +53,16 @@ The current HUD work is limited to Inventory and Equipment. The minimap will
 have its own design pass after the owner supplies notes. Bank, crafting and shop
 windows are separate work. The Monster Slayer reward shop remains a candidate
 for in-place stock and currency tabs in that work.
+
+## Right-click menus
+
+Bring the shared right-click menu up to the same visual and readability
+standard as the other panels. Use the UI size setting for padding and row
+spacing, and the text size setting for labels. Use the same row bounds for
+drawing, highlighting and selecting an action. Keep the existing action order,
+default click behavior and dismissal. Start verification with Inventory and
+Equipment, then check world targets and menus near the viewport edges at 540p
+and 1080p.
 
 ## Preview
 
