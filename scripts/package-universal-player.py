@@ -97,6 +97,36 @@ def build(version, directory, templates, expected_commit):
         (templates / "UNIVERSAL-README.txt").read_text().replace("@VERSION@", version).encode()
     )
     modes["Play Spoiled Milk.command"] = 0o755
+    mode_launchers = {
+        "Windows": {
+            "World Chunks": "Play Spoiled Milk - World Chunks.cmd",
+            "World Streaming": "Play Spoiled Milk - World Streaming.cmd",
+        },
+        "Linux": {
+            "World Chunks": "play-spoiled-milk-world-chunks.sh",
+            "World Streaming": "play-spoiled-milk-world-streaming.sh",
+        },
+        "macOS": {
+            "World Chunks": "Play Spoiled Milk - World Chunks.command",
+            "World Streaming": "Play Spoiled Milk - World Streaming.command",
+        },
+    }
+    launchers = {
+        name: (windows if platform == "Windows" else java)
+        for platform, choices in mode_launchers.items() for name in choices.values()
+    }
+    if any(name in source for name, source in launchers.items()):
+        if not all(name in source for name, source in launchers.items()):
+            raise ValueError("Incomplete World Chunks and World Streaming launchers")
+        for name, source in launchers.items():
+            files[name] = source[name]
+            if not name.endswith(".cmd"):
+                modes[name] = 0o755
+        files["README.txt"] = (
+            (templates / "WORLD-LOADING-README.txt").read_text().replace("@VERSION@", version).encode()
+        )
+    else:
+        mode_launchers = {}
     modes["play-spoiled-milk.sh"] = 0o755
     modes[PAYLOAD + "update-spoiled-milk.sh"] = 0o755
     target = directory / NAME
@@ -124,6 +154,8 @@ def build(version, directory, templates, expected_commit):
         },
         "gamePayloadUnchanged": True,
     }
+    if mode_launchers:
+        report["loadingModeLaunchers"] = mode_launchers
     (directory / "universal-player-package.json").write_text(json.dumps(report, indent=2) + "\n")
     return report
 
