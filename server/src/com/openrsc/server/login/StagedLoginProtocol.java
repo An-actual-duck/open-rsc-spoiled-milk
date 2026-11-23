@@ -4,11 +4,11 @@ import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.PacketBuilder;
 import java.security.MessageDigest;
 
-/** Explicit custom-WebSocket-only pre-world protocol, isolated from gameplay254 equipment. */
+/** Versioned custom-client pre-world controls. Staged account entry uses WebSockets. */
 public final class StagedLoginProtocol {
     public static final int OPCODE=254,MAGIC=0x42535031,VERSION=1,PENDING_RESPONSE=26;
     public static final int SUPPORT=0,PREPARE=1,COMMIT=2,ERROR=3,ACK=4,COMPLETE=5;
-    public static final int WORLD_STREAMING_SUPPORT=6;
+    public static final int WORLD_STREAMING_SUPPORT=6,DESKTOP_WORLD_STREAMING_SUPPORT=7;
     public static final int TOKEN_BYTES=16,DIGEST_BYTES=32,MAX_INPUT_BYTES=6+TOKEN_BYTES+DIGEST_BYTES+1+222;
     private StagedLoginProtocol(){}
     public static PacketBuilder packet(int kind){return new PacketBuilder(OPCODE).writeInt(MAGIC).writeByte(VERSION).writeByte(kind);}

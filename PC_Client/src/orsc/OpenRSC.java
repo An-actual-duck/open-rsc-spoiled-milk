@@ -19,6 +19,7 @@ public class OpenRSC extends ORSCApplet {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args) {
+		DesktopWorldStreamingPreview.configure();
 		try {
 			WorldBuilderClientProfile.initializeFromSystemProperties().applyConnection();
 		} catch (IllegalArgumentException exception) {

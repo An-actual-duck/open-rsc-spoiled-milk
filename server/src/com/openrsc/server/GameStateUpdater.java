@@ -277,7 +277,7 @@ public final class GameStateUpdater {
 		recordUpdateNpcs(() -> updateNpcs(player, visibleNpcs));
 		recordUpdateNpcAppearances(() -> updateNpcAppearances(player));
 		publishTravelBaseline(player);
-		if (SURFACE_SCENERY_CELLS || usesBrowserWorldStreaming(player)) updateSurfaceSceneryCells(player);
+		if (SURFACE_SCENERY_CELLS || usesWorldStreaming(player)) updateSurfaceSceneryCells(player);
 		final boolean[] sceneryChanged = new boolean[1];
 		final boolean[] wallsChanged = new boolean[1];
 		final boolean[] groundItemsChanged = new boolean[1];
@@ -1230,7 +1230,7 @@ public final class GameStateUpdater {
 		if (!advanceToStructure && sent != null) {
 			int sequence = player.getAttribute(NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE, 0);
 			sendPredictedSceneryCells(player, activeTerrain, stagedTerrain, sequence);
-			if ((SURFACE_SCENERY_CELLS || usesBrowserWorldStreaming(player)) && usesIndependentMovement(player) && player.isLoggedIn()) {
+			if ((SURFACE_SCENERY_CELLS || usesWorldStreaming(player)) && usesIndependentMovement(player) && player.isLoggedIn()) {
 				int stepX = stagedTerrain.currentChunkX - activeTerrain.currentChunkX;
 				int stepY = stagedTerrain.currentChunkY - activeTerrain.currentChunkY;
 				TravelBaseline travel = player.getAttribute(TRAVEL_BASELINE_ATTRIBUTE, null);
@@ -1454,7 +1454,7 @@ public final class GameStateUpdater {
 			residency = player.getAttribute(
 				NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE, null);
 			if (residency == null) {
-				residency = usesBrowserWorldStreaming(player)
+				residency = usesWorldStreaming(player)
 					|| EXPANDED_SURFACE_DRAW_BORDER && "127.0.0.1".equals(getServer().getConfig().SERVER_BIND_ADDRESS)
 					? new NativeLayeredTerrainClientResidency(128) : new NativeLayeredTerrainClientResidency();
 				player.setAttribute(
@@ -3518,7 +3518,7 @@ public final class GameStateUpdater {
 	}
 
 	private boolean usesIndependentMovement(final Player player) {
-		return (PERSISTENT_MOVEMENT_PREVIEW || usesBrowserWorldStreaming(player))
+		return (PERSISTENT_MOVEMENT_PREVIEW || usesWorldStreaming(player))
 			&& getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT
 			&& getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
 			&& player.isUsingCustomClient()
@@ -3732,31 +3732,31 @@ public final class GameStateUpdater {
 	// This first milestone isolates walking within installed surface coverage.
 	// A transition at the outer margin still uses the current scene protocol.
 	private static boolean usesCoveredWalkingPreview(final Player viewer) {
-		return (usesBrowserWorldStreaming(viewer) || COVERED_WALKING_PREVIEW
+		return (usesWorldStreaming(viewer) || COVERED_WALKING_PREVIEW
 			&& "127.0.0.1".equals(viewer.getConfig().SERVER_BIND_ADDRESS))
 			&& !viewer.getConfig().WORLD_BUILDER_MODE
 			&& viewer.getWorldLocation().getCoordinate().getLevel() == 0
 			&& "global".equals(viewer.getWorldLocation().getWorldSpace().getValue());
 	}
 
-	private static boolean usesBrowserWorldStreaming(Player player) {
+	private static boolean usesWorldStreaming(Player player) {
 		io.netty.channel.Channel channel = player.getChannel();
 		if (channel == null || !player.isUsingCustomClient()) return false;
 		com.openrsc.server.net.ConnectionAttachment connection =
 			channel.attr(com.openrsc.server.net.RSCConnectionHandler.attachment).get();
-		return connection != null && connection.browserWorldStreaming.get();
+		return connection != null && (connection.browserWorldStreaming.get() || connection.desktopWorldStreaming.get());
 	}
 
 	private static boolean usesSurfaceSceneryDraw(Player player) {
-		return (SURFACE_SCENERY_DRAW || usesBrowserWorldStreaming(player)) && usesCoveredWalkingPreview(player);
+		return (SURFACE_SCENERY_DRAW || usesWorldStreaming(player)) && usesCoveredWalkingPreview(player);
 	}
 
 	private static boolean usesLiveSurfaceHandoff(Player player) {
-		return (LIVE_SURFACE_HANDOFF || usesBrowserWorldStreaming(player)) && usesCoveredWalkingPreview(player);
+		return (LIVE_SURFACE_HANDOFF || usesWorldStreaming(player)) && usesCoveredWalkingPreview(player);
 	}
 
 	private static int surfaceDrawSourceRadius(Player player) {
-		return (EXPANDED_SURFACE_DRAW_BORDER || usesBrowserWorldStreaming(player)) && usesCoveredWalkingPreview(player)
+		return (EXPANDED_SURFACE_DRAW_BORDER || usesWorldStreaming(player)) && usesCoveredWalkingPreview(player)
 			? NATIVE_LAYERED_SURFACE_DRAW_SOURCE_RADIUS : NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS;
 	}
 

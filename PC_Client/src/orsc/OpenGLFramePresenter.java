@@ -1589,10 +1589,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				WORLD_CHUNKS_TEXTURED_VISIBLE,
 				budgetResidentChunkUploads);
 			chunkUploadPhaseNanos = RenderTelemetry.elapsedSince(chunkUploadPhaseStart);
+			// Animated scenery can have a small upload every frame. It must
+			// not starve the incoming terrain queue for the duration of a walk.
 			if (DesktopWorldStreamingPreview.ENABLED && frame.renderer3DFrame != null
-				&& chunkUploadStats.uploadedChunks == 0 && chunkUploadStats.deferredChunks == 0
-				&& !frame.renderer3DFrame.getPreparedTerrain().isEmpty()) {
-				worldChunkRenderer.stagePreparedTerrain(frame.renderer3DFrame, WORLD_CHUNKS_TEXTURED_VISIBLE);
+				&& chunkUploadStats.uploadedChunks == chunkUploadStats.uploadedForRole(
+					Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)
+				&& chunkUploadStats.deferredChunks == 0
+				&& !frame.renderer3DFrame.getPreparedWorldChunks().isEmpty()) {
+				worldChunkRenderer.stagePreparedWorldChunk(frame.renderer3DFrame, WORLD_CHUNKS_TEXTURED_VISIBLE);
 			}
 			RenderTelemetry.recordOpenGLWorldChunkUpload(
 				chunkUploadStats.requestedChunks,

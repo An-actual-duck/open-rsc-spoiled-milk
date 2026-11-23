@@ -39,12 +39,25 @@ public final class StagedLoginSession {
     public static StagedLoginSession forPlayer(Player player){return player.getAttribute(OWNER,null);}
     public boolean ownsDetachedSnapshot(Player player){return player!=null&&!player.isLoggedIn()&&forPlayer(player)==this&&live()&&attachment.stagedLogin.get()==this;}
     public static boolean supports(Server server,ConnectionAttachment attachment){
-        return attachment!=null&&Boolean.TRUE.equals(attachment.isWebSocket.get())&&!server.getConfig().WORLD_BUILDER_MODE
-            &&server.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY&&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
-            &&server.getConfig().WANT_SYNC_SCENE_BASELINE&&server.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
-            &&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY&&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PREDICTION
-            &&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS&&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY
-            &&Boolean.parseBoolean(System.getProperty("spoiledmilk.browserStagedLogin","true"));
+        return attachment != null && Boolean.TRUE.equals(attachment.isWebSocket.get())
+            && supportsLayeredScene(server)
+            && Boolean.parseBoolean(System.getProperty("spoiledmilk.browserStagedLogin", "true"));
+    }
+
+    private static boolean supportsLayeredScene(Server server) {
+        return !server.getConfig().WORLD_BUILDER_MODE
+            && server.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY && server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+            && server.getConfig().WANT_SYNC_SCENE_BASELINE && server.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+            && server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY && server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PREDICTION
+            && server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS && server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY;
+    }
+
+    private static boolean supportsDesktopStreaming(Server server, ConnectionAttachment attachment) {
+        return Boolean.FALSE.equals(attachment.isWebSocket.get())
+            && Boolean.getBoolean("spoiledmilk.desktopWorldStreaming")
+            && supportsLayeredScene(server)
+            && server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION
+            && server.getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT;
     }
     public static boolean handlePreWorld(Server server,Channel channel,Packet packet){
         ConnectionAttachment attachment=channel.attr(RSCConnectionHandler.attachment).get();
@@ -52,15 +65,31 @@ public final class StagedLoginSession {
         if(session!=null){session.receive(packet);return true;}
         if(packet.getID()!=StagedLoginProtocol.OPCODE)return false;
         try{
-            if(!supports(server,attachment)||!server.getPacketFilter().shouldAllowPacket(channel,false))
+            if (!server.getPacketFilter().shouldAllowPacket(channel,false)) {
                 throw new IllegalArgumentException("Unsupported login negotiation");
-            int action=StagedLoginProtocol.header(packet);
-            if(packet.getReadableBytes()!=0)throw new IllegalArgumentException("Trailing login negotiation data");
-            if(action==StagedLoginProtocol.WORLD_STREAMING_SUPPORT
-                &&Boolean.getBoolean("spoiledmilk.browserWorldStreaming")
-                &&server.getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT)attachment.browserWorldStreaming.set(true);
-            else if(action!=StagedLoginProtocol.SUPPORT)throw new IllegalArgumentException("Unsupported login negotiation");
-            attachment.stagedLoginAdvertised.set(true);
+            }
+            int action = StagedLoginProtocol.header(packet);
+            if (packet.getReadableBytes() != 0) {
+                throw new IllegalArgumentException("Trailing login negotiation data");
+            }
+            if (action == StagedLoginProtocol.DESKTOP_WORLD_STREAMING_SUPPORT) {
+                if (!supportsDesktopStreaming(server, attachment)) {
+                    throw new IllegalArgumentException("Desktop World Streaming is unavailable");
+                }
+                attachment.desktopWorldStreaming.set(true);
+            } else {
+                if (!supports(server, attachment)) {
+                    throw new IllegalArgumentException("Unsupported login negotiation");
+                }
+                if (action == StagedLoginProtocol.WORLD_STREAMING_SUPPORT
+                    && Boolean.getBoolean("spoiledmilk.browserWorldStreaming")
+                    && server.getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT) {
+                    attachment.browserWorldStreaming.set(true);
+                } else if (action != StagedLoginProtocol.SUPPORT) {
+                    throw new IllegalArgumentException("Unsupported login negotiation");
+                }
+                attachment.stagedLoginAdvertised.set(true);
+            }
             channel.writeAndFlush(StagedLoginProtocol.packet(action).toPacket());
         }catch(RuntimeException invalid){channel.close();}
         return true;

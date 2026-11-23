@@ -237,11 +237,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		this.rawMaterialShaderEnabled = rawMaterialShaderEnabled;
 	}
 
-	void stagePreparedTerrain(Renderer3DFrame frame, boolean atlasTextureCoordinates) throws Exception {
+	void stagePreparedWorldChunk(Renderer3DFrame frame, boolean atlasTextureCoordinates) throws Exception {
 		if (!useResidentChunkShader(atlasTextureCoordinates) || shouldDrawProjectedShadowProof()) {
 			return;
 		}
-		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getPreparedTerrain()) {
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getPreparedWorldChunks()) {
 			WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk, true);
 			if (chunk.getVertexCount() == 0 || chunk.getIndexCount() == 0 || residentChunks.containsKey(key)) {
 				continue;
@@ -252,9 +252,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			upload(frame, Renderer3DWorldChunkFrame.fromChunks(Collections.singletonList(chunk)),
 				atlasTextureCoordinates, false);
 			if (DesktopWorldStreamingPreview.TRACE) {
-				residentChunks.get(key).stagedTerrain = true;
-				System.out.printf("DESKTOP_TERRAIN_STAGED cell=%d,%d storage=%016x ms=%.3f%n",
-					chunk.getCenterSectionX(), chunk.getCenterSectionY(), chunk.getStorageSignature(),
+				residentChunks.get(key).stagedWorldChunk = true;
+				System.out.printf("DESKTOP_WORLD_CHUNK_STAGED role=%d cell=%d,%d storage=%016x ms=%.3f%n",
+					chunk.getChunkRole(), chunk.getCenterSectionX(), chunk.getCenterSectionY(), chunk.getStorageSignature(),
 					(System.nanoTime() - start) / 1_000_000d);
 			}
 			return;
@@ -395,10 +395,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				existingKeyMismatches++;
 			}
 			if (bufferMatches) {
-				if (buffer.stagedTerrain) {
-					buffer.stagedTerrain = false;
-					System.out.printf("DESKTOP_TERRAIN_ADOPTED cell=%d,%d storage=%016x%n",
-						chunk.getCenterSectionX(), chunk.getCenterSectionY(), chunk.getStorageSignature());
+				if (buffer.stagedWorldChunk) {
+					buffer.stagedWorldChunk = false;
+					System.out.printf("DESKTOP_WORLD_CHUNK_ADOPTED role=%d cell=%d,%d storage=%016x%n",
+						chunk.getChunkRole(), chunk.getCenterSectionX(), chunk.getCenterSectionY(), chunk.getStorageSignature());
 				}
 				reusedChunks++;
 				reusedByRole[roleIndex]++;
@@ -2824,7 +2824,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
 
-		buffer.stagedTerrain = false;
+		buffer.stagedWorldChunk = false;
 		buffer.signature = bufferSignature;
 		buffer.uploadedVertexOffsetX = chunk.getVertexOffsetX();
 		buffer.uploadedVertexOffsetZ = chunk.getVertexOffsetZ();
@@ -4309,7 +4309,7 @@ final class WorldChunkBuffer {
 	WorldChunkMaterialBatch[] materialBatches = new WorldChunkMaterialBatch[0];
 	long shadowProofSignature;
 	long uploadedByteCount;
-	boolean stagedTerrain;
+	boolean stagedWorldChunk;
 
 	WorldChunkBuffer(int vertexBufferId, int indexBufferId, int materialIndexBufferId) {
 		this.vertexBufferId = vertexBufferId;
