@@ -9,6 +9,7 @@ Use the existing Classic bitmap lettering and approved assets for development. S
 | Area | Surfaces to migrate and exercise |
 | --- | --- |
 | In-game HUD | Chat history, text entry, filters, scrollbar and message actions. Sidebar launchers and pinned panels. Minimap, compass, zoom, menu hints, inventory count, combat and gathering styles, wilderness indicators, timers and experience displays. |
+| Toolbar | Scaled launcher buttons, centered original icons, and visible hover, open and pinned states. |
 | Sidebar panels | Inventory, equipment, stats, quests and tasks, spellbook, prayers, summoning, friends, ignores, clan and options. Include tooltips, item grids, sub-tabs, scroll and dragging. |
 | Right-click menus | Inventory, Equipment, ground items, objects and characters. Scale the menu frame, text, row spacing and hit targets. |
 | World interaction | Overhead speech and status bars, item labels, action feedback, NPC responses and keyboard shortcuts. |
@@ -53,6 +54,15 @@ The current HUD work is limited to Inventory and Equipment. The minimap will
 have its own design pass after the owner supplies notes. Bank, crafting and shop
 windows are separate work. The Monster Slayer reward shop remains a candidate
 for in-place stock and currency tabs in that work.
+
+## Toolbar preview
+
+The toolbar shares its draw and input bounds. UI size controls the button
+dimensions and spacing. Each button centers the installed icon at its original
+size. The red Satchel caption is part of the installed menu artwork. The
+preview places that caption strip below the toolbar with its original lettering
+and colours. Existing panels dock to the toolbar, and minimap design remains a
+separate pass.
 
 ## Right-click menus
 

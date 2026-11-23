@@ -27,6 +27,9 @@ public final class NativeHdInterfaceFixture {
 				verifyInventoryBounds(1920, 1080, size, text, false);
 				verifyInventoryBounds(960, 540, size, text, false);
 				verifyInventoryBounds(960, 540, size, text, true);
+				verifyToolbarBounds(1920, 1080, size, text, false);
+				verifyToolbarBounds(960, 540, size, text, false);
+				verifyToolbarBounds(960, 540, size, text, true);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -90,7 +93,9 @@ public final class NativeHdInterfaceFixture {
 	private static void verifyInventoryBounds(int width, int height, GameInterfaceSettings.Size size,
 											  GameInterfaceSettings.TextSize text, boolean bottomLauncher) {
 		ChatPanelLayout chat = chat(width, height, size, text);
-		int launcher = bottomLauncher ? height - 54 : 3;
+		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, bottomLauncher, size,
+			chat.left + chat.width, chat.entryTop());
+		int launcher = bottomLauncher ? toolbar.top : toolbar.panelTop();
 		int chatRight = chat.left + chat.width;
 		InventoryEquipmentLayout panel = new InventoryEquipmentLayout(width, height - 12, launcher, bottomLauncher,
 			chatRight, chat.entryTop(), size, text, chat.lineHeight, chat.tabsHeight - size.pixels(8), 250, 40, true);
@@ -128,6 +133,29 @@ public final class NativeHdInterfaceFixture {
 		}
 		if (bottomLauncher) {
 			check(panel.bottom() < launcher, "Sidebar stays above the lower launcher");
+		}
+	}
+
+	private static void verifyToolbarBounds(int width, int height, GameInterfaceSettings.Size size,
+											GameInterfaceSettings.TextSize text, boolean bottomLauncher) {
+		ChatPanelLayout chat = chat(width, height, size, text);
+		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, bottomLauncher, size,
+			chat.left + chat.width, chat.entryTop());
+		check(toolbar.left >= 0 && toolbar.right < width && toolbar.top >= 0 && toolbar.bottom() < height,
+			"Toolbar fits the viewport");
+		check(toolbar.buttonSize >= SideToolbarLayout.ICON_SIZE + 4, "Original icons fit with padding");
+		for (int index = 0; index < SideToolbarLayout.BUTTON_COUNT; index++) {
+			int x = toolbar.leftOf(index);
+			check(toolbar.buttonAt(x, toolbar.top) == index, "Button's visible leading edge " + index);
+			check(toolbar.buttonAt(x + toolbar.buttonSize - 1, toolbar.bottom() - 1) == index,
+				"Button's visible trailing edge " + index);
+			check(toolbar.buttonAt(x + toolbar.buttonSize, toolbar.top) == -1, "Gap after button " + index);
+		}
+		check(toolbar.buttonAt(toolbar.left, toolbar.bottom()) == -1, "Toolbar stops at its bottom edge");
+		check(toolbar.panelTop() - toolbar.bottom() == SideToolbarLayout.BANNER_HEIGHT + 1,
+			"Original header strip fits between toolbar and sidebar");
+		if (bottomLauncher && toolbar.left < chat.left + chat.width) {
+			check(toolbar.bottom() < chat.entryTop(), "Lower toolbar fits above chat");
 		}
 	}
 

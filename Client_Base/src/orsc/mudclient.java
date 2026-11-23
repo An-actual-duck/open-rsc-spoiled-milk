@@ -1162,6 +1162,8 @@ public final class mudclient implements Runnable {
 	private Panel panelMessageTabs;
 	private ChatPanelLayout chatLayout;
 	private InventoryEquipmentLayout inventoryEquipmentLayout;
+	private SideToolbarLayout sideToolbarLayout;
+	private final SideToolbarArtwork sideToolbarArtwork = new SideToolbarArtwork();
 	private boolean chatLayoutDirty;
 	private Panel panelPlayerInfo;
 	private Panel panelQuestInfo;
@@ -10717,35 +10719,15 @@ public final class mudclient implements Runnable {
 
 					drawChatControls();
 
-					//redstones below (temporary, can be done better with proper tab sprites for ui)
-					if (C_CUSTOM_UI) {
-						int maxY = getUITabsY();
-						int x = this.getSurface().width2 - 199 - 1;
-						int visibleSideMenuTab = this.getVisibleSideMenuTab();
-						if (visibleSideMenuTab == Config.OPTIONS_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
+					SideToolbarLayout toolbar = sideToolbarLayout();
+					if (toolbar != null) {
+						drawSideToolbar(toolbar);
+					} else {
+						if (C_CUSTOM_UI) {
+							drawLegacySideToolbarSelection();
 						}
-						x += 33;
-						if (visibleSideMenuTab == Config.FRIENDS_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
-						x += 33;
-						if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
-						x += 33;
-						if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
-						x += 33;
-						x += 33;
-						if (visibleSideMenuTab == Config.INVENTORY_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
+						getSurface().a(spriteSelect(GUIPARTS.MENUBAR.getDef()), 0, getSurface().width2 - 200, 128, getUITabsY());
 					}
-					//redstones above
-
-					this.getSurface().a(spriteSelect(GUIPARTS.MENUBAR.getDef()), 0, this.getSurface().width2 - 200, 128, getUITabsY());
 					this.drawUi(0);
 					this.getSurface().loggedIn = false;
 					this.drawChatMessageTabs(var1 - 8);
@@ -13390,7 +13372,7 @@ public final class mudclient implements Runnable {
 					if (TRACE_BROWSER_FRAME_STAGES) browserInventoryDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
-				if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
+				if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT && sideToolbarLayout() == null) {
 					this.getSurface().drawShadowText(this.inventoryItemCount + "/" + this.inventoryCapacity, this.getGameWidth() - 19, getUITabsY() + 14, (0x00FFFFFF << (int) Math.floor((this.inventoryItemCount / 15)) * 8) & 0x00FFFFFF, 1, true);
 				}
 
@@ -14042,7 +14024,7 @@ public final class mudclient implements Runnable {
 		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
 		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
 		int width = getSurface().width2;
-		int launcherY = getUITabsY();
+		int launcherY = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
 		int chatRight = chatLayout.left + chatLayout.width;
 		int chatEntryTop = chatLayout.entryTop();
 		if (inventoryEquipmentLayout == null || !inventoryEquipmentLayout.matches(width, launcherY, C_CUSTOM_UI,
@@ -14064,7 +14046,7 @@ public final class mudclient implements Runnable {
 	private void drawInventoryEquipmentPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
 		MudClientGraphics surface = getSurface();
 		if (!C_CUSTOM_UI) {
-			surface.drawSprite(spriteSelect(GUIPARTS.BAGTAB.getDef()), surface.width2 - 248, 3);
+			drawAuthenticSidebarHeader(GUIPARTS.BAGTAB, Config.INVENTORY_TAB, layout.left + layout.width);
 		}
 		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom() - layout.top, 0x182333, 225);
 		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom() - layout.top, 0x667993);
@@ -14577,9 +14559,9 @@ public final class mudclient implements Runnable {
 
 		try {
 			int var3 = this.getSurface().width2 - 199;
-			int var4 = 36;
+			int var4 = getAuthenticSidebarPanelTop();
 			if (!C_CUSTOM_UI)
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.MENUSOCIAL.getDef()), var3 - 49, 3);
+				drawAuthenticSidebarHeader(GUIPARTS.MENUSOCIAL, Config.FRIENDS_TAB, var3 + 196);
 			if (C_CUSTOM_UI)
 				var4 = maxY - 182;
 			short var5 = 196;
@@ -14818,13 +14800,13 @@ public final class mudclient implements Runnable {
 			 */
 
 			if (var1) {
-				int var15 = this.mouseY - 36;
+				int var15 = this.mouseY - getAuthenticSidebarPanelTop();
 				if (C_CUSTOM_UI)
 					var15 = this.mouseY - var4;
 				var3 = 199 + this.mouseX - this.getSurface().width2;
 				// handle Friends tab
 				if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 26) {
-					this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
+					this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
 					if (var15 <= 24 && this.mouseButtonClick == 1) {
 						if (S_WANT_CLANS) {
@@ -14847,7 +14829,7 @@ public final class mudclient implements Runnable {
 				// handle clan tab
 				if (S_WANT_CLANS) {
 					if (var3 >= 65 && var15 >= 0 && var3 < 132 && var15 < 26) {
-						this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
+						this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 						if (var15 <= 24 && this.mouseButtonClick == 1) {
 							if (var3 > 65 && var3 < 132 && (this.panelSocialTab == 2 || this.panelSocialTab == 0)) {
@@ -14863,7 +14845,7 @@ public final class mudclient implements Runnable {
 					if (C_CUSTOM_UI)
 						this.panelSocial.handleMouse(this.getMouseX(), this.getMouseY(), this.getMouseButtonDown(), this.getLastMouseDown());
 					else
-						this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
+						this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 					if (this.mouseButtonClick == 1 && this.panelSocialTab == 0) {
 						index = this.panelSocial.getControlSelectedListIndex(this.controlSocialPanel);
@@ -14914,7 +14896,7 @@ public final class mudclient implements Runnable {
 
 				// clan interactions
 				else if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 295 && this.panelSocialTab == 1 && S_WANT_CLANS) {
-					this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
+					this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
 					if (this.mouseButtonClick >= 1 && this.panelSocialTab == 1) {
 						index = this.panelClan.getControlSelectedListIndex(this.controlClanPanel);
@@ -15045,13 +15027,13 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getAbilitiesPanelHeight() {
-		int available = C_CUSTOM_UI ? getUITabsY() : getGameHeight() - 36 - 4;
+		int available = C_CUSTOM_UI ? getUITabsY() : getGameHeight() - getAuthenticSidebarPanelTop() - 4;
 		return Math.max(132, Math.min(CUSTOM_UI_MAGIC_PANEL_HEIGHT,
 			available - getAbilitiesExtraHeight()));
 	}
 
 	private int getAbilitiesPanelTop() {
-		return C_CUSTOM_UI ? getUITabsY() - getAbilitiesPanelHeight() - getAbilitiesExtraHeight() : 36;
+		return C_CUSTOM_UI ? getUITabsY() - getAbilitiesPanelHeight() - getAbilitiesExtraHeight() : getAuthenticSidebarPanelTop();
 	}
 
 	private void drawUiTabMagic(boolean var1, byte var2) {
@@ -15060,7 +15042,7 @@ public final class mudclient implements Runnable {
 			int magicPanelYStart = getAbilitiesPanelTop();
 			int magicPanelHeight = getAbilitiesPanelHeight();
 			if (!C_CUSTOM_UI)
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.MENUSPELLS.getDef()), magicPanelX - 49, 3);
+				drawAuthenticSidebarHeader(GUIPARTS.MENUSPELLS, Config.MAGIC_AND_PRAYER_TAB, magicPanelX + 196);
 			short magicPanelWidth = 196;
 			int inactiveTabColor = GenUtil.buildColor(160, 160, 160);
 			int activeTabColor = GenUtil.buildColor(220, 220, 220);
@@ -15376,7 +15358,7 @@ public final class mudclient implements Runnable {
 
 				if (var1) {
 					magicPanelX = 199 - this.getSurface().width2 + this.mouseX;
-					int relativeMouseY = this.mouseY - 36;
+					int relativeMouseY = this.mouseY - getAuthenticSidebarPanelTop();
 					int maxClickableY = magicPanelHeight + getAbilitiesExtraHeight();
 					if (C_CUSTOM_UI)
 						relativeMouseY = this.mouseY - magicPanelYStart;
@@ -15384,7 +15366,7 @@ public final class mudclient implements Runnable {
 						if (C_CUSTOM_UI)
 							this.panelMagic.handleMouse(this.getMouseX(), this.getMouseY(), this.getMouseButtonDown(), this.getLastMouseDown());
 						else
-							this.panelMagic.handleMouse(magicPanelX + (this.getSurface().width2 - 199), relativeMouseY + 36,
+							this.panelMagic.handleMouse(magicPanelX + (this.getSurface().width2 - 199), relativeMouseY + magicPanelYStart,
 								this.currentMouseButtonDown, this.lastMouseButtonDown);
 						if (relativeMouseY <= 24 && this.mouseButtonClick == 1) {
 							int clickedList = magicPanelX < firstTabWidth
@@ -16563,7 +16545,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawBox(posX - borderSize, posY - borderSize,
 					var4 + (borderSize * 2), var5 + (borderSize * 2), 0);
 			} else {
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.MINIMAPTAB.getDef()), posX - 89, 3);
+				drawAuthenticSidebarHeader(GUIPARTS.MINIMAPTAB, Config.MINIMAP_AND_COMPASS_TAB, posX + MINIMAP_WIDTH);
 			}
 			this.getSurface().drawBox(posX, posY, var4, var5, 0);
 			this.getSurface().setClip(posX, var4 + posX, posY + var5, posY);
@@ -16694,7 +16676,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawPlayerStatusHud() {
-		int x = this.getSurface().width2 - TOP_MENU_BAR_WIDTH - HEALTH_HUD_WIDTH - HEALTH_HUD_RIGHT_OF_MENU_GAP;
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		int right = toolbar != null && !C_CUSTOM_UI ? toolbar.left : getSurface().width2 - TOP_MENU_BAR_WIDTH;
+		int x = right - HEALTH_HUD_WIDTH - HEALTH_HUD_RIGHT_OF_MENU_GAP;
 		int y = HEALTH_HUD_TOP_MARGIN;
 		x = Math.max(7 + AUTO_ATTACK_HUD_SIZE + AUTO_ATTACK_HUD_GAP, x);
 		this.drawAutoAttackHudButton(x - AUTO_ATTACK_HUD_SIZE - AUTO_ATTACK_HUD_GAP, y - 1);
@@ -16904,7 +16888,7 @@ public final class mudclient implements Runnable {
 
 	private int[] getMinimapContentBounds(boolean floatingMinimap) {
 		if (!floatingMinimap) {
-			return new int[] {this.getSurface().width2 - 159, 36};
+			return new int[] {this.getSurface().width2 - 159, getAuthenticSidebarPanelTop()};
 		}
 		int margin = 8;
 		int topY = C_CUSTOM_UI ? 10 + MINIMAP_FLOATING_BORDER : 36;
@@ -17013,8 +16997,9 @@ public final class mudclient implements Runnable {
 		try {
 			int var3 = this.getSurface().width2 - 199;
 			if (!C_CUSTOM_UI)
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.SETTINGSTAB.getDef()), var3 - 49, 3);
-			int var4 = 36 + 25;
+				drawAuthenticSidebarHeader(GUIPARTS.SETTINGSTAB, Config.OPTIONS_TAB, var3 + 196);
+			int panelTop = getAuthenticSidebarPanelTop();
+			int var4 = panelTop + 25;
 			if (C_CUSTOM_UI)
 				var4 = maxY - 240;
 			short var5 = 196;
@@ -17032,11 +17017,11 @@ public final class mudclient implements Runnable {
 
 				// authentic settings GUI
 				if (this.authenticSettings) {
-					var4 = 36;
-					this.getSurface().drawBoxAlpha(var3, 36, var5, 65, GenUtil.buildColor(181, 181, 181), 160);
-					this.getSurface().drawBoxAlpha(var3, 101, var5, 65, GenUtil.buildColor(201, 201, 201), 160);
-					this.getSurface().drawBoxAlpha(var3, 166, var5, 95, GenUtil.buildColor(181, 181, 181), 160);
-					this.getSurface().drawBoxAlpha(var3, 261, var5, (this.insideTutorial || this.insideBlackHole) ? 55 : 40, GenUtil.buildColor(201, 201, 201), 160);
+					var4 = panelTop;
+					this.getSurface().drawBoxAlpha(var3, panelTop, var5, 65, GenUtil.buildColor(181, 181, 181), 160);
+					this.getSurface().drawBoxAlpha(var3, panelTop + 65, var5, 65, GenUtil.buildColor(201, 201, 201), 160);
+					this.getSurface().drawBoxAlpha(var3, panelTop + 130, var5, 95, GenUtil.buildColor(181, 181, 181), 160);
+					this.getSurface().drawBoxAlpha(var3, panelTop + 225, var5, (this.insideTutorial || this.insideBlackHole) ? 55 : 40, GenUtil.buildColor(201, 201, 201), 160);
 				}
 
 				// custom settings GUI
@@ -17075,7 +17060,7 @@ public final class mudclient implements Runnable {
 			// mouse tracking for option buttons
 			if (mustTrackMouse) {
 				var3 = 199 - this.getSurface().width2 + this.mouseX; // relative X
-				int var13 = this.mouseY - 36; // relative Y
+				int var13 = this.mouseY - panelTop; // relative Y
 				if (C_CUSTOM_UI)
 					var13 = this.mouseY - var4 + 25; // relative Y
 				// within panel
@@ -17112,7 +17097,7 @@ public final class mudclient implements Runnable {
 
 					int var9 = this.getSurface().width2 - 199;
 					var6 = var9 + 3;
-					int var10 = 36;
+					int var10 = panelTop;
 					if (C_CUSTOM_UI)
 						var10 = var4 - 24;
 					var5 = 184;
@@ -18230,7 +18215,7 @@ public final class mudclient implements Runnable {
 		if (C_CUSTOM_UI) {
 			yFromTopDistance = getUITabsY() - 240 + 214;
 		} else {
-			yFromTopDistance = 275;
+			yFromTopDistance = getAuthenticSidebarPanelTop() + 239;
 		}
 
 		yFromTopDistance += 15;
@@ -18354,7 +18339,7 @@ public final class mudclient implements Runnable {
 
 		// skip tutorial button or exit blackhole button
 		if (this.insideTutorial) {
-			yFromTopDistance = 255;
+			yFromTopDistance = getAuthenticSidebarPanelTop() + 219;
 			if (C_CUSTOM_UI)
 				yFromTopDistance = getUITabsY() - 240 + 194;
 			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
@@ -18364,7 +18349,7 @@ public final class mudclient implements Runnable {
 					this.showUiTab = 0;
 			}
 		} else if (this.insideBlackHole) {
-			yFromTopDistance = 255;
+			yFromTopDistance = getAuthenticSidebarPanelTop() + 219;
 			if (C_CUSTOM_UI)
 				yFromTopDistance = getUITabsY() - 240 + 194;
 			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
@@ -18376,7 +18361,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// logout menu option
-		yFromTopDistance = 290;
+		yFromTopDistance = getAuthenticSidebarPanelTop() + 254;
 		if (C_CUSTOM_UI)
 			yFromTopDistance = getUITabsY() - 240 + 229;
 		if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
@@ -18809,9 +18794,9 @@ public final class mudclient implements Runnable {
 		try {
 
 			int x = this.surface.width2 - 199;
-			int y = 36;
+			int y = getAuthenticSidebarPanelTop();
 			if (!C_CUSTOM_UI)
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.SKILLSTAB.getDef()), x - 49, 3);
+				drawAuthenticSidebarHeader(GUIPARTS.SKILLSTAB, Config.SKILLS_AND_QUESTS_TAB, x + 196);
 			if (C_CUSTOM_UI)
 				y = maxY - 287;
 			short width = 196;
@@ -19080,16 +19065,14 @@ public final class mudclient implements Runnable {
 			}
 
 			if (var1) {
-				int mouseYOffset = this.mouseY - 36;
-				if (C_CUSTOM_UI)
-					mouseYOffset = this.mouseY - y; // relative Y
+				int mouseYOffset = this.mouseY - y;
 				x = -this.getSurface().width2 - (-199 - this.mouseX);
 				if (x >= 0 && mouseYOffset >= 0 && x < width && mouseYOffset < height) {
 					if (this.uiTabPlayerInfoSubTab == 1) {
 						if (C_CUSTOM_UI)
 							this.panelQuestInfo.handleMouse(this.getMouseX(), this.getMouseY(), this.getMouseButtonDown(), this.getLastMouseDown());
 						else
-							this.panelQuestInfo.handleMouse(x + this.getSurface().width2 - 199, 36 + mouseYOffset,
+							this.panelQuestInfo.handleMouse(x + this.getSurface().width2 - 199, y + mouseYOffset,
 								this.currentMouseButtonDown, this.lastMouseButtonDown);
 					}
 					if (mouseYOffset <= 24 && this.mouseButtonClick == 1) {
@@ -19465,6 +19448,7 @@ public final class mudclient implements Runnable {
 	}
 
 	void repositionCustomUI() {
+		repositionChat(true);
 		int var3 = this.getSurface().width2 - 199;
 		int maxY = getUITabsY();
 		panelSettings.reposition(controlSettingPanel, var3 + 1, (maxY - 240) + 16, 195, 184);
@@ -19473,12 +19457,15 @@ public final class mudclient implements Runnable {
 			getAbilitiesPanelTop() + 24 + SPELLS_SUBTAB_HEIGHT, 196, 90);
 		panelPlayerInfo.reposition(controlPlayerInfoPanel, var3, (maxY - 287) + 24, 196, 251);
 		panelQuestInfo.reposition(controlQuestInfoPanel, var3, (maxY - 287) + 24, 196, 251);
-		repositionChat(true);
 	}
 
 	void repositionAuthenticUI() {
 		int var3 = this.getSurface().width2 - 199;
-		byte var12 = 36;
+		int var12 = getAuthenticSidebarPanelTop();
+		if (sideToolbarLayout() != null) {
+			panelClan.reposition(controlClanPanel, var3, var12 + 72, 196, 128);
+			panelPlayerTaskInfo.reposition(controlPlayerTaskInfoPanel, var3, 24 + var12 + 27, 196, 224);
+		}
 		if (!authenticSettings) {
 			panelSettings.reposition(controlSettingPanel, var3 + 1, 24 + var12 + 16, 195, 184);
 		}
@@ -22345,16 +22332,109 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private SideToolbarLayout sideToolbarLayout() {
+		if (getSurface() == null || isAndroid() || !RenderSurfaceSettings.isInterfacePreviewEnabled()) return null;
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		int width = getSurface().width2;
+		int chatRight = C_CUSTOM_UI && chatLayout != null ? chatLayout.left + chatLayout.width : 0;
+		int chatEntryTop = C_CUSTOM_UI && chatLayout != null ? chatLayout.entryTop() : 0;
+		if (sideToolbarLayout == null || !sideToolbarLayout.matches(width, getGameHeight(), C_CUSTOM_UI, size,
+			chatRight, chatEntryTop)) {
+			sideToolbarLayout = new SideToolbarLayout(width, getGameHeight(), C_CUSTOM_UI, size, chatRight, chatEntryTop);
+		}
+		return sideToolbarLayout;
+	}
+
+	private int getAuthenticSidebarPanelTop() {
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		return toolbar == null ? 36 : toolbar.panelTop();
+	}
+
+	private void drawSideToolbar(SideToolbarLayout toolbar) {
+		MudClientGraphics surface = getSurface();
+		Sprite strip = spriteSelect(GUIPARTS.MENUBAR.getDef());
+		int hovered = toolbar.buttonAt(mouseX, mouseY);
+		int active = getVisibleSideMenuTab();
+		int iconInset = (toolbar.buttonSize - SideToolbarLayout.ICON_SIZE) / 2;
+		for (int index = 0; index < SideToolbarLayout.BUTTON_COUNT; index++) {
+			int x = toolbar.leftOf(index);
+			int tab = Config.OPTIONS_TAB - index;
+			boolean pinned = tab == Config.MINIMAP_AND_COMPASS_TAB ? minimapPinned : pinnedSideMenuTab == tab;
+			boolean selected = active == tab || pinned;
+			surface.drawVerticalGradient(x, toolbar.top, toolbar.buttonSize, toolbar.buttonSize,
+				selected ? 0x596A83 : 0x34425A, selected ? 0x344258 : 0x252F41);
+			int border = hovered == index ? 0xD5E1F2 : selected ? 0xD2B873 : 0x667993;
+			surface.drawBoxBorder(x, toolbar.buttonSize, toolbar.top, toolbar.buttonSize, border);
+			Sprite icon = sideToolbarArtwork.icon(strip, index);
+			if (icon != null) surface.drawSprite(icon, x + iconInset, toolbar.top + iconInset);
+			if (pinned) {
+				surface.drawLineHoriz(x + 3, toolbar.bottom() - 3, toolbar.buttonSize - 6, 0xD2B873);
+			}
+		}
+		if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
+			String count = inventoryItemCount + "/" + inventoryCapacity;
+			int color = (0x00FFFFFF << (inventoryItemCount / 15 * 8)) & 0x00FFFFFF;
+			surface.drawShadowText(count, toolbar.right - 4 - surface.stringWidth(1, count),
+				toolbar.bottom() - 5, color, 1, false);
+		}
+	}
+
+	private void drawLegacySideToolbarSelection() {
+		int tab = getVisibleSideMenuTab();
+		if (tab == 0 || tab == Config.MINIMAP_AND_COMPASS_TAB) return;
+		int x = getSurface().width2 - 200 + (Config.OPTIONS_TAB - tab) * 33;
+		getSurface().drawBox(x, getUITabsY(), 32, 32, 0xFF0000);
+	}
+
+	private void drawAuthenticSidebarHeader(GUIPARTS part, int tab, int right) {
+		Sprite source = spriteSelect(part.getDef());
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar == null) {
+			getSurface().drawSprite(source, getSurface().width2 - 248, 3);
+			return;
+		}
+		Sprite banner = sideToolbarArtwork.banner(source, Config.OPTIONS_TAB - tab);
+		if (banner != null) {
+			getSurface().drawSprite(banner, right - banner.getWidth(), toolbar.bottom() + 1);
+		}
+	}
+
+	private boolean handlePreviewToolbar(SideToolbarLayout toolbar) {
+		int index = toolbar.buttonAt(mouseX, mouseY);
+		if (index >= 0 && (!C_CUSTOM_UI || mouseButtonClick == 1)) {
+			int tab = Config.OPTIONS_TAB - index;
+			if (tab == Config.MINIMAP_AND_COMPASS_TAB) {
+				if (mouseButtonClick == 1) {
+					togglePinnedMinimap();
+					if (!C_CUSTOM_UI) showUiTab = 0;
+				} else {
+					showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
+				}
+				if ((C_CUSTOM_UI || mouseButtonClick != 1) && !Config.S_DISABLE_MINIMAP_ROTATION) {
+					minimapRandom_1 = (int) (13.0D * Math.random()) - 6;
+					minimapRandom_2 = (int) (23.0D * Math.random()) - 11;
+				}
+			} else {
+				handleSideMenuTabInteraction(tab);
+			}
+		}
+		return mouseButtonClick != 0;
+	}
+
 	int getUITabsY() {
-		if (C_CUSTOM_UI)
-			return getGameHeight() - 32 - 10;
-		else
-			return 3;
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar != null) return toolbar.top;
+		return C_CUSTOM_UI ? getGameHeight() - 32 - 10 : 3;
 	}
 
 	public boolean isMouseOverOpenUiTabPanel(int x, int y) {
 		if (this.getVisibleSideMenuTab() == 0 || this.getSurface() == null) {
 			return false;
+		}
+
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (!C_CUSTOM_UI && toolbar != null && y >= toolbar.bottom() && y < toolbar.panelTop()) {
+			y = toolbar.panelTop();
 		}
 
 		if (this.getVisibleSideMenuTab() == Config.INVENTORY_TAB) {
@@ -22420,7 +22500,8 @@ public final class mudclient implements Runnable {
 
 		int panelRight = this.getSurface().width2;
 		int panelLeft = panelRight - TOP_MENU_BAR_WIDTH;
-		int panelTop = 36;
+		int panelTop = getAuthenticSidebarPanelTop();
+		int panelOffset = panelTop - 36;
 		int panelBottom;
 		switch (visibleSideMenuTab) {
 			case Config.INVENTORY_TAB:
@@ -22436,16 +22517,16 @@ public final class mudclient implements Runnable {
 				int playerInfoHeight = Config.S_WANT_OPENPK_POINTS
 					? 186
 					: S_WANT_EXP_INFO ? 275 : 262;
-				panelBottom = 36 + playerInfoHeight + 12;
+				panelBottom = panelTop + playerInfoHeight + 12;
 				break;
 			case Config.MAGIC_AND_PRAYER_TAB:
 				panelBottom = getAbilitiesPanelTop() + getAbilitiesPanelHeight() + getAbilitiesExtraHeight();
 				break;
 			case Config.FRIENDS_TAB:
-				panelBottom = this.panelSocialTab == 1 ? 307 : 240;
+				panelBottom = panelOffset + (this.panelSocialTab == 1 ? 307 : 240);
 				break;
 			case Config.OPTIONS_TAB:
-				panelBottom = 325;
+				panelBottom = 325 + panelOffset;
 				break;
 			case Config.MINIMAP_AND_COMPASS_TAB:
 			default:
@@ -22503,92 +22584,102 @@ public final class mudclient implements Runnable {
 		if (!C_CUSTOM_UI) {
 			repositionAuthenticUI();
 		}
-		boolean clickedMenuBar = this.mouseButtonClick != 0
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar != null && toolbar.contains(mouseX, mouseY)) {
+			return handlePreviewToolbar(toolbar);
+		}
+		boolean clickedMenuBar = toolbar == null && this.mouseButtonClick != 0
 			&& this.mouseX >= this.getSurface().width2 - TOP_MENU_BAR_WIDTH
 			&& this.mouseX < this.getSurface().width2
 			&& this.mouseY >= 3
 			&& this.mouseY < 35;
-		try {
-			int requestedTab = this.getSideMenuTabAt(this.mouseX, this.mouseY, 3, 35);
-			if (this.handleSideMenuTabInteraction(requestedTab)) {
-				return clickedMenuBar;
-			}
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 3 && this.mouseY < 35) {
-				this.showUiTab = Config.INVENTORY_TAB;
-			}
+		try {			if (toolbar == null) {
+				int requestedTab = this.getSideMenuTabAt(this.mouseX, this.mouseY, 3, 35);
+				if (this.handleSideMenuTabInteraction(requestedTab)) {
+					return clickedMenuBar;
+				}
+				if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 3 && this.mouseY < 35) {
+					this.showUiTab = Config.INVENTORY_TAB;
+				}
 
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 - 33 && this.mouseY >= 3
-				&& this.getSurface().width2 - 3 - 33 > this.mouseX && this.mouseY < 35) {
-				if (this.mouseButtonClick == 1) {
-					this.togglePinnedMinimap();
-					this.showUiTab = 0;
-				} else {
-					this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
-					if (!Config.S_DISABLE_MINIMAP_ROTATION) {
-						this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6; // random rotation of the minimap as anti-bot?
-						this.minimapRandom_2 = (int) (Math.random() * 23.0D) - 11;
+				if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 - 33 && this.mouseY >= 3
+					&& this.getSurface().width2 - 3 - 33 > this.mouseX && this.mouseY < 35) {
+					if (this.mouseButtonClick == 1) {
+						this.togglePinnedMinimap();
+						this.showUiTab = 0;
+					} else {
+						this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
+						if (!Config.S_DISABLE_MINIMAP_ROTATION) {
+							this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6; // random rotation of the minimap as anti-bot?
+							this.minimapRandom_2 = (int) (Math.random() * 23.0D) - 11;
+						}
 					}
 				}
-			}
 
-			if (this.showUiTab == 0 && this.getSurface().width2 - 101 <= this.mouseX && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 3 - 66 && this.mouseY < 35) {
-				this.showUiTab = Config.SKILLS_AND_QUESTS_TAB;
-			}
+				if (this.showUiTab == 0 && this.getSurface().width2 - 101 <= this.mouseX && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 3 - 66 && this.mouseY < 35) {
+					this.showUiTab = Config.SKILLS_AND_QUESTS_TAB;
+				}
 
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 99 - 35 && this.mouseY >= 3
-				&& this.getSurface().width2 - 3 - 99 > this.mouseX && this.mouseY < 35) {
-				this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
-			}
+				if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 99 - 35 && this.mouseY >= 3
+					&& this.getSurface().width2 - 3 - 99 > this.mouseX && this.mouseY < 35) {
+					this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+				}
 
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 - 132 && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 135 && this.mouseY < 35) {
-				this.showUiTab = Config.FRIENDS_TAB;
-			}
+				if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 - 132 && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 135 && this.mouseY < 35) {
+					this.showUiTab = Config.FRIENDS_TAB;
+				}
 
-			if (this.showUiTab == 0 && this.getSurface().width2 - 35 - 165 <= this.mouseX && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 165 - 3 && this.mouseY < 35) {
-				this.showUiTab = Config.OPTIONS_TAB;
-			}
+				if (this.showUiTab == 0 && this.getSurface().width2 - 35 - 165 <= this.mouseX && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 165 - 3 && this.mouseY < 35) {
+					this.showUiTab = Config.OPTIONS_TAB;
+				}
 
-			if (this.showUiTab != 0 && this.getSurface().width2 - 35 <= this.mouseX && this.mouseY >= 3
-				&& this.getSurface().width2 - 3 > this.mouseX && this.mouseY < 26) {
-				this.showUiTab = Config.INVENTORY_TAB;
-			}
+				if (this.showUiTab != 0 && this.getSurface().width2 - 35 <= this.mouseX && this.mouseY >= 3
+					&& this.getSurface().width2 - 3 > this.mouseX && this.mouseY < 26) {
+					this.showUiTab = Config.INVENTORY_TAB;
+				}
 
-			if (this.showUiTab != 0 && this.getSurface().width2 - 68 <= this.mouseX
-				&& this.mouseY >= 3 && this.getSurface().width2 - 33 - 3 > this.mouseX && this.mouseY < 26) {
-				if (this.mouseButtonClick == 1) {
-					this.togglePinnedMinimap();
-					this.showUiTab = 0;
-				} else {
-					this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
-					if (!Config.S_DISABLE_MINIMAP_ROTATION) {
-						this.minimapRandom_2 = (int) (23.0D * Math.random()) - 11; // random rotation of the minimap as anti-bot?
-						this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6;
+				if (this.showUiTab != 0 && this.getSurface().width2 - 68 <= this.mouseX
+					&& this.mouseY >= 3 && this.getSurface().width2 - 33 - 3 > this.mouseX && this.mouseY < 26) {
+					if (this.mouseButtonClick == 1) {
+						this.togglePinnedMinimap();
+						this.showUiTab = 0;
+					} else {
+						this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
+						if (!Config.S_DISABLE_MINIMAP_ROTATION) {
+							this.minimapRandom_2 = (int) (23.0D * Math.random()) - 11; // random rotation of the minimap as anti-bot?
+							this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6;
+						}
 					}
 				}
-			}
 
-			if (this.showUiTab != 0 && this.mouseX >= this.getSurface().width2 - 66 - 35 && this.mouseY >= 3
-				&& this.getSurface().width2 - 3 - 66 > this.mouseX && this.mouseY < 26) {
-				this.showUiTab = Config.SKILLS_AND_QUESTS_TAB;
-			}
+				if (this.showUiTab != 0 && this.mouseX >= this.getSurface().width2 - 66 - 35 && this.mouseY >= 3
+					&& this.getSurface().width2 - 3 - 66 > this.mouseX && this.mouseY < 26) {
+					this.showUiTab = Config.SKILLS_AND_QUESTS_TAB;
+				}
 
-			if (this.showUiTab != 0 && this.getSurface().width2 - 35 - 99 <= this.mouseX && this.mouseY >= 3
-				&& this.getSurface().width2 - 102 > this.mouseX && this.mouseY < 26) {
-				this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
-			}
+				if (this.showUiTab != 0 && this.getSurface().width2 - 35 - 99 <= this.mouseX && this.mouseY >= 3
+					&& this.getSurface().width2 - 102 > this.mouseX && this.mouseY < 26) {
+					this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+				}
 
-			if (this.showUiTab != 0 && this.getSurface().width2 - 167 <= this.mouseX && this.mouseY >= 3
-				&& this.getSurface().width2 - 132 - 3 > this.mouseX && this.mouseY < 26) {
-				this.showUiTab = Config.FRIENDS_TAB;
-			}
+				if (this.showUiTab != 0 && this.getSurface().width2 - 167 <= this.mouseX && this.mouseY >= 3
+					&& this.getSurface().width2 - 132 - 3 > this.mouseX && this.mouseY < 26) {
+					this.showUiTab = Config.FRIENDS_TAB;
+				}
 
-			if (this.showUiTab != 0 && this.getSurface().width2 - 35 - 165 <= this.mouseX && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 168 && this.mouseY < 26) {
-				this.showUiTab = Config.OPTIONS_TAB;
+				if (this.showUiTab != 0 && this.getSurface().width2 - 35 - 165 <= this.mouseX && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 168 && this.mouseY < 26) {
+					this.showUiTab = Config.OPTIONS_TAB;
+				}
+			}
+			int panelOffset = getAuthenticSidebarPanelTop() - 36;
+			int hoverLeft = getSurface().width2 - TOP_MENU_BAR_WIDTH;
+			if (toolbar != null && showUiTab > 0 && showUiTab <= SideToolbarLayout.BUTTON_COUNT) {
+				hoverLeft = Math.min(hoverLeft, toolbar.leftOf(Config.OPTIONS_TAB - showUiTab));
 			}
 
 			InventoryEquipmentLayout inventory = this.showUiTab == Config.INVENTORY_TAB ? inventoryEquipmentLayout() : null;
@@ -22612,29 +22703,29 @@ public final class mudclient implements Runnable {
 				}
 			}
 
-			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && !this.isCurrentSideMenuHomeTab() && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 324)) {
+			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && !this.isCurrentSideMenuHomeTab() && (this.mouseX < hoverLeft || this.mouseY > 324 + panelOffset)) {
 				this.closeOrRestorePinnedSideMenu();
 			}
 
 			// If we are on Android, this area needs to be larger in the Y direction for the "cast last spell" box
 			if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isCurrentSideMenuHomeTab()) {
 				if (isAndroid()) {
-					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 300) {
+					if (this.mouseX < hoverLeft || this.mouseY > 300 + panelOffset) {
 						this.closeOrRestorePinnedSideMenu();
 					}
 				} else {
-					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 240) {
+					if (this.mouseX < hoverLeft || this.mouseY > 240 + panelOffset) {
 						this.closeOrRestorePinnedSideMenu();
 					}
 				}
 			}
 
 			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isCurrentSideMenuHomeTab()))
-				&& (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > (this.panelSocialTab == 1 ? 307 : 240))) {
+				&& (this.mouseX < hoverLeft || this.mouseY > panelOffset + (this.panelSocialTab == 1 ? 307 : 240))) {
 				this.closeOrRestorePinnedSideMenu();
 			}
 
-			if (this.showUiTab == Config.OPTIONS_TAB && !this.isCurrentSideMenuHomeTab() && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 325)) {
+			if (this.showUiTab == Config.OPTIONS_TAB && !this.isCurrentSideMenuHomeTab() && (this.mouseX < hoverLeft || this.mouseY > 325 + panelOffset)) {
 				this.closeOrRestorePinnedSideMenu();
 			}
 
@@ -22645,6 +22736,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean handleTabUIClick_CUSTOM() {
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar != null) {
+			return toolbar.contains(mouseX, mouseY) && handlePreviewToolbar(toolbar);
+		}
 		boolean clicked = mouseButtonClick == 1;
 		int minY = getUITabsY();
 		int maxY = minY + 32;
@@ -22789,9 +22884,9 @@ public final class mudclient implements Runnable {
 
 	private boolean mouseInTabArea_CUSTOM() {
 		try {
-			boolean mouseOverTabBar = C_CUSTOM_UI
-				? this.isMouseOverCustomTabBar(this.mouseX, this.mouseY)
-				: this.isMouseOverAuthenticTabBar(this.mouseX, this.mouseY);
+			SideToolbarLayout toolbar = sideToolbarLayout();
+			boolean mouseOverTabBar = toolbar != null ? toolbar.contains(mouseX, mouseY)
+				: C_CUSTOM_UI ? isMouseOverCustomTabBar(mouseX, mouseY) : isMouseOverAuthenticTabBar(mouseX, mouseY);
 			if (mouseOverTabBar
 				|| this.isMouseOverOpenUiTabPanel(this.mouseX, this.mouseY)) {
 				return true;
@@ -22801,7 +22896,7 @@ public final class mudclient implements Runnable {
 				int[] minimapBounds = this.getMinimapContentBounds(floatingMinimap);
 				int borderSize = floatingMinimap ? MINIMAP_FLOATING_BORDER : 0;
 				int minX = minimapBounds[0] - borderSize;
-				int minY = minimapBounds[1] - borderSize;
+				int minY = !floatingMinimap && toolbar != null ? toolbar.bottom() : minimapBounds[1] - borderSize;
 				int maxX = minimapBounds[0] + MINIMAP_WIDTH + borderSize;
 				int maxY = minimapBounds[1] + MINIMAP_HEIGHT + borderSize;
 				if (this.mouseX >= minX && this.mouseY >= minY && this.mouseX < maxX

@@ -56,7 +56,7 @@ final class InventoryEquipmentLayout {
 		width = COLUMNS * cellWidth + 2 * padding;
 		left = surfaceWidth - width - size.pixels(6);
 
-		int topLimit = bottomLauncher ? size.pixels(6) : launcherY + 32;
+		int topLimit = bottomLauncher ? size.pixels(6) : launcherY;
 		int bottom = bottomLauncher ? launcherY - size.pixels(4) : surfaceHeight - padding;
 		if (left < chatRight) {
 			bottom = Math.min(bottom, chatEntryTop - padding);
