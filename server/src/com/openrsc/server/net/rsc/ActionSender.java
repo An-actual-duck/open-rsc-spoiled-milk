@@ -21,6 +21,7 @@ import com.openrsc.server.content.status.ClericActiveStatusCollector;
 import com.openrsc.server.database.struct.HiscoreEntry;
 import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.custom.HolidayDropEvent;
+import com.openrsc.server.model.MenuOptionListener;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Bank;
@@ -944,7 +945,7 @@ public class ActionSender {
 			LOGGER.info(server.getConfig().GROUND_ITEM_NAMES + " 89");
 			LOGGER.info(server.getConfig().WANT_NATURE_RUNE_PROTECTION + " 90");
 		}
-		Packet p = prepareServerConfigs(server);
+		Packet p = prepareServerConfigs(server, false);
 		// ConnectionAttachment attachment = new ConnectionAttachment();
 		// channel.attr(RSCConnectionHandler.attachment).set(attachment);
 		if (p != null)
@@ -953,12 +954,12 @@ public class ActionSender {
 	}
 
 	static void sendServerConfigs(Player player) {
-		Packet p = prepareServerConfigs(player.getWorld().getServer());
+		Packet p = prepareServerConfigs(player.getWorld().getServer(), DialoguePresentation.enabled());
 		if (p != null)
 			player.write(p);
 	}
 
-	private static Packet prepareServerConfigs(Server server) {
+	private static Packet prepareServerConfigs(Server server, boolean dialoguePreview) {
 		PayloadCustomGenerator generator = new PayloadCustomGenerator();
 		ServerConfigsStruct struct = new ServerConfigsStruct();
 
@@ -1061,6 +1062,9 @@ public class ActionSender {
 		configs.add((byte) (server.getConfig().WANT_NATURE_RUNE_PROTECTION ? 1 : 0)); // 90
 		configs.add((byte) (server.getConfig().WANT_HISCORES ? 1 : 0)); // 91
 
+		if (dialoguePreview) {
+			configs.add(DialoguePresentation.CONFIG_TAG);
+		}
 		struct.configs = configs;
 		struct.setOpcode(OpcodeOut.SEND_SERVER_CONFIGS);
 		return generator.generate(struct, null);
@@ -1378,6 +1382,10 @@ public class ActionSender {
 		MenuOptionStruct struct = new MenuOptionStruct();
 		int numOptions = options.length;
 		struct.numOptions = numOptions;
+		MenuOptionListener listener = player.getMenuHandler();
+		if (listener != null) {
+			struct.dialogueId = listener.getDialogueId();
+		}
 		struct.optionTexts = new String[numOptions];
 		for (int i = 0; i < numOptions; i++){
 			struct.optionTexts[i] = options[i];

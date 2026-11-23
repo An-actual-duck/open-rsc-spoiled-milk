@@ -24,19 +24,20 @@ above chat. It uses the same geometry for wrapping, drawing and selecting
 responses. Keyboard selection and the existing server response indices carry
 over.
 
-The conversation panel should frame the player on the left, the NPC on the
-right, and speech and responses in the middle. Dim the portrait of the
-participant who is listening. Existing NPC speech, player quest speech and
-response choices arrive on different packet paths. Associate speech and choices
-with an explicit conversation and speaker before displaying portraits or
-advancing the conversation in the panel. Test the composition with existing
-character sprites before deciding what portrait artwork is needed.
+The banker preview puts the player's head on the left, the banker's head on the
+right, and the current line between them. It uses the existing side-facing
+head sprites and dims the listener. Speech and response choices share the panel.
+The server sends the speaker, line and conversation ID while the banker script
+runs. Response menus carry that same ID, and the existing response indices and
+script pacing still govern the conversation. Ambient speech uses its usual
+channel. The prototype currently sources portraits from humanoid head sprites
+with a hair-colour mask. Other head layers can still use the dialogue text.
 
-The server's common script helpers already know the NPC involved in many
-conversations. Use that identity and the dialogue session lifecycle for
-private speech and responses. Keep ambient speech in its existing channel.
-Prototype with the banker's branching conversation and verify both participant
-turns, choices, cancellation and the handoff into the bank window.
+A private server can enable the presentation with
+`-Dspoiledmilk.dialoguePreview=true`. Clients opt in after login if they have
+the interface preview enabled and the server advertises support. Prototype
+coverage is limited to talking to bankers. The bank opens through its existing
+interface and the usual bank rules still apply.
 
 Inventory is the first sidebar layout to use for testing tabs, item cells and
 dragging. Test the shared item window in the bank, crafting and shops. Support

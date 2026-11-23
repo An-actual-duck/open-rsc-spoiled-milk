@@ -238,6 +238,8 @@ public final class Player extends Mob {
 	private List<PluginTask> ownedPlugins = Collections.synchronizedList(new ArrayList<>());
 	private long lastExchangeTime = System.currentTimeMillis();
 	private int clientVersion = 0;
+	private volatile boolean dialoguePresentationReady;
+
 	public int preferredIcon = -1;
 	private boolean denyAllLogoutRequests = false;
 	private boolean qolOptOutWarned = false;
@@ -6817,6 +6819,14 @@ public final class Player extends Mob {
 
 	public void setLastExchangeTime() {
 		this.lastExchangeTime = System.currentTimeMillis();
+	}
+
+	public boolean isDialoguePresentationReady() {
+		return dialoguePresentationReady;
+	}
+
+	public void setDialoguePresentationReady() {
+		dialoguePresentationReady = true;
 	}
 
 	public void setClientVersion(int cv) {

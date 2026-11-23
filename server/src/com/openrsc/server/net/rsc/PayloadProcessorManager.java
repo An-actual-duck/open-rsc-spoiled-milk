@@ -85,6 +85,7 @@ public class PayloadProcessorManager {
 	static {
 
 		bind(OpcodeIn.HEARTBEAT, Heartbeat.class);
+		bind(OpcodeIn.DIALOGUE_PRESENTATION_READY, DialoguePresentationReady.class);
 
 		bind(OpcodeIn.WALK_TO_ENTITY, WalkRequest.class);
 		bind(OpcodeIn.WALK_TO_POINT, WalkRequest.class);
@@ -270,6 +271,7 @@ public class PayloadProcessorManager {
 		// HISCORE_REQUEST is exempt: the client fires it automatically while the hiscores view is open
 		if (!OpcodeIn.QUESTION_DIALOG_ANSWER.equals(opcode)
 			&& !OpcodeIn.HEARTBEAT.equals(opcode)
+			&& !OpcodeIn.DIALOGUE_PRESENTATION_READY.equals(opcode)
 			&& !OpcodeIn.KNOWN_PLAYERS.equals(opcode)
 			&& !OpcodeIn.LAYERED_TERRAIN_READY.equals(opcode)
 			&& !OpcodeIn.LAYERED_TERRAIN_STAGE_READY.equals(opcode)

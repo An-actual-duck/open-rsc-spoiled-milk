@@ -19,11 +19,26 @@ public final class DialogueChoicesPanelFixture {
 			GameInterfaceSettings.TextSize.EXTRA_LARGE, 29, 24, true, responses, 20, value -> value.length() * 14);
 		check(compact.optionAt(400, 82) == 0 && compact.optionAt(400, 114) == 0,
 			"All wrapped lines are in the same response hit target");
-		check(compact.activate(749, 210) == DialogueChoicesPanel.SCROLLED, "Scrollbar owns its click");
+		check(compact.activate(749, 210) == DialogueChoicesPanel.NO_SELECTION, "Scrollbar owns its click");
 		compact.scrollRows(100);
 		check(compact.activate(400, 220) == 19, "Last response is reachable at largest settings");
 		compact.scrollRows(-100);
 		check(compact.activate(400, 82) == 0, "Scrolling back restores the first response");
+		DialogueChoicesPanel conversation = new DialogueChoicesPanel(1920, 870, GameInterfaceSettings.Size.STANDARD,
+			GameInterfaceSettings.TextSize.STANDARD, 24, 19, true,
+			new String[] {"First response", "Second response", "Third response"}, 3,
+			value -> value.length() * 10, "Banker", "Good day, how may I help you?");
+		check(conversation.activate(655, 700) == DialogueChoicesPanel.NO_SELECTION, "Clicking a portrait keeps choices open");
+		check(conversation.activate(960, 792) == 1, "Speech keeps the second choice at the existing position");
+		check(conversation.activate(1530, 792) == DialogueChoicesPanel.CANCEL, "Outside the portrait panel still cancels");
+
+		String lengthySpeech = String.join(" ", java.util.Collections.nCopies(120, "Long line"));
+		DialogueChoicesPanel overflowing = new DialogueChoicesPanel(960, 380, GameInterfaceSettings.Size.EXTRA_LARGE,
+			GameInterfaceSettings.TextSize.EXTRA_LARGE, 29, 24, true, responses, responses.length,
+			value -> value.length() * 12, "Banker", lengthySpeech);
+		check(overflowing.optionAt(480, 361) == 0, "A long line leaves space for responses at 540p");
+		overflowing.scrollRows(200);
+		check(overflowing.activate(480, 361) == 19, "The final response remains reachable below speech");
 		System.out.println("PASS dialogue wrapping, scrolling, and original response IDs");
 	}
 

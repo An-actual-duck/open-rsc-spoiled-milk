@@ -347,6 +347,9 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					for (int i = 0; i < numOptions; i++){
 						builder.writeString(mo.optionTexts[i]);
 					}
+					if (mo.dialogueId != 0) {
+						builder.writeInt(mo.dialogueId);
+					}
 					break;
 
 				case SEND_ON_TUTORIAL:

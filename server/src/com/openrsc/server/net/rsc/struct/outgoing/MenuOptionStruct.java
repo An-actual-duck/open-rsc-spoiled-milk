@@ -6,5 +6,6 @@ import com.openrsc.server.net.rsc.struct.AbstractStruct;
 public class MenuOptionStruct extends AbstractStruct<OpcodeOut> {
 
 	public int numOptions;
+	public int dialogueId;
 	public String[] optionTexts;
 }

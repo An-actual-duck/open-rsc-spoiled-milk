@@ -910,7 +910,9 @@ public class PacketHandler {
 			else if (opcode == 158) updateClericSpellbook(length);
 
 				// Set Server Configs
-			else if (opcode == 19) setServerConfiguration();
+			else if (opcode == 19) setServerConfiguration(length);
+
+			else if (opcode == 166) updateDialoguePresentation(length);
 
 			else this.handlePacket2(opcode, length);
 
@@ -2242,7 +2244,7 @@ public class PacketHandler {
 			else if (opcode == 104) updateNPCAppearances();
 
 				// Show Options Menu
-			else if (opcode == 245) showOptionsMenu();
+			else if (opcode == 245) showOptionsMenu(length);
 
 				// Load Area
 			else if (opcode == 25) loadArea();
@@ -2957,7 +2959,7 @@ public class PacketHandler {
 		mc.showMessage(false, var13, var14, MessageType.PRIVATE_SEND, 0, var13);
 	}
 
-	private void setServerConfiguration() {
+	private void setServerConfiguration(int length) {
 		Properties props = new Properties();
 		String serverName, serverNameWelcome, welcomeText;
 		int playerLevelLimit, spawnAuctionNpcs, spawnIronManNpcs;
@@ -3165,6 +3167,15 @@ public class PacketHandler {
 			groundItemNames = packetsIncoming.getUnsignedByte(); // 89
 			wantNatureRuneProtection = packetsIncoming.getUnsignedByte(); // 90
 			wantHiscores = packetsIncoming.getUnsignedByte(); // 91
+			if (RenderSurfaceSettings.isInterfacePreviewEnabled() && !Config.isAndroid()) {
+				String tag = "dialogue-presentation/1";
+				if (length - packetsIncoming.packetEnd == tag.length() + 1
+					&& packetsIncoming.dataBuffer[length - 1] == 10
+					&& tag.equals(packetsIncoming.readString())) {
+					clientStream.newPacket(157);
+					clientStream.finishPacket();
+				}
+			}
 		}
 
 		if (Config.DEBUG) {
@@ -4932,13 +4943,40 @@ public class PacketHandler {
 		}
 	}
 
-	private void showOptionsMenu() {
+	private void showOptionsMenu(int length) {
 		int count = packetsIncoming.getUnsignedByte();
 		mc.setOptionsMenuCount(count);
 		for (int i = 0; count > i; ++i) {
 			mc.setOptionsMenuText(i, packetsIncoming.readString());
 		}
-		mc.setOptionsMenuShow(true);
+		int dialogueId = length - packetsIncoming.packetEnd == Integer.BYTES ? packetsIncoming.get32() : 0;
+		mc.showOptionsMenu(dialogueId);
+	}
+
+	private void updateDialoguePresentation(int length) {
+		if (!RenderSurfaceSettings.isInterfacePreviewEnabled() || Config.isAndroid() || length < 7
+			|| packetsIncoming.getUnsignedByte() != 1) return;
+
+		int type = packetsIncoming.getUnsignedByte();
+		int id = packetsIncoming.get32();
+		if (id <= 0) return;
+		int remaining = length - packetsIncoming.packetEnd;
+		switch (type) {
+			case 1:
+				if (remaining == 2) mc.openDialoguePresentation(id, packetsIncoming.getShort() & 0xFFFF);
+				break;
+			case 2:
+			case 3:
+				if (remaining <= 2048) {
+					String line = new String(packetsIncoming.dataBuffer, packetsIncoming.packetEnd, remaining,
+						java.nio.charset.StandardCharsets.UTF_8);
+					mc.updateDialogueLine(id, type == 2, line);
+				}
+				break;
+			case 4:
+				if (remaining == 0) mc.closeDialoguePresentation(id);
+				break;
+		}
 	}
 
 	private void loadArea() {

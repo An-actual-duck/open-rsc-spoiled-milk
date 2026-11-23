@@ -5,6 +5,7 @@ import com.openrsc.server.model.entity.player.ScriptContext;
 import com.openrsc.server.model.states.Action;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.plugins.PluginInterruptedException;
+import com.openrsc.server.net.rsc.DialoguePresentation;
 import com.openrsc.server.util.LogUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,6 +35,15 @@ public abstract class PluginTask extends GameTickEvent implements Callable<Integ
 	private volatile Thread pluginThread;
 
 	private final ScriptContext scriptContext;
+	private DialoguePresentation dialoguePresentation;
+
+	public DialoguePresentation getDialoguePresentation() {
+		return dialoguePresentation;
+	}
+
+	public void setDialoguePresentation(DialoguePresentation presentation) {
+		dialoguePresentation = presentation;
+	}
 	private final Object[] data;
 	private final Action action;
 	private PluginTickEvent pluginTickEvent;

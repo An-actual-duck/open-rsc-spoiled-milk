@@ -1250,6 +1250,12 @@ public final class mudclient implements Runnable {
 	private boolean showDialogTradeConfirm = false;
 	private volatile boolean optionsMenuShow = false;
 	private DialogueChoicesPanel dialogueChoicesPanel;
+	private final DialogueChoicesPanel.PortraitPainter dialoguePortraits = this::drawDialoguePortrait;
+	private int dialogueId;
+	private int dialogueMenuId;
+	private NPCDef dialogueNpc;
+	private boolean dialoguePlayerSpeaking;
+	private String dialogueLine;
 	private final java.util.concurrent.atomic.AtomicInteger dialogueScroll = new java.util.concurrent.atomic.AtomicInteger();
 	private int showUiWildWarn = 0;
 	private int recentSkill = -1;
@@ -8542,22 +8548,34 @@ public final class mudclient implements Runnable {
 		return optionsMenuShow && usesDialogueChoicesPanel();
 	}
 
-	private void handleDialogueChoicesInput() {
-		DialogueChoicesPanel panel = dialogueChoicesPanel;
-		if (panel == null) {
+	private DialogueChoicesPanel dialoguePanel() {
+		if (chatLayout == null || (!hasDialogueChoiceInput() && dialogueLine == null)) return null;
+		if (dialogueChoicesPanel == null) {
 			GameInterfaceSettings.Size size = GameInterfaceSettings.size();
 			GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
 			MudClientGraphics surface = getSurface();
-			panel = new DialogueChoicesPanel(getGameWidth(), chatLayout.historyTop() - size.pixels(8),
+			boolean hasChoices = hasDialogueChoiceInput();
+			boolean showLine = dialogueLine != null && (!hasChoices || dialogueMenuId == dialogueId);
+			String speaker = null;
+			if (showLine) {
+				speaker = dialoguePlayerSpeaking
+					? (localPlayer != null && localPlayer.displayName != null ? localPlayer.displayName : "You")
+					: (dialogueNpc != null ? dialogueNpc.getName() : "NPC");
+			}
+			dialogueChoicesPanel = new DialogueChoicesPanel(getGameWidth(), chatLayout.historyTop() - size.pixels(8),
 				size, text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
-				S_WANT_KEYBOARD_SHORTCUTS > 1, optionsMenuText, optionsMenuCount,
-				value -> surface.stringWidth(text.bodyFont, value));
-			dialogueChoicesPanel = panel;
+				S_WANT_KEYBOARD_SHORTCUTS > 1, optionsMenuText, hasChoices ? optionsMenuCount : 0,
+				value -> surface.stringWidth(text.bodyFont, value), speaker, showLine ? dialogueLine : null);
 		}
+		return dialogueChoicesPanel;
+	}
+
+	private void handleDialogueChoicesInput() {
+		DialogueChoicesPanel panel = dialoguePanel();
 		panel.scrollRows(dialogueScroll.getAndSet(0));
 		if (mouseButtonClick != 0) {
 			int choice = panel.activate(mouseX, mouseY);
-			if (choice != DialogueChoicesPanel.SCROLLED) {
+			if (choice >= DialogueChoicesPanel.CANCEL) {
 				submitDialogueChoice(choice);
 			}
 			mouseButtonClick = 0;
@@ -8571,6 +8589,9 @@ public final class mudclient implements Runnable {
 		packetHandler.getClientStream().newPacket(116);
 		packetHandler.getClientStream().bufferBits.putByte(choice);
 		packetHandler.getClientStream().finishPacket();
+		if (choice == DialogueChoicesPanel.CANCEL && dialogueId != 0 && dialogueMenuId == dialogueId) {
+			clearDialoguePresentation();
+		}
 		setOptionsMenuShow(false);
 		mouseButtonClick = 0;
 	}
@@ -13401,9 +13422,9 @@ public final class mudclient implements Runnable {
 				if (!dialogueOwnsInput && this.topMouseMenuVisible && !this.optionsMenuShow) {
 					this.drawMenu();
 				}
-				DialogueChoicesPanel dialogue = dialogueChoicesPanel;
-				if (dialogueOwnsInput && optionsMenuShow && dialogue != null) {
-					dialogue.draw(getSurface(), mouseX, mouseY);
+				DialogueChoicesPanel dialogue = dialoguePanel();
+				if (dialogue != null) {
+					dialogue.draw(getSurface(), mouseX, mouseY, dialoguePortraits);
 				}
 			}
 			this.mouseButtonClick = 0;
@@ -26069,6 +26090,8 @@ public final class mudclient implements Runnable {
 		try {
 			this.browserPreparedLogin=null;this.browserPreparedLoginSequence=0;
             if(this.playerMovementRatePercent!=null)java.util.Arrays.fill(this.playerMovementRatePercent,0);
+			clearDialoguePresentation();
+			setOptionsMenuShow(false);
 			this.packetHandler.resetLayeredSceneProtocolState();
 			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.systemUpdate = 0;
@@ -26168,6 +26191,8 @@ public final class mudclient implements Runnable {
 
 	private void resetLoginScreenVariables(byte var1) {
 		try {
+			clearDialoguePresentation();
+			setOptionsMenuShow(false);
 			setWorldEditorBuildMode(false);
 			this.npcCount = 0;
 			this.playerCount = 0;
@@ -27933,6 +27958,52 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void drawDialoguePortrait(int x, int y, int size, boolean player) {
+		if (player) {
+			if (localPlayer == null) return;
+			DialoguePortrait.draw(this, localPlayer.layerAnimation[0] - 1,
+				getPlayerHairColors()[localPlayer.colourHair], getPlayerSkinColors()[localPlayer.colourSkin],
+				x, y, size, false, dialoguePlayerSpeaking);
+		} else if (dialogueNpc != null) {
+			DialoguePortrait.draw(this, dialogueNpc.getSprite(0), dialogueNpc.getHairColour(),
+				dialogueNpc.getSkinColour(), x, y, size, true, !dialoguePlayerSpeaking);
+		}
+	}
+
+	void openDialoguePresentation(int id, int npcId) {
+		clearDialoguePresentation();
+		dialogueId = id;
+		dialogueNpc = npcId < EntityHandler.npcCount() ? EntityHandler.getNpcDef(npcId) : null;
+	}
+
+	void updateDialogueLine(int id, boolean playerSpeaking, String line) {
+		if (dialogueId != id) return;
+		dialoguePlayerSpeaking = playerSpeaking;
+		dialogueLine = line;
+		dialogueChoicesPanel = null;
+	}
+
+	void closeDialoguePresentation(int id) {
+		if (dialogueId == id) {
+			if (dialogueMenuId == id) setOptionsMenuShow(false);
+			clearDialoguePresentation();
+		}
+	}
+
+	private void clearDialoguePresentation() {
+		dialogueId = 0;
+		dialogueMenuId = 0;
+		dialogueNpc = null;
+		dialogueLine = null;
+		dialogueChoicesPanel = null;
+	}
+
+	void showOptionsMenu(int id) {
+		if (id == 0 || id != dialogueId) clearDialoguePresentation();
+		dialogueMenuId = id;
+		setOptionsMenuShow(true);
+	}
+
 	public synchronized void setOptionsMenuShow(boolean show) {
 		dialogueChoicesPanel = null;
 		dialogueScroll.set(0);
@@ -27960,6 +28031,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void beginAreaLoad() {
+		clearDialoguePresentation();
 		clearClericCursePlaybacks();
 		this.loadingArea = true;
 		this.groundItemCount = this.groundItemAreaEpoch.begin();

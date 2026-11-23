@@ -3,13 +3,14 @@ package orsc;
 import orsc.graphics.two.GraphicsController;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.ToIntFunction;
 
-/** Layout, rendering, and hit targets for an existing server response menu. */
+/** Layout, rendering, and hit targets for dialogue and server response choices. */
 final class DialogueChoicesPanel {
 	static final int CANCEL = -1;
-	static final int SCROLLED = -2;
+	static final int NO_SELECTION = -2;
 	private static final String HEADING = "Choose a response";
 
 	private final int left;
@@ -17,6 +18,11 @@ final class DialogueChoicesPanel {
 	private final int width;
 	private final int bottom;
 	private final int padding;
+	private final int speechHeight;
+	private final int portraitSize;
+	private final String speaker;
+	private final List<String> speech;
+	private final int labelHeight;
 	private final int headerHeight;
 	private final int lineHeight;
 	private final int bodyFont;
@@ -29,15 +35,43 @@ final class DialogueChoicesPanel {
 	DialogueChoicesPanel(int viewportWidth, int anchorBottom, GameInterfaceSettings.Size size,
 						 GameInterfaceSettings.TextSize text, int lineHeight, int labelHeight,
 						 boolean numbered, String[] choices, int count, ToIntFunction<String> measure) {
+		this(viewportWidth, anchorBottom, size, text, lineHeight, labelHeight,
+			numbered, choices, count, measure, null, null);
+	}
+
+	DialogueChoicesPanel(int viewportWidth, int anchorBottom, GameInterfaceSettings.Size size,
+						 GameInterfaceSettings.TextSize text, int lineHeight, int labelHeight,
+						 boolean numbered, String[] choices, int count, ToIntFunction<String> measure,
+						 String speaker, String line) {
 		padding = size.pixels(12);
 		this.lineHeight = lineHeight;
 		bodyFont = text.bodyFont;
 		labelFont = text.labelFont;
-		headerHeight = labelHeight + padding * 2;
+		this.labelHeight = labelHeight;
+		this.speaker = speaker;
+		headerHeight = count == 0 ? 0 : labelHeight + padding * 2;
 		width = Math.min(viewportWidth - 2 * padding, size.pixels(720));
 		left = (viewportWidth - width) / 2;
 		bottom = anchorBottom;
 		scrollWidth = size.pixels(24);
+		int panelLimit = anchorBottom - padding;
+		int choiceMinimum = count == 0 ? 0 : headerHeight + lineHeight + 2 * padding;
+		int speechLimit = panelLimit - choiceMinimum - 2 * padding;
+		int speechLabelSpace = labelHeight + padding / 2;
+		portraitSize = Math.min(Math.min(size.pixels(64), width / 5), speechLimit);
+		if (line == null || speechLimit < speechLabelSpace + lineHeight) {
+			speech = Collections.emptyList();
+			speechHeight = 0;
+		} else {
+			List<String> lines = ClericTextLayout.wrap(line, Math.max(1, width - 2 * portraitSize - padding * 6), measure);
+			int maxLines = (speechLimit - speechLabelSpace) / lineHeight;
+			if (lines.size() > maxLines) {
+				lines = new ArrayList<>(lines.subList(0, maxLines - 1));
+				lines.add("...");
+			}
+			speech = lines;
+			speechHeight = Math.max(portraitSize, speechLabelSpace + speech.size() * lineHeight) + 2 * padding;
+		}
 		int textWidth = Math.max(1, width - scrollWidth - padding * 4);
 		int contentHeight = 0;
 		for (int choice = 0; choice < count; choice++) {
@@ -50,7 +84,8 @@ final class DialogueChoicesPanel {
 			responses.add(new Response(lines, contentHeight, rowHeight));
 			contentHeight += rowHeight;
 		}
-		int panelHeight = Math.min(headerHeight + contentHeight + padding, anchorBottom - padding);
+		int panelHeight = Math.min(speechHeight + headerHeight + contentHeight + (count == 0 ? 0 : padding),
+			panelLimit);
 		top = bottom - panelHeight;
 		maxScroll = Math.max(0, contentHeight - (visibleBottom() - visibleTop()));
 	}
@@ -59,8 +94,10 @@ final class DialogueChoicesPanel {
 		if (maxScroll > 0 && mouseX >= scrollX() && mouseX < scrollX() + scrollWidth
 			&& mouseY >= visibleTop() && mouseY < visibleBottom()) {
 			scrollRows(mouseY < scrollMidpoint() ? -1 : 1);
-			return SCROLLED;
+			return NO_SELECTION;
 		}
+		if (speechHeight > 0 && mouseX >= left && mouseX < left + width
+			&& mouseY >= top && mouseY < top + speechHeight + headerHeight) return NO_SELECTION;
 		return optionAt(mouseX, mouseY);
 	}
 
@@ -82,11 +119,31 @@ final class DialogueChoicesPanel {
 		return CANCEL;
 	}
 
-	void draw(GraphicsController surface, int mouseX, int mouseY) {
+	@FunctionalInterface
+	interface PortraitPainter {
+		void draw(int x, int y, int size, boolean player);
+	}
+
+	void draw(GraphicsController surface, int mouseX, int mouseY, PortraitPainter portraits) {
 		int height = bottom - top;
 		surface.drawBoxAlpha(left, top, width, height, 0x182333, 224);
 		surface.drawBoxBorder(left, width, top, height, 0x667993);
-		surface.drawString(HEADING, left + padding * 2, top + headerHeight - padding, 0xFFDC82, labelFont);
+		if (speechHeight > 0) {
+			int y = top + (speechHeight - portraitSize) / 2;
+			portraits.draw(left + 2 * padding, y, portraitSize, true);
+			portraits.draw(left + width - 2 * padding - portraitSize, y, portraitSize, false);
+			int centerX = left + width / 2;
+			int textHeight = labelHeight + padding / 2 + speech.size() * lineHeight;
+			int baseline = top + (speechHeight - textHeight) / 2 + labelHeight;
+			surface.drawColoredStringCentered(centerX, speaker, 0xFFDC82, 0, labelFont, baseline);
+			baseline += padding / 2 + lineHeight;
+			for (String line : speech) {
+				surface.drawColoredStringCentered(centerX, line, 0xFFFFFF, 0, bodyFont, baseline);
+				baseline += lineHeight;
+			}
+		}
+		if (responses.isEmpty()) return;
+		surface.drawString(HEADING, left + padding * 2, visibleTop() - padding, 0xFFDC82, labelFont);
 		int highlighted = optionAt(mouseX, mouseY);
 		surface.setClip(left + 1, responseRight(), visibleBottom(), visibleTop());
 		try {
@@ -135,7 +192,7 @@ final class DialogueChoicesPanel {
 	}
 
 	private int visibleTop() {
-		return top + headerHeight;
+		return top + speechHeight + headerHeight;
 	}
 
 	private int visibleBottom() {
