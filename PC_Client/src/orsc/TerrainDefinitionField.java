@@ -27,26 +27,27 @@ final class TerrainDefinitionField {
     boolean update(Renderer3DFrame frame) {
         Renderer3DWorldChunkFrame world = frame == null ? null : frame.getWorldChunkFrame();
         if (world == null || world.getChunkCount() == 0) { clear(); return false; }
-        int active = frame.getActivePlane();
-        long signature = frame.getShadowContextEpoch() * 31 + active;
-        int offX = GeometryShadowCoordinates.worldOffsetX(world), offZ = GeometryShadowCoordinates.worldOffsetZ(world);
+        return update(world.getChunks(), frame.getActivePlane(), frame.getShadowContextEpoch());
+    }
+
+    boolean update(List<Renderer3DWorldChunkFrame.ChunkMesh> chunks, int active, long epoch) {
+        if (chunks.isEmpty()) return false;
+        long signature = signature(chunks, active, epoch);
+        if (signature == sourceSignature) return width > 0;
+        int offX = chunks.get(0).getLogicalWorldOffsetX(), offZ = chunks.get(0).getLogicalWorldOffsetZ();
         int loX = Integer.MAX_VALUE, loZ = loX, hiX = Integer.MIN_VALUE, hiZ = hiX;
-        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : world.getChunks()) {
-            if (chunk.getPlane() != active || chunk.getTerrainTriangles() <= 0) continue;
-            signature = mix(signature, terrainHeightSignature(chunk));
-            signature = mix(signature, (long)offX + chunk.getVertexOffsetX());
-            signature = mix(signature, (long)offZ + chunk.getVertexOffsetZ());
+        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunks) {
+            if (!hasTerrain(chunk, active)) continue;
             loX = Math.min(loX, Math.floorDiv(chunk.getMinVertexX() + offX, TILE));
             loZ = Math.min(loZ, Math.floorDiv(chunk.getMinVertexZ() + offZ, TILE));
             hiX = Math.max(hiX, Math.floorDiv(chunk.getMaxVertexX() + offX, TILE));
             hiZ = Math.max(hiZ, Math.floorDiv(chunk.getMaxVertexZ() + offZ, TILE));
         }
-        if (signature == sourceSignature) return width > 0;
         if (loX > hiX || loZ > hiZ || hiX - loX + 1 > MAX_AXIS || hiZ - loZ + 1 > MAX_AXIS) { clear(); return false; }
         minX = loX; minZ = loZ; width = hiX - loX + 1; height = hiZ - loZ + 1; plane = active;
         int[] heights = new int[width * height]; Arrays.fill(heights, UNKNOWN);
-        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : world.getChunks()) {
-            if (chunk.getPlane() != active || chunk.getTerrainTriangles() <= 0) continue;
+        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunks) {
+            if (!hasTerrain(chunk, active)) continue;
             for (int triangle = 0; triangle < chunk.getTriangleCount(); triangle++) {
                 if (chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN) continue;
                 for (int corner = 0; corner < 3; corner++) {
@@ -61,6 +62,27 @@ final class TerrainDefinitionField {
         }
         rgba = build(heights, width, height); sourceSignature = signature; revision++; rebuilds++;
         return true;
+    }
+
+    void adoptEpoch(Renderer3DFrame frame) {
+        sourceSignature = signature(frame.getWorldChunkFrame().getChunks(), frame.getActivePlane(),
+            frame.getShadowContextEpoch());
+    }
+
+    private long signature(List<Renderer3DWorldChunkFrame.ChunkMesh> chunks, int active, long epoch) {
+        long signature = epoch * 31 + active;
+        int offX = chunks.get(0).getLogicalWorldOffsetX(), offZ = chunks.get(0).getLogicalWorldOffsetZ();
+        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunks) {
+            if (!hasTerrain(chunk, active)) continue;
+            signature = mix(signature, terrainHeightSignature(chunk));
+            signature = mix(signature, (long)offX + chunk.getVertexOffsetX());
+            signature = mix(signature, (long)offZ + chunk.getVertexOffsetZ());
+        }
+        return signature;
+    }
+
+    static boolean hasTerrain(Renderer3DWorldChunkFrame.ChunkMesh chunk, int plane) {
+        return chunk.getPlane() == plane && chunk.getTerrainTriangles() > 0;
     }
 
     /** Assemble checked lighting cells in their stable world positions, including the currently resident overlap. */

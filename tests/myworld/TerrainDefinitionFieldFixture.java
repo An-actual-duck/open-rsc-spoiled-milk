@@ -50,6 +50,21 @@ public final class TerrainDefinitionFieldFixture {
         single.update(frame(Renderer3DWorldChunkFrame.fromChunks(Collections.singletonList(mesh(0,99,16,0))),1,0));
         require(stitched.minX==single.minX&&stitched.width==single.width&&stitched.pixels().equals(single.pixels()),"Halo/chunk seam changed height definition");
 
-        System.out.println("PASS planar neutrality, sheltered bowl, signed ridge, unknowns, actual frame cache/context/plane/rebase and session recovery");
+        List<Renderer3DWorldChunkFrame.ChunkMesh> predicted = Arrays.asList(mesh, mesh.rebasePresentation(1024, 0));
+        List<Renderer3DWorldChunkFrame.ChunkMesh> installed = Arrays.asList(
+            mesh.rebasePresentation(6144, -6144), mesh.rebasePresentation(7168, -6144));
+        require(TerrainDefinitionTexture.sameTerrain(predicted, installed, 0), "Equivalent rebased prediction rejected");
+        List<Renderer3DWorldChunkFrame.ChunkMesh> movedCell = Arrays.asList(installed.get(0), installed.get(1).rebasePresentation(128, 0));
+        require(!TerrainDefinitionTexture.sameTerrain(predicted, movedCell, 0), "A moved terrain cell adopted stale lighting");
+        require(!TerrainDefinitionTexture.sameTerrain(predicted, installed.subList(0, 1), 0), "Incomplete terrain adopted lighting");
+        Renderer3DFrame installedFrame = frame(Renderer3DWorldChunkFrame.fromChunks(installed), 3, 0);
+        TerrainDefinitionField prepared = new TerrainDefinitionField(), literal = new TerrainDefinitionField();
+        require(prepared.update(predicted, 0, 0) && literal.update(installedFrame), "Missing predicted or literal field");
+        prepared.adoptEpoch(installedFrame);
+        require(prepared.update(installedFrame) && prepared.rebuilds == 1, "A verified prediction rebuilt at installation");
+        require(prepared.width == literal.width && prepared.height == literal.height && prepared.minX == literal.minX
+            && prepared.minZ == literal.minZ && prepared.pixels().equals(literal.pixels()), "Predicted elevation shading differs");
+
+        System.out.println("PASS planar neutrality, sheltered bowl, signed ridge, unknowns, cache/context/plane/rebase, and prepared field parity");
     }
 }
