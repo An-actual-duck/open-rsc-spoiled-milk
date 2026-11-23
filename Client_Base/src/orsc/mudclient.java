@@ -1162,6 +1162,9 @@ public final class mudclient implements Runnable {
 	private Panel panelMessageTabs;
 	private ChatPanelLayout chatLayout;
 	private InventoryEquipmentLayout inventoryEquipmentLayout;
+	private AccomplishmentsLayout accomplishmentsLayout;
+	private final int[] accomplishmentsScroll = new int[2];
+	private final java.util.concurrent.atomic.AtomicInteger accomplishmentsWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private SideToolbarLayout sideToolbarLayout;
 	private final SideToolbarArtwork sideToolbarArtwork = new SideToolbarArtwork();
 	private boolean chatLayoutDirty;
@@ -13382,7 +13385,8 @@ public final class mudclient implements Runnable {
 					if (TRACE_BROWSER_FRAME_STAGES) browserMinimapDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
-				if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) {
+				if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB
+					&& (!interfaceOpen || accomplishmentsLayout() == null)) {
 					this.drawUiTabPlayerInfo(acceptTabInput, var1 ^ 0);
 				}
 
@@ -14068,15 +14072,19 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawInventoryPreviewTab(InventoryEquipmentLayout layout, int x, int width, int tab, String label, int hoveredTab) {
+		drawInterfacePreviewTab(x, layout.tabsTop, width, layout.tabsHeight, label, layout.labelFont,
+			layout.tabBaseline, tabEquipmentIndex == tab, hoveredTab == tab);
+	}
+
+	private void drawInterfacePreviewTab(int x, int y, int width, int height, String label, int font,
+										 int baseline, boolean active, boolean hovered) {
 		MudClientGraphics surface = getSurface();
-		boolean active = tabEquipmentIndex == tab;
-		surface.drawVerticalGradient(x, layout.tabsTop, width, layout.tabsHeight,
-			active ? 0x596A83 : hoveredTab == tab ? 0x465873 : 0x34425A,
+		surface.drawVerticalGradient(x, y, width, height,
+			active ? 0x596A83 : hovered ? 0x465873 : 0x34425A,
 			active ? 0x344258 : 0x252F41);
-		surface.drawBoxBorder(x, width, layout.tabsTop, layout.tabsHeight, 0x141E2E);
-		surface.drawLineHoriz(x + 1, layout.tabsTop + 1, width - 2, active ? 0xD2B873 : 0x667993);
-		surface.drawColoredStringCentered(x + width / 2, label, active ? 0xFFDC82 : 0xFFFFFF,
-			0, layout.labelFont, layout.tabBaseline);
+		surface.drawBoxBorder(x, width, y, height, 0x141E2E);
+		surface.drawLineHoriz(x + 1, y + 1, width - 2, active ? 0xD2B873 : 0x667993);
+		surface.drawColoredStringCentered(x + width / 2, label, active ? 0xFFDC82 : 0xFFFFFF, 0, font, baseline);
 	}
 
 	private void drawInventoryPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
@@ -18787,7 +18795,233 @@ public final class mudclient implements Runnable {
 		this.getSurface().drawString(this.equipmentStatNames[statIndex] + ":@yel@" + value, x, y, color, font);
 	}
 
+	private boolean isAccomplishmentsPreviewEnabled() {
+		return chatLayout != null && !Config.S_WANT_OPENPK_POINTS;
+	}
+
+	private AccomplishmentsLayout accomplishmentsLayout() {
+		if (!isAccomplishmentsPreviewEnabled()) return null;
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		int width = getSurface().width2;
+		int anchor = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatTop = chatLayout.entryTop();
+		if (accomplishmentsLayout == null || !accomplishmentsLayout.matches(width, anchor, C_CUSTOM_UI,
+			chatRight, chatTop, size, text)) {
+			int[] skills = getDisplayedSkillIndices();
+			MudClientGraphics surface = getSurface();
+			int labelWidth = surface.stringWidth(text.bodyFont, "Combat level: 999");
+			for (int skill : skills) {
+				labelWidth = Math.max(labelWidth, surface.stringWidth(text.bodyFont, skillNameLong[skill]));
+			}
+			int skillColumn = labelWidth + surface.stringWidth(text.bodyFont, "999/999") + size.pixels(12);
+			int statusWidth = Math.max(surface.stringWidth(text.bodyFont, "In progress"),
+				Math.max(surface.stringWidth(text.bodyFont, "Completed"), surface.stringWidth(text.bodyFont, "Not started")));
+			accomplishmentsLayout = new AccomplishmentsLayout(width, anchor, C_CUSTOM_UI, chatRight, chatTop, size,
+				text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont), skillColumn, statusWidth,
+				skills, questNames, value -> surface.stringWidth(text.bodyFont, value));
+		}
+		return accomplishmentsLayout;
+	}
+
+	private void drawAccomplishmentsPreview(AccomplishmentsLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		if (!C_CUSTOM_UI) drawAuthenticSidebarHeader(GUIPARTS.SKILLSTAB, Config.SKILLS_AND_QUESTS_TAB, layout.left + layout.width);
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom - layout.top, 0x182333, 228);
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom - layout.top, 0x667993);
+
+		int hoveredTab = acceptInput ? layout.tabAt(mouseX, mouseY) : -1;
+		if (hoveredTab >= 0 && mouseButtonClick == 1) {
+			uiTabPlayerInfoSubTab = hoveredTab;
+			accomplishmentsWheel.set(0);
+			mouseButtonClick = 0;
+		}
+		int tab = uiTabPlayerInfoSubTab;
+		int half = layout.width / 2;
+		drawInterfacePreviewTab(layout.left, layout.top, half, layout.tabHeight, "Stats",
+			layout.labelFont, layout.top + layout.tabBaseline, tab == AccomplishmentsLayout.STATS,
+			hoveredTab == AccomplishmentsLayout.STATS);
+		drawInterfacePreviewTab(layout.left + half, layout.top, layout.width - half, layout.tabHeight, "Quests",
+			layout.labelFont, layout.top + layout.tabBaseline, tab == AccomplishmentsLayout.QUESTS,
+			hoveredTab == AccomplishmentsLayout.QUESTS);
+
+		int scroll = layout.clampScroll(tab, accomplishmentsScroll[tab] + accomplishmentsWheel.getAndSet(0) * layout.rowHeight / 2);
+		int listTop = layout.listTop(tab);
+		int listHeight = layout.listBottom() - listTop;
+		int maxScroll = layout.maxScroll(tab);
+		if (maxScroll > 0 && acceptInput && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
+			&& mouseX < layout.scrollbarLeft() + layout.scrollbarWidth && mouseY >= listTop && mouseY < layout.listBottom()) {
+			scroll = (mouseY - listTop) * maxScroll / Math.max(1, listHeight - 1);
+			mouseButtonClick = 0;
+		}
+		accomplishmentsScroll[tab] = scroll;
+
+		int hoveredSkill = acceptInput && tab == AccomplishmentsLayout.STATS ? layout.skillAt(mouseX, mouseY, scroll) : -1;
+		if (tab == AccomplishmentsLayout.QUESTS) {
+			surface.drawString("Quest points: @yel@" + questPoints, layout.bodyLeft() + layout.padding,
+				listTop - layout.padding, 0xFFFFFF, layout.bodyFont);
+		}
+		surface.setClip(layout.bodyLeft(), layout.scrollbarLeft(), layout.listBottom(), listTop);
+		try {
+			if (tab == AccomplishmentsLayout.QUESTS) {
+				drawAccomplishmentsQuests(layout, scroll, acceptInput);
+			} else {
+				drawAccomplishmentsStats(layout, scroll, hoveredSkill, acceptInput);
+			}
+		} finally {
+			surface.clearClip();
+		}
+		if (maxScroll > 0) {
+			int thumbHeight = Math.max(layout.padding * 2, listHeight * listHeight / (listHeight + maxScroll));
+			int thumbTop = listTop + (listHeight - thumbHeight) * scroll / maxScroll;
+			surface.drawBoxAlpha(layout.scrollbarLeft() + 1, listTop, layout.scrollbarWidth - 1, listHeight, 0x283548, 230);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbTop, layout.scrollbarWidth - 3, thumbHeight, 0x8799B2);
+		}
+		if (hoveredSkill >= 0 && !skillGuideInterface.isVisible()) {
+			drawAccomplishmentsSkillDetails(layout, hoveredSkill);
+		}
+	}
+
+	private void drawAccomplishmentsQuests(AccomplishmentsLayout layout, int scroll, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int hovered = acceptInput ? layout.questAt(mouseX, mouseY, scroll) : -1;
+		for (AccomplishmentsLayout.QuestRow quest : layout.quests) {
+			int y = layout.listTop(AccomplishmentsLayout.QUESTS) + quest.offset - scroll;
+			if (y + quest.height <= layout.listTop(AccomplishmentsLayout.QUESTS) || y >= layout.listBottom()) continue;
+
+			if (hovered == quest.id && S_WANT_QUEST_MENUS) {
+				surface.drawBoxAlpha(layout.bodyLeft(), y, layout.scrollbarLeft() - layout.bodyLeft(), quest.height, 0x54647C, 200);
+			}
+			int baseline = y + (quest.height - quest.lines.size() * layout.bodyHeight) / 2 + layout.bodyHeight - 3;
+			int nameX = layout.bodyLeft() + layout.padding;
+			for (String line : quest.lines) {
+				surface.drawString(line, nameX, baseline, 0xFFFFFF, layout.bodyFont);
+				baseline += layout.bodyHeight;
+			}
+			int stage = questStages[quest.id];
+			int progressColor = stage < 0 ? 0x9FE0AC : stage > 0 && S_WANT_QUEST_STARTED_INDICATOR ? 0xFFDC82 : 0xB4C1D1;
+			String progress = stage < 0 ? "Completed" : S_WANT_QUEST_STARTED_INDICATOR
+				? (stage > 0 ? "In progress" : "Not started") : "Incomplete";
+			int progressX = layout.questStatusRight() - surface.stringWidth(layout.bodyFont, progress);
+			surface.drawString(progress, progressX, y + (quest.height + layout.bodyHeight) / 2 - 3,
+				progressColor, layout.bodyFont);
+			surface.drawLineHoriz(layout.bodyLeft(), y + quest.height - 1, layout.scrollbarLeft() - layout.bodyLeft(), 0x35455C);
+		}
+		if (hovered >= 0 && S_WANT_QUEST_MENUS && mouseButtonClick == 1) {
+			openQuestGuideFromSidebar(hovered);
+			mouseButtonClick = 0;
+		}
+	}
+
+	private void drawAccomplishmentsStats(AccomplishmentsLayout layout, int scroll, int hovered, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int levels = 0;
+		long xp = 0;
+		for (int index = 0; index < layout.skills.length; index++) {
+			int skill = layout.skills[index];
+			levels += playerStatBase[skill];
+			xp += playerExperience[skill];
+			int y = layout.statsRowY(index % layout.skillRows, scroll);
+			if (y + layout.rowHeight <= layout.listTop(AccomplishmentsLayout.STATS) || y >= layout.listBottom()) continue;
+			int column = index / layout.skillRows;
+			int x = layout.columnLeft(column);
+			if (skill == hovered && S_WANT_SKILL_MENUS) {
+				surface.drawBoxAlpha(x, y, layout.columnWidth() - 1, layout.rowHeight, 0x54647C, 200);
+			}
+			int baseline = y + (layout.rowHeight + layout.bodyHeight) / 2 - 3;
+			surface.drawString(skillNameLong[skill], x + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
+			String levelsText = playerStatCurrent[skill] + "/" + playerStatBase[skill];
+			surface.drawString(levelsText, x + layout.columnWidth() - layout.padding - surface.stringWidth(layout.bodyFont, levelsText),
+				baseline, 0xFFDC82, layout.bodyFont);
+			surface.drawLineHoriz(x + 1, y + layout.rowHeight - 1, layout.columnWidth() - 2, 0x35455C);
+		}
+		int row = layout.skillRows;
+		drawAccomplishmentsStatRow(layout, scroll, row++, "Equipment status", null, 0xFFDC82);
+		int left = layout.columnLeft(0) + layout.padding;
+		int right = layout.columnLeft(1) + layout.padding;
+		for (int offset = 0; offset < 4; offset++) {
+			int baseline = layout.statsRowY(row++, scroll) + (layout.rowHeight + layout.bodyHeight) / 2 - 3;
+			drawEquipmentStatusValue(offset == 3 ? 4 : offset, left, baseline, 0xFFFFFF, layout.bodyFont);
+			drawEquipmentStatusValue(offset == 0 ? 3 : offset + 4, right, baseline, 0xFFFFFF, layout.bodyFont);
+		}
+		boolean overallHovered = acceptInput && S_WANT_SKILL_MENUS && S_WANT_HISCORES
+			&& mouseX < layout.columnLeft(1) && layout.statsRowAt(mouseX, mouseY, scroll) == row;
+		drawAccomplishmentsStatRow(layout, scroll, row++, "Overall levels", null, overallHovered ? 0xFFFFFF : 0xFFDC82);
+		drawAccomplishmentsStatRow(layout, scroll, row++, "Skill total: " + levels, "Combat level: " + localPlayer.level, 0xFFFFFF);
+		drawAccomplishmentsStatRow(layout, scroll, row++, "Quest points: " + questPoints,
+			S_WANT_EXP_INFO ? "Total XP: " + xp : null, 0xFFFFFF);
+		String fatigue = S_WANT_FATIGUE ? "Fatigue: " + statFatigue + "%"
+			: S_FEATURES_SLEEP ? (experienceOff ? "XP gain off" : "XP gain on") : null;
+		if (fatigue != null) drawAccomplishmentsStatRow(layout, scroll, row, fatigue, null, 0xFFFFFF);
+
+		if (mouseButtonClick == 1 && S_WANT_SKILL_MENUS && (hovered >= 0 || overallHovered)) {
+			openSkillGuideFromSidebar(overallHovered ? "Overall" : skillNameLong[hovered], overallHovered);
+			mouseButtonClick = 0;
+		}
+	}
+
+	private void drawAccomplishmentsStatRow(AccomplishmentsLayout layout, int scroll, int row, String left, String right, int color) {
+		int baseline = layout.statsRowY(row, scroll) + (layout.rowHeight + layout.bodyHeight) / 2 - 3;
+		getSurface().drawString(left, layout.columnLeft(0) + layout.padding, baseline, color, layout.bodyFont);
+		if (right != null) {
+			getSurface().drawString(right, layout.columnLeft(1) + layout.padding, baseline, color, layout.bodyFont);
+		}
+	}
+
+	private void drawAccomplishmentsSkillDetails(AccomplishmentsLayout layout, int skill) {
+		MudClientGraphics surface = getSurface();
+		int xp = playerExperience[skill];
+		int nextLevel = experienceArray[0];
+		for (int level = 0; level + 1 < experienceArray.length; level++) {
+			if (experienceArray[level] <= xp) nextLevel = experienceArray[level + 1];
+		}
+		java.util.List<String> lines = new java.util.ArrayList<>(5);
+		lines.add(skillNameLong[skill]);
+		lines.add("Total XP: " + xp);
+		lines.add("Next level: " + nextLevel);
+		if (S_WANT_EXP_INFO) lines.add("XP to next level: " + (nextLevel - xp));
+		if ("Worship".equalsIgnoreCase(skillNameLong[skill])) {
+			lines.add("Devotion: " + formatDevotionHalfOfferingUnits(currentDevotionHalfOfferingUnits));
+		}
+		int width = 0;
+		for (String line : lines) width = Math.max(width, surface.stringWidth(layout.bodyFont, line));
+		width += 2 * layout.padding;
+		int x = Math.max(layout.padding, layout.left - layout.padding - width);
+		int height = lines.size() * layout.bodyHeight + 2 * layout.padding;
+		int y = Math.max(layout.top, Math.min(mouseY, layout.bottom - height));
+		surface.drawBoxAlpha(x, y, width, height, 0x182333, 245);
+		surface.drawBoxBorder(x, width, y, height, 0x667993);
+		for (int row = 0; row < lines.size(); row++) {
+			surface.drawString(lines.get(row), x + layout.padding,
+				y + layout.padding + (row + 1) * layout.bodyHeight - 3, row == 0 ? 0xFFDC82 : 0xFFFFFF, layout.bodyFont);
+		}
+	}
+
+	private void openSkillGuideFromSidebar(String skillName, boolean hiscores) {
+		setSkillGuideChosen(skillName);
+		skillGuideInterface.setHiscoresMode(hiscores);
+		skillGuideInterface.setVisible(true);
+		if (!C_CUSTOM_UI) showUiTab = 0;
+	}
+
+	private void openQuestGuideFromSidebar(int quest) {
+		setQuestGuideChosen(questNames[quest]);
+		setQuestGuideProgress(questStages[quest]);
+		setQuestGuideStartWho(quest);
+		setQuestGuideStartWhere(quest);
+		setQuestGuideRequirement(quest);
+		setQuestGuideReward(quest);
+		questGuideInterface.setVisible(true);
+		if (!C_CUSTOM_UI) showUiTab = 0;
+	}
+
 	private void drawUiTabPlayerInfo(boolean var1, int var2) {
+		AccomplishmentsLayout preview = accomplishmentsLayout();
+		if (preview != null) {
+			drawAccomplishmentsPreview(preview, var1);
+			return;
+		}
 
 		int maxY = getUITabsY();
 
@@ -18855,18 +19089,10 @@ public final class mudclient implements Runnable {
 						currentlyHoveredSkill = currSkill;
 						if (isAndroid() && this.mouseButtonClick == 1 && this.uiTabPlayerInfoSubTab == 0) {
 							if (doubleClick() && S_WANT_SKILL_MENUS) {
-								setSkillGuideChosen(skillNameLong[currSkill]);
-								skillGuideInterface.setHiscoresMode(false);
-								skillGuideInterface.setVisible(true);
-								if (!C_CUSTOM_UI)
-									this.showUiTab = 0;
+								openSkillGuideFromSidebar(skillNameLong[currSkill], false);
 							}
 						} else if (!isAndroid() && this.mouseButtonClick == 1 && this.uiTabPlayerInfoSubTab == 0 && S_WANT_SKILL_MENUS) {
-							setSkillGuideChosen(skillNameLong[currSkill]);
-							skillGuideInterface.setHiscoresMode(false);
-							skillGuideInterface.setVisible(true);
-							if (!C_CUSTOM_UI)
-								this.showUiTab = 0;
+							openSkillGuideFromSidebar(skillNameLong[currSkill], false);
 						}
 
 						if (isAndroid() && this.mouseButtonClick == 1 && this.uiTabPlayerInfoSubTab == 0 && S_WANT_OPENPK_POINTS) {
@@ -18955,11 +19181,7 @@ public final class mudclient implements Runnable {
 						overallHovered ? textColourHovered : textColourHeading, 1);
 					if (overallHovered && this.mouseButtonClick == 1) {
 						this.mouseButtonClick = 0;
-						setSkillGuideChosen("Overall");
-						skillGuideInterface.setHiscoresMode(true);
-						skillGuideInterface.setVisible(true);
-						if (!C_CUSTOM_UI)
-							this.showUiTab = 0;
+						openSkillGuideFromSidebar("Overall", true);
 					}
 					heightMargin += 12;
 					int currSkillTotal = 0;
@@ -19049,15 +19271,7 @@ public final class mudclient implements Runnable {
 					&& this.getMouseX() > x && this.getMouseY() > y + 36
 					&& this.getMouseX() < x + this.getSurface().stringWidth(1, this.questNames[position])
 					&& this.getMouseY() < height + y + 8) {
-					setQuestGuideChosen(this.questNames[position]);
-					setQuestGuideProgress(this.questStages[position]);
-					setQuestGuideStartWho(position);
-					setQuestGuideStartWhere(position);
-					setQuestGuideRequirement(position);
-					setQuestGuideReward(position);
-					questGuideInterface.setVisible(true);
-					if (!C_CUSTOM_UI)
-						this.showUiTab = 0;
+					openQuestGuideFromSidebar(position);
 					setMouseClick(0);
 				}
 
@@ -19524,6 +19738,7 @@ public final class mudclient implements Runnable {
 		gameHeight = resizeHeight - 12;
 		dialogueChoicesPanel = null;
 		inventoryEquipmentLayout = null;
+		accomplishmentsLayout = null;
 
 		resizeWidth = resizeHeight = -1;
 
@@ -22442,6 +22657,11 @@ public final class mudclient implements Runnable {
 			if (preview != null) return preview.contains(x, y);
 		}
 
+		if (this.getVisibleSideMenuTab() == Config.SKILLS_AND_QUESTS_TAB) {
+			AccomplishmentsLayout preview = accomplishmentsLayout();
+			if (preview != null) return preview.contains(x, y);
+		}
+
 		if (C_CUSTOM_UI) {
 			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
@@ -22703,8 +22923,11 @@ public final class mudclient implements Runnable {
 				}
 			}
 
-			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && !this.isCurrentSideMenuHomeTab() && (this.mouseX < hoverLeft || this.mouseY > 324 + panelOffset)) {
-				this.closeOrRestorePinnedSideMenu();
+			if (showUiTab == Config.SKILLS_AND_QUESTS_TAB && !isCurrentSideMenuHomeTab()) {
+				AccomplishmentsLayout preview = accomplishmentsLayout();
+				int left = preview == null ? hoverLeft : Math.min(hoverLeft, preview.left);
+				int bottom = preview == null ? 325 + panelOffset : preview.bottom;
+				if (mouseX < left || mouseY >= bottom) closeOrRestorePinnedSideMenu();
 			}
 
 			// If we are on Android, this area needs to be larger in the Y direction for the "cast last spell" box
@@ -26406,6 +26629,9 @@ public final class mudclient implements Runnable {
             if(this.playerMovementRatePercent!=null)java.util.Arrays.fill(this.playerMovementRatePercent,0);
 			clearDialoguePresentation();
 			setOptionsMenuShow(false);
+			accomplishmentsLayout = null;
+			java.util.Arrays.fill(accomplishmentsScroll, 0);
+			accomplishmentsWheel.set(0);
 			this.packetHandler.resetLayeredSceneProtocolState();
 			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.systemUpdate = 0;
@@ -29331,7 +29557,10 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setQuestName(int i, String s) {
-		this.questNames[i] = s;
+		if (!java.util.Objects.equals(questNames[i], s)) {
+			questNames[i] = s;
+			accomplishmentsLayout = null;
+		}
 	}
 
 	public void setQuestStage(int i, int n) {
@@ -31549,7 +31778,15 @@ public final class mudclient implements Runnable {
 		}
 		int visibleSideMenuTab = getVisibleSideMenuTab();
 		if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) { // Quest list.
-			if (uiTabPlayerInfoSubTab == 1) {
+			if (isAccomplishmentsPreviewEnabled()) {
+				if (skillGuideInterface.isVisible()) {
+					skillGuideInterface.skillGuide.scrollMethodList(skillGuideInterface.activeScrollControl(), x);
+				} else if (questGuideInterface.isVisible()) {
+					questGuideInterface.questGuide.scrollMethodList(questGuideInterface.questGuideScroll, x);
+				} else if (isMouseOverOpenUiTabPanel(mouseX, mouseY)) {
+					accomplishmentsWheel.addAndGet(x);
+				}
+			} else if (uiTabPlayerInfoSubTab == 1) {
 				panelQuestInfo.scrollMethodList(controlQuestInfoPanel, x);
 			}
 		} else if (visibleSideMenuTab == Config.OPTIONS_TAB) { // Settings wrench menu

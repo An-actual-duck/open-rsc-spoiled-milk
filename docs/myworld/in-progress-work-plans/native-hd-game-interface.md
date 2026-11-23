@@ -13,7 +13,8 @@ Use the existing Classic bitmap lettering and approved assets for development. S
 | Sidebar panels | Inventory, equipment, stats, quests and tasks, spellbook, prayers, summoning, friends, ignores, clan and options. Include tooltips, item grids, sub-tabs, scroll and dragging. |
 | Right-click menus | Inventory, Equipment, ground items, objects and characters. Scale the menu frame, text, row spacing and hit targets. |
 | World interaction | Overhead speech and status bars, item labels, action feedback, NPC responses and keyboard shortcuts. |
-| Gameplay windows | Bank and PIN, shop, auction house, trade and duel through confirmation. Crafting and other skill actions, guides, social and party management, achievements, rewards, point configuration, account options, death and recovery, territory and minigame displays. |
+| In-game guides | Skill guides, quest guides and their existing guide tabs. Give longer entries room for requirements, progress and rewards, and improve scrolling at both resolutions. |
+| Gameplay windows | Bank and PIN, shop, auction house, trade and duel through confirmation. Crafting and other skill actions, social and party management, achievements, rewards, point configuration, account options, death and recovery, territory and minigame displays. |
 | Session screens and modal states | Login and registration, appearance, loading and reconnect, welcome and notices, reporting, input prompts, confirmations, password and recovery pages, sleep, and logout. |
 | In-game developer tools | World Builder panels, definitions browser and selection controls. Check their hit regions against terrain picking in the same viewport. |
 
@@ -50,8 +51,7 @@ the existing item and slot artwork, context menus, equip and remove actions,
 and Items Kept on Death control. The sidebar stays above chat entry and chat tabs
 where they span the same part of the screen.
 
-The current HUD work is limited to Inventory and Equipment. The minimap will
-have its own design pass after the owner supplies notes. Bank, crafting and shop
+The minimap will have its own design pass after the owner supplies notes. Bank, crafting and shop
 windows are separate work. The Monster Slayer reward shop remains a candidate
 for in-place stock and currency tabs in that work.
 
@@ -63,6 +63,24 @@ size. The red Satchel caption is part of the installed menu artwork. The
 preview places that caption strip below the toolbar with its original lettering
 and colours. Existing panels dock to the toolbar, and minimap design remains a
 separate pass.
+
+## Accomplishments preview
+
+Stats and Quests use the sidebar layout and the current UI and text settings.
+The Stats list preserves current and base levels, XP details, equipment
+bonuses and overall totals. Quest names wrap and the journal shows quest
+points and progress. Both lists scroll, and clicks use the visible row bounds.
+Rows open the existing guides through the same actions.
+
+### In-game guides to update later
+
+- Give skill guides room for longer training and unlock lists, levels and
+  requirements, with clear tabs and scrolling.
+- Give quest guides room for the start contact and location, requirements,
+  progress and rewards. Use layouts that can hold additional guide information
+  as it is written.
+- Verify guide readability, list controls and opening the correct guide from
+  Accomplishments at 540p and 1080p.
 
 ## Right-click menus
 

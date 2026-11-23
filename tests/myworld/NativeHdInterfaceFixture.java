@@ -30,6 +30,9 @@ public final class NativeHdInterfaceFixture {
 				verifyToolbarBounds(1920, 1080, size, text, false);
 				verifyToolbarBounds(960, 540, size, text, false);
 				verifyToolbarBounds(960, 540, size, text, true);
+				verifyAccomplishmentsBounds(1920, 1080, size, text, false);
+				verifyAccomplishmentsBounds(960, 540, size, text, false);
+				verifyAccomplishmentsBounds(960, 540, size, text, true);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -156,6 +159,43 @@ public final class NativeHdInterfaceFixture {
 			"Original header strip fits between toolbar and sidebar");
 		if (bottomLauncher && toolbar.left < chat.left + chat.width) {
 			check(toolbar.bottom() < chat.entryTop(), "Lower toolbar fits above chat");
+		}
+	}
+
+	private static void verifyAccomplishmentsBounds(int width, int height, GameInterfaceSettings.Size size,
+												   GameInterfaceSettings.TextSize text, boolean bottomLauncher) {
+		ChatPanelLayout chat = chat(width, height, size, text);
+		int chatRight = chat.left + chat.width;
+		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, bottomLauncher, size,
+			chatRight, chat.entryTop());
+		int anchor = bottomLauncher ? toolbar.top : toolbar.panelTop();
+		String[] questNames = new String[60];
+		questNames[1] = "An unusually long quest title with enough words to wrap at any supported panel width";
+		for (int i = 3; i < questNames.length; i++) questNames[i] = "Quest " + i;
+		int[] skills = {14, 19, 6, 8, 10, 4, 13};
+		AccomplishmentsLayout panel = new AccomplishmentsLayout(width, anchor, bottomLauncher, chatRight, chat.entryTop(),
+			size, text, chat.lineHeight, chat.tabsHeight - size.pixels(8), 150, 96, skills, questNames,
+			value -> value.length() * 10);
+		check(panel.tabAt(panel.left, panel.top) == AccomplishmentsLayout.STATS, "Stats tab first");
+		check(panel.tabAt(panel.left + panel.width / 2, panel.top) == AccomplishmentsLayout.QUESTS, "Quests tab second");
+		int firstSkillY = panel.listTop(AccomplishmentsLayout.STATS);
+		check(panel.skillAt(panel.columnLeft(0), firstSkillY, 0) == skills[0], "First skill retains its ID");
+		check(panel.skillAt(panel.columnLeft(1), firstSkillY, 0) == skills[panel.skillRows], "Second column uses the right ID");
+		check(panel.skillAt(panel.columnLeft(0), firstSkillY, panel.rowHeight) == skills[1], "Scrolling selects the next skill");
+		check(panel.skillAt(panel.scrollbarLeft(), firstSkillY, 0) == -1, "Scrollbar cannot activate a skill");
+		int firstQuestY = panel.listTop(AccomplishmentsLayout.QUESTS);
+		AccomplishmentsLayout.QuestRow firstQuest = panel.quests.get(0);
+		check(firstQuest.lines.size() > 1, "Long quest name wraps");
+		check(panel.questAt(panel.bodyLeft(), firstQuestY + firstQuest.height - 1, 0) == 1, "Wrapped row keeps its first ID");
+		check(panel.questAt(panel.bodyLeft(), firstQuestY + firstQuest.height, 0) == 3, "Next row skips missing quest IDs");
+		int maxScroll = panel.clampScroll(AccomplishmentsLayout.QUESTS, 100_000);
+		check(maxScroll > 0 && panel.questAt(panel.bodyLeft(), panel.listBottom() - 1, maxScroll) == 59,
+			"Last visible quest at maximum scroll");
+		if (panel.left < chatRight) {
+			check(panel.bottom <= chat.entryTop(), "Accomplishments stays clear of chat input");
+		}
+		if (bottomLauncher) {
+			check(panel.bottom < anchor, "Accomplishments stays above the lower toolbar");
 		}
 	}
 
