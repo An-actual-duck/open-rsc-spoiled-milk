@@ -15,7 +15,36 @@ Use the existing Classic bitmap lettering and approved assets for development. S
 | Session screens and modal states | Login and registration, appearance, loading and reconnect, welcome and notices, reporting, input prompts, confirmations, password and recovery pages, sleep, and logout. |
 | In-game developer tools | World Builder panels, definitions browser and selection controls. Check their hit regions against terrain picking in the same viewport. |
 
-Chat is the first in-game pass. It takes its dimensions from the UI size setting and its fonts from the text size setting. The other interfaces still use their legacy dimensions. The two preferences appear under **Options → Graphics → Interface preview** and use the existing local client settings store.
+Chat and dialogue responses take their dimensions from the UI size setting and their fonts from the text size setting. The two preferences appear under **Options → Graphics → Interface preview** and use the existing local client settings store.
+
+## Dialogue and item windows
+
+The dialogue preview moves existing response choices into a translucent panel
+above chat. It uses the same geometry for wrapping, drawing and selecting
+responses. Keyboard selection and the existing server response indices carry
+over.
+
+The conversation panel should frame the player on the left, the NPC on the
+right, and speech and responses in the middle. Dim the portrait of the
+participant who is listening. Existing NPC speech, player quest speech and
+response choices arrive on different packet paths. Associate speech and choices
+with an explicit conversation and speaker before displaying portraits or
+advancing the conversation in the panel. Test the composition with existing
+character sprites before deciding what portrait artwork is needed.
+
+The server's common script helpers already know the NPC involved in many
+conversations. Use that identity and the dialogue session lifecycle for
+private speech and responses. Keep ambient speech in its existing channel.
+Prototype with the banker's branching conversation and verify both participant
+turns, choices, cancellation and the handoff into the bank window.
+
+Inventory is the first sidebar layout to use for testing tabs, item cells and
+dragging. Test the shared item window in the bank, crafting and shops. Support
+tabs as a layout control. The Monster Slayer reward-shop picker is a candidate
+for switching stock and currency in place once the shared window works with
+the current server-authorized shop actions.
+
+## Preview
 
 The private browser selectors are `interface=1080p` and `interface=540p` on loopback. Standalone development uses `-Dspoiledmilk.nativeHdInterface=true` with a render surface such as `-Dspoiledmilk.renderSurfaceMode=1920x1080`. Choose both UI and text sizes in each resolution and confirm the selections persist after restarting with the same client profile.
 

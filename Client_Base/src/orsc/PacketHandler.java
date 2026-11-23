@@ -4933,12 +4933,12 @@ public class PacketHandler {
 	}
 
 	private void showOptionsMenu() {
-		mc.setOptionsMenuShow(true);
 		int count = packetsIncoming.getUnsignedByte();
 		mc.setOptionsMenuCount(count);
 		for (int i = 0; count > i; ++i) {
 			mc.setOptionsMenuText(i, packetsIncoming.readString());
 		}
+		mc.setOptionsMenuShow(true);
 	}
 
 	private void loadArea() {

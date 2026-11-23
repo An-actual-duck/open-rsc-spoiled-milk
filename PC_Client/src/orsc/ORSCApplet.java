@@ -1434,6 +1434,12 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			boolean zoomable = !scrollableMessagePanel && !mayBeScrollable;
 
 
+			if (mudclient.hasDialogueChoiceInput()) {
+				e.consume();
+				mudclient.runScroll(e.getWheelRotation());
+				return;
+			}
+
 			// Disables zoom while visible
 			boolean inScrollable = (Config.S_SPAWN_AUCTION_NPCS && mudclient.auctionHouse.isVisible() || mudclient.onlineList.isVisible() || Config.S_WANT_SKILL_MENUS && mudclient.skillGuideInterface.isVisible()
 				|| Config.S_WANT_QUEST_MENUS && mudclient.questGuideInterface.isVisible() || mudclient.clan.getClanInterface().isVisible() || mudclient.experienceConfigInterface.isVisible()

@@ -1248,7 +1248,9 @@ public final class mudclient implements Runnable {
 	private boolean showDialogShop = false;
 	private boolean showDialogTrade = false;
 	private boolean showDialogTradeConfirm = false;
-	private boolean optionsMenuShow = false;
+	private volatile boolean optionsMenuShow = false;
+	private DialogueChoicesPanel dialogueChoicesPanel;
+	private final java.util.concurrent.atomic.AtomicInteger dialogueScroll = new java.util.concurrent.atomic.AtomicInteger();
 	private int showUiWildWarn = 0;
 	private int recentSkill = -1;
 	private String sleepingStatusText = null;
@@ -8532,6 +8534,47 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private boolean usesDialogueChoicesPanel() {
+		return chatLayout != null && optionsMenuCount > 0;
+	}
+
+	boolean hasDialogueChoiceInput() {
+		return optionsMenuShow && usesDialogueChoicesPanel();
+	}
+
+	private void handleDialogueChoicesInput() {
+		DialogueChoicesPanel panel = dialogueChoicesPanel;
+		if (panel == null) {
+			GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+			GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+			MudClientGraphics surface = getSurface();
+			panel = new DialogueChoicesPanel(getGameWidth(), chatLayout.historyTop() - size.pixels(8),
+				size, text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+				S_WANT_KEYBOARD_SHORTCUTS > 1, optionsMenuText, optionsMenuCount,
+				value -> surface.stringWidth(text.bodyFont, value));
+			dialogueChoicesPanel = panel;
+		}
+		panel.scrollRows(dialogueScroll.getAndSet(0));
+		if (mouseButtonClick != 0) {
+			int choice = panel.activate(mouseX, mouseY);
+			if (choice != DialogueChoicesPanel.SCROLLED) {
+				submitDialogueChoice(choice);
+			}
+			mouseButtonClick = 0;
+		}
+	}
+
+	private synchronized void submitDialogueChoice(int choice) {
+		if (!optionsMenuShow) {
+			return;
+		}
+		packetHandler.getClientStream().newPacket(116);
+		packetHandler.getClientStream().bufferBits.putByte(choice);
+		packetHandler.getClientStream().finishPacket();
+		setOptionsMenuShow(false);
+		mouseButtonClick = 0;
+	}
+
 	private void drawDialogServerMessage(byte var1) {
 		try {
 
@@ -9689,6 +9732,7 @@ public final class mudclient implements Runnable {
 	private void drawGame(int var1) {
 		try {
 			if (chatLayoutDirty) {
+				dialogueChoicesPanel = null;
 				repositionChat(!authenticSettings && C_CUSTOM_UI);
 			}
 			this.getSurface().beginRenderer2DFrame();
@@ -13250,7 +13294,10 @@ public final class mudclient implements Runnable {
 						var3 += 20;
 						this.getSurface().drawColoredStringCentered(256, var11 + "*", 0xFFFFFF, 0, 4, var3);
 					}*/
-				if (this.optionsMenuShow) {
+				boolean dialogueOwnsInput = optionsMenuShow && usesDialogueChoicesPanel();
+				if (dialogueOwnsInput) {
+					handleDialogueChoicesInput();
+				} else if (this.optionsMenuShow) {
 					this.drawDialogOptionsMenu(-312);
 				}
 
@@ -13302,7 +13349,7 @@ public final class mudclient implements Runnable {
 					}
 				}
 
-				boolean mustDrawMenu = !this.optionsMenuShow && !this.topMouseMenuVisible;
+				boolean mustDrawMenu = !dialogueOwnsInput && !this.optionsMenuShow && !this.topMouseMenuVisible;
 				if (mustDrawMenu) {
 					this.menuCommon.recalculateSize(0);
 				}
@@ -13347,12 +13394,16 @@ public final class mudclient implements Runnable {
 					this.drawUiTabOptions(15, acceptTabInput);
 				}
 
-				if (!this.topMouseMenuVisible && !this.optionsMenuShow) {
+				if (!dialogueOwnsInput && !this.topMouseMenuVisible && !this.optionsMenuShow) {
 					this.createTopMouseMenu(-128);
 				}
 
-				if (this.topMouseMenuVisible && !this.optionsMenuShow) {
+				if (!dialogueOwnsInput && this.topMouseMenuVisible && !this.optionsMenuShow) {
 					this.drawMenu();
+				}
+				DialogueChoicesPanel dialogue = dialogueChoicesPanel;
+				if (dialogueOwnsInput && optionsMenuShow && dialogue != null) {
+					dialogue.draw(getSurface(), mouseX, mouseY);
 				}
 			}
 			this.mouseButtonClick = 0;
@@ -19254,6 +19305,7 @@ public final class mudclient implements Runnable {
 		}
 		gameWidth = resizeWidth;
 		gameHeight = resizeHeight - 12;
+		dialogueChoicesPanel = null;
 
 		resizeWidth = resizeHeight = -1;
 
@@ -20452,19 +20504,15 @@ public final class mudclient implements Runnable {
 						return;
 					}
 
-					if (optionsMenuShow && S_WANT_KEYBOARD_SHORTCUTS > 0) {
-						try {
-							int option = Integer.parseInt("" + (char) key) - 1;
-							if (option >= 0 && option < optionsMenuCount) {
-								this.packetHandler.getClientStream().newPacket(116);
-								this.packetHandler.getClientStream().bufferBits.putByte(option);
-								this.packetHandler.getClientStream().finishPacket();
-								mouseButtonClick = 0;
-								optionsMenuShow = false;
-								return;
-							}
-						} catch (Exception e) {
-
+					if (hasDialogueChoiceInput() && (key == 27 || desktopKeyCode == 27)) {
+						submitDialogueChoice(DialogueChoicesPanel.CANCEL);
+						return;
+					}
+					if (optionsMenuShow && S_WANT_KEYBOARD_SHORTCUTS > 0 && key >= '1' && key <= '9') {
+						int option = key - '1';
+						if (option < optionsMenuCount) {
+							submitDialogueChoice(option);
+							return;
 						}
 					}
 					if ((key == '\n' || key == '\r') && (this.inputX_Action == InputXAction.BANK_DEPOSIT || this.inputX_Action == InputXAction.BANK_WITHDRAW)) {
@@ -22568,6 +22616,7 @@ public final class mudclient implements Runnable {
 			this.logoutTimeout = 0;
 			this.loginScreenNumber = 0;
 			this.currentViewMode = GameMode.LOGIN;
+			setOptionsMenuShow(false);
 
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
@@ -25789,6 +25838,7 @@ public final class mudclient implements Runnable {
 			if (var1 <= 59) {
 				this.drawDialogOptionsMenu(-85);
 			}
+			setOptionsMenuShow(false);
 
 			if (this.logoutTimeout != 0) {
 				this.closeClientStreamOnly();
@@ -27883,8 +27933,13 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	public void setOptionsMenuShow(boolean show) {
-		this.optionsMenuShow = show;
+	public synchronized void setOptionsMenuShow(boolean show) {
+		dialogueChoicesPanel = null;
+		dialogueScroll.set(0);
+		if (show && usesDialogueChoicesPanel()) {
+			topMouseMenuVisible = false;
+		}
+		optionsMenuShow = show;
 	}
 
 	public void setOptionsMenuCount(int i) {
@@ -31087,6 +31142,10 @@ public final class mudclient implements Runnable {
 	}
 
 	public void runScroll(int x) {
+		if (hasDialogueChoiceInput()) {
+			dialogueScroll.addAndGet(Integer.signum(x));
+			return;
+		}
 		if (x > 1)
 			x += x;
 		else if (x < -1)
