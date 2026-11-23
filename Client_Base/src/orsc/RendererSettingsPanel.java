@@ -46,6 +46,8 @@ final class RendererSettingsPanel {
 	private static final int ACTION_WINDOW_MODE = 63;
 	private static final int ACTION_BROWSER_FIT = 75;
 	private static final int ACTION_BROWSER_FULLSCREEN = 76;
+	private static final int ACTION_INTERFACE_SIZE = 77;
+	private static final int ACTION_INTERFACE_TEXT_SIZE = 78;
 	private static final int ACTION_TERRAIN_VARIATION = 64;
 	private static final int ACTION_HIDE_ROOFS = 26;
 	private static final int ACTION_HIDE_UNDERGROUND_FLICKER = 42;
@@ -65,6 +67,8 @@ final class RendererSettingsPanel {
 		REMASTERED_SPRITES,
 		BROWSER_FIT,
 		BROWSER_FULLSCREEN,
+		INTERFACE_SIZE,
+		INTERFACE_TEXT_SIZE,
 		HIDE_ROOFS,
 		HIDE_UNDERGROUND_FLICKER
 	}
@@ -344,12 +348,16 @@ final class RendererSettingsPanel {
 			addRow(rows, "@whi@Fit to tab - " + (BrowserPresentationSettings.isFitToTab() ? "@gre@On" : "@red@Off"), ACTION_BROWSER_FIT);
 			addRow(rows, "@whi@Fullscreen - " + (BrowserPresentationSettings.isFullscreen() ? "@gre@On" : "@red@Off"), ACTION_BROWSER_FULLSCREEN);
 		}
-
 		if (!state.openGLPrimary && !state.browserGpu) {
 			addRow(rows, "@whi@Scaling - ", ACTION_SCALING_ROW);
 			addRow(rows, "@whi@Scaling type - @gre@" + scalingTypeDescription(state.scalingType),
 				ACTION_SCALING_TYPE);
+			addInterfaceSizingRows(rows);
 		} else {
+			addInterfaceSizingRows(rows);
+			if (RenderSurfaceSettings.isInterfacePreviewEnabled()) {
+				addSection(rows, "Rendering");
+			}
 			if (state.openGLPrimary) {
 				addRow(rows, "@whi@Aspect Ratio - " + state.aspectLabel, ACTION_RENDER_SURFACE);
 				addRow(rows, "@whi@Window mode - " + state.windowModeLabel, ACTION_WINDOW_MODE);
@@ -397,7 +405,19 @@ final class RendererSettingsPanel {
 		return Collections.unmodifiableList(rows);
 	}
 
+	private static void addInterfaceSizingRows(List<Row> rows) {
+		if (RenderSurfaceSettings.isInterfacePreviewEnabled()) {
+			addSection(rows, "Interface preview");
+			addRow(rows, "@whi@UI size - @gre@" + GameInterfaceSettings.size().percent + "%", ACTION_INTERFACE_SIZE);
+			addRow(rows, "@whi@Text size - @gre@" + GameInterfaceSettings.textSize().label, ACTION_INTERFACE_TEXT_SIZE);
+		}
+	}
+
 	private static Action actionFor(int selectedAction, State state) {
+		if (RenderSurfaceSettings.isInterfacePreviewEnabled()) {
+			if (selectedAction == ACTION_INTERFACE_SIZE) return Action.INTERFACE_SIZE;
+			if (selectedAction == ACTION_INTERFACE_TEXT_SIZE) return Action.INTERFACE_TEXT_SIZE;
+		}
 		if (BrowserPublicGraphicsPreset.isEnabled()
 			&& (selectedAction == ACTION_FOG || selectedAction == ACTION_LIGHTING || selectedAction == ACTION_GEOMETRY)) return null;
 		if (selectedAction == ACTION_SCALING_TYPE && !state.openGLPrimary && !state.browserGpu) {

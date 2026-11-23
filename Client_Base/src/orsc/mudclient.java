@@ -1160,6 +1160,8 @@ public final class mudclient implements Runnable {
 	private int panelMessageQuest;
 	private int panelMessageClan;
 	private Panel panelMessageTabs;
+	private ChatPanelLayout chatLayout;
+	private boolean chatLayoutDirty;
 	private Panel panelPlayerInfo;
 	private Panel panelQuestInfo;
 	private Panel panelPlayerTaskInfo;
@@ -1484,6 +1486,7 @@ public final class mudclient implements Runnable {
 
 		initConfig();
 		Properties clientSettings = loadClientSettings();
+		GameInterfaceSettings.loadFromClientSettings(clientSettings);
 		SpellbookLayoutSettings.loadFromClientSettings(clientSettings);
 		HitSplatDisplaySettings.loadFromClientSettings(clientSettings);
 		RemasteredSpriteSettings.loadFromClientSettings(clientSettings);
@@ -1523,6 +1526,13 @@ public final class mudclient implements Runnable {
 		Properties props = loadClientSettings();
 		HitSplatDisplaySettings.saveToClientSettings(props);
 		saveClientSettings(props);
+	}
+
+	private void applyGameInterfaceSizing() {
+		Properties props = loadClientSettings();
+		GameInterfaceSettings.saveToClientSettings(props);
+		saveClientSettings(props);
+		chatLayoutDirty = true;
 	}
 
 	private static void saveClientSetting(String key, String value) {
@@ -7454,6 +7464,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawChatMessageTabs(int var1) {
+		if (chatLayout != null) {
+			drawScaledChatTabs(var1 == 5);
+			return;
+		}
 		try {
 			this.getSurface().drawSpriteClipping(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, getGameHeight(), getGameWidth(), 10, 0, 0, 0, false, 0, 1);
 			if (S_WANT_CLANS) {
@@ -7520,6 +7534,160 @@ public final class mudclient implements Runnable {
 			}
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "client.QB(" + var1 + ')');
+		}
+	}
+
+	private void drawScaledChatTabs(boolean drawLabels) {
+		MudClientGraphics surface = getSurface();
+		for (int tab = 0; tab < ChatPanelLayout.TAB_COUNT; tab++) {
+			int left = chatLayout.tabBoundary(tab);
+			int width = chatLayout.tabBoundary(tab + 1) - left;
+			boolean selected = messageTabSelected == MessageTab.lookup(tab) && (tab != 4 || S_WANT_CLANS);
+			surface.drawVerticalGradient(left, chatLayout.tabsTop(), width, chatLayout.tabsHeight,
+				selected ? 0x596A83 : 0x3B4C67, selected ? 0x344258 : 0x252F41);
+			surface.drawBoxBorder(left, width, chatLayout.tabsTop(), chatLayout.tabsHeight, 0x141E2E);
+			surface.drawLineHoriz(left + 1, chatLayout.tabsTop() + 1, width - 2, selected ? 0xD2B873 : 0x677B96);
+			if (drawLabels) {
+				int color = selected ? 0xFFDC82 : 0xFFFFFF;
+				if (chatLayoutTabActivity(tab) % 30 > 15) {
+					color = 0xFF8580;
+				}
+				String label = tab == 4 && !S_WANT_CLANS ? "Report Abuse" : CHAT_TAB_LABELS[tab];
+				surface.drawColoredStringCentered(left + width / 2, label, color, 0,
+					chatLayout.labelFont, chatLayout.tabsTop() + chatLayout.labelBaseline);
+			}
+		}
+	}
+
+	private static final String[] CHAT_TAB_LABELS = {"All", "Local", "Game", "Private", "Clan"};
+
+	private void handleScaledChatTabSelection() {
+		int tabIndex = chatLayout.tabAt(mouseX, mouseY);
+		if (tabIndex < 0) {
+			return;
+		}
+		if (lastMouseButtonDown == 1) {
+			MessageTab tab = MessageTab.lookup(tabIndex);
+			if (tab == MessageTab.CLAN && !S_WANT_CLANS) {
+				inputTextFinal = "";
+				inputTextCurrent = "";
+				reportAbuse_State = 1;
+			} else {
+				messageTabSelected = tab;
+				int control = chatHistoryControl(tab);
+				if (control >= 0) {
+					panelMessageTabs.controlScrollAmount[control] = 999999;
+				}
+			}
+		}
+		currentMouseButtonDown = 0;
+		lastMouseButtonDown = 0;
+	}
+
+	private int chatHistoryControl(MessageTab tab) {
+		switch (tab) {
+			case CHAT: return panelMessageChat;
+			case QUEST: return panelMessageQuest;
+			case PRIVATE: return panelMessagePrivate;
+			case CLAN: return panelMessageClan;
+			default: return -1;
+		}
+	}
+
+	private int chatLayoutTabActivity(int tab) {
+		switch (tab) {
+			case 0: return messageTabActivity_Game;
+			case 1: return messageTabActivity_Chat;
+			case 2: return messageTabActivity_Quest;
+			case 3: return messageTabActivity_Private;
+			case 4: return S_WANT_CLANS ? messageTabActivity_Clan : 0;
+			default: return 0;
+		}
+	}
+
+	private void drawScaledChatBackdrop() {
+		boolean historyOpen = isScaledChatHistoryVisible();
+		int top = historyOpen ? chatLayout.historyTop() : chatLayout.entryTop();
+		int height = chatLayout.tabsTop() - top;
+		getSurface().drawBoxAlpha(chatLayout.left, top, chatLayout.width, height, 0x182333, 205);
+		getSurface().drawBoxBorder(chatLayout.left, chatLayout.width, top, height, 0x667993);
+		if (historyOpen) {
+			getSurface().drawLineHoriz(chatLayout.left + 1, chatLayout.entryTop(), chatLayout.width - 2, 0x667993);
+		}
+	}
+
+	private boolean isScaledChatHistoryVisible() {
+		if (messageTabSelected != MessageTab.ALL) {
+			return true;
+		}
+		for (int row = 0; row < messagesArray.length; row++) {
+			if (MessageHistory.messageHistoryTimeout[row] > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private int recentChatBaseline(int row) {
+		if (chatLayout != null) {
+			return chatLayout.recentBaseline(row);
+		}
+		int bottom = getGameHeight();
+		if (isAndroid() && osConfig.F_SHOWING_KEYBOARD) {
+			bottom = (int) (bottom / 2.5) + 8;
+		}
+		return bottom - row * 12 - 18;
+	}
+
+	private boolean isOverRecentChatRow(int row, String message) {
+		if (chatLayout == null) {
+			int baseline = getGameHeight() - row * 12 - 18;
+			return mouseX > 7 && mouseX < getSurface().stringWidth(1, message) + 7
+				&& mouseY > baseline - 12 && mouseY < baseline;
+		}
+		int baseline = recentChatBaseline(row);
+		int textLeft = chatLayout.left + chatLayout.textInset;
+		return chatLayout.containsHistory(mouseX, mouseY) && mouseX >= textLeft
+			&& mouseX < textLeft + getSurface().stringWidth(chatLayout.bodyFont, message)
+			&& mouseY >= baseline - chatLayout.lineHeight && mouseY <= baseline;
+	}
+
+	private void drawRecentChat() {
+		if (chatLayout != null) {
+			getSurface().setClip(chatLayout.left + 1, chatLayout.left + chatLayout.width - 1, chatLayout.entryTop(), chatLayout.historyTop() + 1);
+		}
+		try {
+			int font = chatLayout == null ? 1 : chatLayout.bodyFont;
+			int x = chatLayout == null ? 7 : chatLayout.left + chatLayout.textInset;
+			for (int row = 0; row < messagesArray.length; row++) {
+				if (MessageHistory.messageHistoryTimeout[row] > 0) {
+					String message = MessageHistory.messageHistoryColor[row]
+						+ StringUtil.formatMessage(MessageHistory.messageHistoryMessage[row],
+							MessageHistory.messageHistorySender[row], MessageHistory.messageHistoryType[row],
+							MessageHistory.messageHistoryColor[row]);
+					getSurface().drawColoredString(x, recentChatBaseline(row), message, font, 0xFFFF00,
+						MessageHistory.messageHistoryCrownID[row]);
+				}
+			}
+		} finally {
+			if (chatLayout != null) {
+				getSurface().clearClip();
+			}
+		}
+	}
+
+	private void drawChatControls() {
+		MiscFunctions.textListEntryHeightMod = chatLayout == null ? 2 : 0;
+		if (chatLayout != null) {
+			getSurface().setClip(chatLayout.left + 1, chatLayout.left + chatLayout.width - 1, chatLayout.tabsTop(), chatLayout.historyTop() + 1);
+		}
+		try {
+			panelMessageTabs.drawPanel();
+		} finally {
+			MiscFunctions.textListEntryHeightMod = 0;
+			if (chatLayout != null) {
+				getSurface().clearClip();
+			}
 		}
 	}
 
@@ -9520,6 +9688,9 @@ public final class mudclient implements Runnable {
 
 	private void drawGame(int var1) {
 		try {
+			if (chatLayoutDirty) {
+				repositionChat(!authenticSettings && C_CUSTOM_UI);
+			}
 			this.getSurface().beginRenderer2DFrame();
 			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
 
@@ -10455,20 +10626,11 @@ public final class mudclient implements Runnable {
 						}
                         this.getSurface().captureRenderer2DUiBaseFrame();
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
-						if (this.messageTabSelected == MessageTab.ALL) {
-							for (centerX = 0; centerX < messagesArray.length; ++centerX) {
-							if (MessageHistory.messageHistoryTimeout[centerX] > 0) {
-								String var17 = MessageHistory.messageHistoryColor[centerX]
-									+ StringUtil.formatMessage(MessageHistory.messageHistoryMessage[centerX],
-									MessageHistory.messageHistorySender[centerX],
-									MessageHistory.messageHistoryType[centerX], MessageHistory.messageHistoryColor[centerX]);
-								double boost = this.getGameHeight();
-								if (isAndroid() && osConfig.F_SHOWING_KEYBOARD)
-									boost = (boost / 2.5) + 8;
-								this.getSurface().drawColoredString(7, (int) boost - centerX * 12 - 18, var17,
-									1, 0xFFFF00, MessageHistory.messageHistoryCrownID[centerX]);
-							}
-						}
+					if (chatLayout != null) {
+						drawScaledChatBackdrop();
+					}
+					if (this.messageTabSelected == MessageTab.ALL) {
+						drawRecentChat();
 					}
 
 
@@ -10487,9 +10649,7 @@ public final class mudclient implements Runnable {
 						this.panelMessageTabs.show(this.panelMessageClan);
 					}
 
-					MiscFunctions.textListEntryHeightMod = 2;
-					this.panelMessageTabs.drawPanel();
-					MiscFunctions.textListEntryHeightMod = 0;
+					drawChatControls();
 
 					//redstones below (temporary, can be done better with proper tab sprites for ui)
 					if (C_CUSTOM_UI) {
@@ -13280,6 +13440,9 @@ public final class mudclient implements Runnable {
 		return true;
 	}
 	private boolean isMouseOverMessageUi(int x,int y){
+		if (chatLayout != null) {
+			return chatLayout.contains(x, y, isScaledChatHistoryVisible());
+		}
 		int panelTop=this.messageTabSelected==MessageTab.ALL
 			?getGameHeight()-10:getGameHeight()-65;
 		return x>=0&&x<getGameWidth()
@@ -13405,9 +13568,7 @@ public final class mudclient implements Runnable {
 						String msg = StringUtil.formatMessage(
 							MessageHistory.messageHistoryMessage[i], MessageHistory.messageHistorySender[i],
 							MessageHistory.messageHistoryType[i], MessageHistory.messageHistoryColor[i]);
-						if (this.mouseX > 7 && this.mouseX < this.getSurface().stringWidth(1, msg) + 7
-							&& this.mouseY > -(i * 12) - 30 + this.getGameHeight()
-							&& this.getGameHeight() - i * 12 - 18 > this.mouseY
+						if (isOverRecentChatRow(i, msg)
 							&& (this.mouseButtonClick == 2
 							|| this.optionMouseButtonOne && this.mouseButtonClick == 1)
 							&& this.drawMenuMessage(MessageHistory.messageHistoryClan[i], 127,
@@ -13421,6 +13582,9 @@ public final class mudclient implements Runnable {
 			this.menuVisible = false;
 
 			this.sceneInstanceStore.clearFrameMarks();
+			if (chatLayout != null && isMouseOverMessageUi(mouseX, mouseY)) {
+				return;
+			}
 
 			int var2 = -1;
 			int var3 = this.scene.b(0);
@@ -17295,6 +17459,14 @@ public final class mudclient implements Runnable {
 			case BROWSER_FULLSCREEN:
 				BrowserPresentationSettings.request(BrowserPresentationSettings.FULLSCREEN);
 				break;
+			case INTERFACE_SIZE:
+				GameInterfaceSettings.cycleSize();
+				this.applyGameInterfaceSizing();
+				break;
+			case INTERFACE_TEXT_SIZE:
+				GameInterfaceSettings.cycleTextSize();
+				this.applyGameInterfaceSizing();
+				break;
 			case HIDE_ROOFS:
 				this.toggleRoofVisibilitySetting();
 				break;
@@ -19020,12 +19192,7 @@ public final class mudclient implements Runnable {
 			getAbilitiesPanelTop() + 24 + SPELLS_SUBTAB_HEIGHT, 196, 90);
 		panelPlayerInfo.reposition(controlPlayerInfoPanel, var3, (maxY - 287) + 24, 196, 251);
 		panelQuestInfo.reposition(controlQuestInfoPanel, var3, (maxY - 287) + 24, 196, 251);
-		int offX = 300;
-		panelMessageTabs.reposition(panelMessageChat, 5, getGameHeight() - 65, getGameWidth() - offX, 56);
-		panelMessageTabs.reposition(panelMessageEntry, 7, getGameHeight() - 10, getGameWidth() - offX, 14);
-		panelMessageTabs.reposition(panelMessageQuest, 5, getGameHeight() - 65, getGameWidth() - offX, 56);
-		panelMessageTabs.reposition(panelMessagePrivate, 5, getGameHeight() - 65, getGameWidth() - offX, 56);
-		panelMessageTabs.reposition(panelMessageClan, 5, getGameHeight() - 65, getGameWidth() - offX, 56);
+		repositionChat(true);
 	}
 
 	void repositionAuthenticUI() {
@@ -19038,11 +19205,47 @@ public final class mudclient implements Runnable {
 		panelMagic.reposition(controlMagicPanel, var3, 24 + var12 + SPELLS_SUBTAB_HEIGHT, 196, 90);
 		panelPlayerInfo.reposition(controlPlayerInfoPanel, var3, 24 + var12, 196, 251);
 		panelQuestInfo.reposition(controlQuestInfoPanel, var3, 24 + var12, 196, 251);
-		panelMessageTabs.reposition(panelMessageChat, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
-		panelMessageTabs.reposition(panelMessageEntry, 7, getGameHeight() - 10, getGameWidth() - 14, 14);
-		panelMessageTabs.reposition(panelMessageQuest, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
-		panelMessageTabs.reposition(panelMessagePrivate, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
-		panelMessageTabs.reposition(panelMessageClan, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
+		repositionChat(false);
+	}
+
+	private boolean usesNativeHdInterface() {
+		return !isAndroid() && RenderSurfaceSettings.usesNativeHdInterface(gameHeight + 12);
+	}
+
+	private void repositionChat(boolean customInterface) {
+		chatLayoutDirty = false;
+		chatLayout = null;
+		if (!isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled()) {
+			GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+			MudClientGraphics surface = getSurface();
+			chatLayout = new ChatPanelLayout(gameWidth, gameHeight + 12, GameInterfaceSettings.size(), text,
+				surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+				surface.stringWidth(text.labelFont, "Report Abuse"));
+		}
+		int listX = chatLayout == null ? 5 : chatLayout.left + chatLayout.textInset - 2;
+		int listY = chatLayout == null ? gameHeight - 65 : chatLayout.historyTop();
+		int listWidth = chatLayout == null ? gameWidth - (customInterface ? 300 : 10)
+			: chatLayout.width - 2 * chatLayout.textInset + 2;
+		int listHeight = chatLayout == null ? 56 : chatLayout.historyHeight;
+		int font = chatLayout == null ? 1 : chatLayout.bodyFont;
+		panelMessageTabs.setChatScrollbarWidth(chatLayout == null ? 12 : chatLayout.scrollbarWidth);
+		for (int control : new int[] {panelMessageChat, panelMessageQuest, panelMessagePrivate, panelMessageClan}) {
+			panelMessageTabs.reposition(control, listX, listY, listWidth, listHeight);
+			panelMessageTabs.setTextFont(control, font);
+		}
+		int entryWidth = chatLayout == null ? gameWidth - (customInterface ? 300 : 14) : listWidth;
+		int entryHeight = chatLayout == null ? 14 : chatLayout.entryHeight;
+		int entryY = chatLayout == null ? gameHeight - 10 : chatLayout.entryTop() + entryHeight / 2;
+		panelMessageTabs.reposition(panelMessageEntry, listX + 2, entryY, entryWidth, entryHeight);
+		panelMessageTabs.setTextFont(panelMessageEntry, font);
+	}
+
+	private void resizeSceneViewport() {
+		// The legacy focal length is a power of two. At twice the render height
+		// use twice the focal length to preserve the wide viewport's framing.
+		int projectionShift = usesNativeHdInterface() ? m_qd + 1 : m_qd;
+		scene.setMidpoints(halfGameHeight(), true, gameWidth, halfGameWidth(),
+			halfGameHeight(), projectionShift, halfGameWidth());
 	}
 
 	boolean reposition() {
@@ -19056,8 +19259,7 @@ public final class mudclient implements Runnable {
 
 		getSurface().resize(this.gameWidth, this.gameHeight + 12);
 		this.getSurface().setClip(0, this.getGameWidth(), this.getGameHeight() + 12, 0);
-		this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(), this.halfGameWidth(),
-			this.halfGameHeight(), this.m_qd, this.halfGameWidth());
+		resizeSceneViewport();
 
 		clientPort.resized();
 		int var3 = this.getSurface().width2 - 199;
@@ -19701,7 +19903,9 @@ public final class mudclient implements Runnable {
 				this.preloadTerrainForActiveMovementContext();
 
 				if (!this.isSleeping) {
-					if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
+					if (chatLayout != null) {
+						handleScaledChatTabSelection();
+					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
 						if (mouseX > 15 + (halfGameWidth() - 256) && mouseX < 96 + (halfGameWidth() - 256)
 							&& lastMouseButtonDown == 1)
 							this.messageTabSelected = MessageTab.ALL;
@@ -19748,7 +19952,7 @@ public final class mudclient implements Runnable {
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
 					bank.bank.handleMouse(this.mouseX, this.mouseY,
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					if (this.messageTabSelected != MessageTab.ALL && this.mouseX >= 494
+					if (chatLayout == null && this.messageTabSelected != MessageTab.ALL && this.mouseX >= 494
 						&& this.mouseY >= this.getGameHeight() - 66) {
 						this.lastMouseButtonDown = 0;
 					}
@@ -29804,9 +30008,7 @@ public final class mudclient implements Runnable {
 							this.loadSlayerMovementPreviewSprites();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);
-							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),
-								this.halfGameWidth(), this.halfGameHeight(), this.m_qd,
-								this.halfGameWidth());
+							resizeSceneViewport();
 							this.scene.fogLandscapeDistance = 2400;
 							this.scene.fogEntityDistance = 2400;
 							this.scene.fogSmoothingStartDistance = 2300;
@@ -29846,9 +30048,7 @@ public final class mudclient implements Runnable {
 						if (!this.errorLoadingData) {
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);
-							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),
-								this.halfGameWidth(), this.halfGameHeight(), this.m_qd,
-								this.halfGameWidth());
+							resizeSceneViewport();
 							this.scene.fogLandscapeDistance = 2400;
 							this.scene.fogEntityDistance = 2400;
 							this.scene.fogSmoothingStartDistance = 2300;
@@ -29886,6 +30086,8 @@ public final class mudclient implements Runnable {
 			}
 			if (C_CUSTOM_UI) {
 				repositionCustomUI();
+			} else if (!isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled()) {
+				repositionChat(false);
 			}
 			startWorldBuilderSession();
 		} catch (RuntimeException var9) {
@@ -30892,6 +31094,14 @@ public final class mudclient implements Runnable {
 		if (worldEditorInterface != null && worldEditorInterface.scrollDefinitionBrowser(x)) {
 			return;
 		}
+		if (chatLayout != null && !controlPressed && chatLayout.containsHistory(mouseX, mouseY)
+			&& !isMouseOverOpenUiTabPanel(mouseX, mouseY)) {
+			int chatControl = chatHistoryControl(messageTabSelected);
+			if (chatControl >= 0) {
+				panelMessageTabs.scrollMethodList(chatControl, x);
+				return;
+			}
+		}
 		int visibleSideMenuTab = getVisibleSideMenuTab();
 		if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) { // Quest list.
 			if (uiTabPlayerInfoSubTab == 1) {
@@ -30949,14 +31159,12 @@ public final class mudclient implements Runnable {
 			}
 		} else if (experienceConfigInterface.isVisible() && experienceConfigInterface.selectSkillMenu) {
 			experienceConfigInterface.experienceConfig.scrollMethodList(experienceConfigInterface.experienceConfigScroll, x);
-		} else if (messageTabSelected == MessageTab.QUEST && !this.controlPressed)
-			panelMessageTabs.scrollMethodList(panelMessageQuest, x);
-		else if (this.messageTabSelected == MessageTab.CHAT && !this.controlPressed)
-			panelMessageTabs.scrollMethodList(panelMessageChat, x);
-		else if (this.messageTabSelected == MessageTab.PRIVATE && !this.controlPressed)
-			panelMessageTabs.scrollMethodList(panelMessagePrivate, x);
-		else if (this.messageTabSelected == MessageTab.CLAN && !this.controlPressed)
-			panelMessageTabs.scrollMethodList(panelMessageClan, x);
+		} else if (!controlPressed && chatLayout == null) {
+			int control = chatHistoryControl(messageTabSelected);
+			if (control >= 0) {
+				panelMessageTabs.scrollMethodList(control, x);
+			}
+		}
 	}
 
 	public boolean isShowDialogBank() {

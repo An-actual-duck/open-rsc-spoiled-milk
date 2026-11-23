@@ -14,6 +14,7 @@ public final class Panel {
 	public int[] controlListCurrentSize;
 	public int[] controlScrollAmount;
 	private int button1HeldTicks = 0;
+	private int chatScrollbarWidth = 12;
 	private int colorA;
 	private int colorB;
 	private int colorC;
@@ -1074,6 +1075,8 @@ public final class Panel {
 		try {
 
 			int var12 = height / this.graphics.fontHeight(font);
+			int scrollbarWidth = chatScrollbarWidth;
+			int trackHeight = height - scrollbarWidth * 2 - 3;
 			if (scroll > entryCount - var12) {
 				scroll = entryCount - var12;
 			}
@@ -1087,19 +1090,18 @@ public final class Panel {
 			int var14;
 			int var15;
 			if (entryCount > var12) {
-				var13 = width - 12 + x;
-				var14 = var12 * (height - 27) / entryCount;
+				var13 = width - scrollbarWidth + x;
+				var14 = var12 * trackHeight / entryCount;
 				if (var14 < 6) {
 					var14 = 6;
 				}
 
-				var15 = (-var14 - 27 + height) * scroll / (entryCount - var12);
-				if (this.currentMouseButtonDown == 1 && var13 <= this.currMouseX && this.currMouseX <= 12 + var13) {
-					if (this.currMouseY > y && y + 12 > this.currMouseY && scroll > 0) {
+				if (this.currentMouseButtonDown == 1 && var13 <= this.currMouseX && this.currMouseX <= scrollbarWidth + var13) {
+					if (this.currMouseY > y && y + scrollbarWidth > this.currMouseY && scroll > 0) {
 						--scroll;
 					}
 
-					if (height + y - 12 < this.currMouseY && this.currMouseY < height + y
+					if (height + y - scrollbarWidth < this.currMouseY && this.currMouseY < height + y
 						&& entryCount - var12 > scroll) {
 						++scroll;
 					}
@@ -1108,12 +1110,13 @@ public final class Panel {
 				}
 
 				if (this.currentMouseButtonDown == 1
-					&& (this.currMouseX >= var13 && this.currMouseX <= var13 + 12 || this.currMouseX >= var13 - 12
-					&& 24 + var13 >= this.currMouseX && this.isScrolling[controlIndex])) {
-					if (this.currMouseY > 12 + y && this.currMouseY < y + height - 12) {
+					&& (this.currMouseX >= var13 && this.currMouseX <= var13 + scrollbarWidth
+					|| this.currMouseX >= var13 - scrollbarWidth && 2 * scrollbarWidth + var13 >= this.currMouseX
+					&& this.isScrolling[controlIndex])) {
+					if (this.currMouseY > scrollbarWidth + y && this.currMouseY < y + height - scrollbarWidth) {
 						this.isScrolling[controlIndex] = true;
-						int var16 = this.currMouseY - var14 / 2 - y - 12;
-						scroll = var16 * entryCount / (height - 24);
+						int var16 = this.currMouseY - var14 / 2 - y - scrollbarWidth;
+						scroll = var16 * entryCount / (height - 2 * scrollbarWidth);
 						if (entryCount - var12 < scroll) {
 							scroll = entryCount - var12;
 						}
@@ -1128,8 +1131,12 @@ public final class Panel {
 					this.isScrolling[controlIndex] = false;
 				}
 
-				var15 = scroll * (height - 27 - var14) / (entryCount - var12);
-				this.renderScrollbar(x, y, width, height, var14, var15);
+				var15 = scroll * (trackHeight - var14) / (entryCount - var12);
+				if (scrollbarWidth == 12) {
+					this.renderScrollbar(x, y, width, height, var14, var15);
+				} else {
+					renderScaledChatScrollbar(var13, y, scrollbarWidth, height, var14, var15);
+				}
 			}
 
 			var13 = height - this.graphics.fontHeight(font) * var12;
@@ -1158,6 +1165,21 @@ public final class Panel {
 					+ ',' + y + ',' + width + ',' + height + ',' + entryCount + ','
 					+ (entriesString != null ? "{...}" : "null") + ',' + font + ',' + "false" + ')');
 		}
+	}
+
+	private void renderScaledChatScrollbar(int x, int y, int width, int height, int thumbHeight, int thumbOffset) {
+		int trackTop = y + width + 1;
+		int trackHeight = height - width * 2 - 3;
+		graphics.drawBoxBorder(x, width, y, height, 0);
+		graphics.drawVerticalGradient(x + 1, trackTop, width - 2, trackHeight, colorB, colorA);
+		graphics.drawBox(x + 2, trackTop + thumbOffset, width - 4, thumbHeight, colorD);
+		graphics.drawLineVert(x + 2, trackTop + thumbOffset, colorC, thumbHeight);
+		graphics.drawLineVert(x + width - 3, trackTop + thumbOffset, colorE, thumbHeight);
+		int arrowSize = width - 4;
+		graphics.drawSpriteClipping(graphics.spriteSelect(EntityHandler.GUIPARTS.MINIARROWUP.getDef()),
+			x + 2, y + 2, arrowSize, arrowSize, 0, 0, 0, false, 0, 1);
+		graphics.drawSpriteClipping(graphics.spriteSelect(EntityHandler.GUIPARTS.MINIARROWDOWN.getDef()),
+			x + 2, y + height - width + 2, arrowSize, arrowSize, 0, 0, 0, false, 0, 1);
 	}
 
 	private void renderSprite(int x, int y, Sprite sprite) {
@@ -1363,6 +1385,14 @@ public final class Panel {
 		this.controlWidth[id] = w;
 		this.controlHeight[id] = h;
 
+	}
+
+	public void setTextFont(int control, int font) {
+		controlArgInt[control] = font;
+	}
+
+	public void setChatScrollbarWidth(int width) {
+		chatScrollbarWidth = width;
 	}
 
 	public void resetScrollIndex(int auctionScrollHandle) {
