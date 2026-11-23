@@ -1589,6 +1589,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				WORLD_CHUNKS_TEXTURED_VISIBLE,
 				budgetResidentChunkUploads);
 			chunkUploadPhaseNanos = RenderTelemetry.elapsedSince(chunkUploadPhaseStart);
+			if (DesktopWorldStreamingPreview.ENABLED && frame.renderer3DFrame != null
+				&& chunkUploadStats.uploadedChunks == 0 && chunkUploadStats.deferredChunks == 0
+				&& !frame.renderer3DFrame.getPreparedTerrain().isEmpty()) {
+				worldChunkRenderer.stagePreparedTerrain(frame.renderer3DFrame, WORLD_CHUNKS_TEXTURED_VISIBLE);
+			}
 			RenderTelemetry.recordOpenGLWorldChunkUpload(
 				chunkUploadStats.requestedChunks,
 				chunkUploadStats.uploadedChunks,

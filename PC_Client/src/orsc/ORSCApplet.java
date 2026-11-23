@@ -800,6 +800,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		BufferedImage renderer2DUiBaseImage = getRenderer2DUiBaseImage();
 		Renderer2DFrame renderer2DFrame = mudclient.getSurface().consumeRenderer2DFrame();
 		Renderer3DFrame renderer3DFrame = getRenderer3DFrame();
+		if (DesktopWorldStreamingPreview.ENABLED && renderer3DFrame != null && mudclient.isGameView()) {
+			renderer3DFrame.setPreparedTerrain(mudclient.getPreparedTerrainMeshes(true));
+		}
 		long presentStart = RenderTelemetry.now();
 		scaledWindow.setGameImage(
 			frameImage,

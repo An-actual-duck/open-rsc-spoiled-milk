@@ -4,12 +4,18 @@
 import argparse
 import hashlib
 import json
+import shlex
 from pathlib import Path
 import shutil
 import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[3]
+LIVE_SURFACE_PROPERTIES = (
+    'persistentMovementPreview', 'persistentSurfaceCollision', 'surfaceSceneryCells',
+    'rollingSurfaceWindow', 'fixedSurfaceDraw', 'expandedSurfaceDrawBorder',
+    'surfaceSceneryDraw', 'liveSurfaceHandoff',
+)
 
 
 def main():
@@ -20,11 +26,16 @@ def main():
     parser.add_argument('--control', action='store_true')
     parser.add_argument('--outer-coverage', action='store_true')
     parser.add_argument('--live-surface', action='store_true')
+    parser.add_argument('--desktop-preupload', action='store_true',
+                        help='Stage incoming draw buffers on native OpenGL before walking adoption')
+    parser.add_argument('--client-jar', type=Path, default=ROOT / 'Client_Base/Open_RSC_Client.jar')
     args = parser.parse_args()
     if not args.name or not all(c.isascii() and (c.isalnum() or c in '-_') for c in args.name):
         parser.error('Use a simple new run name')
     if not all(1024 <= port <= 65535 for port in (args.tcp_port, args.ws_port)) or args.tcp_port == args.ws_port:
         parser.error('Use two different nonprivileged loopback ports')
+    if args.desktop_preupload and not args.live_surface:
+        parser.error('Desktop preupload requires the private live-surface mode')
     if args.live_surface:
         args.outer_coverage = True
     if args.control and args.outer_coverage:
@@ -40,7 +51,7 @@ def main():
     cache = client / 'Cache'
     cache.mkdir(parents=True)
     (run / 'home').mkdir()
-    shutil.copy2(ROOT / 'Client_Base/Open_RSC_Client.jar', client / 'client.jar')
+    shutil.copy2(args.client_jar, client / 'client.jar')
     for name in ('audio', 'video'):
         shutil.copytree(ROOT / 'Client_Base/Cache' / name, cache / name)
     config = subprocess.check_output(['git', 'show', 'HEAD:Client_Base/Cache/config.txt'], cwd=ROOT)
@@ -64,6 +75,7 @@ def main():
         'tcp': f'127.0.0.1:{args.tcp_port}',
         'websocket': f'127.0.0.1:{args.ws_port}',
         'coveredWalkingPreview': not args.control,
+        'desktopPreupload': args.desktop_preupload,
         'route': 'live-surface' if args.live_surface else 'outer-coverage' if args.outer_coverage else 'middle-boundary',
     }
     (run / 'stage.json').write_text(json.dumps(stage, indent=2) + '\n')
@@ -80,12 +92,16 @@ def main():
                         '--surface-scenery-draw', '--live-surface-handoff', '--safe-walk-fixture'])
     subprocess.run(command, cwd=ROOT, check=True)
 
+    properties = LIVE_SURFACE_PROPERTIES if args.live_surface else ()
+    if args.desktop_preupload:
+        properties += ('desktopWorldStreamingPreview',)
+    client_flags = shlex.join([f'-Dspoiledmilk.{name}=true' for name in properties])
     launcher = run / 'Open Covered Walking Preview.sh'
     launcher.write_text('''#!/usr/bin/env bash
 set -euo pipefail
 run_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$run_dir/client"
-exec java -Duser.home="$run_dir/home" -Xmx2g -jar client.jar
+exec java -Duser.home="$run_dir/home" -Xmx2g ''' + client_flags + ''' -jar client.jar
 ''')
     launcher.chmod(0o755)
     print(run)

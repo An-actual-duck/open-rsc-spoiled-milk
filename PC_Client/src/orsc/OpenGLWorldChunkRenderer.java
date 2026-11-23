@@ -237,6 +237,30 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		this.rawMaterialShaderEnabled = rawMaterialShaderEnabled;
 	}
 
+	void stagePreparedTerrain(Renderer3DFrame frame, boolean atlasTextureCoordinates) throws Exception {
+		if (!useResidentChunkShader(atlasTextureCoordinates) || shouldDrawProjectedShadowProof()) {
+			return;
+		}
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getPreparedTerrain()) {
+			WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk, true);
+			if (chunk.getVertexCount() == 0 || chunk.getIndexCount() == 0 || residentChunks.containsKey(key)) {
+				continue;
+			}
+			// Use the same buffer and material path as visible terrain so the
+			// normal signature checks still govern its eventual adoption.
+			long start = System.nanoTime();
+			upload(frame, Renderer3DWorldChunkFrame.fromChunks(Collections.singletonList(chunk)),
+				atlasTextureCoordinates, false);
+			if (DesktopWorldStreamingPreview.TRACE) {
+				residentChunks.get(key).stagedTerrain = true;
+				System.out.printf("DESKTOP_TERRAIN_STAGED cell=%d,%d storage=%016x ms=%.3f%n",
+					chunk.getCenterSectionX(), chunk.getCenterSectionY(), chunk.getStorageSignature(),
+					(System.nanoTime() - start) / 1_000_000d);
+			}
+			return;
+		}
+	}
+
 	OpenGLWorldChunkUploadStats upload(
 		Renderer3DFrame frame,
 		Renderer3DWorldChunkFrame chunkFrame,
@@ -371,6 +395,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				existingKeyMismatches++;
 			}
 			if (bufferMatches) {
+				if (buffer.stagedTerrain) {
+					buffer.stagedTerrain = false;
+					System.out.printf("DESKTOP_TERRAIN_ADOPTED cell=%d,%d storage=%016x%n",
+						chunk.getCenterSectionX(), chunk.getCenterSectionY(), chunk.getStorageSignature());
+				}
 				reusedChunks++;
 				reusedByRole[roleIndex]++;
 				continue;
@@ -2795,6 +2824,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
 
+		buffer.stagedTerrain = false;
 		buffer.signature = bufferSignature;
 		buffer.uploadedVertexOffsetX = chunk.getVertexOffsetX();
 		buffer.uploadedVertexOffsetZ = chunk.getVertexOffsetZ();
@@ -4279,6 +4309,7 @@ final class WorldChunkBuffer {
 	WorldChunkMaterialBatch[] materialBatches = new WorldChunkMaterialBatch[0];
 	long shadowProofSignature;
 	long uploadedByteCount;
+	boolean stagedTerrain;
 
 	WorldChunkBuffer(int vertexBufferId, int indexBufferId, int materialIndexBufferId) {
 		this.vertexBufferId = vertexBufferId;
