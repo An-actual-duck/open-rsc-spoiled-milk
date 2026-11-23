@@ -39,11 +39,19 @@ the interface preview enabled and the server advertises support. Prototype
 coverage is limited to talking to bankers. The bank opens through its existing
 interface and the usual bank rules still apply.
 
-Inventory is the first sidebar layout to use for testing tabs, item cells and
-dragging. Test the shared item window in the bank, crafting and shops. Support
-tabs as a layout control. The Monster Slayer reward-shop picker is a candidate
-for switching stock and currency in place once the shared window works with
-the current server-authorized shop actions.
+## Inventory and Equipment preview
+
+The sidebar uses the interface size for item tiles and the text size for stack
+counts, equipment stats and tab labels. Inventory and Equipment share the tab
+strip and use the same bounds for drawing and pointer input. The preview uses
+the existing item and slot artwork, context menus, equip and remove actions,
+and Items Kept on Death control. The sidebar stays above chat entry and chat tabs
+where they span the same part of the screen.
+
+The current HUD work is limited to Inventory and Equipment. The minimap will
+have its own design pass after the owner supplies notes. Bank, crafting and shop
+windows are separate work. The Monster Slayer reward shop remains a candidate
+for in-place stock and currency tabs in that work.
 
 ## Preview
 

@@ -1161,6 +1161,7 @@ public final class mudclient implements Runnable {
 	private int panelMessageClan;
 	private Panel panelMessageTabs;
 	private ChatPanelLayout chatLayout;
+	private InventoryEquipmentLayout inventoryEquipmentLayout;
 	private boolean chatLayoutDirty;
 	private Panel panelPlayerInfo;
 	private Panel panelQuestInfo;
@@ -13383,7 +13384,7 @@ public final class mudclient implements Runnable {
 					this.drawUiTab0(var1 ^ 2);
 				}
 
-				if (visibleSideMenuTab == Config.INVENTORY_TAB) {
+				if (visibleSideMenuTab == Config.INVENTORY_TAB && (!interfaceOpen || chatLayout == null)) {
 					long panelStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 					this.drawUiTab1(-15252, acceptTabInput);
 					if (TRACE_BROWSER_FRAME_STAGES) browserInventoryDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
@@ -14036,8 +14037,303 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private InventoryEquipmentLayout inventoryEquipmentLayout() {
+		if (chatLayout == null || getSurface() == null) return null;
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		int width = getSurface().width2;
+		int launcherY = getUITabsY();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatEntryTop = chatLayout.entryTop();
+		if (inventoryEquipmentLayout == null || !inventoryEquipmentLayout.matches(width, launcherY, C_CUSTOM_UI,
+			chatRight, chatEntryTop, size, text, S_WANT_EQUIPMENT_TAB)) {
+			MudClientGraphics surface = getSurface();
+			int statWidth = 0;
+			if (S_WANT_EQUIPMENT_TAB) {
+				for (String label : equipmentStatNames) {
+					statWidth = Math.max(statWidth, surface.stringWidth(text.bodyFont, label + ": 9999"));
+				}
+			}
+			inventoryEquipmentLayout = new InventoryEquipmentLayout(width, getGameHeight(), launcherY, C_CUSTOM_UI,
+				chatRight, chatEntryTop, size, text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+				2 * statWidth + size.pixels(18), m_cl, S_WANT_EQUIPMENT_TAB);
+		}
+		return inventoryEquipmentLayout;
+	}
+
+	private void drawInventoryEquipmentPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		if (!C_CUSTOM_UI) {
+			surface.drawSprite(spriteSelect(GUIPARTS.BAGTAB.getDef()), surface.width2 - 248, 3);
+		}
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom() - layout.top, 0x182333, 225);
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom() - layout.top, 0x667993);
+		if (tabEquipmentIndex == InventoryEquipmentLayout.EQUIPMENT && S_WANT_EQUIPMENT_TAB) {
+			drawEquipmentPreview(layout, acceptInput);
+		} else {
+			drawInventoryPreview(layout, acceptInput);
+		}
+		if (S_WANT_EQUIPMENT_TAB) {
+			int hoveredTab = acceptInput ? layout.tabAt(mouseX, mouseY) : -1;
+			int half = layout.width / 2;
+			drawInventoryPreviewTab(layout, layout.left, half, InventoryEquipmentLayout.EQUIPMENT, "Equipment", hoveredTab);
+			drawInventoryPreviewTab(layout, layout.left + half, layout.width - half, InventoryEquipmentLayout.INVENTORY, "Inventory", hoveredTab);
+			if (hoveredTab >= 0 && mouseButtonClick == 1) {
+				tabEquipmentIndex = hoveredTab;
+				mouseButtonClick = 0;
+			}
+		}
+	}
+
+	private void drawInventoryPreviewTab(InventoryEquipmentLayout layout, int x, int width, int tab, String label, int hoveredTab) {
+		MudClientGraphics surface = getSurface();
+		boolean active = tabEquipmentIndex == tab;
+		surface.drawVerticalGradient(x, layout.tabsTop, width, layout.tabsHeight,
+			active ? 0x596A83 : hoveredTab == tab ? 0x465873 : 0x34425A,
+			active ? 0x344258 : 0x252F41);
+		surface.drawBoxBorder(x, width, layout.tabsTop, layout.tabsHeight, 0x141E2E);
+		surface.drawLineHoriz(x + 1, layout.tabsTop + 1, width - 2, active ? 0xD2B873 : 0x667993);
+		surface.drawColoredStringCentered(x + width / 2, label, active ? 0xFFDC82 : 0xFFFFFF,
+			0, layout.labelFont, layout.tabBaseline);
+	}
+
+	private void drawInventoryPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int hovered = acceptInput ? layout.inventorySlotAt(mouseX, mouseY) : -1;
+		int iconHeight = Math.max(1, Math.min(layout.cellHeight - 3, (layout.cellWidth - 4) * 2 / 3));
+		int iconWidth = iconHeight * 3 / 2;
+		int countInset = Math.max(2, layout.padding / 2);
+		for (int slot = 0; slot < m_cl; slot++) {
+			int x = layout.cellX(slot);
+			int y = layout.cellY(slot);
+			boolean unlocked = slot < inventoryCapacity;
+			boolean occupied = unlocked && slot < inventoryItemCount;
+			int color = unlocked ? occupied ? 0x34445A : 0x243143 : 0x1C2531;
+			if (occupied && !S_WANT_EQUIPMENT_TAB && getInventoryItemEquippedID(slot) == 1) {
+				color = 0x64444B;
+			}
+			surface.drawBoxAlpha(x, y, layout.cellWidth - 1, layout.cellHeight - 1, color, 204);
+			if (occupied) {
+				Item item = getInventoryItem(slot);
+				ItemDef def = item.getNoted() ? ItemDef.asNote(item.getItemDef()) : item.getItemDef();
+				drawInventoryPreviewIcon(def, item.getNoted(),
+					x + (layout.cellWidth - iconWidth) / 2, y + (layout.cellHeight - iconHeight) / 2,
+					iconWidth, iconHeight);
+				if (def.isStackable()) {
+					drawInventoryPreviewCount(getInventoryItemSize(slot), x + countInset, y, layout.cellWidth - 2 * countInset,
+						layout.cellHeight, layout.bodyFont);
+				}
+			}
+			if (slot == hovered && occupied) {
+				surface.drawBoxBorder(x, layout.cellWidth, y, layout.cellHeight, 0xD2B873);
+			}
+		}
+		if (hovered >= 0 && hovered < inventoryCapacity && hovered < inventoryItemCount) {
+			addInventorySlotMenu(hovered);
+		}
+	}
+
+	private void drawInventoryPreviewIcon(ItemDef def, boolean noted, int x, int y, int width, int height) {
+		if (noted) {
+			ItemDef paper = S_WANT_CERT_AS_NOTES ? EntityHandler.noteDef : EntityHandler.certificateDef;
+			getSurface().drawSpriteClipping(spriteSelect(paper), x, y, width, height,
+				paper.getPictureMask(), 0, paper.getBlueMask(), false, 0, 1);
+			if (!S_WANT_CERT_AS_NOTES) return;
+			x += width * 7 / 48;
+			y += height / 8;
+			width = width * 33 / 48;
+			height = height * 23 / 32;
+		}
+		getSurface().drawSpriteClipping(spriteSelect(def), x, y, width, height,
+			def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1);
+	}
+
+	private void drawInventoryPreviewCount(int amount, int x, int y, int width, int height, int font) {
+		MudClientGraphics surface = getSurface();
+		String label = Integer.toString(amount);
+		if (surface.stringWidth(font, label) > width && amount >= 1000) {
+			label = amount >= 1_000_000_000 ? amount / 1_000_000_000 + "B"
+				: amount >= 1_000_000 ? amount / 1_000_000 + "M" : amount / 1000 + "K";
+		}
+		int baseline = y + Math.min(height - 2, surface.fontHeight(font) - 3);
+		surface.drawShadowText(label, x, baseline, 0xFFDC82, font, false);
+	}
+
+	private void drawEquipmentPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int slotCount = Math.min(S_PLAYER_SLOT_COUNT, equipIconXLocations.length);
+		int hovered = acceptInput
+			? layout.equipmentSlotAt(equipIconXLocations, equipIconYLocations, slotCount, mouseX, mouseY)
+			: -1;
+		int slotWidth = layout.equipmentPixels(EquipmentSlotHoverTarget.SLOT_WIDTH);
+		int slotHeight = layout.equipmentPixels(EquipmentSlotHoverTarget.SLOT_HEIGHT);
+		if (slotWidth > 0 && slotHeight > 0) {
+			for (int slot = 0; slot < slotCount; slot++) {
+				int x = layout.equipmentLeft + layout.equipmentPixels(equipIconXLocations[slot]);
+				int y = layout.equipmentTop + layout.equipmentPixels(equipIconYLocations[slot]);
+				ItemDef item = equippedItems[slot];
+				Sprite tile = item == null ? getEquipmentSlotSprite(slot) : spriteSelect(GUIPARTS.EQUIPSLOT_HIGHLIGHT.getDef());
+				surface.drawSpriteClipping(tile, x, y, slotWidth, slotHeight, 0, 0, 0, false, 0, 1,
+					item == null ? 0xA0FFFFFF : 0xD0FFFFFF);
+				if (item != null) {
+					drawInventoryPreviewIcon(item, false, x, y, slotWidth, slotHeight);
+					if (item.isStackable()) {
+						drawInventoryPreviewCount(equippedItemAmount[slot], x + 2, y, slotWidth - 4, slotHeight, layout.bodyFont);
+					}
+				}
+				if (slot == hovered && item != null) {
+					surface.drawBoxBorder(x, slotWidth, y, slotHeight, 0xD2B873);
+				}
+			}
+		}
+
+		surface.drawLineHoriz(layout.left + layout.padding, layout.statsTop - layout.padding / 2,
+			layout.width - 2 * layout.padding, 0x667993);
+		for (int row = 0; row < 4; row++) {
+			int baseline = layout.statsTop + (row + 1) * layout.statRowHeight - 3;
+			drawEquipmentStatusValue(row == 3 ? 4 : row, layout.left + 2 * layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
+			drawEquipmentStatusValue(row == 0 ? 3 : row + 4, layout.left + layout.width / 2 + layout.padding,
+				baseline, 0xFFFFFF, layout.bodyFont);
+		}
+
+		if (S_ITEMS_ON_DEATH_MENU) {
+			Sprite icon = spriteSelect(GUIPARTS.KEPT_ON_DEATH.getDef());
+			int x = layout.left + 2 * layout.padding;
+			int y = layout.equipmentTop;
+			int width = layout.equipmentPixels(40);
+			int height = layout.equipmentPixels(25);
+			if (width > 0 && height > 0) {
+				surface.drawSpriteClipping(icon, x, y, width, height, 0, 0, 0, false, 0, 1);
+				if (acceptInput && mouseButtonClick == 1 && mouseX >= x && mouseX < x + width
+					&& mouseY >= y && mouseY < y + height) {
+					if (!C_CUSTOM_UI) showUiTab = 0;
+					lostOnDeathInterface.setVisible(true);
+					mouseButtonClick = 0;
+				}
+			}
+		}
+
+		if (hovered >= 0 && equippedItems[hovered] != null) {
+			if (mouseButtonClick == 1) {
+				sendUnequipFromEquipment(hovered);
+				mouseButtonClick = 0;
+			} else if (mouseButtonClick == 2) {
+				addEquipmentSlotMenu(hovered);
+			} else {
+				menuCommon.addCharacterItem(hovered, MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT,
+					"Unequip", "@lre@" + equippedItems[hovered].getName());
+			}
+		}
+	}
+
+	private void sendUnequipFromEquipment(int slot) {
+		packetHandler.getClientStream().newPacket(Opcodes.Out.ITEM_UNEQUIP_FROM_EQUIPMENT.getOpcode());
+		packetHandler.getClientStream().bufferBits.putByte(slot);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	private void addInventorySlotMenu(int slot) {
+		int id = getInventoryItemID(slot);
+		Item item = getInventoryItem(slot);
+		ItemDef def = item.getItemDef();
+		int vId = id;
+		if (item.getNoted()) {
+			vId = (vId + 1) * -1;
+		}
+		if (this.ratNoteSelectionActive) {
+			this.menuCommon.addItem(0, "Turn into certs", 0, 0,
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(),
+				slot, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
+		} else if (this.camelBankSelectionActive) {
+			this.menuCommon.addItem(0, "Send to bank", 0, 0,
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(),
+				slot, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
+		} else if (this.selectedSpell >= 0) {
+			SpellDef spellDef = EntityHandler.getSpellDef(selectedSpell);
+
+			// Ugly checks for curse and enfeeble so you can cast on talismans
+			if (spellDef.getSpellType() == 3
+				|| (S_WANT_RUNECRAFT && (this.selectedSpell == 9 || this.selectedSpell == 44))) {
+				//Add Nature Rune alchemy protection if we're on a non-authentic client.
+				if (!authenticSettings && C_WANT_NATURE_RUNE_PROTECTION && (this.selectedSpell == 10 || this.selectedSpell == 28) && EntityHandler.getItemDef(id).getName().equals("Nature-Rune")) {
+					return;
+				}
+				this.menuCommon.addCharacterItem_WithID(slot,
+					"@lre@" + EntityHandler.getItemDef(id).getName(),
+					MenuItemAction.ITEM_CAST_SPELL,
+					"Cast " + EntityHandler.getSpellDef(selectedSpell).getName() + " on",
+					this.selectedSpell);
+			}
+		} else if (this.selectedItemInventoryIndex < 0) {
+			if (getInventoryItemEquippedID(slot) == 1 && !S_WANT_EQUIPMENT_TAB) {
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_UNEQUIP_FROM_INVENTORY, "Remove",
+					"@lre@" + EntityHandler.getItemDef(id).getName());
+			} else if (InventoryEquipMenuPolicy.canOfferEquip(def, item.getNoted())) {
+				String equipCommand = InventoryEquipMenuPolicy.actionLabel(def);
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_EQUIP_FROM_INVENTORY, equipCommand,
+					"@lre@" + def.getName());
+			}
+
+			if (def.getCommand() != null
+				&& !item.getNoted()) {
+				for (int p = def.getCommand().length - 1; p >= 0; p--) {
+					this.menuCommon.addItem(0, EntityHandler.getItemDef(id).getCommand()[p], p, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), slot, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
+				}
+			}
+
+			if (S_WANT_DROP_X && def.getCommand() != null
+				&& def.getCommand()[0].equalsIgnoreCase("bury")
+				&& !item.getNoted()) {
+				this.menuCommon.addItem(0, "Bury All", 0, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), slot, null, MenuItemAction.ITEM_COMMAND_ALL, 0, null, null);
+			}
+
+			if (!hasInventoryUseCommand(def.getCommand())) {
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_USE, "Use",
+					"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+			}
+			this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_DROP, "Drop",
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+			if (S_WANT_DROP_X) {
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_DROP_X, "Drop X",
+					"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_DROP_ALL, "Drop All",
+					"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+			}
+			this.menuCommon.addCharacterItem(vId, MenuItemAction.ITEM_EXAMINE, "Examine",
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName()
+					+ (localPlayer.isDev() ? " @or1@(" + id + ")" : ""));
+		} else {
+			this.menuCommon.addCharacterItem_WithID(slot,
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(), MenuItemAction.ITEM_USE_ITEM,
+				"Use " + this.m_ig + " with", this.selectedItemInventoryIndex);
+		}
+	}
+
+	private void addEquipmentSlotMenu(int slot) {
+		this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT, "Remove",
+			"@lre@" + equippedItems[slot].getName());
+		if (equippedItems[slot].getCommand() != null)
+			for (int p = 0; p < equippedItems[slot].getCommand().length; p++) {
+				this.menuCommon.addItem(0, equippedItems[slot].getCommand()[p], p, 0, "@lre@" + equippedItems[slot].getName(), slot, null, MenuItemAction.ITEM_COMMAND_EQUIPTAB, 0, null, null);
+			}
+		if (!hasInventoryUseCommand(equippedItems[slot].getCommand())) {
+			this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_USE_EQUIPTAB, "Use",
+				"@lre@" + equippedItems[slot].getName());
+		}
+		this.menuCommon.addCharacterItem(equippedItems[slot].id, MenuItemAction.ITEM_DROP_EQUIPTAB, "Drop",
+			"@lre@" + equippedItems[slot].getName());
+		this.menuCommon.addCharacterItem(equippedItems[slot].id, MenuItemAction.ITEM_EXAMINE, "Examine",
+			"@lre@" + equippedItems[slot].getName()
+				+ (localPlayer.isDev() ? " @or1@(" + equippedItems[slot].id + ")" : ""));
+	}
+
 	// inventory right click menu definitions
 	private void drawUiTab1(int var1, boolean var2) {
+		InventoryEquipmentLayout preview = inventoryEquipmentLayout();
+		if (preview != null) {
+			drawInventoryEquipmentPreview(preview, var2);
+			return;
+		}
 
 		int maxY = getUITabsY();
 
@@ -14121,80 +14417,7 @@ public final class mudclient implements Runnable {
 					if (var3 >= 0 && var4 >= 0 && var3 < 248 && inventoryGridHeight > var4) {
 						var5 = var4 / INVENTORY_SLOT_HEIGHT * INVENTORY_COLUMNS + var3 / INVENTORY_SLOT_WIDTH;
 						if (var5 < this.inventoryCapacity && this.inventoryItemCount > var5) {
-							id = getInventoryItemID(var5);
-							Item item = getInventoryItem(var5);
-							ItemDef def = item.getItemDef();
-							int vId = id;
-							if (item.getNoted()) {
-								vId = (vId + 1) * -1;
-							}
-							if (this.ratNoteSelectionActive) {
-								this.menuCommon.addItem(0, "Turn into certs", 0, 0,
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(),
-									var5, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
-							} else if (this.camelBankSelectionActive) {
-								this.menuCommon.addItem(0, "Send to bank", 0, 0,
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(),
-									var5, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
-							} else if (this.selectedSpell >= 0) {
-								SpellDef spellDef = EntityHandler.getSpellDef(selectedSpell);
-
-								// Ugly checks for curse and enfeeble so you can cast on talismans
-								if (spellDef.getSpellType() == 3
-									|| (S_WANT_RUNECRAFT && (this.selectedSpell == 9 || this.selectedSpell == 44))) {
-									//Add Nature Rune alchemy protection if we're on a non-authentic client.
-									if (!authenticSettings && C_WANT_NATURE_RUNE_PROTECTION && (this.selectedSpell == 10 || this.selectedSpell == 28) && EntityHandler.getItemDef(id).getName().equals("Nature-Rune")) {
-										return;
-									}
-									this.menuCommon.addCharacterItem_WithID(var5,
-										"@lre@" + EntityHandler.getItemDef(id).getName(),
-										MenuItemAction.ITEM_CAST_SPELL,
-										"Cast " + EntityHandler.getSpellDef(selectedSpell).getName() + " on",
-										this.selectedSpell);
-								}
-							} else if (this.selectedItemInventoryIndex < 0) {
-								if (getInventoryItemEquippedID(var5) == 1 && !S_WANT_EQUIPMENT_TAB) {
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_UNEQUIP_FROM_INVENTORY, "Remove",
-										"@lre@" + EntityHandler.getItemDef(id).getName());
-								} else if (InventoryEquipMenuPolicy.canOfferEquip(def, item.getNoted())) {
-									String equipCommand = InventoryEquipMenuPolicy.actionLabel(def);
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_EQUIP_FROM_INVENTORY, equipCommand,
-										"@lre@" + def.getName());
-								}
-
-								if (def.getCommand() != null
-									&& !item.getNoted()) {
-									for (int p = def.getCommand().length - 1; p >= 0; p--) {
-										this.menuCommon.addItem(0, EntityHandler.getItemDef(id).getCommand()[p], p, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), var5, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
-									}
-								}
-
-								if (S_WANT_DROP_X && def.getCommand() != null
-									&& def.getCommand()[0].equalsIgnoreCase("bury")
-									&& !item.getNoted()) {
-									this.menuCommon.addItem(0, "Bury All", 0, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), var5, null, MenuItemAction.ITEM_COMMAND_ALL, 0, null, null);
-								}
-
-								if (!hasInventoryUseCommand(def.getCommand())) {
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_USE, "Use",
-										"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
-								}
-								this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_DROP, "Drop",
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
-								if (S_WANT_DROP_X) {
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_DROP_X, "Drop X",
-										"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_DROP_ALL, "Drop All",
-										"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
-								}
-								this.menuCommon.addCharacterItem(vId, MenuItemAction.ITEM_EXAMINE, "Examine",
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName()
-										+ (localPlayer.isDev() ? " @or1@(" + id + ")" : ""));
-							} else {
-								this.menuCommon.addCharacterItem_WithID(var5,
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(), MenuItemAction.ITEM_USE_ITEM,
-									"Use " + this.m_ig + " with", this.selectedItemInventoryIndex);
-							}
+							addInventorySlotMenu(var5);
 						}
 					}
 
@@ -14287,28 +14510,10 @@ public final class mudclient implements Runnable {
 								//Send a packet to the server to unequip the item.
 								if (equippedItems[j] != null) {
 									if (this.mouseButtonClick == 1 && !this.topMouseMenuVisible) {//unequip from equip menu
-										this.packetHandler.getClientStream().newPacket(Opcodes.Out.ITEM_UNEQUIP_FROM_EQUIPMENT.getOpcode());
-										this.packetHandler.getClientStream().bufferBits.putByte(j);
-										this.packetHandler.getClientStream().finishPacket();
+										sendUnequipFromEquipment(j);
 										break;
 									} else {
-										this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT, "Remove",
-											"@lre@" + equippedItems[j].getName());
-										if (equippedItems[j].getCommand() != null)
-											for (int p = 0; p < equippedItems[j].getCommand().length; p++) {
-												this.menuCommon.addItem(0, equippedItems[j].getCommand()[p], p, 0, "@lre@" + equippedItems[j].getName(), j, null, MenuItemAction.ITEM_COMMAND_EQUIPTAB, 0, null, null);
-											}
-										//this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_COMMAND_EQUIPTAB, equippedItems[j].getCommand(),
-										//	"@lre@" + equippedItems[j].getName());
-										if (!hasInventoryUseCommand(equippedItems[j].getCommand())) {
-											this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_USE_EQUIPTAB, "Use",
-												"@lre@" + equippedItems[j].getName());
-										}
-										this.menuCommon.addCharacterItem(equippedItems[j].id, MenuItemAction.ITEM_DROP_EQUIPTAB, "Drop",
-											"@lre@" + equippedItems[j].getName());
-										this.menuCommon.addCharacterItem(equippedItems[j].id, MenuItemAction.ITEM_EXAMINE, "Examine",
-											"@lre@" + equippedItems[j].getName()
-												+ (localPlayer.isDev() ? " @or1@(" + equippedItems[j].id + ")" : ""));
+										addEquipmentSlotMenu(j);
 										break;
 									}
 
@@ -18589,8 +18794,12 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawEquipmentStatusValue(int statIndex, int x, int y, int color) {
+		drawEquipmentStatusValue(statIndex, x, y, color, 1);
+	}
+
+	private void drawEquipmentStatusValue(int statIndex, int x, int y, int color, int font) {
 		int value = statIndex < this.playerStatEquipment.length ? this.playerStatEquipment[statIndex] : 0;
-		this.getSurface().drawString(this.equipmentStatNames[statIndex] + ":@yel@" + value, x, y, color, 1);
+		this.getSurface().drawString(this.equipmentStatNames[statIndex] + ":@yel@" + value, x, y, color, font);
 	}
 
 	private void drawUiTabPlayerInfo(boolean var1, int var2) {
@@ -19327,6 +19536,7 @@ public final class mudclient implements Runnable {
 		gameWidth = resizeWidth;
 		gameHeight = resizeHeight - 12;
 		dialogueChoicesPanel = null;
+		inventoryEquipmentLayout = null;
 
 		resizeWidth = resizeHeight = -1;
 
@@ -21177,9 +21387,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case ITEM_UNEQUIP_FROM_EQUIPMENT: {
-					this.packetHandler.getClientStream().newPacket(Opcodes.Out.ITEM_UNEQUIP_FROM_EQUIPMENT.getOpcode());
-					this.packetHandler.getClientStream().bufferBits.putByte(indexOrX);
-					this.packetHandler.getClientStream().finishPacket();
+					sendUnequipFromEquipment(indexOrX);
 					break;
 				}
 				case ITEM_UNEQUIP_FROM_INVENTORY: {
@@ -22149,6 +22357,11 @@ public final class mudclient implements Runnable {
 			return false;
 		}
 
+		if (this.getVisibleSideMenuTab() == Config.INVENTORY_TAB) {
+			InventoryEquipmentLayout preview = inventoryEquipmentLayout();
+			if (preview != null) return preview.contains(x, y);
+		}
+
 		if (C_CUSTOM_UI) {
 			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
@@ -22378,7 +22591,13 @@ public final class mudclient implements Runnable {
 				this.showUiTab = Config.OPTIONS_TAB;
 			}
 
-			if (!S_WANT_EQUIPMENT_TAB) {
+			InventoryEquipmentLayout inventory = this.showUiTab == Config.INVENTORY_TAB ? inventoryEquipmentLayout() : null;
+			if (inventory != null) {
+				if (!this.isCurrentSideMenuHomeTab()
+					&& (this.mouseX < inventory.left || this.mouseY >= inventory.bottom())) {
+					this.closeOrRestorePinnedSideMenu();
+				}
+			} else if (!S_WANT_EQUIPMENT_TAB) {
 				if (this.showUiTab == Config.INVENTORY_TAB && !this.isCurrentSideMenuHomeTab()
 					&& (this.mouseX < this.getSurface().width2 - 248 || 36 + this.m_cl / 5 * 34 < this.mouseY)) {
 					this.closeOrRestorePinnedSideMenu();

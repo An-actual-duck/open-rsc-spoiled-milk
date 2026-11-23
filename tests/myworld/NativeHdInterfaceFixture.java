@@ -24,6 +24,9 @@ public final class NativeHdInterfaceFixture {
 				verifyChatBounds(chat(1920, 1080, size, text), 1920);
 				verifyChatBounds(chat(960, 540, size, text), 960);
 				verifyChatBounds(chat(800, 600, size, text), 800);
+				verifyInventoryBounds(1920, 1080, size, text, false);
+				verifyInventoryBounds(960, 540, size, text, false);
+				verifyInventoryBounds(960, 540, size, text, true);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -82,6 +85,50 @@ public final class NativeHdInterfaceFixture {
 		check(compactWithBigText.entryHeight >= compactWithBigText.lineHeight
 			&& compactWithBigText.recentBaseline(4) - compactWithBigText.lineHeight >= compactWithBigText.historyTop(),
 			"Compact geometry fits large text");
+	}
+
+	private static void verifyInventoryBounds(int width, int height, GameInterfaceSettings.Size size,
+											  GameInterfaceSettings.TextSize text, boolean bottomLauncher) {
+		ChatPanelLayout chat = chat(width, height, size, text);
+		int launcher = bottomLauncher ? height - 54 : 3;
+		int chatRight = chat.left + chat.width;
+		InventoryEquipmentLayout panel = new InventoryEquipmentLayout(width, height - 12, launcher, bottomLauncher,
+			chatRight, chat.entryTop(), size, text, chat.lineHeight, chat.tabsHeight - size.pixels(8), 250, 40, true);
+
+		for (int slot = 0; slot < 40; slot++) {
+			int x = panel.cellX(slot);
+			int y = panel.cellY(slot);
+			check(panel.contains(x, y) && panel.inventorySlotAt(x, y) == slot, "Inventory slot top-left " + slot);
+			check(panel.inventorySlotAt(x + panel.cellWidth - 1, y + panel.cellHeight - 1) == slot,
+				"Inventory slot bottom-right " + slot);
+		}
+		check(panel.inventorySlotAt(panel.cellX(4) + panel.cellWidth, panel.cellY(0)) == -1, "Right edge excludes padding");
+		check(panel.inventorySlotAt(panel.cellX(39), panel.cellY(39) + panel.cellHeight) == -1,
+			"Grid ends before the tab strip");
+		int[] equippableX = {98, 98, 98, 153, 43, 43, 98, 98, 43, 153, 153, 43};
+		int[] equippableY = {5, 85, 125, 85, 85, 165, 165, 45, 45, 45, 165, 125};
+		for (int slot = 0; slot < equippableX.length; slot++) {
+			int x = panel.equipmentLeft + panel.equipmentPixels(equippableX[slot]);
+			int y = panel.equipmentTop + panel.equipmentPixels(equippableY[slot]);
+			check(panel.equipmentSlotAt(equippableX, equippableY, equippableX.length, x, y) == slot, "Equipment slot " + slot);
+			int outsideX = x + panel.equipmentPixels(EquipmentSlotHoverTarget.SLOT_WIDTH);
+			check(panel.equipmentSlotAt(equippableX, equippableY, equippableX.length, outsideX, y) != slot,
+				"Equipment slot excludes right edge " + slot);
+		}
+		check(panel.tabAt(panel.left, panel.tabsTop) == InventoryEquipmentLayout.EQUIPMENT, "Equipment tab starts at left");
+		check(panel.tabAt(panel.left + panel.width / 2, panel.tabsTop) == InventoryEquipmentLayout.INVENTORY,
+			"Inventory tab starts at the tab boundary");
+		check(panel.tabAt(panel.left, panel.bottom()) == -1 && !panel.contains(panel.left + panel.width, panel.top),
+			"Sidebar excludes bottom and right edges");
+		check(panel.inventorySlotAt(panel.left, panel.tabsTop) == -1, "Tab clicks cannot hit inventory slots");
+		check(panel.left >= 0 && panel.top >= 0 && panel.left + panel.width <= width && panel.bottom() <= height,
+			"Sidebar fits the screen");
+		if (panel.left < chatRight) {
+			check(panel.bottom() <= chat.entryTop(), "Sidebar does not cover chat entry or tabs");
+		}
+		if (bottomLauncher) {
+			check(panel.bottom() < launcher, "Sidebar stays above the lower launcher");
+		}
 	}
 
 	private static void verifyChatBounds(ChatPanelLayout chat, int width) {
