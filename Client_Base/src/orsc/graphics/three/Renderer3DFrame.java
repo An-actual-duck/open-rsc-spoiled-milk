@@ -53,6 +53,7 @@ public final class Renderer3DFrame {
 	private volatile Renderer3DDepthFrame depthFrame;
 	private Renderer3DMeshFrame meshFrame;
 	private Renderer3DWorldChunkFrame worldChunkFrame = Renderer3DWorldChunkFrame.EMPTY;
+	private List<Renderer3DWorldChunkFrame.ChunkMesh> preparedWorldChunks = Collections.emptyList();
 	private volatile Renderer3DRoofVisibility roofVisibility = Renderer3DRoofVisibility.VISIBLE;
 	private volatile int activePlane;
 	private boolean worldFaceStorageReleased;
@@ -715,6 +716,23 @@ public final class Renderer3DFrame {
 
 	public Renderer3DWorldChunkFrame getWorldChunkFrame() {
 		return worldChunkFrame;
+	}
+
+	/** Snapshots checked world products before the frame crosses to the render thread. */
+	public void setPreparedWorldChunks(List<Renderer3DWorldChunkFrame.ChunkMesh> terrain,
+		List<Renderer3DWorldChunkFrame.ChunkMesh> scenery) {
+		if (terrain.isEmpty() && scenery.isEmpty()) {
+			preparedWorldChunks = Collections.emptyList();
+			return;
+		}
+		List<Renderer3DWorldChunkFrame.ChunkMesh> chunks = new ArrayList<>(terrain.size() + scenery.size());
+		chunks.addAll(terrain);
+		chunks.addAll(scenery);
+		preparedWorldChunks = Collections.unmodifiableList(chunks);
+	}
+
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedWorldChunks() {
+		return preparedWorldChunks;
 	}
 
 	public void setRoofVisibility(Renderer3DRoofVisibility roofVisibility, int activePlane) {

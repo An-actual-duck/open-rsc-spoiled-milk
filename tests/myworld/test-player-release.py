@@ -272,10 +272,18 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 expected_root_entries = {
                     "README.txt",
                     "Play Spoiled Milk.cmd",
+                    "Play Spoiled Milk - World Chunks.cmd",
+                    "Play Spoiled Milk - World Streaming.cmd",
                     "game-files",
                 }
                 if archive == generic:
-                    expected_root_entries.add("play-spoiled-milk.sh")
+                    expected_root_entries.update({
+                        "play-spoiled-milk.sh",
+                        "play-spoiled-milk-world-chunks.sh",
+                        "play-spoiled-milk-world-streaming.sh",
+                        "Play Spoiled Milk - World Chunks.command",
+                        "Play Spoiled Milk - World Streaming.command",
+                    })
                 root_entries = {
                     member[len(package_name) + 1:].split("/", 1)[0]
                     for member in names
@@ -353,7 +361,8 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     'if exist "%~dp0Spoiled_Milk_Client.jar" del /q',
                     'if exist "%~dp0Cache" rmdir /s /q',
                     'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0game-files\\update-spoiled-milk.ps1"',
-                    "if errorlevel 1 (\n  pause\n  exit /b 1\n)",
+                    "if errorlevel 1 (\n    pause\n    exit /b 1\n  )",
+                    "-Dspoiledmilk.desktopWorldStreaming=%WORLD_STREAMING%",
                     'cd /d "%~dp0game-files"',
                     "Spoiled_Milk_Client.jar",
                     *CLIENT_JVM_MEMORY_FLAGS,

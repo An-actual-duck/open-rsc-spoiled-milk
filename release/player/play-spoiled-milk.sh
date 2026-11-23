@@ -3,6 +3,10 @@ set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 GAME_DIR="$ROOT_DIR/game-files"
+WORLD_STREAMING=false
+if [ "${1:-}" = "--world-streaming" ]; then
+  WORLD_STREAMING=true
+fi
 
 if [ -f "$GAME_DIR/Spoiled_Milk_Client.jar" ]; then
   rm -f \
@@ -27,6 +31,7 @@ exec java \
   -Xms512m \
   -Xmx2g \
   -Dspoiledmilk.releaseBuild=true \
+  "-Dspoiledmilk.desktopWorldStreaming=$WORLD_STREAMING" \
   -Dsun.java2d.opengl=true \
   -Dspoiledmilk.directFramebuffer=true \
   -Dspoiledmilk.openglPresenter=true \

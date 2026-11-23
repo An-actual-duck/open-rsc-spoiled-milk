@@ -122,10 +122,47 @@ class UniversalPackageTest(unittest.TestCase):
                 self.assertIn(str(install / "game-files"), result.stdout)
                 self.assertIn("-jar Spoiled_Milk_Client.jar", result.stdout)
 
+    def test_loading_mode_launchers_share_one_payload_and_select_modes(self):
+        windows = ["Play Spoiled Milk - World Chunks.cmd", "Play Spoiled Milk - World Streaming.cmd"]
+        posix = ["play-spoiled-milk-world-chunks.sh", "play-spoiled-milk-world-streaming.sh",
+                 "Play Spoiled Milk - World Chunks.command", "Play Spoiled Milk - World Streaming.command"]
+        self.inputs(java_changes={name: (self.templates / name).read_bytes() for name in posix + windows},
+                    windows_changes={name: (self.templates / name).read_bytes() for name in windows})
+        report = self.build()
+        self.assertEqual({"Windows", "Linux", "macOS"}, set(report["loadingModeLaunchers"]))
+        with zipfile.ZipFile(self.root / module.NAME) as archive:
+            self.assertEqual(1, sum(name.endswith("/Spoiled_Milk_Client.jar") for name in archive.namelist()))
+            for name, flag in zip(windows, ("--world-chunks", "--world-streaming")):
+                self.assertIn(f'call "%~dp0Play Spoiled Milk.cmd" {flag}'.encode(), archive.read(module.ROOT + name))
+            for name in posix:
+                self.assertTrue(archive.getinfo(module.ROOT + name).external_attr >> 16 & 0o111)
+            archive.extractall(self.root / "unpacked")
+
+        install = self.root / "unpacked/Spoiled Milk"
+        (install / "game-files/update-spoiled-milk.sh").write_text("#!/bin/sh\nexit 0\n")
+        fake_bin = self.root / "bin"
+        fake_bin.mkdir()
+        java = fake_bin / "java"
+        java.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
+        java.chmod(0o755)
+        for name, mode in zip(posix, ("false", "true", "false", "true")):
+            with self.subTest(name=name):
+                result = subprocess.run(
+                    ["sh", str(install / name)], cwd=self.root,
+                    env={**os.environ, "PATH": str(fake_bin) + os.pathsep + os.environ["PATH"]},
+                    check=True, text=True, capture_output=True, timeout=10)
+                self.assertEqual([f"-Dspoiledmilk.desktopWorldStreaming={mode}"],
+                                 [arg for arg in result.stdout.splitlines() if "desktopWorldStreaming" in arg])
+
+    def test_rejects_missing_world_loading_launcher(self):
+        self.inputs(windows_changes={"Play Spoiled Milk - World Streaming.cmd": b"partial release"})
+        with self.assertRaisesRegex(ValueError, "Incomplete World Chunks and World Streaming"):
+            self.build()
+
     def test_older_windows_conditional_is_repaired(self):
         broken = (
             self.templates / "Play Spoiled Milk Windows.cmd").read_text().replace(
-                "if errorlevel 1 (\n  pause\n  exit /b 1\n)",
+                "if errorlevel 1 (\n    pause\n    exit /b 1\n  )",
                 "if errorlevel 1 pause & exit /b 1")
         self.inputs(windows_changes={"Play Spoiled Milk.cmd": broken.encode()})
         self.build()

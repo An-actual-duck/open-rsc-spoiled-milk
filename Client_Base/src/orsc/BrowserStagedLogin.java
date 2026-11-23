@@ -46,6 +46,9 @@ public final class BrowserStagedLogin {
     static boolean supportWorldStreaming(Network_Socket stream)throws IOException {
         return support(stream,6);
     }
+    static boolean supportDesktopWorldStreaming(Network_Socket stream) throws IOException {
+        return support(stream,7);
+    }
     private static boolean support(Network_Socket stream,int action)throws IOException {
         int readLimit=stream.m_d;stream.m_d=0;
         try{

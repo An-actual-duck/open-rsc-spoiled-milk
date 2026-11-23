@@ -1,4 +1,7 @@
 @echo off
+setlocal
+set "WORLD_STREAMING=false"
+if /i "%~1"=="--world-streaming" set "WORLD_STREAMING=true"
 cd /d "%~dp0"
 if exist "%~dp0game-files\Spoiled_Milk_Client.jar" (
   if exist "%~dp0Spoiled_Milk_Client.jar" del /q "%~dp0Spoiled_Milk_Client.jar" >nul 2>nul
@@ -12,16 +15,19 @@ if exist "%~dp0game-files\Spoiled_Milk_Client.jar" (
   if exist "%~dp0runtime" rmdir /s /q "%~dp0runtime" >nul 2>nul
   if exist "%~dp0updates" rmdir /s /q "%~dp0updates" >nul 2>nul
 )
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0game-files\update-spoiled-milk.ps1"
-if errorlevel 1 (
-  pause
-  exit /b 1
+if exist "%~dp0game-files\update-spoiled-milk.ps1" (
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0game-files\update-spoiled-milk.ps1"
+  if errorlevel 1 (
+    pause
+    exit /b 1
+  )
 )
 cd /d "%~dp0game-files"
 java ^
   -Xms512m ^
   -Xmx2g ^
   -Dspoiledmilk.releaseBuild=true ^
+  -Dspoiledmilk.desktopWorldStreaming=%WORLD_STREAMING% ^
   -Dsun.java2d.opengl=true ^
   -Dspoiledmilk.directFramebuffer=true ^
   -Dspoiledmilk.openglPresenter=true ^

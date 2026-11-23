@@ -44,7 +44,7 @@ public final class CoveredWalkClient {
 	}
 
 	private static void run(Path status, boolean preview, String password, boolean longerRoute, boolean live) throws Exception {
-		if (live) {
+		if (live && !Boolean.getBoolean("spoiledmilk.desktopWorldStreaming")) {
 			for (String feature : new String[] {"persistentMovementPreview", "persistentSurfaceCollision", "surfaceSceneryCells",
 				"rollingSurfaceWindow", "fixedSurfaceDraw", "expandedSurfaceDrawBorder", "surfaceSceneryDraw", "liveSurfaceHandoff"}) {
 				System.setProperty("spoiledmilk." + feature, "true");
