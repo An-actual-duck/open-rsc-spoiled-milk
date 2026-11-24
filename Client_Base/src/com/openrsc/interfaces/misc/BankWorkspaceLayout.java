@@ -18,6 +18,8 @@ final class BankWorkspaceLayout {
 	final int gap;
 	final int header;
 	final int button;
+	final int actionButton;
+	final int actionGap;
 	final int tabHeight;
 	final int stockColumns;
 	final int stockRows;
@@ -61,7 +63,11 @@ final class BankWorkspaceLayout {
 		filterList = new Rectangle(filters.x + gap, filterTop, filters.width - 2 * gap,
 			Math.max(1, (y + height - filterTop - button - 2 * gap) / filterRowHeight) * filterRowHeight);
 		int actionRows = 3 + (hasPresets ? 2 : 0) + (hasNotes ? 1 : 0);
-		int carryTop = y + header + gap + actionRows * (button + gap / 2) + 2 * line + gap;
+		actionGap = Math.min(4, gap / 2);
+		int carryTarget = 2 * Math.max(size(30), line + 6) + line + 4 + actionGap;
+		int actionHeight = (height - header - 2 * gap - 2 * line - carryTarget) / actionRows - actionGap;
+		actionButton = Math.min(button, Math.max(line + 3, actionHeight));
+		int carryTop = y + header + 2 * gap + actionRows * (actionButton + actionGap) + 2 * line;
 		carried = new Rectangle(actions.x + gap, carryTop, actionsWidth - 2 * gap, y + height - carryTop - gap);
 	}
 

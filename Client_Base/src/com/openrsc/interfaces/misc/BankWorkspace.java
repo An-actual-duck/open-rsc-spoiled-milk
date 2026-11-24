@@ -115,7 +115,7 @@ final class BankWorkspace {
 		int max = Math.max(0, rows(count, columns) - visibleRows);
 		if (max == 0) return;
 		carriedRow = pager(layout.carried.x, layout.carried.x + layout.carried.width,
-			layout.carried.y + layout.carried.height - layout.button, carriedRow, visibleRows, max);
+			layout.carried.y + layout.carried.height - layout.actionButton, carriedRow, visibleRows, max, layout.actionButton);
 	}
 
 	void drawStockFooter(int count, int capacity) {
@@ -123,7 +123,7 @@ final class BankWorkspace {
 		int max = Math.max(0, rows(count, layout.stockColumns) - layout.stockRows);
 		int y = layout.stock.y + layout.stock.height + layout.gap;
 		if (max > 0) {
-			tab.row = pager(layout.stock.x, layout.stock.x + layout.stock.width, y, tab.row, layout.stockRows, max);
+			tab.row = pager(layout.stock.x, layout.stock.x + layout.stock.width, y, tab.row, layout.stockRows, max, layout.button);
 		}
 		String slots = bank.getWorkspaceUsedSlots() + " / " + capacity + " bank slots";
 		center(slots, layout.bank.x, layout.bank.y + layout.bank.height - layout.gap, layout.bank.width, layout.font, MUTED);
@@ -223,12 +223,11 @@ final class BankWorkspace {
 			}
 		}
 		if (max > 0) {
-			filterRow = pager(area.x, area.x + area.width, area.y + area.height + 2, filterRow, visible, max);
+			filterRow = pager(area.x, area.x + area.width, area.y + area.height + 2, filterRow, visible, max, layout.button);
 		}
 	}
 
-	private int pager(int x, int right, int y, int row, int step, int max) {
-		int w = layout.button;
+	private int pager(int x, int right, int y, int row, int step, int max, int w) {
 		if (button(x, y, w, w, "<", false, row > 0)) row = Math.max(0, row - step);
 		if (button(right - w, y, w, w, ">", false, row < max)) row = Math.min(max, row + step);
 		return row;

@@ -1410,7 +1410,7 @@ public final class CustomBankInterface extends BankInterface {
 		workspace.panel(view.actions, "Bank actions");
 		int left = view.actions.x + view.gap;
 		int width = view.actions.width - 2 * view.gap;
-		int row = view.button + view.gap / 2;
+		int row = view.actionButton + view.actionGap;
 		int top = view.actions.y + view.header + view.gap;
 		int close = view.button + view.gap;
 		if (workspace.button(view.actions.x + view.actions.width - close - view.gap / 2,
@@ -1420,12 +1420,12 @@ public final class CustomBankInterface extends BankInterface {
 		}
 		int half = width / 2;
 		if (S_WANT_EQUIPMENT_TAB) {
-			if (workspace.button(left, top, half - 2, view.button, "Inventory", !equipmentMode, true) && equipmentMode) {
+			if (workspace.button(left, top, half - 2, view.actionButton, "Inventory", !equipmentMode, true) && equipmentMode) {
 				workspace.resetCarriedScroll();
 				equipmentMode = false;
 				resetWorkspaceSelection();
 			}
-			if (workspace.button(left + half, top, width - half, view.button, "Equipment", equipmentMode, true) && !equipmentMode) {
+			if (workspace.button(left + half, top, width - half, view.actionButton, "Equipment", equipmentMode, true) && !equipmentMode) {
 				workspace.resetCarriedScroll();
 				equipmentMode = true;
 				swapNoteMode = false;
@@ -1434,34 +1434,34 @@ public final class CustomBankInterface extends BankInterface {
 		}
 		top += row;
 		String depositLabel = equipmentMode ? "Deposit all equipment" : "Deposit all inventory";
-		if (workspace.button(left, top, width, view.button, depositLabel, false, true)) {
+		if (workspace.button(left, top, width, view.actionButton, depositLabel, false, true)) {
 			if (equipmentMode) sendDepositAllEquipment();
 			else sendDepositAllInventory();
 		}
 		top += row;
 		if (S_WANT_BANK_PRESETS) {
-			if (workspace.button(left, top, width, view.button, "Inventory presets", false, true)) {
+			if (workspace.button(left, top, width, view.actionButton, "Inventory presets", false, true)) {
 				presetMode = true;
 				bank.setFocus(-1);
 				resetWorkspaceSelection();
 			}
 			top += row;
-			if (workspace.button(left, top, half - 2, view.button, "Load preset 1", false, true)) loadPreset(0);
-			if (workspace.button(left + half, top, width - half, view.button, "Load preset 2", false, true)) loadPreset(1);
+			if (workspace.button(left, top, half - 2, view.actionButton, "Load preset 1", false, true)) loadPreset(0);
+			if (workspace.button(left + half, top, width - half, view.actionButton, "Load preset 2", false, true)) loadPreset(1);
 			top += row;
 		}
 		if (S_WANT_BANK_NOTES) {
 			String note = S_WANT_CERT_AS_NOTES ? "As note" : "As certificate";
-			if (workspace.button(left, top, half - 2, view.button, "As item", !swapNoteMode, true)) swapNoteMode = false;
-			if (workspace.button(left + half, top, width - half, view.button, note, swapNoteMode, !equipmentMode)) swapNoteMode = true;
+			if (workspace.button(left, top, half - 2, view.actionButton, "As item", !swapNoteMode, true)) swapNoteMode = false;
+			if (workspace.button(left + half, top, width - half, view.actionButton, note, swapNoteMode, !equipmentMode)) swapNoteMode = true;
 			top += row;
 		}
 		workspace.draw("Rearrange", left, top + view.line - 2, view.font, BankWorkspace.MUTED);
 		top += view.line;
 		int third = width / 3;
-		if (workspace.button(left, top, third - 2, view.button, "Off", organizeMode == 0, true)) changeOrganizeMode(0);
-		if (workspace.button(left + third, top, third - 2, view.button, "Swap", organizeMode == 1, true)) changeOrganizeMode(1);
-		if (workspace.button(left + 2 * third, top, width - 2 * third, view.button, "Insert", organizeMode == 2, true)) changeOrganizeMode(2);
+		if (workspace.button(left, top, third - 2, view.actionButton, "Off", organizeMode == 0, true)) changeOrganizeMode(0);
+		if (workspace.button(left + third, top, third - 2, view.actionButton, "Swap", organizeMode == 1, true)) changeOrganizeMode(1);
+		if (workspace.button(left + 2 * third, top, width - 2 * third, view.actionButton, "Insert", organizeMode == 2, true)) changeOrganizeMode(2);
 	}
 
 	private void changeOrganizeMode(int mode) {
@@ -1475,9 +1475,11 @@ public final class CustomBankInterface extends BankInterface {
 		workspace.draw(title, area.x, area.y - 3, view.font, BankWorkspace.MUTED);
 		int columns = Math.max(1, area.width / BankWorkspaceLayout.size(48));
 		int tileWidth = area.width / columns;
-		int tileHeight = Math.max(view.line + 6, BankWorkspaceLayout.size(35));
+		int gridSpace = area.height - view.actionButton - view.actionGap;
+		int tileHeight = Math.min(Math.max(view.line + 6, gridSpace),
+			Math.max(view.line + 6, BankWorkspaceLayout.size(view.actionButton < view.button ? 30 : 35)));
 		int count = equipmentMode ? Math.min(S_PLAYER_SLOT_COUNT, equipmentViewOrder.length) : mc.getInventoryCapacity();
-		int rows = Math.max(1, (area.height - view.button - view.gap) / tileHeight);
+		int rows = Math.max(1, gridSpace / tileHeight);
 		int start = workspace.carriedStart(count, columns, rows);
 		for (int i = 0; i < rows * columns && start + i < count; i++) {
 			int slot = start + i;
