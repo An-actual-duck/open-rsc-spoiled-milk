@@ -125,11 +125,18 @@ Progress uses the current quest stage. Cook's Assistant also has a detailed next
 step and its ingredient list. Missing entries are identified in the guide.
 Long lists and wrapped text scroll within the page at both resolutions.
 
-### Skill guides to update next
+### Skill guides
 
-Give the existing skill guides room for longer training and unlock lists, levels
-and requirements. Verify the tabs, scrolling and launch from Accomplishments
-at 540p and 1080p.
+Accomplishments → Stats opens the scaled skill guide. The existing categories
+stay across the top. The left column shows topics for the selected category,
+and the right column holds the selected topic's text, levels and existing
+illustrations. The topic list and article scroll independently. UI size sets
+the window and control dimensions, and text size sets the fonts and wrapping.
+
+Most sections start with a single page of existing information. Smithing gear
+sections split by metal, and Worship → Spells places the existing god-line
+filters in the topic column. Future guide articles can add topics as they are
+written. Hiscores still use the existing view.
 
 ## Ability books preview
 

@@ -1489,6 +1489,8 @@ public final class mudclient implements Runnable {
 	private String skillGuideChosen;
 	private static final int COOKS_ASSISTANT_QUEST = 1;
 	private volatile QuestGuideWindow questGuidePreview;
+	private volatile SkillGuideWindow skillGuidePreview;
+	private final java.util.concurrent.atomic.AtomicInteger skillGuideWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private final java.util.concurrent.atomic.AtomicInteger questGuideWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private volatile boolean questGuideDismiss;
 	private String questGuideChosen;
@@ -13727,6 +13729,8 @@ public final class mudclient implements Runnable {
 				drawQuestRewardWindow();
 			} else if (hasQuestGuidePreviewInput()) {
 				drawQuestGuidePreview();
+			} else if (hasSkillGuidePreviewInput()) {
+				drawSkillGuide();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -20270,6 +20274,9 @@ public final class mudclient implements Runnable {
 
 	private void openSkillGuideFromSidebar(String skillName, boolean hiscores) {
 		setSkillGuideChosen(skillName);
+		skillGuideInterface.curTab = 0;
+		skillGuideWheel.set(0);
+		skillGuidePreview = chatLayout == null || hiscores ? null : skillGuideInterface.createGuideWindow();
 		skillGuideInterface.setHiscoresMode(hiscores);
 		skillGuideInterface.setVisible(true);
 		if (!C_CUSTOM_UI) showUiTab = 0;
@@ -21698,7 +21705,8 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					if (!hasContextMenuInput() && !hasQuestRewardInput() && !hasQuestGuidePreviewInput()) {
+					if (!hasContextMenuInput() && !hasQuestRewardInput()
+						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()) {
 						this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 					}
@@ -21839,7 +21847,8 @@ public final class mudclient implements Runnable {
 					} else if (this.lastMouseButtonDown == 2) {
 						this.mouseButtonClick = 2;
 					}
-					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput() && !hasQuestGuidePreviewInput()
+					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput()
+						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
 						&& mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
@@ -22169,6 +22178,10 @@ public final class mudclient implements Runnable {
 					}
 					if (hasQuestGuidePreviewInput()) {
 						if (key == 27 || desktopKeyCode == 27) questGuideDismiss = true;
+						return;
+					}
+					if (hasSkillGuidePreviewInput()) {
+						if (key == 27 || desktopKeyCode == 27) closeSkillGuidePreview();
 						return;
 					}
 					if (this.showAppearanceChange) {
@@ -28071,6 +28084,7 @@ public final class mudclient implements Runnable {
 			questRewardWheel.set(0);
 			questRewardDismiss = false;
 			closeQuestGuidePreview();
+			closeSkillGuidePreview();
 			clearDialoguePresentation();
 			setOptionsMenuShow(false);
 			setWorldEditorBuildMode(false);
@@ -32830,8 +32844,37 @@ public final class mudclient implements Runnable {
 		return gameState;
 	}
 
+	private boolean hasSkillGuidePreviewInput() {
+		return skillGuidePreview != null && chatLayout != null && skillGuideInterface.isVisible()
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !optionsMenuShow
+			&& inputX_Action == InputXAction.ACT_0 && logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage
+			&& showUiWildWarn != 1 && !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank()
+			&& !showDialogShop && !showAppearanceChange;
+	}
+
+	private void closeSkillGuidePreview() {
+		if (skillGuideInterface != null) skillGuideInterface.setVisible(false);
+		skillGuidePreview = null;
+		skillGuideWheel.set(0);
+	}
+
 	private void drawSkillGuide() {
-		skillGuideInterface.onRender(this.getSurface());
+		if (!skillGuideInterface.isVisible()) return;
+		SkillGuideWindow guide = skillGuidePreview;
+		if (guide == null || chatLayout == null || skillGuideInterface.isHiscoresView()) {
+			skillGuideInterface.onRender(getSurface());
+			if (guide != null) {
+				if (!skillGuideInterface.isVisible()) closeSkillGuidePreview();
+				mouseButtonClick = 0;
+			}
+			return;
+		}
+		if (!hasSkillGuidePreviewInput()) return;
+		SkillGuideWindow.Action action = guide.draw(this, chatLayout.entryTop(),
+			Config.S_WANT_HISCORES && hiscoreGuideSkillId >= 0, skillGuideWheel.getAndSet(0));
+		if (action == SkillGuideWindow.Action.CLOSE) closeSkillGuidePreview();
+		if (action == SkillGuideWindow.Action.HISCORES) skillGuideInterface.setHiscoresMode(true);
+		mouseButtonClick = 0;
 	}
 
 	private void drawPointConfig() {
@@ -33254,6 +33297,14 @@ public final class mudclient implements Runnable {
 		}
 		if (hasQuestGuidePreviewInput()) {
 			questGuideWheel.addAndGet(x);
+			return;
+		}
+		if (hasSkillGuidePreviewInput()) {
+			if (skillGuideInterface.isHiscoresView()) {
+				skillGuideInterface.skillGuide.scrollMethodList(skillGuideInterface.hiscoreScroll, x);
+			} else {
+				skillGuideWheel.addAndGet(x);
+			}
 			return;
 		}
 		if (usesTradePreview()) {

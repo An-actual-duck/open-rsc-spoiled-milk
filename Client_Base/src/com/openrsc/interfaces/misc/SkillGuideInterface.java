@@ -7,12 +7,16 @@ import com.openrsc.client.entityhandling.defs.NPCDef;
 import com.openrsc.client.entityhandling.defs.SpellDef;
 import orsc.Config;
 import orsc.ClericTextLayout;
+import orsc.SkillGuideWindow;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.two.GraphicsController;
 import orsc.mudclient;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public final class SkillGuideInterface {
@@ -556,6 +560,88 @@ public final class SkillGuideInterface {
 		mc.getSurface().drawBoxAlpha(x, y, width, height, bgBtnColour, 192);
 		mc.getSurface().drawBoxBorder(x, width, y, height, 0x242424);
 		mc.getSurface().drawString(text, x + (width / 2) - (mc.getSurface().stringWidth(font, text) / 2), y + height / 2 + 5, textColour, font);
+	}
+
+	public SkillGuideWindow createGuideWindow() {
+		return new SkillGuideWindow(mc.getSkillGuideChosen(), mc.skillGuideChosenTabs, this::loadGuideTopics);
+	}
+
+	private List<SkillGuideWindow.Topic> loadGuideTopics(int section) {
+		curTab = section;
+		if (isClericSpellsTab()) return loadClericTopics();
+
+		populateSkillItems();
+		Map<String, List<SkillGuideWindow.Article>> byTopic = new LinkedHashMap<>();
+		String defaultTopic = isExpositoryTab() ? "Overview" : "Unlocks";
+		for (SkillMenuEntry entry : skillMenuEntries) {
+			String topic = entry.topic;
+			if (topic == null) {
+				topic = mc.getSkillGuideChosen().equals("Smithing") && curTab == 6
+					? "Other recipes" : defaultTopic;
+			}
+			byTopic.computeIfAbsent(topic, key -> new ArrayList<>()).add(guideArticle(entry));
+		}
+		if (byTopic.isEmpty()) {
+			byTopic.put(defaultTopic, Collections.singletonList(new SkillGuideWindow.Article("",
+				Collections.singletonList("No guide entries are available for this section."))));
+		}
+		List<SkillGuideWindow.Topic> topics = new ArrayList<>();
+		byTopic.forEach((label, articles) -> topics.add(new SkillGuideWindow.Topic(label, articles)));
+		return topics;
+	}
+
+	private List<SkillGuideWindow.Topic> loadClericTopics() {
+		List<SkillGuideWindow.Topic> topics = new ArrayList<>();
+		for (int i = 0; i < CLERIC_FILTER_KEYS.length; i++) {
+			List<SkillGuideWindow.Article> articles = new ArrayList<>();
+			for (ClericSpellGuideCatalog.Entry entry : ClericSpellGuideCatalog.buildDocument(
+				mc.getClericSpellbookDefinitions(), this::itemName, CLERIC_FILTER_KEYS[i])) {
+				articles.add(new SkillGuideWindow.Article(entry.getHeader(), entry.getParagraphs()));
+			}
+			if (articles.isEmpty()) {
+				articles.add(new SkillGuideWindow.Article("",
+					Collections.singletonList("Cleric spell details are unavailable until the catalog loads.")));
+			}
+			topics.add(new SkillGuideWindow.Topic(CLERIC_FILTER_LABELS[i], articles));
+		}
+		return topics;
+	}
+
+	private String itemName(int itemId) {
+		ItemDef def = EntityHandler.getItemDef(itemId);
+		return def == null ? "item #" + itemId : def.getName();
+	}
+
+	private SkillGuideWindow.Article guideArticle(SkillMenuEntry entry) {
+		String level = entry.getLevelReq();
+		String heading = level.isEmpty() ? "" : "Level " + level;
+		if (entry instanceof MagicSpellMenuItem) {
+			MagicSpellMenuItem spell = (MagicSpellMenuItem) entry;
+			return new SkillGuideWindow.Article(heading + "  " + spell.getFullSpellName(),
+				Collections.singletonList(spell.getTooltip()));
+		}
+		SkillGuideWindow.Icon icon = null;
+		if (entry instanceof SkillMenuItem && !isExpositoryTab()) {
+			ItemDef def = EntityHandler.getItemDef(((SkillMenuItem) entry).getItemID());
+			if (def != null) {
+				icon = (x, y, size) -> mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
+					x, y + size / 6, size, size * 2 / 3, def.getPictureMask(), 0,
+					def.getBlueMask(), false, 0, 1);
+			}
+		} else if (entry instanceof SkillMenuNPC) {
+			int npcId = ((SkillMenuNPC) entry).getNpcID();
+			NPCDef def = EntityHandler.getNpcDef(npcId);
+			if (def != null) {
+				icon = (x, y, size) -> {
+					int height = npcId == 114 || npcId == 241 ? size / 2 : size;
+					int width = def.getCamera2() > 0 ? def.getCamera1() * height / def.getCamera2() : height;
+					width = Math.max(1, Math.min(size, width));
+					mc.drawNPCDef(def, x + (size - width) / 2, y + (size - height) / 2, width, height,
+						isSummonGuideSideFacingNpc(npcId) ? 3 : 0);
+				};
+			}
+		}
+		return SkillGuideWindow.Article.unlock(entry.getSkillDetail(), level, icon);
 	}
 
 	public void populateSkillItems() {
@@ -1642,7 +1728,7 @@ public final class SkillGuideInterface {
 
 	private void addClericSpellGuideEntries() {
 		List<ClericSpellGuideCatalog.Entry> entries = ClericSpellGuideCatalog.build(
-			mc.getClericSpellbookDefinitions(),id->{com.openrsc.client.entityhandling.defs.ItemDef item=EntityHandler.getItemDef(id);return item==null?"item #"+id:item.getName();}, clericGuideFilter);
+			mc.getClericSpellbookDefinitions(), this::itemName, clericGuideFilter);
 		for (ClericSpellGuideCatalog.Entry entry : entries) {
 			skillMenuEntries.add(new ClericSpellMenuItem(entry));
 		}
@@ -1911,6 +1997,7 @@ public final class SkillGuideInterface {
 								int scimitarId, int twoHandedId, int axeId, int pickaxeId, int battleAxeId,
 								int maceId, int scytheId, int spearId, int boltId, int helmId, int gauntletId, int greavesId,
 								int shieldId, int paladinShieldId, int legsId, int bodyId) {
+		int first = skillMenuEntries.size();
 		addSmithingGuideItem(daggerId, String.valueOf(baseLevel), name + " weapons - 1 to 3 bars");
 		addSmithingGuideItem(axeId, String.valueOf(baseLevel), name + " tools - 1 bar");
 		addSmithingGuideItem(scytheId, String.valueOf(baseLevel), name + " scythe - 3 bars");
@@ -1921,6 +2008,7 @@ public final class SkillGuideInterface {
 		addSmithingGuideItem(paladinShieldId, String.valueOf(baseLevel + 4), name + " paladin shield - 3 bars");
 		addSmithingGuideItem(legsId, String.valueOf(baseLevel + 4), name + " platelegs - 3 bars");
 		addSmithingGuideItem(bodyId, String.valueOf(baseLevel + 6), name + " platebody - 4 bars");
+		for (int i = first; i < skillMenuEntries.size(); i++) skillMenuEntries.get(i).topic = name;
 	}
 
 	private void addSmithingGuideItem(int itemId, String level, String description) {
@@ -1954,7 +2042,8 @@ public final class SkillGuideInterface {
 
 class SkillMenuEntry {
 
-	private String levelReq, skillDetail;
+	private final String levelReq, skillDetail;
+	String topic;
 
 	protected SkillMenuEntry(String levelReq, String skillDetail) {
 		this.levelReq = levelReq;
@@ -1985,14 +2074,13 @@ class SkillMenuItem extends SkillMenuEntry {
 }
 
 class MagicSpellMenuItem extends SkillMenuEntry {
-	private String spellName;
-	private String tooltip;
+	private final String fullSpellName, spellName, tooltip;
 
 	public MagicSpellMenuItem(int spellIndex, SpellDef spell) {
 		super(String.valueOf(spell.getReqLevel()), "");
 		ElementalSpellDisplayMetadata metadata = ElementalSpellDisplayMetadata.resolve(spellIndex, spell);
-		String displayName = metadata == null ? spell.getName() : metadata.getSpellName();
-		this.spellName = formatSpellName(displayName);
+		this.fullSpellName = metadata == null ? spell.getName() : metadata.getSpellName();
+		this.spellName = formatSpellName(fullSpellName);
 		this.tooltip = formatTooltip(spell.getDescription(), metadata);
 	}
 
@@ -2029,6 +2117,10 @@ class MagicSpellMenuItem extends SkillMenuEntry {
 			return "Area dark magic damage";
 		}
 		return description;
+	}
+
+	public String getFullSpellName() {
+		return fullSpellName;
 	}
 
 	public String getSpellName() {
