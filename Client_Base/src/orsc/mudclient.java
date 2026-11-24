@@ -838,6 +838,9 @@ public final class mudclient implements Runnable {
 		"What is your favourite movie?"};
 	boolean drawMinimap = false;
 	private boolean minimapPinned = false;
+	private MinimapFrameLayout minimapFrame;
+	private SideToolbarLayout minimapFrameToolbar;
+	private GameInterfaceSettings.TextSize minimapFrameText;
 	/** A detached non-map side panel, independent of the transient tab state. */
 	private int pinnedSideMenuTab = 0;
 	private boolean showCoordinatesOverlay = true;
@@ -13503,7 +13506,13 @@ public final class mudclient implements Runnable {
 
 				if (this.shouldDrawMinimapPanel()) {
 					long panelStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
-					this.drawUiTabMinimap(mustDrawMenu, (byte) 125);
+					MinimapFrameLayout frame = minimapFrameLayout();
+					if (frame == null) {
+						this.drawUiTabMinimap(mustDrawMenu, (byte) 125);
+					} else if (!interfaceOpen && !onlineList.isVisible() && inputX_Action == InputXAction.ACT_0) {
+						drawMinimapFrame(frame);
+						if (mustDrawMenu && frame.contains(mouseX, mouseY)) mouseButtonClick = 0;
+					}
 					if (TRACE_BROWSER_FRAME_STAGES) browserMinimapDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
@@ -17203,6 +17212,37 @@ public final class mudclient implements Runnable {
 			return "?";
 		}
 		return initials.toString();
+	}
+
+	private MinimapFrameLayout minimapFrameLayout() {
+		ChatPanelLayout chat = chatLayout;
+		if (chat == null) return null;
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar == null) return null;
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		if (minimapFrame == null || minimapFrameToolbar != toolbar || minimapFrameText != text) {
+			MudClientGraphics surface = getSurface();
+			int anchor = C_CUSTOM_UI ? toolbar.top : toolbar.panelTop();
+			minimapFrame = new MinimapFrameLayout(surface.width2, getGameHeight(), anchor, C_CUSTOM_UI,
+				chat.left + chat.width, chat.entryTop(), GameInterfaceSettings.size(), text,
+				surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont));
+			minimapFrameToolbar = toolbar;
+			minimapFrameText = text;
+		}
+		return minimapFrame;
+	}
+
+	private void drawMinimapFrame(MinimapFrameLayout frame) {
+		MudClientGraphics surface = getSurface();
+		surface.drawBoxAlpha(frame.left, frame.top, frame.width, frame.bottom - frame.top, 0x182333, 244);
+		surface.drawVerticalGradient(frame.left, frame.top, frame.width, frame.headerHeight, 0x3B4C67, 0x28354A);
+		surface.drawBoxBorder(frame.left, frame.width, frame.top, frame.bottom - frame.top, 0x667993);
+		int bodyTop = frame.top + frame.headerHeight;
+		surface.drawLineHoriz(frame.left + 1, bodyTop - 1, frame.width - 2, 0x667993);
+		surface.drawString("Minimap", frame.left + frame.padding,
+			frame.top + (frame.headerHeight + frame.labelLine) / 2 - 3, 0xFFDC82, frame.labelFont);
+		surface.drawColoredStringCentered(frame.left + frame.width / 2, "Map pending", 0xC4D0E0, 0,
+			frame.bodyFont, (bodyTop + frame.bottom + frame.bodyLine) / 2 - 3);
 	}
 
 	// mini map menu
@@ -23478,10 +23518,6 @@ public final class mudclient implements Runnable {
 				} else {
 					showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
 				}
-				if ((C_CUSTOM_UI || mouseButtonClick != 1) && !Config.S_DISABLE_MINIMAP_ROTATION) {
-					minimapRandom_1 = (int) (13.0D * Math.random()) - 6;
-					minimapRandom_2 = (int) (23.0D * Math.random()) - 11;
-				}
 			} else {
 				handleSideMenuTabInteraction(tab);
 			}
@@ -23496,6 +23532,10 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean isMouseOverOpenUiTabPanel(int x, int y) {
+		if (shouldDrawMinimapPanel()) {
+			MinimapFrameLayout frame = minimapFrameLayout();
+			if (frame != null && frame.contains(x, y)) return true;
+		}
 		if (this.getVisibleSideMenuTab() == 0 || this.getSurface() == null) {
 			return false;
 		}
@@ -23814,7 +23854,10 @@ public final class mudclient implements Runnable {
 			}
 
 			SocialPanelLayout social = showUiTab == Config.FRIENDS_TAB ? socialPanelLayout() : null;
-			if (social != null && !isCurrentSideMenuHomeTab()) {
+			MinimapFrameLayout map = showUiTab == Config.MINIMAP_AND_COMPASS_TAB ? minimapFrameLayout() : null;
+			if (map != null) {
+				if (mouseX < Math.min(hoverLeft, map.left) || mouseY >= map.bottom) closeOrRestorePinnedSideMenu();
+			} else if (social != null && !isCurrentSideMenuHomeTab()) {
 				if (mouseX < Math.min(hoverLeft, social.left) || mouseY >= social.bottom) closeOrRestorePinnedSideMenu();
 			} else if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isCurrentSideMenuHomeTab()))
 				&& (this.mouseX < hoverLeft || this.mouseY > panelOffset + (this.panelSocialTab == 1 ? 307 : 240))) {
@@ -23990,7 +24033,7 @@ public final class mudclient implements Runnable {
 				|| this.isMouseOverOpenUiTabPanel(this.mouseX, this.mouseY)) {
 				return true;
 			}
-			if (this.shouldDrawMinimapPanel()) {
+			if (chatLayout == null && this.shouldDrawMinimapPanel()) {
 				boolean floatingMinimap = this.isFloatingMinimap();
 				int[] minimapBounds = this.getMinimapContentBounds(floatingMinimap);
 				int borderSize = floatingMinimap ? MINIMAP_FLOATING_BORDER : 0;

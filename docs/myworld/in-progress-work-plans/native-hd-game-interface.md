@@ -51,8 +51,7 @@ the existing item and slot artwork, context menus, equip and remove actions,
 and Items Kept on Death control. The sidebar stays above chat entry and chat tabs
 where they span the same part of the screen.
 
-The minimap will have its own design pass after the owner supplies notes. Bank, crafting and shop
-windows are separate work. The Monster Slayer reward shop remains a candidate
+Bank, crafting and shop windows are separate work. The Monster Slayer reward shop remains a candidate
 for in-place stock and currency tabs in that work.
 
 ## Toolbar preview
@@ -61,8 +60,15 @@ The toolbar shares its draw and input bounds. UI size controls the button
 dimensions and spacing. Each button centers the installed icon at its original
 size. The red Satchel caption is part of the installed menu artwork. The
 preview places that caption strip below the toolbar with its original lettering
-and colours. Existing panels dock to the toolbar, and minimap design remains a
-separate pass.
+and colours. The minimap slot opens the frame described below.
+
+## Minimap frame preview
+
+The preview has a scaled frame and keeps the existing launcher, pinning and
+top-right placement. The pane displays a placeholder while the minimap itself
+is under review. The placeholder accepts no movement or camera commands. The
+map, compass and navigation controls will be decided in the minimap design
+pass. The standard client still uses the current minimap.
 
 ## Accomplishments preview
 

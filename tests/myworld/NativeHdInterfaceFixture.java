@@ -46,6 +46,9 @@ public final class NativeHdInterfaceFixture {
 				verifySettingsBounds(960, 540, size, text, true);
 				verifyContextMenu(1920, 1068, size, text);
 				verifyContextMenu(960, 528, size, text);
+				verifyMinimapFrame(1920, 1080, size, text, false);
+				verifyMinimapFrame(960, 540, size, text, false);
+				verifyMinimapFrame(960, 540, size, text, true);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -399,6 +402,25 @@ public final class NativeHdInterfaceFixture {
 			"A long actor label keeps the action and its colour");
 		check(measure.applyAsInt(narrow.label(0)) <= narrow.width - 2 * narrow.padding, "A long label fits the frame");
 		check(narrow.keepsOpenAt(0, 0), "Opening at the top-left remains possible");
+	}
+
+	private static void verifyMinimapFrame(int width, int height, GameInterfaceSettings.Size size,
+										   GameInterfaceSettings.TextSize text, boolean floating) {
+		ChatPanelLayout chat = chat(width, height, size, text);
+		int chatRight = chat.left + chat.width;
+		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, floating, size, chatRight, chat.entryTop());
+		int anchor = floating ? toolbar.top : toolbar.panelTop();
+		int[] fontHeight = {12, 14, 14, 15, 15, 19, 24, 29};
+		MinimapFrameLayout frame = new MinimapFrameLayout(width, height - 12, anchor, floating, chatRight,
+			chat.entryTop(), size, text, fontHeight[text.bodyFont], fontHeight[text.labelFont]);
+		check(frame.left >= 0 && frame.left + frame.width < width, "Map frame fits the right edge");
+		check(frame.top == (floating ? frame.padding : toolbar.panelTop()), "Map frame follows its existing anchor");
+		check(frame.bottom > frame.top + frame.headerHeight + frame.bodyLine, "Map frame has room under the header");
+		if (floating) check(frame.bottom < toolbar.top, "Floating frame leaves the lower toolbar reachable");
+		if (frame.left < chatRight) check(frame.bottom <= chat.entryTop(), "Frame leaves the chat controls reachable");
+		check(frame.contains(frame.left + frame.width - 1, frame.bottom - 1), "The visible frame owns input");
+		check(!frame.contains(frame.left + frame.width, frame.bottom - 1), "Input remains available beside the frame");
+		check(!frame.contains(frame.left, frame.bottom), "Input remains available below the frame");
 	}
 
 	private static void verifyChatBounds(ChatPanelLayout chat, int width) {
