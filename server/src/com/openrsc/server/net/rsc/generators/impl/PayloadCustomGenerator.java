@@ -888,6 +888,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 								builder.writeByte((byte) (b.pinned[i] ? 1 : 0));
 							}
 						}
+					if (b.filterTabs != null) {
+						builder.writeByte((byte) b.filterTabs.length);
+						for (String filters : b.filterTabs) builder.writeString(filters);
+					}
 					break;
 
 				case SEND_BANK_UPDATE:

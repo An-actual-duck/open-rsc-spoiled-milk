@@ -26,6 +26,7 @@ import com.openrsc.server.model.MenuOptionListener;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Bank;
+import com.openrsc.server.model.container.BankFilterTabs;
 import com.openrsc.server.model.container.BankPreset;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Inventory;
@@ -2140,6 +2141,9 @@ public class ActionSender {
 		struct.catalogIDs = new int[itemsInBank];
 		struct.amount = new int[itemsInBank];
 		struct.includesPinMetadata = includePins;
+		if (player.getAttribute(BankFilterTabs.CLIENT_ATTRIBUTE, false)) {
+			struct.filterTabs = BankFilterTabs.load(player.getCache());
+		}
 		struct.pinned = new boolean[itemsInBank];
 		if (includePins) {
 			for (int i = 0; i < displaySlots.size(); i++) {

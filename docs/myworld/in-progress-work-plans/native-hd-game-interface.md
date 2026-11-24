@@ -51,7 +51,7 @@ the existing item and slot artwork, context menus, equip and remove actions,
 and Items Kept on Death control. The sidebar stays above chat entry and chat tabs
 where they span the same part of the screen.
 
-The bank has its own redesign.
+The bank preview organizes filters, stock and bank actions into three panels.
 
 ## Crafting preview
 
@@ -185,3 +185,20 @@ Monster Slayer currency tiers and Rangers Guild item families open as tabs in
 the catalog. Material tiers within a Rangers family remain visible together.
 The side panel selects a quantity and confirms the purchase. Point prices,
 balances and any required ingredients appear below the item grid.
+
+
+## Bank preview
+
+The bank grid sits below its tab strip. Players start with one tab and can use
+the plus button to add up to six. A tab's icon comes from the first item visible
+under that tab's filters. All tabs can show the full bank, including tab one.
+
+The Filters panel has a per-tab Save filters toggle. Saved search, tags, and
+AND/OR matching follow the account. Edits are saved while the toggle is on.
+With saving off, filters apply until the player switches tabs or reopens the
+bank. Every tab uses the same items and logical slot IDs.
+
+The right panel contains the deposit-all action, inventory and equipment views,
+preset entry and quick loads, withdrawal form, and rearrangement controls.
+The preset screen offers the existing save and load actions. Fixed empty slots
+are a separate layout change.

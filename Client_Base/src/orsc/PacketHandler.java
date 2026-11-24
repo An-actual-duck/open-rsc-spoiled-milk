@@ -2299,7 +2299,7 @@ public class PacketHandler {
 			}
 
 			// Show Bank
-			else if (opcode == 42) showBank();
+			else if (opcode == 42) showBank(length);
 
 				// Remove inventory item
 			else if (opcode == 123) removeInventoryItem();
@@ -5230,7 +5230,8 @@ public class PacketHandler {
 		Discord.setLastUpdate("Questing");
 	}
 
-	private void showBank() {
+	private void showBank(int packetLength) {
+		boolean opening = !mc.isShowDialogBank();
 		mc.setShowDialogBank(true);
 		mc.setNewBankItemCount(packetsIncoming.getShort());
 		mc.setBankItemsMax(packetsIncoming.getShort());
@@ -5244,6 +5245,10 @@ public class PacketHandler {
 			}
 
 		if (Config.S_WANT_CUSTOM_BANKS) {
+			int count = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getUnsignedByte() : 0;
+			String[] filterTabs = new String[count];
+			for (int i = 0; i < count; i++) filterTabs[i] = packetsIncoming.readString();
+			mc.getBank().receiveFilterTabs(filterTabs, opening);
 			mc.getBank().calculateWealth();
 		}
 

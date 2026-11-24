@@ -13344,6 +13344,9 @@ public final class mudclient implements Runnable {
 				packetHandler.getClientStream().newPacket(199);
 				packetHandler.getClientStream().bufferBits.putByte(29);
 				packetHandler.getClientStream().finishPacket();
+				packetHandler.getClientStream().newPacket(199);
+				packetHandler.getClientStream().bufferBits.putByte(31);
+				packetHandler.getClientStream().finishPacket();
 				craftingTabsRegistered = true;
 			}
 
@@ -13362,10 +13365,11 @@ public final class mudclient implements Runnable {
 			} else if (this.showDialogMessage) {
 				this.drawDialogWelcome(var1 - 4853);
 				this.setInitLoginCleared(false);
-			} else if (this.showDialogServerMessage && (!C_CUSTOM_UI || shopPreviewOpen())) {
+			} else if (this.showDialogServerMessage && (!C_CUSTOM_UI || shopPreviewOpen()
+				|| isShowDialogBank() && bank.usesWorkspace())) {
 				this.drawDialogServerMessage((byte) -115);
 			} else if (this.showUiWildWarn != 1) {
-				if (this.isShowDialogBank() && this.combatTimeout == 0 && !C_CUSTOM_UI) {
+				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
 				} else if (auctionHouse.isVisible() && combatTimeout == 0) {
 					auctionHouse.onRender(getSurface());
@@ -32804,6 +32808,7 @@ public final class mudclient implements Runnable {
 			window.scroll(x);
 			return;
 		}
+		if (isShowDialogBank() && bank.scrollWorkspace(x)) return;
 		if (doSkillInterface != null && doSkillInterface.scrollCraftingWindow(x)) return;
 		if (x > 1)
 			x += x;

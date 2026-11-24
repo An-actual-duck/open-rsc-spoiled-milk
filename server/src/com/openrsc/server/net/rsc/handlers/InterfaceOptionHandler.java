@@ -20,6 +20,7 @@ import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.content.cleric.runtime.ClericSupportCasting;
 import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.PluginTickEvent;
+import com.openrsc.server.model.container.BankFilterTabs;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -137,6 +138,16 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 				break;
 			case PRODUCTION_TABS:
 				if (player.isUsingCustomClient()) player.setAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, true);
+				break;
+			case BANK_FILTER_TABS:
+				if (player.isUsingCustomClient() && player.getConfig().WANT_CUSTOM_BANKS) {
+					player.setAttribute(BankFilterTabs.CLIENT_ATTRIBUTE, true);
+				}
+				break;
+			case BANK_SAVE_FILTER_TAB:
+				if (player.getAttribute(BankFilterTabs.CLIENT_ATTRIBUTE, false)) {
+					BankFilterTabs.save(player.getCache(), payload.slot, payload.name);
+				}
 				break;
 			case SHOP_TABS:
 				if (player.isUsingCustomClient()) player.setAttribute(PointShopTabs.CLIENT_ATTRIBUTE, true);
