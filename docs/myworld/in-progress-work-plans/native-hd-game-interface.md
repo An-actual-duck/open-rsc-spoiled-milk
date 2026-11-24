@@ -51,8 +51,22 @@ the existing item and slot artwork, context menus, equip and remove actions,
 and Items Kept on Death control. The sidebar stays above chat entry and chat tabs
 where they span the same part of the screen.
 
-Bank, crafting and shop windows are separate work. The Monster Slayer reward shop remains a candidate
-for in-place stock and currency tabs in that work.
+The bank and shops have their own redesigns. The Monster Slayer reward shop remains a candidate
+for in-place stock and currency tabs.
+
+## Crafting preview
+
+Crafting, smithing and smelting recipe windows group the recipes for the active
+interaction into item families and material tabs. Anvils show recipes for the
+bars in the player's inventory in one catalog. Material costs stay below the
+recipe grid, with recipe and ingredient tooltips above it. A separate panel
+holds quantity, All and the crafting preferences.
+
+The server supplies the batch count and advances it when production completes.
+The bar animates during the server's action delay and appears in the controls
+while Keep window open is checked. Closing the window moves it above the
+player and the batch continues. Cancel and world actions retain their existing
+interruption behavior.
 
 ## Toolbar preview
 

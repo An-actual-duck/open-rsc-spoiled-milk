@@ -69,6 +69,8 @@ public final class DoSkillInterface {
 	private int craftingProgressItem = -1;
 	private int craftingProgressTotal;
 	private int craftingProgressDone;
+	private long craftingStepStartedNanos;
+	private int craftingStepDurationMillis;
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -984,17 +986,28 @@ public final class DoSkillInterface {
 		craftingProgressItem = itemId;
 		craftingProgressTotal = total;
 		craftingProgressDone = 0;
+		craftingStepDurationMillis = 0;
 		if (craftingWindow != null && !productionKeepOpenEnabled) closeProductionInterface();
 	}
 
+	public void timeCraftingProgressStep(int durationMillis) {
+		if (hasCraftingProgress() && durationMillis > 0) {
+			craftingStepStartedNanos = System.nanoTime();
+			craftingStepDurationMillis = durationMillis;
+		}
+	}
+
 	public void updateCraftingProgress(int completed) {
-		craftingProgressDone = Math.min(craftingProgressTotal, Math.max(craftingProgressDone, completed));
+		if (completed <= craftingProgressDone) return;
+		craftingProgressDone = Math.min(craftingProgressTotal, completed);
+		craftingStepDurationMillis = 0;
 	}
 
 	public void clearCraftingProgress() {
 		craftingProgressItem = -1;
 		craftingProgressDone = 0;
 		craftingProgressTotal = 0;
+		craftingStepDurationMillis = 0;
 	}
 
 	public boolean hasCraftingProgress() {
@@ -1022,8 +1035,15 @@ public final class DoSkillInterface {
 	public void drawCraftingProgress(int x, int y, int width, int height, int font) {
 		if (!hasCraftingProgress()) return;
 		mc.getSurface().drawBoxAlpha(x, y, width, height, 0x111923, 225);
-		mc.getSurface().drawBoxAlpha(x + 1, y + 1,
-			(width - 2) * craftingProgressDone / craftingProgressTotal, height - 2, 0x366B61, 225);
+		int usableWidth = width - 2;
+		int finishedWidth = usableWidth * craftingProgressDone / craftingProgressTotal;
+		mc.getSurface().drawBoxAlpha(x + 1, y + 1, finishedWidth, height - 2, 0x366B61, 225);
+		if (craftingStepDurationMillis > 0 && craftingProgressDone < craftingProgressTotal) {
+			double elapsedMillis = (System.nanoTime() - craftingStepStartedNanos) / 1_000_000.0;
+			double step = Math.max(0, Math.min(0.98, elapsedMillis / craftingStepDurationMillis));
+			int stepWidth = usableWidth * (craftingProgressDone + 1) / craftingProgressTotal - finishedWidth;
+			mc.getSurface().drawBoxAlpha(x + 1 + finishedWidth, y + 1, (int) (stepWidth * step), height - 2, 0x438D82, 225);
+		}
 		mc.getSurface().drawBoxBorder(x, width, y, height, 0x728D99);
 		String count = craftingProgressDone + " / " + craftingProgressTotal;
 		drawString(count, x + (width - mc.getSurface().stringWidth(font, count)) / 2,

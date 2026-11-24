@@ -958,6 +958,8 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					} else if (pb.interfaceId == 6) {
 						builder.writeShort(pb.itemId);
 						builder.writeByte((byte) pb.timesRepeat);
+					} else if (pb.interfaceId == 9) {
+						builder.writeInt(pb.delay);
 					} else if (pb.interfaceId == 1 || pb.interfaceId == 3 || pb.interfaceId == 7) {
 						if (pb.interfaceId == 1) {
 							builder.writeShort(pb.delay);

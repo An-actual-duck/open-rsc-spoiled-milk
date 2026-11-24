@@ -2539,6 +2539,10 @@ public class PacketHandler {
 			mc.doSkillInterface.clearCraftingProgress();
 			return;
 		}
+		if (actionType == 9) {
+			mc.doSkillInterface.timeCraftingProgressStep(packetsIncoming.get32());
+			return;
+		}
 		if (!Config.C_BATCH_PROGRESS_BAR) {
 			mc.hideBatchProgressBar();
 			return;

@@ -13,7 +13,8 @@ public class Batch {
 	private int current;
 	private int totalBatch;
 	private boolean completed;
-	private boolean showingProductionProgress;
+	private volatile boolean showingProductionProgress;
+	private boolean productionStepAnnounced;
 	private Point location;
 
 	/**
@@ -52,8 +53,22 @@ public class Batch {
 		}
 	}
 
+	synchronized void beginProductionStep(int ticks) {
+		if (showingProductionProgress && !productionStepAnnounced) {
+			productionStepAnnounced = true;
+			ActionSender.sendProductionProgressStep(player, ticks * player.getConfig().GAME_TICK);
+		}
+	}
+
+	public boolean isShowingProductionProgress() {
+		return showingProductionProgress;
+	}
+
 	private synchronized void updateProductionProgress() {
-		if (showingProductionProgress) ActionSender.sendProductionProgressUpdate(player, current);
+		if (showingProductionProgress) {
+			productionStepAnnounced = false;
+			ActionSender.sendProductionProgressUpdate(player, current);
+		}
 	}
 
 	private void finishProductionProgress() {

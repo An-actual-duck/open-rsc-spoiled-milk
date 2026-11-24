@@ -1,9 +1,12 @@
 package com.openrsc.server.net.rsc;
 
+import com.openrsc.server.constants.custom.InterfaceOptions;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.handlers.*;
 import com.openrsc.server.net.rsc.struct.AbstractStruct;
+import com.openrsc.server.net.rsc.struct.incoming.OptionsStruct;
+import com.openrsc.server.plugins.Batch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -238,7 +241,8 @@ public class PayloadProcessorManager {
 				}
 				if (method != null) {
 					checkIfShouldCancelMenu(player, payload.getOpcode());
-					if (player != null && player.hasActiveBatch() && ACTION_OPCODES.contains(payload.getOpcode())) {
+					if (player != null && player.hasActiveBatch() && ACTION_OPCODES.contains(payload.getOpcode())
+							&& !keepsProductionBatchRunning(player.getBatch(), payload)) {
 						player.interruptPlugins();
 					}
 					method.invoke(processor, payload, player); //processor.process(payload, player);
@@ -255,6 +259,13 @@ public class PayloadProcessorManager {
 			return true;
 		}
 		return false;
+	}
+
+	private static boolean keepsProductionBatchRunning(Batch batch, AbstractStruct<OpcodeIn> payload) {
+		if (!(payload instanceof OptionsStruct) || batch == null || !batch.isShowingProductionProgress()) return false;
+		InterfaceOptions option = InterfaceOptions.getById(((OptionsStruct) payload).index);
+		return option == InterfaceOptions.PRODUCTION_CLOSE || option == InterfaceOptions.PRODUCTION_START
+			|| option == InterfaceOptions.PRODUCTION_REMEMBER_TOGGLE || option == InterfaceOptions.PRODUCTION_KEEP_OPEN_TOGGLE;
 	}
 
 	public static boolean blockedByAbyssalTrap(OpcodeIn opcode, Player player) {

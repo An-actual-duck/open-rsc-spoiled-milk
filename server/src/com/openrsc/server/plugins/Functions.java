@@ -165,7 +165,11 @@ public class Functions {
 		final PluginTask pluginTask = PluginTask.getContextPluginTask();
 		if (pluginTask == null)
 			return;
-		// System.out.println("Sleeping on " + Thread.currentThread().getName());
+		// The one-tick gap between repetitions is separate from the production action.
+		if (ticks > 1 && pluginTask.getScriptContext() != null) {
+			Batch batch = pluginTask.getScriptContext().getBatch();
+			if (batch != null) batch.beginProductionStep(ticks);
+		}
 		pluginTask.pause(ticks);
 	}
 

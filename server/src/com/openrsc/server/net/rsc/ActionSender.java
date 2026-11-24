@@ -2367,6 +2367,13 @@ public class ActionSender {
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
 	}
 
+	public static void sendProductionProgressStep(Player player, int durationMillis) {
+		ProgressBarStruct progress = new ProgressBarStruct();
+		progress.interfaceId = 9;
+		progress.delay = durationMillis;
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
+	}
+
 	public static void sendActionProgressBar(Player player, int itemId, int delayTicks) {
 		ProgressBarStruct struct = new ProgressBarStruct();
 		struct.interfaceId = 4;

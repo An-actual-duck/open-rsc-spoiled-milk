@@ -114,7 +114,9 @@ final class CraftingWindow {
 		}
 		if (session.productionCanGoBack) {
 			int backWidth = Math.max(size(50), measure(font, "Back") + gap);
-			if (button(start, y + gap / 2, backWidth, buttonHeight, "Back", font, false, true)) session.sendProductionBack();
+			if (button(start, y + gap / 2, backWidth, buttonHeight, "Back", font, false, !session.hasCraftingProgress())) {
+				session.sendProductionBack();
+			}
 			start += backWidth + gap;
 		}
 		draw(fit(session.title, titleFont, end - closeWidth - gap - start),
