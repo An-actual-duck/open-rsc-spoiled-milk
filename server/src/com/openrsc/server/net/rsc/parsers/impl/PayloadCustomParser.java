@@ -1002,6 +1002,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 							os.id = packet.readInt();
 							break;
 					case CANCEL_BATCH:
+					case PRODUCTION_TABS:
 					case PRODUCTION_BACK:
 						//nothing
 						break;

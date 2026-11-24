@@ -2527,6 +2527,18 @@ public class PacketHandler {
 			mc.completeActionProgressBar();
 			return;
 		}
+		if (actionType == 6) {
+			mc.doSkillInterface.startCraftingProgress(packetsIncoming.getShort(), packetsIncoming.getByte() & 0xff);
+			return;
+		}
+		if (actionType == 7) {
+			mc.doSkillInterface.updateCraftingProgress(packetsIncoming.getByte() & 0xff);
+			return;
+		}
+		if (actionType == 8) {
+			mc.doSkillInterface.clearCraftingProgress();
+			return;
+		}
 		if (!Config.C_BATCH_PROGRESS_BAR) {
 			mc.hideBatchProgressBar();
 			return;

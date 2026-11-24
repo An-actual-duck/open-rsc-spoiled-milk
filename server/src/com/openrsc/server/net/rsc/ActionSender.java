@@ -2346,6 +2346,27 @@ public class ActionSender {
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, struct, player);
 	}
 
+	public static void sendProductionProgressStart(Player player, int itemId, int total) {
+		ProgressBarStruct progress = new ProgressBarStruct();
+		progress.interfaceId = 6;
+		progress.itemId = itemId;
+		progress.timesRepeat = total;
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
+	}
+
+	public static void sendProductionProgressUpdate(Player player, int completed) {
+		ProgressBarStruct progress = new ProgressBarStruct();
+		progress.interfaceId = 7;
+		progress.timesRepeat = completed;
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
+	}
+
+	public static void sendProductionProgressEnd(Player player) {
+		ProgressBarStruct progress = new ProgressBarStruct();
+		progress.interfaceId = 8;
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
+	}
+
 	public static void sendActionProgressBar(Player player, int itemId, int delayTicks) {
 		ProgressBarStruct struct = new ProgressBarStruct();
 		struct.interfaceId = 4;

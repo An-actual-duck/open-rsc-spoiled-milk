@@ -955,7 +955,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					if (pb.interfaceId == 4) {
 						builder.writeShort(pb.itemId);
 						builder.writeShort(pb.delay);
-					} else if (pb.interfaceId > 0 && pb.interfaceId != 2 && pb.interfaceId != 5) {
+					} else if (pb.interfaceId == 6) {
+						builder.writeShort(pb.itemId);
+						builder.writeByte((byte) pb.timesRepeat);
+					} else if (pb.interfaceId == 1 || pb.interfaceId == 3 || pb.interfaceId == 7) {
 						if (pb.interfaceId == 1) {
 							builder.writeShort(pb.delay);
 						}

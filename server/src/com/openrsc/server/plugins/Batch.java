@@ -13,6 +13,7 @@ public class Batch {
 	private int current;
 	private int totalBatch;
 	private boolean completed;
+	private boolean showingProductionProgress;
 	private Point location;
 
 	/**
@@ -44,7 +45,26 @@ public class Batch {
 		// Repeating actions use the actor-attached tool progress display.
 	}
 
-	public void stop() {
+	public synchronized void startProductionProgress(int itemId) {
+		if (totalBatch > 0) {
+			showingProductionProgress = true;
+			ActionSender.sendProductionProgressStart(player, itemId, totalBatch);
+		}
+	}
+
+	private synchronized void updateProductionProgress() {
+		if (showingProductionProgress) ActionSender.sendProductionProgressUpdate(player, current);
+	}
+
+	private void finishProductionProgress() {
+		if (showingProductionProgress) {
+			showingProductionProgress = false;
+			ActionSender.sendProductionProgressEnd(player);
+		}
+	}
+
+	public synchronized void stop() {
+		finishProductionProgress();
 		ActionSender.sendRemoveActionProgressBar(getPlayer());
 		this.completed = true;
 	}
@@ -68,6 +88,7 @@ public class Batch {
 			return;
 		}
 		incrementBatch();
+		updateProductionProgress();
 		if (!isUnlimited() && getCurrentBatchProgress() == getTotalBatch()) {
 			stop();
 		}

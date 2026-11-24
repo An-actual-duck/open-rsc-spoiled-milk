@@ -68,6 +68,15 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 			player.message("To forge items use the metal you wish to work with the anvil");
 			return;
 		}
+		if (player.getAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, false)) {
+			ProductionSession catalog = createAnvilCatalog(player);
+			if (catalog != null) {
+				player.setAttribute("production_session", catalog);
+				player.setAttribute("production_starter", (ProductionStarter) Smithing::beginProductionFromInterface);
+				ActionSender.showProductionInterface(player, catalog);
+				return;
+			}
+		}
 		ProductionSession session = createSmithingMaterialSession(player);
 		player.setAttribute("production_session", session);
 		player.setAttribute("production_starter", (ProductionStarter) Smithing::beginMaterialSelectionFromInterface);
@@ -478,18 +487,25 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 			return false;
 		}
 		Smithing smithing = new Smithing();
-		ItemSmithingDef def = smithing.getProductionRecipeDef(player, session.getInputItemId(), itemId);
+		int barId = session.getInputItemId();
+		if (barId == -1) {
+			ProductionRecipe recipe = session.getRecipeByItemId(itemId);
+			int[] ingredients = recipe == null ? new int[0] : recipe.getIngredientItemIds();
+			if (ingredients.length == 0) return false;
+			barId = ingredients[0];
+		}
+		ItemSmithingDef def = smithing.getProductionRecipeDef(player, barId, itemId);
 		if (def == null) {
 			player.message("Nothing interesting happens");
 			return false;
 		}
 
-		Item bar = new Item(session.getInputItemId());
+		Item bar = new Item(barId);
 		if (!smithing.canStartRecipe(player, bar, def)) {
 			return false;
 		}
 
-		int availableCount = player.getCarriedItems().getInventory().countId(session.getInputItemId(), Optional.of(false)) / def.getRequiredBars();
+		int availableCount = player.getCarriedItems().getInventory().countId(barId, Optional.of(false)) / def.getRequiredBars();
 		int makeCount = Math.min(quantity, availableCount);
 		if (makeCount < 1) {
 			player.message("You need more materials to make that");
@@ -582,6 +598,17 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 			return null;
 		}
 		return new ProductionSession(ProductionSession.TYPE_SMITHING, "Choose an item to smith", item.getCatalogId(), recipes);
+	}
+
+	private ProductionSession createAnvilCatalog(Player player) {
+		List<ProductionRecipe> recipes = new ArrayList<>();
+		for (int barId : MODERN_ANVIL_BARS) {
+			if (player.getCarriedItems().getInventory().countId(barId, Optional.of(false)) < 1) continue;
+			ProductionSession metal = createSmithingProductionSession(player, new Item(barId));
+			if (metal != null) recipes.addAll(metal.getRecipes());
+		}
+		return recipes.isEmpty() ? null
+			: new ProductionSession(ProductionSession.TYPE_SMITHING, "Choose an item to smith", -1, recipes);
 	}
 
 	private ProductionSession createSmithingMaterialSession(Player player) {

@@ -20,23 +20,23 @@ public final class DoSkillInterface {
 	int width = 430;
 	int height = 320;
 	private ArrayList<DoSkillItem> doSkillItems;
-	private ArrayList<ProductionRecipeView> productionRecipes;
+	final ArrayList<ProductionRecipeView> productionRecipes;
 	private String skillToDo, skillDoing;
-	private String title = "";
+	String title = "";
 	private boolean visible, rightClickMenu = false, productionMode = false;
 	private mudclient mc;
 	private int panelColour, textColour, bordColour;
 	private int x, y, autoHeight;
-	private int selectedRecipeIndex = -1;
-	private int productionQuantity = 1;
-	private int inputItemId = -1;
+	int selectedRecipeIndex = -1;
+	int productionQuantity = 1;
+	int inputItemId = -1;
 	private int productionResourceAmount = 0;
 	private int productionInterfaceId = -1;
-	private boolean productionRememberSupported = false;
-	private boolean productionRememberEnabled = false;
-	private boolean productionKeepOpenSupported = false;
-	private boolean productionKeepOpenEnabled = false;
-	private boolean productionCanGoBack = false;
+	boolean productionRememberSupported = false;
+	boolean productionRememberEnabled = false;
+	boolean productionKeepOpenSupported = false;
+	boolean productionKeepOpenEnabled = false;
+	boolean productionCanGoBack = false;
 	private int[] productionPointCodes = new int[0];
 	private int[] productionPointBalances = new int[0];
 	private static final int PRODUCTION_CONTENT_HEIGHT = 292;
@@ -46,6 +46,8 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_UI_CAN_GO_BACK = 4;
 	private static final int PRODUCTION_UI_KEEP_OPEN_SUPPORTED = 8;
 	private static final int PRODUCTION_UI_KEEP_OPEN_ENABLED = 16;
+	private static final int PRODUCTION_SMITHING = 1;
+	private static final int PRODUCTION_SMELTING = 3;
 	private static final int PRODUCTION_SMITHING_MATERIAL = 4;
 	private static final int PRODUCTION_FURNACE_CATEGORY = 5;
 	private static final int PRODUCTION_FURNACE_MATERIAL = 6;
@@ -54,7 +56,7 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
 	private static final int PRODUCTION_MONSTER_SLAYER_REDEMPTION = 10;
 	private static final int PRODUCTION_MONSTER_SLAYER_SHOP_CATEGORY = 11;
-	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
+	static final int PRODUCTION_ALL_QUANTITY = 1000000;
 	/** The source mark is 59x41; preserve that proportion without clipping it. */
 	private static final int POINT_COIN_WIDTH = 18;
 	private static final int POINT_COIN_HEIGHT = 13;
@@ -63,6 +65,10 @@ public final class DoSkillInterface {
 	private static Sprite slayerPointCoin;
 	private static boolean slayerPointCoinLoadAttempted;
 	private String pointCoinHover = "";
+	private CraftingWindow craftingWindow;
+	private int craftingProgressItem = -1;
+	private int craftingProgressTotal;
+	private int craftingProgressDone;
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -101,7 +107,8 @@ public final class DoSkillInterface {
 		autoHeight = y + height;
 
 		if (productionMode) {
-			renderProductionInterface();
+			if (craftingWindow != null) craftingWindow.render();
+			else renderProductionInterface();
 			return;
 		}
 
@@ -840,7 +847,7 @@ public final class DoSkillInterface {
 		return hoverText;
 	}
 
-	private String ingredientTooltip(int itemId, int fallbackItemId, int owned, long required) {
+	String ingredientTooltip(int itemId, int fallbackItemId, int owned, long required) {
 		String text = EntityHandler.getItemDef(itemId).getName();
 		if (isValidItemId(fallbackItemId)) {
 			text += " or " + EntityHandler.getItemDef(fallbackItemId).getName();
@@ -848,7 +855,7 @@ public final class DoSkillInterface {
 		return text + " - " + owned + "/" + required;
 	}
 
-	private int getDisplayIngredientItemId(int itemId, int fallbackItemId, long required) {
+	int getDisplayIngredientItemId(int itemId, int fallbackItemId, long required) {
 		if (isValidItemId(fallbackItemId)
 			&& mc.getInventoryCount(itemId, false) < required
 			&& mc.getInventoryCount(fallbackItemId, false) >= required) {
@@ -857,7 +864,7 @@ public final class DoSkillInterface {
 		return itemId;
 	}
 
-	private int getOwnedIngredientCount(int itemId, int fallbackItemId) {
+	int getOwnedIngredientCount(int itemId, int fallbackItemId) {
 		int owned = mc.getInventoryCount(itemId, false);
 		if (isValidItemId(fallbackItemId)) {
 			owned = Math.max(owned, mc.getInventoryCount(fallbackItemId, false));
@@ -865,7 +872,7 @@ public final class DoSkillInterface {
 		return owned;
 	}
 
-	private boolean isValidItemId(int itemId) {
+	boolean isValidItemId(int itemId) {
 		return itemId >= 0 && itemId < EntityHandler.itemCount();
 	}
 
@@ -883,7 +890,7 @@ public final class DoSkillInterface {
 		});
 	}
 
-	private void sendProductionStart(int quantity) {
+	void sendProductionStart(int quantity) {
 		ProductionRecipeView selected = getSelectedRecipe();
 		if (selected == null) {
 			return;
@@ -895,33 +902,39 @@ public final class DoSkillInterface {
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendProductionClose() {
+	void sendCancelProductionBatch() {
+		mc.packetHandler.getClientStream().newPacket(199);
+		mc.packetHandler.getClientStream().bufferBits.putByte(6);
+		mc.packetHandler.getClientStream().finishPacket();
+	}
+
+	void sendProductionClose() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(20);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendProductionRememberPreference() {
+	void sendProductionRememberPreference() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(24);
 		mc.packetHandler.getClientStream().bufferBits.putByte(productionRememberEnabled ? 1 : 0);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendProductionKeepOpenPreference() {
+	void sendProductionKeepOpenPreference() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(27);
 		mc.packetHandler.getClientStream().bufferBits.putByte(productionKeepOpenEnabled ? 1 : 0);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendProductionBack() {
+	void sendProductionBack() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(25);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private ProductionRecipeView getSelectedRecipe() {
+	ProductionRecipeView getSelectedRecipe() {
 		if (selectedRecipeIndex < 0 || selectedRecipeIndex >= productionRecipes.size()) {
 			return null;
 		}
@@ -961,11 +974,71 @@ public final class DoSkillInterface {
 		if (this.selectedRecipeIndex < 0 && !this.productionRecipes.isEmpty()) {
 			this.selectedRecipeIndex = 0;
 		}
+		craftingWindow = mc.usesCraftingInterfacePreview() && interfaceId >= PRODUCTION_SMITHING && interfaceId <= PRODUCTION_SMELTING
+			? new CraftingWindow(mc, this, new CraftingRecipeTabs(productionRecipes, inputItemId)) : null;
 		setVisible(true);
+	}
+
+	public void startCraftingProgress(int itemId, int total) {
+		if (!mc.usesCraftingInterfacePreview() || total <= 0) return;
+		craftingProgressItem = itemId;
+		craftingProgressTotal = total;
+		craftingProgressDone = 0;
+		if (craftingWindow != null && !productionKeepOpenEnabled) closeProductionInterface();
+	}
+
+	public void updateCraftingProgress(int completed) {
+		craftingProgressDone = Math.min(craftingProgressTotal, Math.max(craftingProgressDone, completed));
+	}
+
+	public void clearCraftingProgress() {
+		craftingProgressItem = -1;
+		craftingProgressDone = 0;
+		craftingProgressTotal = 0;
+	}
+
+	public boolean hasCraftingProgress() {
+		return craftingProgressItem >= 0;
+	}
+
+	String craftingProgressName() {
+		return CraftingRecipeTabs.itemName(craftingProgressItem);
+	}
+
+	boolean hasInWindowCraftingProgress() {
+		return visible && craftingWindow != null && productionKeepOpenEnabled;
+	}
+
+	public boolean hasOverheadCraftingProgress(boolean craftingWindowCovered) {
+		return craftingWindowCovered || !hasInWindowCraftingProgress();
+	}
+
+	boolean hasCraftingMaterials(ProductionRecipeView recipe) {
+		if (!recipe.isMaterialsMet()) return false;
+		if (productionInterfaceId != PRODUCTION_SMITHING || inputItemId != -1 || !recipe.hasIngredientDetails()) return true;
+		return mc.getInventoryCount(recipe.getIngredientItemId(0), false) >= recipe.getIngredientAmount(0);
+	}
+
+	public void drawCraftingProgress(int x, int y, int width, int height, int font) {
+		if (!hasCraftingProgress()) return;
+		mc.getSurface().drawBoxAlpha(x, y, width, height, 0x111923, 225);
+		mc.getSurface().drawBoxAlpha(x + 1, y + 1,
+			(width - 2) * craftingProgressDone / craftingProgressTotal, height - 2, 0x366B61, 225);
+		mc.getSurface().drawBoxBorder(x, width, y, height, 0x728D99);
+		String count = craftingProgressDone + " / " + craftingProgressTotal;
+		drawString(count, x + (width - mc.getSurface().stringWidth(font, count)) / 2,
+			y + (height + mc.getSurface().fontHeight(font)) / 2 - 2, font, 0xFFFFFF);
+	}
+
+	public boolean scrollCraftingWindow(int amount) {
+		if (!visible || craftingWindow == null) return false;
+		craftingWindow.scroll(amount);
+		return true;
 	}
 
 	public void closeProductionInterface() {
 		this.productionMode = false;
+		this.craftingWindow = null;
 		this.productionRecipes.clear();
 		this.selectedRecipeIndex = -1;
 		this.productionQuantity = 1;

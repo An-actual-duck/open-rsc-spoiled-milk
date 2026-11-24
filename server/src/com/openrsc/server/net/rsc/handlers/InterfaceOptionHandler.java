@@ -134,6 +134,9 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			case PRODUCTION_KEEP_OPEN_TOGGLE:
 				handleProductionKeepOpenToggle(player, payload);
 				break;
+			case PRODUCTION_TABS:
+				if (player.isUsingCustomClient()) player.setAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, true);
+				break;
 			case PRODUCTION_BACK:
 				handleProductionBack(player);
 				break;
@@ -274,6 +277,10 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 				}
 
 				ProductionMemory.beginStart(player, session, itemId);
+				if (player.getAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, false) && (session.isType(ProductionSession.TYPE_CRAFTING)
+						|| session.isType(ProductionSession.TYPE_SMITHING) || session.isType(ProductionSession.TYPE_SMELTING))) {
+					getScriptContext().setProductionProgressItem(itemId);
+				}
 				boolean started;
 				try {
 					started = starter.start(player, session, itemId, quantity);

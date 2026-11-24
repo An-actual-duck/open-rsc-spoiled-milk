@@ -497,6 +497,7 @@ public final class mudclient implements Runnable {
 	private int[] characterBubbleX = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int[] characterBubbleY = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private boolean actionProgressActive = false;
+	private boolean craftingTabsRegistered;
 	private int actionProgressItemId = -1;
 	private long actionProgressStartTime = 0L;
 	private long actionProgressDurationMs = 1L;
@@ -12752,8 +12753,14 @@ public final class mudclient implements Runnable {
 					this.characterBubbleScale[this.characterBubbleCount] = overlayMovement;
 					this.characterBubbleID[this.characterBubbleCount++] = player.bubbleItem;
 				}
-				if (player == this.localPlayer && this.actionProgressActive) {
-					drawActionProgressBar(x + width / 2, y, overlayMovement);
+				if (player == this.localPlayer) {
+					if (doSkillInterface != null && doSkillInterface.hasCraftingProgress()) {
+						if (doSkillInterface.hasOverheadCraftingProgress(combatTimeout != 0)) {
+							drawOverheadCraftingProgress(x + width / 2, y, overlayMovement);
+						}
+					} else if (this.actionProgressActive) {
+						drawActionProgressBar(x + width / 2, y, overlayMovement);
+					}
 				}
 				drawCombatEffectOverlay(player, x, y, width, height);
 				drawClericBuffOverlay(player, x, y, width, height);
@@ -13323,6 +13330,12 @@ public final class mudclient implements Runnable {
 
 	private void drawUi(int var1) {
 		try {
+			if (!craftingTabsRegistered && usesCraftingInterfacePreview()) {
+				packetHandler.getClientStream().newPacket(199);
+				packetHandler.getClientStream().bufferBits.putByte(28);
+				packetHandler.getClientStream().finishPacket();
+				craftingTabsRegistered = true;
+			}
 
 			boolean var2 = false;
 
@@ -27547,6 +27560,11 @@ public final class mudclient implements Runnable {
 			this.browserPreparedLogin=null;this.browserPreparedLoginSequence=0;
             if(this.playerMovementRatePercent!=null)java.util.Arrays.fill(this.playerMovementRatePercent,0);
 			clearDialoguePresentation();
+			if (doSkillInterface != null) {
+				doSkillInterface.clearCraftingProgress();
+				doSkillInterface.closeProductionInterface();
+			}
+			craftingTabsRegistered = false;
 			setOptionsMenuShow(false);
 			accomplishmentsLayout = null;
 			java.util.Arrays.fill(accomplishmentsScroll, 0);
@@ -28387,6 +28405,19 @@ public final class mudclient implements Runnable {
 		this.actionProgressActive = false;
 		this.actionProgressItemId = -1;
 		this.extendGatheringFocusMenuLinger();
+	}
+
+	private void drawOverheadCraftingProgress(int centerX, int actorTopY, int scale) {
+		int font = GameInterfaceSettings.textSize().labelFont;
+		int width = Math.max(GameInterfaceSettings.size().pixels(78), getSurface().stringWidth(font, "30 / 30") + 10);
+		int height = getSurface().fontHeight(font) + 4;
+		int top = actorTopY - scale * 39 / 100 - height;
+		getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		try {
+			doSkillInterface.drawCraftingProgress(centerX - width / 2, top, width, height, font);
+		} finally {
+			getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
+		}
 	}
 
 	private void drawActionProgressBar(int centerX, int actorTopY, int scale) {
@@ -32682,6 +32713,10 @@ public final class mudclient implements Runnable {
 		territorySignupInterface.onRender();
 	}
 
+	public boolean usesCraftingInterfacePreview() {
+		return chatLayout != null;
+	}
+
 	public void runScroll(int x) {
 		if (hasDialogueChoiceInput()) {
 			dialogueScroll.addAndGet(Integer.signum(x));
@@ -32692,6 +32727,7 @@ public final class mudclient implements Runnable {
 			if (menu.keepsOpenAt(mouseX, mouseY)) contextMenuWheel.addAndGet(x);
 			return;
 		}
+		if (doSkillInterface != null && doSkillInterface.scrollCraftingWindow(x)) return;
 		if (x > 1)
 			x += x;
 		else if (x < -1)
