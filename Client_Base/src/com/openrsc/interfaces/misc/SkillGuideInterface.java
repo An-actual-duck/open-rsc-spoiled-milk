@@ -272,7 +272,7 @@ public final class SkillGuideInterface {
 			mc.getSurface().drawString("Important information to know", headerX, y + 94, 0xffffff, 2);
 			return;
 		}
-		mc.getSurface().drawString("Level", x + 5, y + 94, 0xffffff, 2);
+		mc.getSurface().drawString(mc.getSkillGuideChosen().equalsIgnoreCase("Harvest") ? "Shears tier" : "Level", x + 5, y + 94, 0xffffff, 2);
 		mc.getSurface().drawString("Advancement", x + 5 + 80, y + 94, 0xffffff, 2);
 	}
 
@@ -1208,77 +1208,80 @@ public final class SkillGuideInterface {
 		}
 		if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvest")) {
 			if (curTab == 0) {
-				skillMenuEntries.add(new SkillMenuItem(29, "1", "Grain - T1 shears"));
-				skillMenuEntries.add(new SkillMenuItem(348, "1", "Potato - T1 shears"));
-				skillMenuEntries.add(new SkillMenuItem(241, "1", "Onion - T1 shears"));
-				skillMenuEntries.add(new SkillMenuItem(18, "1", "Cabbage - T1 shears"));
-				skillMenuEntries.add(new SkillMenuItem(218, "8", "Garlic - T2 shears"));
-				skillMenuEntries.add(new SkillMenuItem(675, "15", "Flax - T3 shears"));
-				skillMenuEntries.add(new SkillMenuItem(320, "15", "Tomato - T3 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1353, "22", "Corn - T4 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1569, "1", "Lily's Pumpkin - T1 shears"));
-				skillMenuEntries.add(new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP"));
-				skillMenuEntries.add(new SkillMenuItem(1352, "30", "Red Cabbage - T5 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1354, "46", "White Pumpkin - T7 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1456, "46", "Sugar Cane - T7 shears"));
+				skillMenuEntries.add(new SkillMenuItem(29, "T1", "Grain"));
+				skillMenuEntries.add(new SkillMenuItem(348, "T1", "Potato"));
+				skillMenuEntries.add(new SkillMenuItem(241, "T1", "Onion"));
+				skillMenuEntries.add(new SkillMenuItem(18, "T1", "Cabbage"));
+				skillMenuEntries.add(new SkillMenuItem(675, "T1", "Flax"));
+				skillMenuEntries.add(new SkillMenuItem(218, "T2", "Garlic"));
+				skillMenuEntries.add(new SkillMenuItem(320, "T3", "Tomato"));
+				skillMenuEntries.add(new SkillMenuItem(1353, "T4", "Corn"));
+				skillMenuEntries.add(new SkillMenuItem(1569, "T1", "Lily's Pumpkin"));
+				skillMenuEntries.add(new SkillMenuItem(422, "T1", "Event Pumpkin (bonus XP)"));
+				skillMenuEntries.add(new SkillMenuItem(1352, "T5", "Red Cabbage"));
+				skillMenuEntries.add(new SkillMenuItem(1354, "T7", "White Pumpkin"));
+				skillMenuEntries.add(new SkillMenuItem(1456, "T7", "Sugar Cane"));
 			} else if (curTab == 1) {
-				skillMenuEntries.add(new SkillMenuItem(855, "15", "Lemon Tree - T3 shears"));
-				skillMenuEntries.add(new SkillMenuItem(863, "22", "Lime Tree - T4 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1348, "30", "Apple Tree - T5 shears"));
-				skillMenuEntries.add(new SkillMenuItem(249, "30", "Banana Palm - T5 shears"));
-				skillMenuEntries.add(new SkillMenuItem(143, "38", "Grape Vine - T6 shears"));
-				skillMenuEntries.add(new SkillMenuItem(857, "38", "Orange Tree - T6 shears"));
-				skillMenuEntries.add(new SkillMenuItem(861, "54", "Pineapple Plant - T8 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1349, "54", "Grapefruit Tree - T8 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1350, "54", "Papaya Palm - T8 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1351, "62", "Coconut Palm - T9 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1457, "70", "Dragonfruit Tree - T10 shears"));
-				skillMenuEntries.add(new SkillMenuItem(1465, "70", "Bless/Curse Grapes"));
+				skillMenuEntries.add(new SkillMenuItem(855, "T3", "Lemon Tree"));
+				skillMenuEntries.add(new SkillMenuItem(863, "T4", "Lime Tree"));
+				skillMenuEntries.add(new SkillMenuItem(1348, "T5", "Apple Tree"));
+				skillMenuEntries.add(new SkillMenuItem(249, "T5", "Banana Palm"));
+				skillMenuEntries.add(new SkillMenuItem(143, "T6", "Grape Vine"));
+				skillMenuEntries.add(new SkillMenuItem(857, "T6", "Orange Tree"));
+				skillMenuEntries.add(new SkillMenuItem(861, "T8", "Pineapple Plant"));
+				skillMenuEntries.add(new SkillMenuItem(1349, "T8", "Grapefruit Tree"));
+				skillMenuEntries.add(new SkillMenuItem(1350, "T8", "Papaya Palm"));
+				skillMenuEntries.add(new SkillMenuItem(1351, "T9", "Coconut Palm"));
+				skillMenuEntries.add(new SkillMenuItem(1457, "T10", "Dragonfruit Tree"));
+				skillMenuEntries.add(new SkillMenuItem(1465, "", "Bless/Curse Grapes (level 70)"));
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(236, "8", "Redberry Bush - T2 shears"));
-				skillMenuEntries.add(new SkillMenuItem(55, "22", "Cadavaberry Bush - T4 shears"));
-				skillMenuEntries.add(new SkillMenuItem(765, "38", "Dwellberry Bush - T6 shears"));
-				skillMenuEntries.add(new SkillMenuItem(936, "46", "Jangerberry Bush - T7 shears"));
-				skillMenuEntries.add(new SkillMenuItem(471, "62", "Whiteberry Bush - T9 shears"));
+				skillMenuEntries.add(new SkillMenuItem(236, "T2", "Redberry Bush"));
+				skillMenuEntries.add(new SkillMenuItem(55, "T4", "Cadavaberry Bush"));
+				skillMenuEntries.add(new SkillMenuItem(765, "T6", "Dwellberry Bush"));
+				skillMenuEntries.add(new SkillMenuItem(936, "T7", "Jangerberry Bush"));
+				skillMenuEntries.add(new SkillMenuItem(471, "T9", "Whiteberry Bush"));
 			} else if (curTab == 3) {
-				skillMenuEntries.add(new SkillMenuItem(165, "1", "Guam herb chance - T1 shears"));
-				skillMenuEntries.add(new SkillMenuItem(435, "8", "Marrentill chance - T2 shears"));
-				skillMenuEntries.add(new SkillMenuItem(436, "15", "Tarromin chance - T3 shears"));
-				skillMenuEntries.add(new SkillMenuItem(622, "22", "Sea weed - T4 shears"));
-				skillMenuEntries.add(new SkillMenuItem(437, "22", "Harralander chance - T4 shears"));
-				skillMenuEntries.add(new SkillMenuItem(438, "30", "Ranarr Weed chance - T5 shears"));
-				skillMenuEntries.add(new SkillMenuItem(220, "38", "Limpwurt Root - T6 shears"));
-				skillMenuEntries.add(new SkillMenuItem(439, "38", "Irit Leaf chance - T6 shears"));
-				skillMenuEntries.add(new SkillMenuItem(440, "46", "Avantoe chance - T7 shears"));
-				skillMenuEntries.add(new SkillMenuItem(441, "54", "Kwuarm chance - T8 shears"));
-				skillMenuEntries.add(new SkillMenuItem(469, "54", "Snape Grass - T8 shears"));
-				skillMenuEntries.add(new SkillMenuItem(442, "54", "Cadantine chance - T8 shears"));
-				skillMenuEntries.add(new SkillMenuItem(443, "70", "Dwarf Weed chance - T10 shears"));
-				skillMenuEntries.add(new SkillMenuItem(933, "70", "Torstol rare chance - T10 shears"));
+				skillMenuEntries.add(new SkillMenuItem(165, "T1", "Guam herb chance"));
+				skillMenuEntries.add(new SkillMenuItem(435, "T2", "Marrentill chance"));
+				skillMenuEntries.add(new SkillMenuItem(436, "T3", "Tarromin chance"));
+				skillMenuEntries.add(new SkillMenuItem(622, "T4", "Sea weed"));
+				skillMenuEntries.add(new SkillMenuItem(437, "T4", "Harralander chance"));
+				skillMenuEntries.add(new SkillMenuItem(438, "T5", "Ranarr Weed chance"));
+				skillMenuEntries.add(new SkillMenuItem(220, "T6", "Limpwurt Root"));
+				skillMenuEntries.add(new SkillMenuItem(439, "T6", "Irit Leaf chance"));
+				skillMenuEntries.add(new SkillMenuItem(440, "T7", "Avantoe chance"));
+				skillMenuEntries.add(new SkillMenuItem(441, "T8", "Kwuarm chance"));
+				skillMenuEntries.add(new SkillMenuItem(469, "T8", "Snape Grass"));
+				skillMenuEntries.add(new SkillMenuItem(442, "T8", "Cadantine chance"));
+				skillMenuEntries.add(new SkillMenuItem(443, "T10", "Dwarf Weed chance"));
+				skillMenuEntries.add(new SkillMenuItem(933, "T10", "Torstol rare chance"));
 			} else if (curTab == 4) {
-				skillMenuEntries.add(new SkillMenuItem(3256, "1", "Fern leaf - T1 shears"));
-				skillMenuEntries.add(new SkillMenuItem(3257, "8", "Mushroom - T2 shears"));
-				skillMenuEntries.add(new SkillMenuItem(3258, "30", "Fungus - T5 shears"));
-				skillMenuEntries.add(new SkillMenuItem(220, "38", "Limpwurt Root - T6 shears"));
-				skillMenuEntries.add(new SkillMenuItem(3259, "54", "Red flower - T8 shears"));
-				skillMenuEntries.add(new SkillMenuItem(3260, "70", "Blue flower - T10 shears"));
+				skillMenuEntries.add(new SkillMenuItem(3256, "T1", "Fern leaf"));
+				skillMenuEntries.add(new SkillMenuItem(3257, "T2", "Mushroom"));
+				skillMenuEntries.add(new SkillMenuItem(3258, "T5", "Fungus"));
+				skillMenuEntries.add(new SkillMenuItem(220, "T6", "Limpwurt Root"));
+				skillMenuEntries.add(new SkillMenuItem(3259, "T8", "Red flower"));
+				skillMenuEntries.add(new SkillMenuItem(3260, "T10", "Blue flower"));
 			} else if (curTab == 5) {
-				skillMenuEntries.add(new SkillMenuItem(144, "1", "Tin shears - T1, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2215, "8", "Copper shears - T2, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2216, "15", "Bronze shears - T3, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2217, "22", "Iron shears - T4, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2218, "30", "Steel shears - T5, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2219, "38", "Mithril shears - T6, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2220, "46", "Titan steel shears - T7, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2221, "54", "Adamantite shears - T8, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2222, "62", "Orichalcum shears - T9, equipped tool"));
-				skillMenuEntries.add(new SkillMenuItem(2223, "70", "Rune shears - T10, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(144, "T1", "Tin shears"));
+				skillMenuEntries.add(new SkillMenuItem(2215, "T2", "Copper shears"));
+				skillMenuEntries.add(new SkillMenuItem(2216, "T3", "Bronze shears"));
+				skillMenuEntries.add(new SkillMenuItem(2217, "T4", "Iron shears"));
+				skillMenuEntries.add(new SkillMenuItem(2218, "T5", "Steel shears"));
+				skillMenuEntries.add(new SkillMenuItem(2219, "T6", "Mithril shears"));
+				skillMenuEntries.add(new SkillMenuItem(2220, "T7", "Titan steel shears"));
+				skillMenuEntries.add(new SkillMenuItem(2221, "T8", "Adamantite shears"));
+				skillMenuEntries.add(new SkillMenuItem(2222, "T9", "Orichalcum shears"));
+				skillMenuEntries.add(new SkillMenuItem(2223, "T10", "Rune shears"));
+				skillMenuEntries.add(new SkillMenuItem(3272, "T11", "Exalted Rune shears"));
 			} else if (curTab == 6) {
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1526, "Harvesting");
 				}
 				skillMenuEntries.add(new SkillMenuItem(144, "", "Harvestables unlock by equipped shears tier"));
-				skillMenuEntries.add(new SkillMenuItem(144, "", "Harvesting level gates which shears you can use"));
+				skillMenuEntries.add(new SkillMenuItem(144, "", "You can equip shears at any Harvesting level"));
+				skillMenuEntries.add(new SkillMenuItem(145, "", "Shear sheep with Tin shears or better"));
+				skillMenuEntries.add(new SkillMenuItem(144, "", "Harvesting level and shears tier affect yield"));
 				skillMenuEntries.add(new SkillMenuItem(439, "", "Herb rolls use shears tier and 3 tiers below"));
 				skillMenuEntries.add(new SkillMenuItem(2709, "", "Resource seeds can appear as side rewards"));
 				skillMenuEntries.add(new SkillMenuItem(2709, "", "Seed focus: No seeds, A few, More, or Even more"));

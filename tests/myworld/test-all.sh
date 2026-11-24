@@ -102,6 +102,8 @@ python3 ./tests/myworld/test-world-builder-target-contract.py
 python3 ./tests/myworld/test-native-terrain-wire-cache.py
 python3 ./tests/myworld/test-native-terrain-residency.py
 python3 ./tests/myworld/test-fatigue-sleep-removal.py
+python3 ./tests/myworld/test-harvesting-legacy-crops.py
+python3 ./tests/myworld/test-harvesting-requirements.py
 python3 ./tests/myworld/test-gathering-rework-plan.py
 python3 ./tests/myworld/test-dragon-hatchet-woodcutting.py
 python3 ./tests/myworld/test-resource-seed-placement.py

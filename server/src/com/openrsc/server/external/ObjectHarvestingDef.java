@@ -6,7 +6,7 @@ package com.openrsc.server.external;
 public final class ObjectHarvestingDef {
 
 	/**
-	 * How much experience identifying gives
+	 * Harvesting experience per unit of produce
 	 */
 	private int exp;
 
@@ -20,10 +20,11 @@ public final class ObjectHarvestingDef {
 	 */
 	private int prodId;
 
-	/**
-	 * Harvest level required to yield
-	 */
-	private int requiredLvl;
+	/** Minimum equipped shears tier for this resource. */
+	private int minimumShearsTier;
+
+	/** Harvesting level used as the baseline for scaling yield. */
+	private int yieldBaselineLevel;
 
 	/**
 	 * How long the object takes to respawn afterwards
@@ -42,8 +43,12 @@ public final class ObjectHarvestingDef {
 		return prodId;
 	}
 
-	public int getReqLevel() {
-		return requiredLvl;
+	public int getMinimumShearsTier() {
+		return minimumShearsTier;
+	}
+
+	public int getYieldBaselineLevel() {
+		return yieldBaselineLevel;
 	}
 
 	public int getRespawnTime() {

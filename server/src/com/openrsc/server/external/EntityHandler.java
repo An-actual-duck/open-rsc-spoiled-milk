@@ -5,6 +5,7 @@ import com.openrsc.server.constants.AppearanceId;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Spells;
 import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
@@ -285,6 +286,12 @@ public final class EntityHandler {
 		doors = (DoorDef[]) getPersistenceManager().load("defs/DoorDef.xml");
 		for (DoorDef definition : doors) definition.validateDoorSurround(doors);
 		gameObjects = (GameObjectDef[]) getPersistenceManager().load("defs/GameObjectDef.xml");
+		if (getServer().getConfig().BATCH_PROGRESSION) {
+			// Flax switches to primary Harvest in the client when batch progression is enabled.
+			GameObjectDef flax = gameObjects[SceneryId.FLAX.id()];
+			flax.command1 = flax.command2;
+			flax.command2 = "Examine";
+		}
 		prayers = (PrayerDef[]) getPersistenceManager().load("defs/PrayerDef.xml");
 		if (!getServer().getConfig().LACKS_PRAYERS) {
 			// On May 24 2001 original magic/prayer rework, new spells featured

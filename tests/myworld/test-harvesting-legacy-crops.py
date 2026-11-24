@@ -22,57 +22,57 @@ LEGACY_HARVESTABLES = (
     ("Pineapple tree", 430, 861, 176),
 )
 
-GUIDE_OBJECT_LEVELS = (
-    (72, 1),     # Grain
-    (183, 30),   # Banana tree
-    (191, 1),    # Potato
-    (313, 15),   # Flax
-    (430, 54),   # Pineapple tree
-    (1243, 15),  # Lemon tree
-    (1244, 22),  # Lime tree
-    (1245, 30),  # Apple tree
-    (1246, 38),  # Orange tree
-    (1247, 54),  # Grapefruit tree
-    (1248, 30),  # Banana palm
-    (1249, 62),  # Coconut palm
-    (1250, 54),  # Papaya palm
-    (1251, 54),  # Pineapple plant
-    (1256, 8),   # Redberry bush
-    (1257, 22),  # Cadavaberry bush
-    (1258, 38),  # Dwellberry bush
-    (1259, 46),  # Jangerberry bush
-    (1260, 62),  # Whiteberry bush
-    (1265, 1),   # Potato
-    (1266, 1),   # Onion
-    (1267, 8),   # Garlic
-    (1268, 15),  # Tomato
-    (1269, 22),  # Corn
-    (1262, 1),   # Cabbage
-    (1263, 30),  # Red cabbage
-    (1264, 46),  # White pumpkin
-    (1282, 46),  # Sugar cane
-    (1283, 38),  # Grape vine
-    (1293, 70),  # Dragonfruit tree
-    (1327, 1),   # Event pumpkin
-    (1275, 1),   # Lily's pumpkin
+OBJECT_TIERS_AND_YIELD_BASELINES = (
+    (72, 1, 1),     # Grain
+    (183, 5, 30),   # Banana tree
+    (191, 1, 1),    # Potato
+    (313, 1, 1),   # Flax
+    (430, 8, 54),   # Pineapple tree
+    (1243, 3, 15),  # Lemon tree
+    (1244, 4, 22),  # Lime tree
+    (1245, 5, 30),  # Apple tree
+    (1246, 6, 38),  # Orange tree
+    (1247, 8, 54),  # Grapefruit tree
+    (1248, 5, 30),  # Banana palm
+    (1249, 9, 62),  # Coconut palm
+    (1250, 8, 54),  # Papaya palm
+    (1251, 8, 54),  # Pineapple plant
+    (1256, 2, 8),   # Redberry bush
+    (1257, 4, 22),  # Cadavaberry bush
+    (1258, 6, 38),  # Dwellberry bush
+    (1259, 7, 46),  # Jangerberry bush
+    (1260, 9, 62),  # Whiteberry bush
+    (1265, 1, 1),   # Potato
+    (1266, 1, 1),   # Onion
+    (1267, 2, 8),   # Garlic
+    (1268, 3, 15),  # Tomato
+    (1269, 4, 22),  # Corn
+    (1262, 1, 1),   # Cabbage
+    (1263, 5, 30),  # Red cabbage
+    (1264, 7, 46),  # White pumpkin
+    (1282, 7, 46),  # Sugar cane
+    (1283, 6, 38),  # Grape vine
+    (1293, 10, 70),  # Dragonfruit tree
+    (1327, 1, 1),   # Event pumpkin
+    (1275, 1, 1),   # Lily's pumpkin
 )
 
-GUIDE_CLIP_LEVEL_SNIPPETS = (
-    "ItemId.UNIDENTIFIED_GUAM_LEAF.id(), 1, 50",
-    "ItemId.UNIDENTIFIED_MARRENTILL.id(), 8, 60",
-    "ItemId.UNIDENTIFIED_TARROMIN.id(), 15, 72",
-    "ItemId.UNIDENTIFIED_HARRALANDER.id(), 22, 96",
-    "ItemId.UNIDENTIFIED_RANARR_WEED.id(), 30, 122",
-    "ItemId.UNIDENTIFIED_IRIT_LEAF.id(), 38, 194",
-    "ItemId.UNIDENTIFIED_AVANTOE.id(), 46, 246",
-    "ItemId.UNIDENTIFIED_KWUARM.id(), 54, 312",
-    "ItemId.UNIDENTIFIED_CADANTINE.id(), 54, 480",
-    "ItemId.UNIDENTIFIED_DWARF_WEED.id(), 70, 768",
-    "ItemId.UNIDENTIFIED_TORSTOL.id(), 70, 960",
-    "ItemId.SEAWEED.id(), 22, 84",
-    "ItemId.EDIBLE_SEAWEED.id(), 22, 84",
-    "ItemId.LIMPWURT_ROOT.id(), 38, 144",
-    "ItemId.SNAPE_GRASS.id(), 54, 328",
+CLIP_REWARD_SNIPPETS = (
+    "ItemId.UNIDENTIFIED_GUAM_LEAF.id(), 1, 1, 50",
+    "ItemId.UNIDENTIFIED_MARRENTILL.id(), 2, 8, 60",
+    "ItemId.UNIDENTIFIED_TARROMIN.id(), 3, 15, 72",
+    "ItemId.UNIDENTIFIED_HARRALANDER.id(), 4, 22, 96",
+    "ItemId.UNIDENTIFIED_RANARR_WEED.id(), 5, 30, 122",
+    "ItemId.UNIDENTIFIED_IRIT_LEAF.id(), 6, 38, 194",
+    "ItemId.UNIDENTIFIED_AVANTOE.id(), 7, 46, 246",
+    "ItemId.UNIDENTIFIED_KWUARM.id(), 8, 54, 312",
+    "ItemId.UNIDENTIFIED_CADANTINE.id(), 8, 54, 480",
+    "ItemId.UNIDENTIFIED_DWARF_WEED.id(), 10, 70, 768",
+    "ItemId.UNIDENTIFIED_TORSTOL.id(), 10, 70, 960",
+    "ItemId.SEAWEED.id(), 4, 22, 84",
+    "ItemId.EDIBLE_SEAWEED.id(), 4, 22, 84",
+    "ItemId.LIMPWURT_ROOT.id(), 6, 38, 144",
+    "ItemId.SNAPE_GRASS.id(), 8, 54, 328",
 )
 
 
@@ -107,17 +107,22 @@ def main() -> None:
         require(entry, f"<prodId>{produce_id}</prodId>", f"Object {object_id} has the wrong produce")
         require(entry, f"<exp>{experience}</exp>", f"Object {object_id} has the wrong Harvesting XP")
 
-    for object_id, required_level in GUIDE_OBJECT_LEVELS:
+    for object_id, minimum_tier, yield_baseline in OBJECT_TIERS_AND_YIELD_BASELINES:
         entry_start = harvesting_defs.index(f"<int>{object_id}</int>")
         entry = harvesting_defs[entry_start:harvesting_defs.index("</ObjectHarvestingDef>", entry_start)]
         require(
             entry,
-            f"<requiredLvl>{required_level}</requiredLvl>",
-            f"Object {object_id} Harvesting level must match the skill guide",
+            f"<minimumShearsTier>{minimum_tier}</minimumShearsTier>",
+            f"Object {object_id} must retain its minimum shears tier",
+        )
+        require(
+            entry,
+            f"<yieldBaselineLevel>{yield_baseline}</yieldBaselineLevel>",
+            f"Object {object_id} must retain its yield baseline",
         )
 
-    for snippet in GUIDE_CLIP_LEVEL_SNIPPETS:
-        require(harvesting_plugin, snippet, f"Clip Harvesting level must match guide: {snippet}")
+    for snippet in CLIP_REWARD_SNIPPETS:
+        require(harvesting_plugin, snippet, f"Clip reward must retain its tier, yield baseline and XP: {snippet}")
 
     if "<command2>pick</command2>" in object_defs.lower():
         raise AssertionError("A generic scenery Pick action still bypasses Harvesting")
@@ -132,11 +137,11 @@ def main() -> None:
     require(entity_handler, 'Config.S_BATCH_PROGRESSION ? "Examine" : "Harvest"', "Client flax secondary action must mirror Harvest")
     require(entity_handler, '"Pineapple tree", "A tree with nice ripe pineapples growing on it", "WalkTo", "Harvest"', "Client pineapple action must mirror Harvest")
     require(entity_handler, '"Pineapple tree", "There are no pineapples left on the tree", "WalkTo", "Examine"', "Client empty pineapple tree must not expose Harvest")
-    require(skill_guide, 'new SkillMenuItem(29, "1", "Grain - T1 shears")', "Harvesting guide is missing grain")
-    require(skill_guide, 'new SkillMenuItem(675, "15", "Flax - T3 shears")', "Harvesting guide is missing flax")
-    require(skill_guide, 'new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP")', "Harvesting guide is missing event pumpkins")
-    require(skill_guide, 'new SkillMenuItem(933, "70", "Torstol rare chance - T10 shears")', "Harvesting guide is missing torstol")
-    require(harvesting_plugin, "new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TORSTOL.id(), 70, 960)", "Harvesting herb table is missing torstol")
+    require(skill_guide, 'new SkillMenuItem(29, "T1", "Grain")', "Harvesting guide is missing grain")
+    require(skill_guide, 'new SkillMenuItem(675, "T1", "Flax")', "Harvesting guide is missing flax")
+    require(skill_guide, 'new SkillMenuItem(422, "T1", "Event Pumpkin (bonus XP)")', "Harvesting guide is missing event pumpkins")
+    require(skill_guide, 'new SkillMenuItem(933, "T10", "Torstol rare chance")', "Harvesting guide is missing torstol")
+    require(harvesting_plugin, "new ClippedProduce(ItemId.UNIDENTIFIED_TORSTOL.id(), 10, 70, 960)", "Harvesting herb table is missing torstol")
     require(formulae, "ItemId.UNIDENTIFIED_TORSTOL.id()", "Harvesting herb roll table is missing torstol")
     require(formulae, "32, 25, 19, 14, 11, 8, 6, 5, 4, 3, 1", "Harvesting herb roll weights must include rare torstol")
     require(harvesting_defs, "<int>1327</int>", "Regular event pumpkins are missing a Harvesting definition")
