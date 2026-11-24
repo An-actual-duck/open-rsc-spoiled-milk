@@ -42,6 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -581,7 +582,7 @@ public final class World {
 				return CompletableFuture.completedFuture(retained.forStage(haloTerrain, sourceRevision));
 			}
 		}
-		return sectorPreloadExecutor.submit(
+		return queueTerrainPreload(
 			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
 				@Override
 				public NativeLayeredTerrainHaloPrebuildResult call() {
@@ -633,8 +634,16 @@ public final class World {
 		}
 	}
 
+	private <T> Future<T> queueTerrainPreload(Callable<T> work) {
+		// World Streaming startup in the browser has failed inside the delegated
+		// executor's Callable submission. Schedule the same future directly.
+		FutureTask<T> task = new FutureTask<>(work);
+		sectorPreloadExecutor.execute(task);
+		return task;
+	}
+
 	public Future<NativeLayeredTerrainSnapshot> decodePredictedSurfaceTerrain(Callable<NativeLayeredTerrainSnapshot> decode) {
-		return sectorPreloadExecutor.submit(decode);
+		return queueTerrainPreload(decode);
 	}
 
 	/**
@@ -670,7 +679,7 @@ public final class World {
 		final Renderer3DWorldChunkFrame reusableChunks =
 			reusableNativeLayeredTerrainChunks(
 				activeTerrain, worldOffsetX, worldOffsetZ);
-		return sectorPreloadExecutor.submit(
+		return queueTerrainPreload(
 			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
 				@Override
 				public NativeLayeredTerrainHaloPrebuildResult call() {
@@ -747,7 +756,7 @@ public final class World {
 			result.predictedStructural = structuralTerrain;
 			return result;
 		};
-		if (drawPreparation == null) return sectorPreloadExecutor.submit(build);
+		if (drawPreparation == null) return queueTerrainPreload(build);
 		sectorPreloadExecutor.execute(() -> {
 			try {
 				if (drawPreparation.gameplay.isCancelled()) return;
@@ -2403,7 +2412,7 @@ public final class World {
 		final long targetRevision = Math.addExact(sourceRevision, 1L);
 		final String activeScopeIdentity = activeTerrain.scopeIdentity();
 		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
-		return sectorPreloadExecutor.submit(
+		return queueTerrainPreload(
 			new Callable<NativeLayeredTerrainPrebuildResult>() {
 				@Override
 				public NativeLayeredTerrainPrebuildResult call() {
