@@ -256,7 +256,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       // No Java array is retained: bufferData copied geometry; metadata was explicitly copied.
     },
     async Java_orsc_BrowserWebGLBridge_uploadCompactSceneChunk(lib,id,vertexInput,indexInput,batchInput){
-      if(!compactScene)throw new Error('Local compact geometry requires the private preview');
+      if(!compactScene)throw new Error('Local compact geometry is disabled for this renderer');
       uploadLocalChunk(id,vertexInput,indexInput,batchInput,COMPACT_GEOMETRY);
     },
     async Java_orsc_BrowserWebGLBridge_replaceChunk(lib,id,vertexInput,indexInput,batchInput){
