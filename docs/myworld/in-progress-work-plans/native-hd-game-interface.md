@@ -116,24 +116,20 @@ bonuses and overall totals. Quest names wrap and the journal shows quest
 points and progress. Both lists scroll, and clicks use the visible row bounds.
 Rows open the existing guides through the same actions.
 
-### Quest guide preview
+### Quest guides
 
-Cook's Assistant opens from Accomplishments → Quests. Its Overview page lists
-the start contact, location, requirements and ingredients. Progress reads the
-player's current quest stage, and Rewards describes the expected rewards and
-how Cooking XP is calculated. Tabs, scrolling and text follow the interface
-preferences. Use this guide to review the layout before migrating the rest of
-the quest list.
+Every quest in Accomplishments → Quests opens the scaled guide in the preview.
+Overview shows the listed start contact, location and requirements. Rewards
+shows the existing guide rewards, including formulas and unlocks where recorded.
+Progress uses the current quest stage. Cook's Assistant also has a detailed next
+step and its ingredient list. Missing entries are identified in the guide.
+Long lists and wrapped text scroll within the page at both resolutions.
 
-### Remaining in-game guides
+### Skill guides to update next
 
-- Give skill guides room for longer training and unlock lists, levels and
-  requirements, with clear tabs and scrolling.
-- Give quest guides room for the start contact and location, requirements,
-  progress and rewards. Use layouts that can hold additional guide information
-  as it is written.
-- Verify guide readability, list controls and opening the correct guide from
-  Accomplishments at 540p and 1080p.
+Give the existing skill guides room for longer training and unlock lists, levels
+and requirements. Verify the tabs, scrolling and launch from Accomplishments
+at 540p and 1080p.
 
 ## Ability books preview
 

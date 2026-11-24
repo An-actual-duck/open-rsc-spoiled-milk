@@ -20284,7 +20284,7 @@ public final class mudclient implements Runnable {
 		setQuestGuideReward(quest);
 		questGuideWheel.set(0);
 		questGuideDismiss = false;
-		questGuidePreview = chatLayout != null && quest == COOKS_ASSISTANT_QUEST ? cooksAssistantGuide() : null;
+		questGuidePreview = chatLayout == null ? null : createQuestGuide(quest);
 		questGuideInterface.setVisible(true);
 		if (!C_CUSTOM_UI) showUiTab = 0;
 	}
@@ -32994,8 +32994,31 @@ public final class mudclient implements Runnable {
 		hiscoreData.clear();
 	}
 
+	private QuestGuideWindow createQuestGuide(int quest) {
+		if (quest == COOKS_ASSISTANT_QUEST) return cooksAssistantGuide();
+		String start = null;
+		if (quest < questGuideStartWhos.length && quest < questGuideStartWheres.length) {
+			start = "Speak to " + questGuideStartWhos[quest] + " " + questGuideStartWheres[quest] + ".";
+		}
+		String[] requirements = questGuideEntries(questGuideRequirements, quest, "Requirement details are unavailable.");
+		String[] rewards = questGuideEntries(questGuideRewards, quest, "Reward details are unavailable.");
+		return new QuestGuideWindow(quest, questNames[quest], new QuestGuideWindow.Section[] {
+			new QuestGuideWindow.Section("Start", start == null ? "Start details are unavailable." : start),
+			new QuestGuideWindow.Section("Requirements", requirements)
+		}, start, null, null, new QuestGuideWindow.Section[] {
+			new QuestGuideWindow.Section("Quest rewards", rewards)
+		});
+	}
+
+	private static String[] questGuideEntries(String[][] table, int quest, String unavailable) {
+		if (table != null && quest < table.length && table[quest] != null && table[quest].length > 0) {
+			return table[quest];
+		}
+		return new String[] {unavailable};
+	}
+
 	private QuestGuideWindow cooksAssistantGuide() {
-		return new QuestGuideWindow("Cook's Assistant", new QuestGuideWindow.Section[] {
+		return new QuestGuideWindow(COOKS_ASSISTANT_QUEST, "Cook's Assistant", new QuestGuideWindow.Section[] {
 			new QuestGuideWindow.Section("Start", "Speak to " + getQuestGuideStartWho() + " in the Lumbridge Castle kitchen."),
 			new QuestGuideWindow.Section("Requirements", "No quests or skill levels are required to start."),
 			new QuestGuideWindow.Section("Items to bring", "An egg, a bucket of milk, and a pot of flour.")
@@ -33017,7 +33040,7 @@ public final class mudclient implements Runnable {
 
 	private void drawQuestGuidePreview() {
 		QuestGuideWindow guide = questGuidePreview;
-		if (questGuideDismiss || guide.draw(this, chatLayout.entryTop(), questStages[COOKS_ASSISTANT_QUEST], questGuideWheel.getAndSet(0))) {
+		if (questGuideDismiss || guide.draw(this, chatLayout.entryTop(), questStages[guide.questId], questGuideWheel.getAndSet(0))) {
 			closeQuestGuidePreview();
 		}
 		mouseButtonClick = 0;

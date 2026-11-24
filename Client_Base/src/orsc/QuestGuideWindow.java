@@ -9,6 +9,7 @@ import orsc.graphics.two.MudClientGraphics;
 /** Scaled guide pages with shared drawing, tab, and scroll bounds. */
 final class QuestGuideWindow {
 	private static final String[] TABS = {"Overview", "Progress", "Rewards"};
+	final int questId;
 	private final String title;
 	private final Section[] overview, rewards;
 	private final String notStarted, inProgress, completed;
@@ -16,8 +17,9 @@ final class QuestGuideWindow {
 	private int wrappedPage = -1, wrappedStage, wrappedWidth, wrappedFont;
 	private List<Row> rows;
 
-	QuestGuideWindow(String title, Section[] overview, String notStarted, String inProgress,
+	QuestGuideWindow(int questId, String title, Section[] overview, String notStarted, String inProgress,
 					 String completed, Section[] rewards) {
+		this.questId = questId;
 		this.title = title;
 		this.overview = overview;
 		this.notStarted = notStarted;
@@ -122,9 +124,7 @@ final class QuestGuideWindow {
 		wrappedStage = stage;
 		wrappedWidth = width;
 		wrappedFont = font;
-		Section[] sections = page == 0 ? overview : page == 2 ? rewards : new Section[] {
-			new Section(stage < 0 ? "Quest complete" : "Next step", stage < 0 ? completed : stage == 0 ? notStarted : inProgress)
-		};
+		Section[] sections = page == 0 ? overview : page == 2 ? rewards : new Section[] {progressSection(stage)};
 		rows = new ArrayList<>();
 		for (Section section : sections) {
 			if (!rows.isEmpty()) rows.add(new Row("", false));
@@ -133,6 +133,15 @@ final class QuestGuideWindow {
 				for (String line : ClericTextLayout.wrap(paragraph, width, measure)) rows.add(new Row(line, false));
 			}
 		}
+	}
+
+	private Section progressSection(int stage) {
+		if (stage < 0) {
+			return completed == null ? new Section("Quest complete") : new Section("Quest complete", completed);
+		}
+		String step = stage == 0 ? notStarted : inProgress;
+		if (step != null) return new Section("Next step", step);
+		return new Section("Walkthrough", "Detailed walkthrough unavailable.");
 	}
 
 	static final class Section {
