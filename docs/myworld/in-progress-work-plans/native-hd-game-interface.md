@@ -14,11 +14,27 @@ Use the existing Classic bitmap lettering and approved assets for development. S
 | Right-click menus | Inventory, Equipment, ground items, objects and characters. Scale the menu frame, text, row spacing and hit targets. |
 | World interaction | Overhead speech and status bars, item labels, action feedback, NPC responses and keyboard shortcuts. |
 | In-game guides | Skill guides, quest guides and their existing guide tabs. Give longer entries room for requirements, progress and rewards, and improve scrolling at both resolutions. |
-| Gameplay windows | Bank and PIN, shop, auction house, trade through confirmation. Crafting and other skill actions, social and party management, achievements, rewards, point configuration, account options, death and recovery, territory and minigame displays. |
+| Gameplay windows | Bank, shops, trade through confirmation, crafting and other skill actions, social and party management, achievements, quest rewards, account options, death and recovery. |
 | Session screens and modal states | Login and registration, appearance, loading and reconnect, welcome and notices, reporting, input prompts, confirmations, password and recovery pages, sleep, and logout. |
 | In-game developer tools | World Builder panels, definitions browser and selection controls. Check their hit regions against terrain picking in the same viewport. |
 
 Chat and dialogue responses take their dimensions from the UI size setting and their fonts from the text size setting. The two preferences appear under **Options → Graphics → Interface preview** and use the existing local client settings store.
+
+Quest completion rewards are the next gameplay window to update.
+
+## Needs further exploration
+
+Revisit these after the more straightforward UI updates are complete.
+
+- **Bank PINs**. Trace how players reach PIN setup, including any chat commands
+  or banker options. Exercise setup, change, removal, and first bank access
+  after relogging before deciding where the PIN controls belong.
+- **Auction House**. Walk through listing, buying, cancelling, expiry, and
+  collection with two accounts. Use that walkthrough to decide what changes
+  would help on a small server.
+- **Activity windows**. Review territory and minigame screens, point
+  configuration, and other activity-specific windows individually. Establish
+  what players need to see or do in each before choosing a layout.
 
 ## Dialogue and item windows
 
