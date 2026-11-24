@@ -35,7 +35,7 @@ final class RendererSettingsPanel {
 	private static final int SCALE_PLUS_X_OFFSET = 45;
 	private static final int LEGACY_SCALING_ROW_INDEX = RemasteredSpriteSettings.isAvailable() ? 2 : 1;
 
-	private static final int ACTION_SCALING_ROW = 49;
+	static final int ACTION_SCALING_ROW = 49;
 	private static final int ACTION_SCALING_TYPE = 46;
 	private static final int ACTION_RENDER_SURFACE = 56;
 	private static final int ACTION_RENDERER_PROFILE = 59;
@@ -335,7 +335,21 @@ final class RendererSettingsPanel {
 	}
 
 	static List<Row> rows(State state) {
+		return rows(state, false);
+	}
+
+	static List<Row> previewRows(State state) {
+		return rows(state, true);
+	}
+
+	private static List<Row> rows(State state, boolean preview) {
 		List<Row> rows = new ArrayList<Row>();
+		if (preview) {
+			addSection(rows, "Display and interface");
+			addRow(rows, "@whi@Resolution - @gre@" + RenderSurfaceSettings.getWidth() + "x"
+				+ RenderSurfaceSettings.getHeight(), state.openGLPrimary ? ACTION_RENDER_SURFACE : SECTION_ROW);
+			addInterfaceSizingOptions(rows);
+		}
 		addSection(rows, "Graphics");
 		if (state.openGLPrimary) {
 			addRow(rows, "@whi@Preset - " + state.rendererProfileLabel, ACTION_RENDERER_PROFILE);
@@ -352,14 +366,14 @@ final class RendererSettingsPanel {
 			addRow(rows, "@whi@Scaling - ", ACTION_SCALING_ROW);
 			addRow(rows, "@whi@Scaling type - @gre@" + scalingTypeDescription(state.scalingType),
 				ACTION_SCALING_TYPE);
-			addInterfaceSizingRows(rows);
+			if (!preview) addInterfaceSizingRows(rows);
 		} else {
-			addInterfaceSizingRows(rows);
-			if (RenderSurfaceSettings.isInterfacePreviewEnabled()) {
+			if (!preview) addInterfaceSizingRows(rows);
+			if (!preview && RenderSurfaceSettings.isInterfacePreviewEnabled()) {
 				addSection(rows, "Rendering");
 			}
 			if (state.openGLPrimary) {
-				addRow(rows, "@whi@Aspect Ratio - " + state.aspectLabel, ACTION_RENDER_SURFACE);
+				if (!preview) addRow(rows, "@whi@Aspect Ratio - " + state.aspectLabel, ACTION_RENDER_SURFACE);
 				addRow(rows, "@whi@Window mode - " + state.windowModeLabel, ACTION_WINDOW_MODE);
 			}
 			boolean fixedBrowserPreset = BrowserPublicGraphicsPreset.isEnabled();
@@ -378,18 +392,19 @@ final class RendererSettingsPanel {
 				addRow(rows, "@whi@Terrain Variation - " + state.terrainVariationLabel, ACTION_TERRAIN_VARIATION);
 				addRow(rows, "@whi@Fog - " + state.fogLabel, ACTION_FOG);
 			}
+			if (preview) addSection(rows, "Image tuning");
 			addTuningRows(rows, "Terrain shading", state.terrainReliefLevel,
-				RendererReliefSettings.MAX_LEVEL, TERRAIN_RELIEF_SLIDER);
+				RendererReliefSettings.MAX_LEVEL, TERRAIN_RELIEF_SLIDER, preview);
 			addTuningRows(rows, "Object shading", state.objectReliefLevel,
-				RendererReliefSettings.MAX_LEVEL, OBJECT_RELIEF_SLIDER);
+				RendererReliefSettings.MAX_LEVEL, OBJECT_RELIEF_SLIDER, preview);
 			addTuningRows(rows, "Brightness / dimness", state.dimnessLevel,
-				RendererColorDiagnosticSettings.MAX_LEVEL, DIMNESS_SLIDER);
+				RendererColorDiagnosticSettings.MAX_LEVEL, DIMNESS_SLIDER, preview);
 			addTuningRows(rows, "Contrast", state.contrastLevel,
-				RendererColorDiagnosticSettings.MAX_LEVEL, CONTRAST_SLIDER);
+				RendererColorDiagnosticSettings.MAX_LEVEL, CONTRAST_SLIDER, preview);
 			addTuningRows(rows, "Gamma", state.gammaLevel,
-				RendererColorDiagnosticSettings.MAX_LEVEL, GAMMA_SLIDER);
+				RendererColorDiagnosticSettings.MAX_LEVEL, GAMMA_SLIDER, preview);
 			addTuningRows(rows, "Saturation", state.saturationLevel,
-				RendererColorDiagnosticSettings.MAX_LEVEL, SATURATION_SLIDER);
+				RendererColorDiagnosticSettings.MAX_LEVEL, SATURATION_SLIDER, preview);
 		}
 
 		addSection(rows, "Visibility");
@@ -408,12 +423,16 @@ final class RendererSettingsPanel {
 	private static void addInterfaceSizingRows(List<Row> rows) {
 		if (RenderSurfaceSettings.isInterfacePreviewEnabled()) {
 			addSection(rows, "Interface preview");
-			addRow(rows, "@whi@UI size - @gre@" + GameInterfaceSettings.size().percent + "%", ACTION_INTERFACE_SIZE);
-			addRow(rows, "@whi@Text size - @gre@" + GameInterfaceSettings.textSize().label, ACTION_INTERFACE_TEXT_SIZE);
+			addInterfaceSizingOptions(rows);
 		}
 	}
 
-	private static Action actionFor(int selectedAction, State state) {
+	private static void addInterfaceSizingOptions(List<Row> rows) {
+		addRow(rows, "@whi@UI size - @gre@" + GameInterfaceSettings.size().percent + "%", ACTION_INTERFACE_SIZE);
+		addRow(rows, "@whi@Text size - @gre@" + GameInterfaceSettings.textSize().label, ACTION_INTERFACE_TEXT_SIZE);
+	}
+
+	static Action actionFor(int selectedAction, State state) {
 		if (RenderSurfaceSettings.isInterfacePreviewEnabled()) {
 			if (selectedAction == ACTION_INTERFACE_SIZE) return Action.INTERFACE_SIZE;
 			if (selectedAction == ACTION_INTERFACE_TEXT_SIZE) return Action.INTERFACE_TEXT_SIZE;
@@ -534,11 +553,11 @@ final class RendererSettingsPanel {
 		}
 	}
 
-	private static boolean isRendererTuningSlider(int settingIndex) {
+	static boolean isRendererTuningSlider(int settingIndex) {
 		return settingIndex >= TERRAIN_RELIEF_SLIDER && settingIndex <= SATURATION_SLIDER;
 	}
 
-	private static int getRendererTuningLevel(int settingIndex) {
+	static int getRendererTuningLevel(int settingIndex) {
 		if (settingIndex == TERRAIN_RELIEF_SLIDER) {
 			return RendererReliefSettings.getTerrainLevel();
 		}
@@ -557,54 +576,90 @@ final class RendererSettingsPanel {
 		return RendererColorDiagnosticSettings.getSaturationLevel();
 	}
 
-	private static int getRendererTuningMaxLevel(int settingIndex) {
+	static int getRendererTuningMinLevel(int settingIndex) {
+		return settingIndex == TERRAIN_RELIEF_SLIDER || settingIndex == OBJECT_RELIEF_SLIDER
+			? RendererReliefSettings.MIN_LEVEL : RendererColorDiagnosticSettings.MIN_LEVEL;
+	}
+
+	static int getRendererTuningMaxLevel(int settingIndex) {
 		return settingIndex == TERRAIN_RELIEF_SLIDER || settingIndex == OBJECT_RELIEF_SLIDER
 			? RendererReliefSettings.MAX_LEVEL : RendererColorDiagnosticSettings.MAX_LEVEL;
 	}
 
 	private static void setRendererTuningLevel(int settingIndex, int level, Actions actions) {
-		if (settingIndex == TERRAIN_RELIEF_SLIDER) {
-			int oldLevel = RendererReliefSettings.getTerrainLevel();
-			int acceptedLevel = RendererReliefSettings.setTerrainLevel(level);
-			if (oldLevel != acceptedLevel) {
-				actions.rendererTuningChanged("terrain-relief", acceptedLevel,
-					RendererReliefSettings.getTerrainStrength());
-			}
-		} else if (settingIndex == OBJECT_RELIEF_SLIDER) {
-			int oldLevel = RendererReliefSettings.getObjectLevel();
-			int acceptedLevel = RendererReliefSettings.setObjectLevel(level);
-			if (oldLevel != acceptedLevel) {
-				actions.rendererTuningChanged("object-relief", acceptedLevel,
-					RendererReliefSettings.getObjectStrength());
-			}
-		} else if (settingIndex == DIMNESS_SLIDER) {
-			int oldLevel = RendererColorDiagnosticSettings.getDimnessLevel();
-			int acceptedLevel = RendererColorDiagnosticSettings.setDimnessLevel(level);
-			if (oldLevel != acceptedLevel) {
-				actions.rendererTuningChanged("dimness", acceptedLevel,
-					RendererColorDiagnosticSettings.getDimnessMultiplier());
-			}
-		} else if (settingIndex == CONTRAST_SLIDER) {
-			int oldLevel = RendererColorDiagnosticSettings.getContrastLevel();
-			int acceptedLevel = RendererColorDiagnosticSettings.setContrastLevel(level);
-			if (oldLevel != acceptedLevel) {
-				actions.rendererTuningChanged("contrast", acceptedLevel,
-					RendererColorDiagnosticSettings.getContrastMultiplier());
-			}
-		} else if (settingIndex == GAMMA_SLIDER) {
-			int oldLevel = RendererColorDiagnosticSettings.getGammaLevel();
-			int acceptedLevel = RendererColorDiagnosticSettings.setGammaLevel(level);
-			if (oldLevel != acceptedLevel) {
-				actions.rendererTuningChanged("gamma", acceptedLevel,
-					RendererColorDiagnosticSettings.getGammaValue());
-			}
-		} else if (settingIndex == SATURATION_SLIDER) {
-			int oldLevel = RendererColorDiagnosticSettings.getSaturationLevel();
-			int acceptedLevel = RendererColorDiagnosticSettings.setSaturationLevel(level);
-			if (oldLevel != acceptedLevel) {
-				actions.rendererTuningChanged("saturation", acceptedLevel,
-					RendererColorDiagnosticSettings.getSaturationMultiplier());
-			}
+		int previous = getRendererTuningLevel(settingIndex);
+		applyTuningLevel(settingIndex, level);
+		if (getRendererTuningLevel(settingIndex) != previous) reportTuningLevel(settingIndex, actions);
+	}
+
+	private static void applyTuningLevel(int setting, int level) {
+		switch (setting) {
+			case TERRAIN_RELIEF_SLIDER: RendererReliefSettings.setTerrainLevel(level); break;
+			case OBJECT_RELIEF_SLIDER: RendererReliefSettings.setObjectLevel(level); break;
+			case DIMNESS_SLIDER: RendererColorDiagnosticSettings.setDimnessLevel(level); break;
+			case CONTRAST_SLIDER: RendererColorDiagnosticSettings.setContrastLevel(level); break;
+			case GAMMA_SLIDER: RendererColorDiagnosticSettings.setGammaLevel(level); break;
+			case SATURATION_SLIDER: RendererColorDiagnosticSettings.setSaturationLevel(level); break;
+		}
+	}
+
+	private static void reportTuningLevel(int setting, Actions actions) {
+		int level = getRendererTuningLevel(setting);
+		switch (setting) {
+			case TERRAIN_RELIEF_SLIDER:
+				actions.rendererTuningChanged("terrain-relief", level, RendererReliefSettings.getTerrainStrength());
+				break;
+			case OBJECT_RELIEF_SLIDER:
+				actions.rendererTuningChanged("object-relief", level, RendererReliefSettings.getObjectStrength());
+				break;
+			case DIMNESS_SLIDER:
+				actions.rendererTuningChanged("dimness", level, RendererColorDiagnosticSettings.getDimnessMultiplier());
+				break;
+			case CONTRAST_SLIDER:
+				actions.rendererTuningChanged("contrast", level, RendererColorDiagnosticSettings.getContrastMultiplier());
+				break;
+			case GAMMA_SLIDER:
+				actions.rendererTuningChanged("gamma", level, RendererColorDiagnosticSettings.getGammaValue());
+				break;
+			case SATURATION_SLIDER:
+				actions.rendererTuningChanged("saturation", level, RendererColorDiagnosticSettings.getSaturationMultiplier());
+				break;
+		}
+	}
+
+	/** Keeps one slider under the pointer until release and reports the final value once. */
+	static final class TuningDrag {
+		private int setting = -1;
+		private int initialLevel;
+		private int left;
+		private int right;
+
+		boolean isActive() {
+			return setting != -1;
+		}
+
+		boolean isActive(int action) {
+			return setting == action;
+		}
+
+		void begin(int action, int left, int right, int x) {
+			setting = action;
+			initialLevel = getRendererTuningLevel(action);
+			this.left = left;
+			this.right = right;
+			move(x);
+		}
+
+		void move(int x) {
+			int level = SettingsPanelLayout.sliderLevel(x, left, right,
+				getRendererTuningMinLevel(setting), getRendererTuningMaxLevel(setting));
+			if (level != getRendererTuningLevel(setting)) applyTuningLevel(setting, level);
+		}
+
+		void finish(Actions actions) {
+			int action = setting;
+			setting = -1;
+			if (getRendererTuningLevel(action) != initialLevel) reportTuningLevel(action, actions);
 		}
 	}
 
@@ -629,9 +684,13 @@ final class RendererSettingsPanel {
 	}
 
 	private static void addTuningRows(List<Row> rows, String label, int level,
-								  int maxLevel, int action) {
-		addRow(rows, "@whi@" + label, SECTION_ROW);
-		addRow(rows, rendererTuningSliderBar(level, maxLevel), action);
+								  int maxLevel, int action, boolean preview) {
+		if (preview) {
+			addRow(rows, label, action);
+		} else {
+			addRow(rows, "@whi@" + label, SECTION_ROW);
+			addRow(rows, rendererTuningSliderBar(level, maxLevel), action);
+		}
 	}
 
 	private static void addSection(List<Row> rows, String label) {

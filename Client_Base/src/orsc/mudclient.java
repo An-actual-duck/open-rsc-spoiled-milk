@@ -1202,6 +1202,11 @@ public final class mudclient implements Runnable {
 			}
 		});
 	private final RendererSettingsPanel rendererSettingsPanel = new RendererSettingsPanel();
+	private SettingsPanelLayout settingsPanelLayout;
+	private final int[] settingsScroll = new int[SettingsPanelLayout.TAB_COUNT];
+	private final java.util.concurrent.atomic.AtomicIntegerArray settingsWheel =
+		new java.util.concurrent.atomic.AtomicIntegerArray(SettingsPanelLayout.TAB_COUNT);
+	private final RendererSettingsPanel.TuningDrag settingsTuningDrag = new RendererSettingsPanel.TuningDrag();
 	private final RendererSettingsPanel.Actions rendererSettingsActions = new RendererSettingsPanel.Actions() {
 		@Override
 		public void perform(RendererSettingsPanel.Action action) {
@@ -9778,6 +9783,14 @@ public final class mudclient implements Runnable {
 
 	private void drawGame(int var1) {
 		try {
+			if (settingsTuningDrag.isActive()) {
+				if (getVisibleSideMenuTab() == Config.OPTIONS_TAB && settingTab == SettingsPanelLayout.GRAPHICS) {
+					settingsTuningDrag.move(mouseX);
+					if (getMouseButtonDown() != 1) settingsTuningDrag.finish(rendererSettingsActions);
+				} else {
+					settingsTuningDrag.finish(rendererSettingsActions);
+				}
+			}
 			if (chatLayoutDirty) {
 				dialogueChoicesPanel = null;
 				repositionChat(!authenticSettings && C_CUSTOM_UI);
@@ -13429,7 +13442,12 @@ public final class mudclient implements Runnable {
 				}
 
 				if (visibleSideMenuTab == Config.OPTIONS_TAB) {
-					this.drawUiTabOptions(15, acceptTabInput);
+					SettingsPanelLayout settings = settingsPanelLayout();
+					if (settings == null) {
+						this.drawUiTabOptions(15, acceptTabInput);
+					} else if (!interfaceOpen && !onlineList.isVisible() && inputX_Action == InputXAction.ACT_0) {
+						drawSettingsPreview(settings, acceptTabInput);
+					}
 				}
 
 				if (!dialogueOwnsInput && !this.topMouseMenuVisible && !this.optionsMenuShow) {
@@ -17557,6 +17575,221 @@ public final class mudclient implements Runnable {
 	}
 
 	// wrench settings menu
+	private static final String[] SETTINGS_TAB_LABELS = {"Social", "General", "Graphics"};
+
+	private SettingsPanelLayout settingsPanelLayout() {
+		if (chatLayout == null) return null;
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		int anchor = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatTop = chatLayout.entryTop();
+		if (settingsPanelLayout == null || !settingsPanelLayout.matches(surface.width2, anchor, C_CUSTOM_UI,
+			chatRight, chatTop, size, text)) {
+			settingsPanelLayout = new SettingsPanelLayout(surface.width2, anchor, C_CUSTOM_UI, chatRight,
+				chatTop, size, text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont));
+		}
+		return settingsPanelLayout;
+	}
+
+	private void drawSettingsPreview(SettingsPanelLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		boolean canClick = acceptInput && !settingsTuningDrag.isActive();
+		int hoveredTab = canClick ? layout.tabAt(mouseX, mouseY) : -1;
+		if (hoveredTab >= 0 && mouseButtonClick == 1) {
+			settingTab = hoveredTab;
+			mouseButtonClick = 0;
+		}
+		surface.drawBoxAlpha(layout.left, layout.top, layout.right - layout.left, layout.bottom - layout.top, 0x182333, 228);
+		surface.drawBoxBorder(layout.left, layout.right - layout.left, layout.top, layout.bottom - layout.top, 0x667993);
+		for (int tab = 0; tab < SETTINGS_TAB_LABELS.length; tab++) {
+			drawInterfacePreviewTab(layout.tabLeft(tab), layout.top, layout.tabLeft(tab + 1) - layout.tabLeft(tab),
+				layout.tabHeight, SETTINGS_TAB_LABELS[tab], layout.labelFont,
+				layout.top + (layout.tabHeight + layout.labelLine) / 2 - 3, tab == settingTab, tab == hoveredTab);
+		}
+
+		RendererSettingsPanel.State graphics = settingTab == SettingsPanelLayout.GRAPHICS ? rendererSettingsState() : null;
+		List<RendererSettingsPanel.Row> settings;
+		if (graphics != null) settings = RendererSettingsPanel.previewRows(graphics);
+		else if (settingTab == SettingsPanelLayout.GENERAL) settings = generalSettingsRows();
+		else settings = socialSettingsRows();
+		SettingsPreviewRow[] rows = new SettingsPreviewRow[settings.size()];
+		int[] heights = new int[rows.length];
+		for (int i = 0; i < rows.length; i++) {
+			rows[i] = new SettingsPreviewRow(settings.get(i), layout, surface, graphics != null);
+			heights[i] = rows[i].height;
+		}
+		int maxScroll = layout.maxScroll(heights);
+		int scroll = Math.max(0, Math.min(maxScroll, settingsScroll[settingTab] + settingsWheel.getAndSet(settingTab, 0)));
+		if (maxScroll > 0 && canClick && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
+			&& layout.overList(mouseX, mouseY)) {
+			scroll = (mouseY - layout.listTop()) * maxScroll / Math.max(1, layout.listHeight() - 1);
+			mouseButtonClick = 0;
+		}
+		settingsScroll[settingTab] = scroll;
+
+		int selected = RendererSettingsPanel.SECTION_ROW;
+		int rowTop = layout.listTop();
+		surface.setClip(layout.listLeft(), layout.scrollbarLeft(), layout.listBottom(), rowTop);
+		try {
+			for (int i = scroll; i < rows.length && rowTop < layout.listBottom(); i++) {
+				SettingsPreviewRow row = rows[i];
+				boolean hovered = canClick && layout.overList(mouseX, mouseY) && mouseX < layout.scrollbarLeft()
+					&& mouseY >= rowTop && mouseY < rowTop + row.height;
+				if (row.slider) {
+					boolean onTrack = hovered && layout.overSlider(mouseX, mouseY, rowTop);
+					if (onTrack && mouseButtonClick == 1) {
+						settingsTuningDrag.begin(row.action, layout.sliderLeft(), layout.sliderRight(), mouseX);
+						mouseButtonClick = 0;
+					}
+					drawSettingsSlider(layout, row, rowTop, onTrack || settingsTuningDrag.isActive(row.action));
+				} else if (row.action == RendererSettingsPanel.ACTION_SCALING_ROW && graphics != null) {
+					drawSettingsScaleButtons(layout, graphics, rowTop, hovered);
+				} else {
+					drawSettingsRow(layout, row, rowTop, hovered && row.action != RendererSettingsPanel.SECTION_ROW);
+					if (hovered && mouseButtonClick == 1) selected = row.action;
+				}
+				rowTop += row.height;
+			}
+		} finally {
+			surface.clearClip();
+		}
+		if (maxScroll > 0) {
+			int height = layout.listHeight();
+			int thumb = Math.max(layout.padding * 2, height * (rows.length - maxScroll) / rows.length);
+			int y = layout.listTop();
+			int x = layout.scrollbarLeft();
+			surface.drawBox(x + 1, y, layout.scrollWidth - 2, height, 0x283548);
+			surface.drawBox(x + 2, y + (height - thumb) * scroll / maxScroll, layout.scrollWidth - 4, thumb, 0x8799B2);
+		}
+
+		int logoutTop = layout.logoutTop();
+		int logoutWidth = layout.right - layout.padding - layout.listLeft();
+		boolean overLogout = canClick && mouseX >= layout.listLeft() && mouseX < layout.listLeft() + logoutWidth
+			&& mouseY >= logoutTop && mouseY < logoutTop + layout.logoutHeight;
+		drawInterfacePreviewTab(layout.listLeft(), logoutTop, logoutWidth, layout.logoutHeight, "Log out",
+			layout.labelFont, logoutTop + (layout.logoutHeight + layout.labelLine) / 2 - 3, false, overLogout);
+		if (mouseButtonClick == 1) {
+			if (overLogout) sendLogout(0);
+			else if (selected != RendererSettingsPanel.SECTION_ROW) {
+				if (graphics != null) {
+					RendererSettingsPanel.Action action = RendererSettingsPanel.actionFor(selected, graphics);
+					if (action != null) applyRendererSettingsAction(action);
+				} else if (settingTab == SettingsPanelLayout.GENERAL) {
+					applyGeneralSettingsRow(selected);
+				} else {
+					applySocialSetting(SocialSetting.values()[selected]);
+				}
+			}
+			if (canClick && layout.contains(mouseX, mouseY)) mouseButtonClick = 0;
+		}
+		if (settingsTuningDrag.isActive() && getMouseButtonDown() != 1) {
+			settingsTuningDrag.finish(rendererSettingsActions);
+		}
+	}
+
+	private static final class SettingsPreviewRow {
+		final int action;
+		final boolean section;
+		final boolean slider;
+		final int height;
+		final String value;
+		final List<String> labelLines;
+		final boolean stacked;
+
+		SettingsPreviewRow(RendererSettingsPanel.Row row, SettingsPanelLayout layout, MudClientGraphics surface,
+						   boolean graphics) {
+			action = row.action;
+			section = action == RendererSettingsPanel.SECTION_ROW && row.label.startsWith("@yel@");
+			slider = graphics && RendererSettingsPanel.isRendererTuningSlider(action);
+			int separator = row.label.indexOf(" - ");
+			int separatorLength = 3;
+			if (separator < 0 && row.label.startsWith("@whi@Sprites: ")) {
+				separator = row.label.indexOf(": ");
+				separatorLength = 2;
+			}
+			String title = separator < 0 ? row.label : row.label.substring(0, separator);
+			if (title.startsWith("@whi@") || (section && title.startsWith("@yel@"))) title = title.substring(5);
+			value = separator < 0 ? "" : row.label.substring(separator + separatorLength);
+			int width = layout.scrollbarLeft() - layout.listLeft() - 2 * layout.padding;
+			int titleWidth = surface.stringWidth(layout.bodyFont, title);
+			labelLines = titleWidth <= width ? Collections.singletonList(title)
+				: ClericTextLayout.wrap(title, width, label -> surface.stringWidth(layout.bodyFont, label));
+			stacked = !value.isEmpty() && (labelLines.size() > 1
+				|| titleWidth + surface.stringWidth(layout.bodyFont, value) + layout.padding > width);
+			if (slider) height = layout.sliderHeight;
+			else height = layout.rowHeight + (Math.max(0, labelLines.size() - 1) + (stacked ? 1 : 0)) * layout.bodyLine;
+		}
+	}
+
+	private void drawSettingsRow(SettingsPanelLayout layout, SettingsPreviewRow row, int y, boolean hovered) {
+		MudClientGraphics surface = getSurface();
+		int left = layout.listLeft();
+		int right = layout.scrollbarLeft();
+		if (!row.section) {
+			surface.drawBoxAlpha(left, y, right - left, row.height - 1, hovered ? 0x3A4C67 : 0x29374E, 192);
+		}
+		int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
+		for (int i = 0; i < row.labelLines.size(); i++) {
+			surface.drawString(row.labelLines.get(i), left + layout.padding, baseline + i * layout.bodyLine,
+				row.section ? 0xFFDC82 : 0xFFFFFF, layout.bodyFont);
+		}
+		if (!row.value.isEmpty()) {
+			int x = right - layout.padding - surface.stringWidth(layout.bodyFont, row.value);
+			surface.drawString(row.value, x, baseline + (row.stacked ? row.labelLines.size() * layout.bodyLine : 0),
+				0xC4D0E0, layout.bodyFont);
+		}
+	}
+
+	private void drawSettingsSlider(SettingsPanelLayout layout, SettingsPreviewRow row, int y, boolean highlight) {
+		MudClientGraphics surface = getSurface();
+		drawSettingsRow(layout, row, y, highlight);
+		int level = RendererSettingsPanel.getRendererTuningLevel(row.action);
+		int min = RendererSettingsPanel.getRendererTuningMinLevel(row.action);
+		int max = RendererSettingsPanel.getRendererTuningMaxLevel(row.action);
+		String value = level + " / " + max;
+		int valueX = layout.scrollbarLeft() - layout.padding - surface.stringWidth(layout.bodyFont, value);
+		surface.drawString(value, valueX, y + (layout.rowHeight + layout.bodyLine) / 2 - 3, 0xFFDC82, layout.bodyFont);
+
+		int left = layout.sliderLeft();
+		int right = layout.sliderRight();
+		int centerY = layout.sliderY(y);
+		int thumbX = SettingsPanelLayout.sliderX(level, left, right, min, max);
+		int trackY = centerY - layout.trackHeight / 2;
+		surface.drawBox(left, trackY, right - left + 1, layout.trackHeight, 0x142032);
+		surface.drawBox(left, trackY, thumbX - left + 1, layout.trackHeight, highlight ? 0x8DBDFF : 0x739CD4);
+		int half = layout.thumbSize / 2;
+		surface.drawBox(thumbX - half, centerY - half, layout.thumbSize, layout.thumbSize,
+			highlight ? 0xF3D589 : 0xDFE8F7);
+		surface.drawBoxBorder(thumbX - half, layout.thumbSize, centerY - half, layout.thumbSize, 0x526785);
+	}
+
+	private void drawSettingsScaleButtons(SettingsPanelLayout layout, RendererSettingsPanel.State graphics,
+										 int y, boolean hovered) {
+		MudClientGraphics surface = getSurface();
+		int left = layout.listLeft();
+		int right = layout.scrollbarLeft();
+		int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
+		surface.drawBoxAlpha(left, y, right - left, layout.rowHeight - 1, 0x29374E, 192);
+		surface.drawString("Window scale", left + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
+		String value = graphics.renderingScalar + "x";
+		int buttonWidth = layout.rowHeight;
+		int plusX = right - layout.padding - buttonWidth;
+		int valueWidth = surface.stringWidth(layout.bodyFont, value);
+		int valueX = plusX - layout.padding - valueWidth;
+		int minusX = valueX - layout.padding - buttonWidth;
+		surface.drawString(value, valueX, baseline, 0xFFDC82, layout.bodyFont);
+		boolean overMinus = hovered && mouseX >= minusX && mouseX < minusX + buttonWidth;
+		boolean overPlus = hovered && mouseX >= plusX && mouseX < plusX + buttonWidth;
+		drawInterfacePreviewTab(minusX, y, buttonWidth, layout.rowHeight, "-", layout.bodyFont, baseline, false, overMinus);
+		drawInterfacePreviewTab(plusX, y, buttonWidth, layout.rowHeight, "+", layout.bodyFont, baseline, false, overPlus);
+		if (mouseButtonClick == 1 && (overMinus || overPlus)) {
+			applyRendererSettingsAction(overMinus ? RendererSettingsPanel.Action.SCALE_DOWN : RendererSettingsPanel.Action.SCALE_UP);
+			mouseButtonClick = 0;
+		}
+	}
+
 	private void drawUiTabOptions(int var1, boolean mustTrackMouse) {
 
 		int maxY = getUITabsY();
@@ -17904,227 +18137,182 @@ public final class mudclient implements Runnable {
 		this.getSurface().drawString("Click here to logout", baseX + 3, y, logoutColor, 1);
 	}
 
-	// custom general menu tab
-	private int addSettingsSection(int index, String label) {
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@yel@" + label, RendererSettingsPanel.SECTION_ROW, null, null);
-		return index;
-	}
-
-	private int addSettingsRow(int index, String label, int action) {
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++, label, action, null, null);
-		return index;
-	}
-
-	private void drawGeneralSettingsOptions(int baseX, short boxWidth, int x, int y) {
-		int var4 = y - 15;
-		this.panelSettings.clearList(this.controlSettingPanel);
-		int index = 0;
-		this.getSurface().drawString("Game options", 3 + baseX, y, 0, 1);
-
-		index = addSettingsSection(index, "Gameplay");
+	// General rows share their action IDs across both layouts.
+	private List<RendererSettingsPanel.Row> generalSettingsRows() {
+		List<RendererSettingsPanel.Row> rows = new ArrayList<>();
+		java.util.function.BiConsumer<String, Integer> add =
+			(label, action) -> rows.add(new RendererSettingsPanel.Row(label, action));
+		add.accept("@yel@" + "Gameplay", RendererSettingsPanel.SECTION_ROW);
 
 		// camera angle mode - byte index 1
 		if (this.optionCameraModeAuto) {
-			index = addSettingsRow(index, "@whi@Camera angle mode - @gre@Auto", 0);
+			add.accept("@whi@Camera angle mode - @gre@Auto", 0);
 		} else {
-			index = addSettingsRow(index, "@whi@Camera angle mode - @red@Manual", 0);
+			add.accept("@whi@Camera angle mode - @red@Manual", 0);
 		}
 
 		// sound effects - byte index 2
 		if (wantMembers()) {
 			if (optionSoundDisabled) {
-				index = addSettingsRow(index, "@whi@Sound effects - @red@off", 2);
+				add.accept("@whi@Sound effects - @red@off", 2);
 			} else {
-				index = addSettingsRow(index, "@whi@Sound effects - @gre@on", 2);
+				add.accept("@whi@Sound effects - @gre@on", 2);
 			}
 		}
 
-		index = addSettingsSection(index, "Interface");
+		add.accept("@yel@" + "Interface", RendererSettingsPanel.SECTION_ROW);
 		// Keep the Android row subject to the same temporary availability gate
 		// as desktop Graphics.
 		if (RemasteredSpriteSettings.isAvailable()
 			&& isAndroid() && !ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
-			index = addSettingsRow(index, "@whi@Sprites: "
+			add.accept("@whi@Sprites: "
 				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
 				RendererSettingsPanel.REMASTERED_SPRITES);
 		}
 
-		index = addSettingsRow(index,
-			"@whi@Middle mouse - " + DesktopMiddleMouseSettings.getMode().label,
+		add.accept("@whi@Middle mouse - " + DesktopMiddleMouseSettings.getMode().label,
 			RendererSettingsPanel.MIDDLE_MOUSE);
 
 		// mouse button(s) - byte index 1
 		if (this.optionMouseButtonOne) {
-			index = addSettingsRow(index, "@whi@Mouse buttons - @red@One", 1);
+			add.accept("@whi@Mouse buttons - @red@One", 1);
 		} else {
-			index = addSettingsRow(index, "@whi@Mouse buttons - @gre@Two", 1);
+			add.accept("@whi@Mouse buttons - @gre@Two", 1);
 		}
 
-		index = addSettingsRow(index,
-			"@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
+		add.accept("@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
 
 		if (chatLayout == null) {
-			index = addSettingsRow(index, "@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65);
+			add.accept("@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65);
 		}
 
-		index = addSettingsRow(index, HitSplatDisplaySettings.optionLabel(), HitSplatDisplaySettings.OPTION_ACTION);
+		add.accept(HitSplatDisplaySettings.optionLabel(), HitSplatDisplaySettings.OPTION_ACTION);
 
 		// custom UI
 		if (S_WANT_CUSTOM_UI) {
 			if (!C_CUSTOM_UI) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Custom UI - @red@Off", 39, null, null);
+				add.accept("@whi@Custom UI - @red@Off", 39);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Custom UI - @gre@On", 39, null, null);
+				add.accept("@whi@Custom UI - @gre@On", 39);
 			}
 		}
 
 		// batch progress bar
 		if (S_BATCH_PROGRESSION) {
 			if (!C_BATCH_PROGRESS_BAR) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Batch Progress Bar - @red@Off", 24, null, null);
+				add.accept("@whi@Batch Progress Bar - @red@Off", 24);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Batch Progress Bar - @gre@On", 24, null, null);
+				add.accept("@whi@Batch Progress Bar - @gre@On", 24);
 			}
 		}
 
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@whi@Tool Focus Menu - " + getGatheringFocusMenuLabel(), 52, null, null);
+		add.accept("@whi@Tool Focus Menu - " + getGatheringFocusMenuLabel(), 52);
 
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@whi@Hits XP Focus Menu - " + getHitsXpFocusMenuLabel(), 53, null, null);
+		add.accept("@whi@Hits XP Focus Menu - " + getHitsXpFocusMenuLabel(), 53);
 
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@whi@Summon Health Bars - " + (C_SUMMON_HEALTH_BARS ? "@gre@On" : "@red@Off"), 54, null, null);
+		add.accept("@whi@Summon Health Bars - " + (C_SUMMON_HEALTH_BARS ? "@gre@On" : "@red@Off"), 54);
 
 		// experience drops
 		if (S_EXPERIENCE_DROPS_TOGGLE) {
 			if (!C_EXPERIENCE_DROPS) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Experience Drops - @red@Off", 25, null, null);
+				add.accept("@whi@Experience Drops - @red@Off", 25);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Experience Drops - @gre@On", 25, null, null);
+				add.accept("@whi@Experience Drops - @gre@On", 25);
 			}
 		}
 
 		// npc kill count messages
 		if (S_NPC_KILL_COUNTERS) {
 			if (!C_TOTAL_NPC_KC) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Total NPC Killcounter - @red@Off", 38, null, null);
+				add.accept("@whi@Total NPC Killcounter - @red@Off", 38);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Total NPC Killcounter - @gre@On", 38, null, null);
+				add.accept("@whi@Total NPC Killcounter - @gre@On", 38);
 			}
 			if (!C_RECENT_NPC_KC) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Last NPC Killcounter - @red@Off", 44, null, null);
+				add.accept("@whi@Last NPC Killcounter - @red@Off", 44);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Last NPC Killcounter - @gre@On", 44, null, null);
+				add.accept("@whi@Last NPC Killcounter - @gre@On", 44);
 			}
 		}
 		// show roof
 		if (isAndroid() && S_SHOW_ROOF_TOGGLE) {
 			if (!C_HIDE_ROOFS) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Roofs - @red@Off", 26, null, null);
+				add.accept("@whi@Hide Roofs - @red@Off", 26);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Roofs - @gre@On", 26, null, null);
+				add.accept("@whi@Hide Roofs - @gre@On", 26);
 			}
 		}
 
 		// underground lighting flicker toggle
 		if (isAndroid() && S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
 			if (!C_HIDE_UNDERGROUND_FLICKER) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Underground Flicker - @red@Off", 42, null, null);
+				add.accept("@whi@Hide Underground Flicker - @red@Off", 42);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Underground Flicker - @gre@On", 42, null, null);
+				add.accept("@whi@Hide Underground Flicker - @gre@On", 42);
 			}
 		}
 
 		// ground items
 		if (S_GROUND_ITEM_TOGGLE) {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Ground Items - " + (C_SHOW_GROUND_ITEMS == 0 ? "@gre@Show ALL"
+			add.accept("@whi@Ground Items - " + (C_SHOW_GROUND_ITEMS == 0 ? "@gre@Show ALL"
 					: C_SHOW_GROUND_ITEMS == 1 ? "@red@Hide ALL"
 					: C_SHOW_GROUND_ITEMS == 2 ? "@gr1@Only Bones"
-					: C_SHOW_GROUND_ITEMS == 3 ? "@ora@No Bones" : "@or1@No Ashes"), 8, null, null);
+					: C_SHOW_GROUND_ITEMS == 3 ? "@ora@No Bones" : "@or1@No Ashes"), 8);
 		}
 
 		// Ground item names
 		if (S_GROUND_ITEM_NAMES) {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Ground Item Names - " + (C_GROUND_ITEM_NAMES ? "@gre@On" : "@red@Off"),
-				45, null, null);
+			add.accept("@whi@Ground Item Names - " + (C_GROUND_ITEM_NAMES ? "@gre@On" : "@red@Off"),
+				45);
 		}
 
 		// auto message switch
 		if (S_AUTO_MESSAGE_SWITCH_TOGGLE) {
 			if (!C_MESSAGE_TAB_SWITCH) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Auto Message Switch - @red@Off", 9, null, null);
+				add.accept("@whi@Auto Message Switch - @red@Off", 9);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Auto Message Switch - @gre@On", 9, null, null);
+				add.accept("@whi@Auto Message Switch - @gre@On", 9);
 			}
 		}
 
 		// side menu
 		if (S_SIDE_MENU_TOGGLE) {
 			if (!C_SIDE_MENU_OVERLAY) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Side Menu - @red@Off", 10, null, null);
+				add.accept("@whi@Side Menu - @red@Off", 10);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Side Menu - @gre@On", 10, null, null);
+				add.accept("@whi@Side Menu - @gre@On", 10);
 			}
 		}
 
 		// kill feed
 		if (S_WANT_KILL_FEED) {
 			if (!C_KILL_FEED) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Kill Feed - @red@Off", 11, null, null);
+				add.accept("@whi@Kill Feed - @red@Off", 11);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Kill Feed - @gre@On", 11, null, null);
+				add.accept("@whi@Kill Feed - @gre@On", 11);
 			}
 		}
 
 		// experience counter
 		if (S_EXPERIENCE_COUNTER_TOGGLE)
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Experience Counter - " + (C_EXPERIENCE_COUNTER == 0 ? "@red@Never"
-					: C_EXPERIENCE_COUNTER == 1 ? "@yel@Recent" : "@gre@Always"), 14, null, null);
+			add.accept("@whi@Experience Counter - " + (C_EXPERIENCE_COUNTER == 0 ? "@red@Never"
+					: C_EXPERIENCE_COUNTER == 1 ? "@yel@Recent" : "@gre@Always"), 14);
 
 		// inventory count
 		if (S_INVENTORY_COUNT_TOGGLE) {
 			if (!C_INV_COUNT) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Inventory Count - @red@Off", 15, null, null);
+				add.accept("@whi@Inventory Count - @red@Off", 15);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Inventory Count - @gre@On", 15, null, null);
+				add.accept("@whi@Inventory Count - @gre@On", 15);
 			}
 		}
 
 		// Hide Login Box
 		if (S_HIDE_LOGIN_BOX) {
 			if (C_HIDE_LOGIN_BOX) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Login Box - @gre@Yes", 20, null, null);
+				add.accept("@whi@Hide Login Box - @gre@Yes", 20);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Login Box - @red@No", 20, null, null);
+				add.accept("@whi@Hide Login Box - @red@No", 20);
 			}
 		}
 
@@ -18134,48 +18322,51 @@ public final class mudclient implements Runnable {
 			if (S_SHOW_FLOATING_NAMETAGS) {
 				// name and clan tag overlay
 				if (!C_NAME_CLAN_TAG_OVERLAY) {
-					this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-						"@whi@Name and Clan Tag - @red@Off", 16, null, null);
+					add.accept("@whi@Name and Clan Tag - @red@Off", 16);
 				} else {
-					this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-						"@whi@Name and Clan Tag - @gre@On", 16, null, null);
+					add.accept("@whi@Name and Clan Tag - @gre@On", 16);
 				}
 			}
 
 			// clan invite blocking
 			if (!this.clanInviteBlockSetting) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Clan Invitation - @red@Block", 17, null, null);
+				add.accept("@whi@Clan Invitation - @red@Block", 17);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Clan Invitation - @gre@Receive", 17, null, null);
+				add.accept("@whi@Clan Invitation - @gre@Receive", 17);
 			}
 
 			if (C_PARTY_INV) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Party Invitation - @red@Block", 19, null, null);
+				add.accept("@whi@Party Invitation - @red@Block", 19);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Party Invitation - @gre@Receive", 19, null, null);
+				add.accept("@whi@Party Invitation - @gre@Receive", 19);
 			}
 
 			//Only display this setting if we're on a non-authentic client.
 			if (!authenticSettings) {
 				if (!C_WANT_NATURE_RUNE_PROTECTION) {
-					this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-						"@whi@Nat Rune Alch Protection - @red@Off", 47, null, null);
+					add.accept("@whi@Nat Rune Alch Protection - @red@Off", 47);
 				} else {
-					this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-						"@whi@Nat Rune Alch Protection - @gre@On", 47, null, null);
+					add.accept("@whi@Nat Rune Alch Protection - @gre@On", 47);
 				}
 
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Auto Retaliate - " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off"), 48, null, null);
+				add.accept("@whi@Auto Retaliate - " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off"), 48);
 			}
 
 			// report abuse - keep at bottom of list since it's not a toggle
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Report Abuse", 18, null, null);
+			add.accept("@whi@Report Abuse", 18);
+		}
+
+		return rows;
+	}
+
+	private void drawGeneralSettingsOptions(int baseX, short boxWidth, int x, int y) {
+		int var4 = y - 15;
+		this.panelSettings.clearList(this.controlSettingPanel);
+		this.getSurface().drawString("Game options", 3 + baseX, y, 0, 1);
+		List<RendererSettingsPanel.Row> rows = generalSettingsRows();
+		for (int index = 0; index < rows.size(); index++) {
+			RendererSettingsPanel.Row row = rows.get(index);
+			this.panelSettings.setListEntry(this.controlSettingPanel, index, row.label, row.action, null, null);
 		}
 
 		// items on death menu option OR logout text if not enabled
@@ -18495,13 +18686,14 @@ public final class mudclient implements Runnable {
 		else
 			settingIndex = checkPosition;
 
-		//System.out.println("Setting index is: " + settingIndex); // DO NOT REMOVE THIS, IT IS VERY HELPFUL
-		if (settingIndex == RendererSettingsPanel.SECTION_ROW) {
-			return;
-		}
+		if (settingIndex == RendererSettingsPanel.SECTION_ROW) return;
+		if (mouseButtonClick == 1) applyGeneralSettingsRow(settingIndex);
+		this.handleSettingsLogout(var5, var6, yFromTopDistance);
+	}
 
+	private void applyGeneralSettingsRow(int settingIndex) {
 		// camera mode - byte index 0
-		if (settingIndex == 0 && this.mouseButtonClick == 1) {
+		if (settingIndex == 0) {
 			this.optionCameraModeAuto = !this.optionCameraModeAuto;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(0);
@@ -18510,7 +18702,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// sound on/off - byte index 2
-		if (wantMembers() && settingIndex == 2 && this.mouseButtonClick == 1) {
+		if (wantMembers() && settingIndex == 2) {
 			optionSoundDisabled = !optionSoundDisabled;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(2);
@@ -18518,16 +18710,16 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == RendererSettingsPanel.REMASTERED_SPRITES && this.mouseButtonClick == 1) {
+		if (settingIndex == RendererSettingsPanel.REMASTERED_SPRITES) {
 			toggleRemasteredSprites();
 		}
 
-		if (settingTab == 1 && settingIndex == RendererSettingsPanel.MIDDLE_MOUSE && this.mouseButtonClick == 1) {
+		if (settingTab == 1 && settingIndex == RendererSettingsPanel.MIDDLE_MOUSE) {
 			this.cycleDesktopMiddleMouseMode();
 		}
 
 		// one or two mouse button(s) - byte index 1
-		if (settingIndex == 1 && this.mouseButtonClick == 1) {
+		if (settingIndex == 1) {
 			this.optionMouseButtonOne = !this.optionMouseButtonOne;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(1);
@@ -18535,22 +18727,22 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 51 && this.mouseButtonClick == 1) {
+		if (settingIndex == 51) {
 			this.toggleCoordinatesOverlay();
 		}
 
-		if (settingIndex == 65 && this.mouseButtonClick == 1) {
+		if (settingIndex == 65) {
 			this.cycleSpellbookLayoutMode();
 		}
 
-		if (settingIndex == HitSplatDisplaySettings.OPTION_ACTION && this.mouseButtonClick == 1) {
+		if (settingIndex == HitSplatDisplaySettings.OPTION_ACTION) {
 			HitSplatDisplaySettings.cycleStyle();
 			saveHitSplatDisplaySettings();
 		}
 
 		// custom UI - byte index 39
 		if (S_WANT_CUSTOM_UI) {
-			if (settingIndex == 39 && this.mouseButtonClick == 1) {
+			if (settingIndex == 39) {
 				C_CUSTOM_UI = !C_CUSTOM_UI;
 				if (C_CUSTOM_UI)
 					repositionCustomUI();
@@ -18565,17 +18757,17 @@ public final class mudclient implements Runnable {
 		}
 
 		// hide roofs toggle - byte index 26
-		if (settingIndex == 26 && this.mouseButtonClick == 1 && S_SHOW_ROOF_TOGGLE) {
+		if (settingIndex == 26 && S_SHOW_ROOF_TOGGLE) {
 			this.toggleRoofVisibilitySetting();
 		}
 
 		// hide underground flicker toggle - byte index 42
-		if (settingIndex == 42 && this.mouseButtonClick == 1 && S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
+		if (settingIndex == 42 && S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
 			this.toggleUndergroundFlickerSetting();
 		}
 
 		// ground items toggle - byte index 28
-		if (settingIndex == 8 && this.mouseButtonClick == 1 && S_GROUND_ITEM_TOGGLE) {
+		if (settingIndex == 8 && S_GROUND_ITEM_TOGGLE) {
 			C_SHOW_GROUND_ITEMS = ++C_SHOW_GROUND_ITEMS%5;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(28);
@@ -18584,7 +18776,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// auto message tab switch - byte index 29
-		if (settingIndex == 9 && this.mouseButtonClick == 1 && S_AUTO_MESSAGE_SWITCH_TOGGLE) {
+		if (settingIndex == 9 && S_AUTO_MESSAGE_SWITCH_TOGGLE) {
 			C_MESSAGE_TAB_SWITCH = !C_MESSAGE_TAB_SWITCH;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(29);
@@ -18594,7 +18786,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// side menu - byte index 30
-		if (settingIndex == 10 && this.mouseButtonClick == 1 && S_SIDE_MENU_TOGGLE) {
+		if (settingIndex == 10 && S_SIDE_MENU_TOGGLE) {
 			C_SIDE_MENU_OVERLAY = !C_SIDE_MENU_OVERLAY;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(30);
@@ -18604,7 +18796,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// kill feed - byte index 31
-		if (settingIndex == 11 && this.mouseButtonClick == 1 && S_WANT_KILL_FEED) {
+		if (settingIndex == 11 && S_WANT_KILL_FEED) {
 			C_KILL_FEED = !C_KILL_FEED;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(31);
@@ -18614,7 +18806,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// experience counter - byte index 33
-		if (settingIndex == 14 && this.mouseButtonClick == 1 && S_EXPERIENCE_COUNTER_TOGGLE) {
+		if (settingIndex == 14 && S_EXPERIENCE_COUNTER_TOGGLE) {
 			C_EXPERIENCE_COUNTER++;
 			if (C_EXPERIENCE_COUNTER == 3)
 				C_EXPERIENCE_COUNTER = 0;
@@ -18625,7 +18817,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// inventory count - byte index 34
-		if (settingIndex == 15 && this.mouseButtonClick == 1 && S_INVENTORY_COUNT_TOGGLE) {
+		if (settingIndex == 15 && S_INVENTORY_COUNT_TOGGLE) {
 			C_INV_COUNT = !C_INV_COUNT;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(34);
@@ -18635,7 +18827,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// Show Login Box - byte index 40
-		if (settingIndex == 20 && this.mouseButtonClick == 1 && S_HIDE_LOGIN_BOX) {
+		if (settingIndex == 20 && S_HIDE_LOGIN_BOX) {
 			C_HIDE_LOGIN_BOX = !C_HIDE_LOGIN_BOX;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(40);
@@ -18644,7 +18836,7 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 45 && this.mouseButtonClick == 1 && S_GROUND_ITEM_NAMES) {
+		if (settingIndex == 45 && S_GROUND_ITEM_NAMES) {
 			C_GROUND_ITEM_NAMES = !C_GROUND_ITEM_NAMES;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(45);
@@ -18655,7 +18847,7 @@ public final class mudclient implements Runnable {
 
 		// batch progress bar - byte index 24
 		if (S_BATCH_PROGRESSION) {
-			if (settingIndex == 24 && this.mouseButtonClick == 1) {
+			if (settingIndex == 24) {
 				C_BATCH_PROGRESS_BAR = !C_BATCH_PROGRESS_BAR;
 				this.packetHandler.getClientStream().newPacket(111);
 				this.packetHandler.getClientStream().bufferBits.putByte(24);
@@ -18665,7 +18857,7 @@ public final class mudclient implements Runnable {
 			}
 		}
 
-		if (settingIndex == 52 && this.mouseButtonClick == 1) {
+		if (settingIndex == 52) {
 			C_GATHERING_FOCUS_MENU = (C_GATHERING_FOCUS_MENU + 1) % 3;
 			if (C_GATHERING_FOCUS_MENU == 0) {
 				this.gatheringFocusMenuHideAt = 0L;
@@ -18678,7 +18870,7 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 53 && this.mouseButtonClick == 1) {
+		if (settingIndex == 53) {
 			C_HITS_XP_FOCUS_MENU = (C_HITS_XP_FOCUS_MENU + 1) % 3;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(49);
@@ -18686,7 +18878,7 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 54 && this.mouseButtonClick == 1) {
+		if (settingIndex == 54) {
 			C_SUMMON_HEALTH_BARS = !C_SUMMON_HEALTH_BARS;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(50);
@@ -18695,7 +18887,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// experience drops - byte index 25
-		if (settingIndex == 25 && this.mouseButtonClick == 1 && S_EXPERIENCE_DROPS_TOGGLE) {
+		if (settingIndex == 25 && S_EXPERIENCE_DROPS_TOGGLE) {
 			C_EXPERIENCE_DROPS = !C_EXPERIENCE_DROPS;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(25);
@@ -18706,14 +18898,14 @@ public final class mudclient implements Runnable {
 
 		// npc killcount shows
 		if (S_NPC_KILL_COUNTERS) {
-			if (settingIndex == 38 && this.mouseButtonClick == 1) {
+			if (settingIndex == 38) {
 				C_TOTAL_NPC_KC = !C_TOTAL_NPC_KC;
 				this.packetHandler.getClientStream().newPacket(111);
 				this.packetHandler.getClientStream().bufferBits.putByte(38);
 				this.packetHandler.getClientStream().bufferBits.putByte(C_TOTAL_NPC_KC ? 1 : 0);
 				this.packetHandler.getClientStream().finishPacket();
 			}
-			if (settingIndex == 44 && this.mouseButtonClick == 1) {
+			if (settingIndex == 44) {
 				C_RECENT_NPC_KC = !C_RECENT_NPC_KC;
 				this.packetHandler.getClientStream().newPacket(111);
 				this.packetHandler.getClientStream().bufferBits.putByte(44);
@@ -18726,7 +18918,7 @@ public final class mudclient implements Runnable {
 		if (S_WANT_CLANS) {
 			// floating clan name tag overlay - byte index 35
 			if (S_SHOW_FLOATING_NAMETAGS) {
-				if (settingIndex == 16 && this.mouseButtonClick == 1) {
+				if (settingIndex == 16) {
 					C_NAME_CLAN_TAG_OVERLAY = !C_NAME_CLAN_TAG_OVERLAY;
 					this.packetHandler.getClientStream().newPacket(111);
 					this.packetHandler.getClientStream().bufferBits.putByte(35);
@@ -18737,7 +18929,7 @@ public final class mudclient implements Runnable {
 			}
 
 			// clan invite blocking - byte index 11
-			if (settingIndex == 17 && this.mouseButtonClick == 1) {
+			if (settingIndex == 17) {
 				this.clanInviteBlockSetting = !this.clanInviteBlockSetting;
 				this.packetHandler.getClientStream().newPacket(111);
 				this.packetHandler.getClientStream().bufferBits.putByte(11);
@@ -18746,14 +18938,14 @@ public final class mudclient implements Runnable {
 			}
 
 			// report abuse
-			if (settingIndex == 18 && this.mouseButtonClick == 1) {
+			if (settingIndex == 18) {
 				this.inputTextFinal = "";
 				this.inputTextCurrent = "";
 				this.reportAbuse_State = 1;
 			}
 
 			// party invite blocking
-			if (settingIndex == 19 && this.mouseButtonClick == 1) {
+			if (settingIndex == 19) {
 				this.partyInviteBlockSetting = !this.partyInviteBlockSetting;
 				C_PARTY_INV = !C_PARTY_INV;
 				this.packetHandler.getClientStream().newPacket(111);
@@ -18764,7 +18956,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// nature rune protection toggle - byte index 47
-		if (settingIndex == 47 && this.mouseButtonClick == 1 && S_WANT_NATURE_RUNE_PROTECTION) {
+		if (settingIndex == 47 && S_WANT_NATURE_RUNE_PROTECTION) {
 			C_WANT_NATURE_RUNE_PROTECTION = !C_WANT_NATURE_RUNE_PROTECTION;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(46);
@@ -18772,11 +18964,10 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 48 && this.mouseButtonClick == 1) {
+		if (settingIndex == 48) {
 			toggleAutoRetaliate();
 		}
 
-		this.handleSettingsLogout(var5, var6, yFromTopDistance);
 	}
 
 	private void handleSettingsLogout(short boxWidth, int x, int yFromTopDistance) {
@@ -18793,149 +18984,153 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	// custom social menu tab
-	private void handleSocialSettingsClicks(short var5, int var6, int yFromTopDistance) {
-		boolean var11 = false;
+	private enum SocialSetting {
+		PASSWORD, RECOVERY, CONTACT, CHAT, PRIVATE_CHAT, GLOBAL_FRIEND, GLOBAL_CHAT, TRADE,
+		ONLINE_LIST, IGNORED_LIST, SKIP_TUTORIAL, EXIT_BLACK_HOLE
+	}
 
-		// change password
-		yFromTopDistance += 2 * 15 + 5;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.panelPasswordChange_Mode = PasswordChangeMode.OLD_PASSWORD;
-			this.inputTextCurrent = "";
-			this.inputTextFinal = "";
-			if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) {
-				clientPort.drawKeyboard();
-			}
-		}
-
-		// change recovery questions
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.packetHandler.getClientStream().newPacket(197);
-			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		// change contact details
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.packetHandler.getClientStream().newPacket(247);
-			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		// privacy divider text
-		yFromTopDistance += 17;
-
-		// block chat toggle
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12
-			&& 4 + yFromTopDistance > this.mouseY && this.mouseButtonClick == 1) {
-			this.settingsBlockChat = ++this.settingsBlockChat %3;
-			var11 = true;
-		}
-
-		// block private toggle
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
-			&& yFromTopDistance + 4 > this.mouseY && this.mouseButtonClick == 1) {
-			this.settingsBlockPrivate = ++this.settingsBlockPrivate %3;
-			var11 = true;
-		}
-
-		// Block global friend chat toggle
+	private List<RendererSettingsPanel.Row> socialSettingsRows() {
+		List<RendererSettingsPanel.Row> rows = new ArrayList<>();
+		rows.add(new RendererSettingsPanel.Row("@yel@Security", RendererSettingsPanel.SECTION_ROW));
+		addSocialSetting(rows, SocialSetting.PASSWORD, "Change password");
+		addSocialSetting(rows, SocialSetting.RECOVERY, "Change recovery questions");
+		addSocialSetting(rows, SocialSetting.CONTACT, "Change contact details");
+		rows.add(new RendererSettingsPanel.Row("@yel@Privacy", RendererSettingsPanel.SECTION_ROW));
+		addSocialSetting(rows, SocialSetting.CHAT, "Allow chat messages - " + privacySettingLabel(settingsBlockChat));
+		addSocialSetting(rows, SocialSetting.PRIVATE_CHAT,
+			"Allow private messages - " + privacySettingLabel(settingsBlockPrivate));
 		if (S_WANT_GLOBAL_FRIEND && !S_WANT_GLOBAL_CHAT) {
-			yFromTopDistance += 15;
-			if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
-				&& yFromTopDistance + 4 > this.mouseY && this.mouseButtonClick == 1) {
+			addSocialSetting(rows, SocialSetting.GLOBAL_FRIEND, "Allow global messages - "
+				+ (C_BLOCK_GLOBAL_FRIEND ? "@red@Off" : "@gre@On"));
+		} else if (S_WANT_GLOBAL_CHAT && !S_WANT_GLOBAL_FRIEND) {
+			String hidden;
+			switch (settingsBlockGlobal) {
+				case 2: hidden = "@red@All"; break;
+				case 3: hidden = "@or1@PKing"; break;
+				case 4: hidden = "@ora@General"; break;
+				default: hidden = "@gre@None"; break;
+			}
+			addSocialSetting(rows, SocialSetting.GLOBAL_CHAT, "Hide global messages - " + hidden);
+		}
+		addSocialSetting(rows, SocialSetting.TRADE, "Allow trade requests - " + privacySettingLabel(settingsBlockTrade));
+		if (!insideTutorial) {
+			rows.add(new RendererSettingsPanel.Row("@yel@Player lists", RendererSettingsPanel.SECTION_ROW));
+			if (S_WANT_PLAYER_COMMANDS) addSocialSetting(rows, SocialSetting.ONLINE_LIST, "Display online list");
+			addSocialSetting(rows, SocialSetting.IGNORED_LIST, "View ignored list");
+		}
+		if (insideTutorial) addSocialSetting(rows, SocialSetting.SKIP_TUTORIAL, "Skip the tutorial");
+		else if (insideBlackHole) addSocialSetting(rows, SocialSetting.EXIT_BLACK_HOLE, "Exit the black hole");
+		return rows;
+	}
+
+	private static void addSocialSetting(List<RendererSettingsPanel.Row> rows, SocialSetting setting, String label) {
+		rows.add(new RendererSettingsPanel.Row(label, setting.ordinal()));
+	}
+
+	private static String privacySettingLabel(int value) {
+		return value == 2 ? "@red@Off" : value == 1 ? "@yel@Friends" : "@gre@On";
+	}
+
+	private void applySocialSetting(SocialSetting setting) {
+		switch (setting) {
+			case PASSWORD:
+				panelPasswordChange_Mode = PasswordChangeMode.OLD_PASSWORD;
+				inputTextCurrent = "";
+				inputTextFinal = "";
+				if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+				break;
+			case RECOVERY:
+				packetHandler.getClientStream().newPacket(197);
+				packetHandler.getClientStream().finishPacket();
+				break;
+			case CONTACT:
+				packetHandler.getClientStream().newPacket(247);
+				packetHandler.getClientStream().finishPacket();
+				break;
+			case CHAT:
+				settingsBlockChat = (settingsBlockChat + 1) % 3;
+				createPacket64(settingsBlockChat, settingsBlockPrivate, settingsBlockTrade, 0);
+				break;
+			case PRIVATE_CHAT:
+				settingsBlockPrivate = (settingsBlockPrivate + 1) % 3;
+				createPacket64(settingsBlockChat, settingsBlockPrivate, settingsBlockTrade, 0);
+				break;
+			case TRADE:
+				settingsBlockTrade = (settingsBlockTrade + 1) % 3;
+				createPacket64(settingsBlockChat, settingsBlockPrivate, settingsBlockTrade, 0);
+				break;
+			case GLOBAL_FRIEND:
 				C_BLOCK_GLOBAL_FRIEND = !C_BLOCK_GLOBAL_FRIEND;
-				this.packetHandler.getClientStream().newPacket(111);
-				this.packetHandler.getClientStream().bufferBits.putByte(41);
-				this.packetHandler.getClientStream().bufferBits.putByte(C_BLOCK_GLOBAL_FRIEND ? 1 : 0);
-				this.packetHandler.getClientStream().finishPacket();
+				packetHandler.getClientStream().newPacket(111);
+				packetHandler.getClientStream().bufferBits.putByte(41);
+				packetHandler.getClientStream().bufferBits.putByte(C_BLOCK_GLOBAL_FRIEND ? 1 : 0);
+				packetHandler.getClientStream().finishPacket();
+				break;
+			case GLOBAL_CHAT:
+				settingsBlockGlobal = settingsBlockGlobal >= 4 ? 1 : settingsBlockGlobal + 1;
+				packetHandler.getClientStream().newPacket(111);
+				packetHandler.getClientStream().bufferBits.putByte(9);
+				packetHandler.getClientStream().bufferBits.putByte(settingsBlockGlobal);
+				packetHandler.getClientStream().finishPacket();
+				break;
+			case ONLINE_LIST:
+				sendCommandString("onlinelist");
+				break;
+			case IGNORED_LIST:
+				showIgnoredList();
+				break;
+			case SKIP_TUTORIAL:
+				showItemModX(InputXPrompt.promptSkipTutorial, InputXAction.SKIP_TUTORIAL, false);
+				if (!C_CUSTOM_UI) showUiTab = 0;
+				break;
+			case EXIT_BLACK_HOLE:
+				showItemModX(InputXPrompt.promptExitBlackHole, InputXAction.EXIT_BLACK_HOLE, false);
+				if (!C_CUSTOM_UI) showUiTab = 0;
+				break;
+		}
+	}
+
+	private void handleSocialSettingsClicks(short width, int left, int y) {
+		if (mouseButtonClick != 1 || mouseX <= left || mouseX >= left + width) return;
+		y += 35;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.PASSWORD);
+		y += 15;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.RECOVERY);
+		y += 15;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.CONTACT);
+		y += 32;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.CHAT);
+		y += 15;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.PRIVATE_CHAT);
+
+		if (S_WANT_GLOBAL_FRIEND && !S_WANT_GLOBAL_CHAT) {
+			y += 15;
+			if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.GLOBAL_FRIEND);
+		} else if (S_WANT_GLOBAL_CHAT && !S_WANT_GLOBAL_FRIEND) {
+			y += 15;
+			if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.GLOBAL_CHAT);
+		}
+
+		y += 15;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.TRADE);
+		if (!insideTutorial) {
+			y += 25;
+			if (S_WANT_PLAYER_COMMANDS && mouseY > y - 18 && mouseY < y + 7) {
+				applySocialSetting(SocialSetting.ONLINE_LIST);
 			}
+			if (hitsLegacySocialSetting(y + 14)) applySocialSetting(SocialSetting.IGNORED_LIST);
 		}
+		int specialY = C_CUSTOM_UI ? getUITabsY() - 240 + 194 : getAuthenticSidebarPanelTop() + 219;
+		if (hitsLegacySocialSetting(specialY)) {
+			if (insideTutorial) applySocialSetting(SocialSetting.SKIP_TUTORIAL);
+			else if (insideBlackHole) applySocialSetting(SocialSetting.EXIT_BLACK_HOLE);
+		}
+		int logoutY = C_CUSTOM_UI ? getUITabsY() - 240 + 229 : getAuthenticSidebarPanelTop() + 254;
+		if (hitsLegacySocialSetting(logoutY)) sendLogout(0);
+	}
 
-		// block global chat toggle
-		if (S_WANT_GLOBAL_CHAT && !S_WANT_GLOBAL_FRIEND) {
-			yFromTopDistance += 15;
-			if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
-				&& yFromTopDistance + 4 > this.mouseY && this.mouseButtonClick == 1) {
-				if (this.settingsBlockGlobal >= 4) {
-					this.settingsBlockGlobal = 0;
-				}
-				this.settingsBlockGlobal = this.settingsBlockGlobal + 1;
-				this.packetHandler.getClientStream().newPacket(111);
-				this.packetHandler.getClientStream().bufferBits.putByte(9);
-				this.packetHandler.getClientStream().bufferBits.putByte(this.settingsBlockGlobal);
-				this.packetHandler.getClientStream().finishPacket();
-			}
-		}
-
-		// block trade toggle
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var6 + var5 && yFromTopDistance - 12 < this.mouseY
-			&& this.mouseY < 4 + yFromTopDistance && this.mouseButtonClick == 1) {
-			this.settingsBlockTrade = ++this.settingsBlockTrade %3;
-			var11 = true;
-		}
-
-		// block chat toggle
-		if (var11) {
-			this.createPacket64(this.settingsBlockChat, this.settingsBlockPrivate,
-				this.settingsBlockTrade, 0);
-		}
-
-		// handle online list click
-		if (!this.insideTutorial) {
-			yFromTopDistance += 25;
-			if (S_WANT_PLAYER_COMMANDS && this.mouseX > var6 && this.mouseX < var6 + var5
-				&& yFromTopDistance - 18 < this.mouseY && this.mouseY < yFromTopDistance + 7 && this.mouseButtonClick == 1) {
-				this.sendCommandString("onlinelist");
-			}
-		}
-
-		if (!this.insideTutorial) {
-			yFromTopDistance += 14;
-			if (this.mouseX > var6 && this.mouseX < var6 + var5
-				&& yFromTopDistance - 12 < this.mouseY && this.mouseY < yFromTopDistance + 4
-				&& this.mouseButtonClick == 1) {
-				this.showIgnoredList();
-			}
-		}
-
-		// skip tutorial button or exit blackhole button
-		if (this.insideTutorial) {
-			yFromTopDistance = getAuthenticSidebarPanelTop() + 219;
-			if (C_CUSTOM_UI)
-				yFromTopDistance = getUITabsY() - 240 + 194;
-			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
-				&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-				this.showItemModX(InputXPrompt.promptSkipTutorial, InputXAction.SKIP_TUTORIAL, false);
-				if (!C_CUSTOM_UI)
-					this.showUiTab = 0;
-			}
-		} else if (this.insideBlackHole) {
-			yFromTopDistance = getAuthenticSidebarPanelTop() + 219;
-			if (C_CUSTOM_UI)
-				yFromTopDistance = getUITabsY() - 240 + 194;
-			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
-				&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-				this.showItemModX(InputXPrompt.promptExitBlackHole, InputXAction.EXIT_BLACK_HOLE, false);
-				if (!C_CUSTOM_UI)
-					this.showUiTab = 0;
-			}
-		}
-
-		// logout menu option
-		yFromTopDistance = getAuthenticSidebarPanelTop() + 254;
-		if (C_CUSTOM_UI)
-			yFromTopDistance = getUITabsY() - 240 + 229;
-		if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
-			&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-			this.sendLogout(0);
-		}
+	private boolean hitsLegacySocialSetting(int baseline) {
+		return mouseY > baseline - 12 && mouseY < baseline + 4;
 	}
 
 	// android menu tab
@@ -23236,6 +23431,10 @@ public final class mudclient implements Runnable {
 			SocialPanelLayout preview = socialPanelLayout();
 			if (preview != null) return preview.contains(x, y);
 		}
+		if (getVisibleSideMenuTab() == Config.OPTIONS_TAB) {
+			SettingsPanelLayout preview = settingsPanelLayout();
+			if (preview != null) return settingsTuningDrag.isActive() || preview.contains(x, y);
+		}
 		if (C_CUSTOM_UI) {
 			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
@@ -23371,6 +23570,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean handleTabUIClick() {
+		if (settingsTuningDrag.isActive()) return mouseButtonClick != 0;
 		if (C_CUSTOM_UI) {
 			repositionCustomUI();
 			return handleTabUIClick_CUSTOM();
@@ -23529,8 +23729,11 @@ public final class mudclient implements Runnable {
 				this.closeOrRestorePinnedSideMenu();
 			}
 
-			if (this.showUiTab == Config.OPTIONS_TAB && !this.isCurrentSideMenuHomeTab() && (this.mouseX < hoverLeft || this.mouseY > 325 + panelOffset)) {
-				this.closeOrRestorePinnedSideMenu();
+			if (showUiTab == Config.OPTIONS_TAB && !isCurrentSideMenuHomeTab()) {
+				SettingsPanelLayout settings = settingsPanelLayout();
+				int left = settings == null ? hoverLeft : Math.min(hoverLeft, settings.left);
+				int bottom = settings == null ? 326 + panelOffset : settings.bottom;
+				if (mouseX < left || mouseY >= bottom) closeOrRestorePinnedSideMenu();
 			}
 
 		} catch (RuntimeException var3) {
@@ -32375,7 +32578,7 @@ public final class mudclient implements Runnable {
 			} else if (uiTabPlayerInfoSubTab == 1) {
 				panelQuestInfo.scrollMethodList(controlQuestInfoPanel, x);
 			}
-		} else if (visibleSideMenuTab == Config.OPTIONS_TAB) { // Settings wrench menu
+		} else if (visibleSideMenuTab == Config.OPTIONS_TAB && chatLayout == null) {
 			panelSettings.scrollMethodCustomList(controlSettingPanel, x, 1);
 		} else if (slotUsesAbilityPreview(visibleSideMenuTab)) {
 			AbilityBook book = AbilityBook.forTab(visibleSideMenuTab);
@@ -32437,6 +32640,10 @@ public final class mudclient implements Runnable {
 			}
 		} else if (experienceConfigInterface.isVisible() && experienceConfigInterface.selectSkillMenu) {
 			experienceConfigInterface.experienceConfig.scrollMethodList(experienceConfigInterface.experienceConfigScroll, x);
+		} else if (visibleSideMenuTab == Config.OPTIONS_TAB && chatLayout != null
+			&& inputX_Action == InputXAction.ACT_0 && !settingsTuningDrag.isActive()) {
+			SettingsPanelLayout layout = settingsPanelLayout();
+			if (layout.overList(mouseX, mouseY)) settingsWheel.addAndGet(settingTab, x);
 		} else if (visibleSideMenuTab == Config.FRIENDS_TAB && chatLayout != null
 			&& inputX_Action == InputXAction.ACT_0 && panelSocialPopup_Mode == SocialPopupMode.NONE) {
 			int tab = panelSocialTab;

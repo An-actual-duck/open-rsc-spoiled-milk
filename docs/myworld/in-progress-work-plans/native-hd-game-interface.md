@@ -111,6 +111,20 @@ Settings until its redesign is ready to move into Social.
 - Rework the online player list inside Social and migrate the existing entry
   from Settings once the new list is usable.
 
+## Settings preview
+
+Settings keeps the Social, General and Graphics tabs and their existing
+actions. Settings labels and values adjust to the selected text size, and
+each tab keeps its own scroll position. Graphics groups resolution, UI size
+and text size at the top. The browser's game resolution follows the selected
+preview at launch. Standalone OpenGL keeps the existing resolution selector.
+
+Terrain shading, object shading, brightness, contrast, gamma and saturation
+each have a track, handle and current level. Clicking the track or dragging
+the handle uses the existing tuning levels and updates the renderer while
+dragging. Release saves the final level. Browser presets still govern which
+graphics choices can be changed.
+
 ## Right-click menus
 
 Bring the shared right-click menu up to the same visual and readability

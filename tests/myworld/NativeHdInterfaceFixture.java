@@ -20,6 +20,7 @@ public final class NativeHdInterfaceFixture {
 		verifyIndependentSizing();
 		verifyAbilityBookSettings();
 		verifySettingRows(preview);
+		verifyGraphicsTuningDrag();
 		for (GameInterfaceSettings.Size size : GameInterfaceSettings.Size.values()) {
 			for (GameInterfaceSettings.TextSize text : GameInterfaceSettings.TextSize.values()) {
 				verifyChatBounds(chat(1920, 1080, size, text), 1920);
@@ -40,6 +41,9 @@ public final class NativeHdInterfaceFixture {
 				verifySocialBounds(1920, 1080, size, text, false);
 				verifySocialBounds(960, 540, size, text, false);
 				verifySocialBounds(960, 540, size, text, true);
+				verifySettingsBounds(1920, 1080, size, text, false);
+				verifySettingsBounds(960, 540, size, text, false);
+				verifySettingsBounds(960, 540, size, text, true);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -289,6 +293,72 @@ public final class NativeHdInterfaceFixture {
 			check(panel.rowAt(panel.scrollbarLeft(), listTop, listTop, 2, 100) == -1, "Scrollbar excludes row actions");
 			check(panel.rowAt(panel.bodyLeft(), panel.actionTop(), listTop, 2, 100) == -1, "Footer excludes row actions");
 		}
+	}
+
+	private static void verifySettingsBounds(int width, int height, GameInterfaceSettings.Size size,
+											  GameInterfaceSettings.TextSize text, boolean bottomLauncher) {
+		ChatPanelLayout chat = chat(width, height, size, text);
+		int chatRight = chat.left + chat.width;
+		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, bottomLauncher, size, chatRight, chat.entryTop());
+		int anchor = bottomLauncher ? toolbar.top : toolbar.panelTop();
+		SettingsPanelLayout panel = new SettingsPanelLayout(width, anchor, bottomLauncher, chatRight, chat.entryTop(),
+			size, text, chat.lineHeight, chat.tabsHeight - size.pixels(8));
+		for (int tab = 0; tab < SettingsPanelLayout.TAB_COUNT; tab++) {
+			check(panel.tabAt(panel.tabLeft(tab), panel.top) == tab, "Settings tab left edge");
+			check(panel.tabAt(panel.tabLeft(tab + 1) - 1, panel.top) == tab, "Settings tab right edge");
+		}
+		check(panel.sliderLeft() < panel.sliderRight(), "Slider has a usable track");
+		check(panel.listHeight() >= panel.sliderHeight, "Slider fits in the scroll viewport");
+		check(panel.overSlider(panel.sliderLeft(), panel.sliderY(panel.listTop()), panel.listTop()), "Track is clickable");
+		check(!panel.overSlider(panel.sliderLeft(), panel.listTop(), panel.listTop()), "Slider label has no pointer action");
+		check(!panel.overList(panel.listLeft(), panel.logoutTop()), "Log out stays outside scroll viewport");
+		if (panel.left < chatRight) check(panel.bottom <= chat.entryTop(), "Settings fit above chat");
+		if (bottomLauncher) check(panel.bottom < anchor, "Settings fit above the lower toolbar");
+	}
+
+	private static void verifyGraphicsTuningDrag() {
+		RendererSettingsPanel.State state = RendererSettingsPanel.State.capture(true,
+			ScaledWindow.ScalingAlgorithm.INTEGER_SCALING, 1, Collections.singletonList(1f),
+			false, false, false, false);
+		java.util.List<RendererSettingsPanel.Row> rows = RendererSettingsPanel.previewRows(state);
+		check(rows.get(1).label.contains("Resolution") && rows.get(2).label.contains("UI size")
+			&& rows.get(3).label.contains("Text size"), "Display sizing options are grouped together");
+		int sliders = 0;
+		for (RendererSettingsPanel.Row row : rows) {
+			if (RendererSettingsPanel.isRendererTuningSlider(row.action)) {
+				sliders++;
+				check(!row.label.contains("[") && !row.label.startsWith("@"), "Preview slider has a plain label");
+			}
+		}
+		check(sliders == 6, "All image tuning sliders are available");
+
+		int before = RendererColorDiagnosticSettings.getGammaLevel();
+		RendererColorDiagnosticSettings.setGammaLevel(10);
+		RendererSettingsPanel.TuningDrag drag = new RendererSettingsPanel.TuningDrag();
+		int[] committed = {0, 0};
+		RendererSettingsPanel.Actions actions = new RendererSettingsPanel.Actions() {
+			@Override public void perform(RendererSettingsPanel.Action action) { throw new AssertionError(action); }
+			@Override public void rendererTuningChanged(String control, int level, float value) {
+				check("gamma".equals(control), "Drag retains the starting setting");
+				committed[0]++;
+				committed[1] = level;
+			}
+		};
+		drag.begin(RendererSettingsPanel.GAMMA_SLIDER, 100, 290, 135);
+		check(RendererColorDiagnosticSettings.getGammaLevel() == 5, "Track click rounds to the nearest existing level");
+		drag.move(400);
+		check(RendererColorDiagnosticSettings.getGammaLevel() == 20, "Dragging past the track clamps the maximum");
+		drag.move(-4);
+		check(RendererColorDiagnosticSettings.getGammaLevel() == 1 && committed[0] == 0,
+			"Dragging updates live before saving");
+		drag.finish(actions);
+		check(committed[0] == 1 && committed[1] == 1 && !drag.isActive(), "Release saves only the final level");
+		drag.begin(RendererSettingsPanel.GAMMA_SLIDER, 100, 290, 100);
+		drag.move(200);
+		drag.move(100);
+		drag.finish(actions);
+		check(committed[0] == 1, "Returning to the initial value skips persistence");
+		RendererColorDiagnosticSettings.setGammaLevel(before);
 	}
 
 	private static void verifyChatBounds(ChatPanelLayout chat, int width) {
