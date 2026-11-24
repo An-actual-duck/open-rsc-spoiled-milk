@@ -11,6 +11,7 @@ import java.util.Map;
 
 /** Groups the recipes supplied for the current production interaction. */
 final class CraftingRecipeTabs {
+	static final int GOLD_BAR = 172;
 	final List<Family> families = new ArrayList<>();
 
 	CraftingRecipeTabs(List<ProductionRecipeView> recipes, int inputItemId) {
@@ -30,13 +31,17 @@ final class CraftingRecipeTabs {
 		return def == null ? "Materials" : def.getName();
 	}
 
+	static boolean isMould(int itemId) {
+		return itemName(itemId).toLowerCase(Locale.ROOT).endsWith("mould");
+	}
+
 	private static int materialId(ProductionRecipeView recipe, int inputId, String family) {
 		boolean jewelry = family.equals("Rings") || family.equals("Necklaces")
 			|| family.equals("Amulets") || family.equals("Bangles");
-		if (jewelry && itemName(inputId).equalsIgnoreCase("gold bar")) {
+		if (jewelry && inputId == GOLD_BAR) {
 			for (int i = 0; i < recipe.getIngredientCount(); i++) {
 				int ingredient = recipe.getIngredientItemId(i);
-				if (ingredient != inputId && !itemName(ingredient).toLowerCase(Locale.ROOT).endsWith("mould")) {
+				if (ingredient != inputId && !isMould(ingredient)) {
 					return ingredient;
 				}
 			}

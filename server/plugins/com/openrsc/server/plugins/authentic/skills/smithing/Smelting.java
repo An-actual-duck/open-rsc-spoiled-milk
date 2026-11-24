@@ -44,6 +44,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	private static final String DWARF_YOUTH_RESCUE_CACHE_KEY = "miniquest_dwarf_youth_rescue";
 	private static final String LAVA_FORGE_REPAIRED_CACHE_KEY = "myworld_lava_forge_repaired";
 	public static final int FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id();
+	public static final int FURNACE_CATEGORY_JEWELRY = ItemId.GOLD_AMULET.id();
 	public static final int FURNACE_CATEGORY_RINGS = ItemId.GOLD_RING.id();
 	public static final int FURNACE_CATEGORY_NECKLACES = ItemId.GOLD_NECKLACE.id();
 	public static final int FURNACE_CATEGORY_BANGLES = MyWorldItemId.GOLD_BANGLE;
@@ -269,9 +270,16 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_BARS, true, -1));
 		if (player.getConfig().WANT_MYWORLD) recipes.add(categoryRecipe(FURNACE_CATEGORY_SIGIL_BLANKS,
 			has(player, ClericMetalSigils.SIGIL_MOULD), ClericMetalSigils.SIGIL_MOULD));
-		recipes.add(categoryRecipe(FURNACE_CATEGORY_RINGS, has(player, ItemId.RING_MOULD.id()), ItemId.RING_MOULD.id()));
-		recipes.add(categoryRecipe(FURNACE_CATEGORY_NECKLACES, has(player, ItemId.NECKLACE_MOULD.id()), ItemId.NECKLACE_MOULD.id()));
-		recipes.add(categoryRecipe(FURNACE_CATEGORY_BANGLES, has(player, MyWorldItemId.BANGLE_MOULD), MyWorldItemId.BANGLE_MOULD));
+		boolean hasRingMould = has(player, ItemId.RING_MOULD.id());
+		boolean hasNecklaceMould = has(player, ItemId.NECKLACE_MOULD.id());
+		boolean hasBangleMould = has(player, MyWorldItemId.BANGLE_MOULD);
+		if (player.getAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, false)) {
+			recipes.add(categoryRecipe(FURNACE_CATEGORY_JEWELRY, hasRingMould || hasNecklaceMould || hasBangleMould, -1));
+		} else {
+			recipes.add(categoryRecipe(FURNACE_CATEGORY_RINGS, hasRingMould, ItemId.RING_MOULD.id()));
+			recipes.add(categoryRecipe(FURNACE_CATEGORY_NECKLACES, hasNecklaceMould, ItemId.NECKLACE_MOULD.id()));
+			recipes.add(categoryRecipe(FURNACE_CATEGORY_BANGLES, hasBangleMould, MyWorldItemId.BANGLE_MOULD));
+		}
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_HOLY_SYMBOLS, has(player, ItemId.HOLY_SYMBOL_MOULD.id()), ItemId.HOLY_SYMBOL_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_UNHOLY_SYMBOLS, has(player, ItemId.UNHOLY_SYMBOL_MOULD.id()), ItemId.UNHOLY_SYMBOL_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_GUTHIX_SYMBOLS, has(player, ItemId.GUTHIX_SYMBOL_MOULD.id()), ItemId.GUTHIX_SYMBOL_MOULD.id()));

@@ -2013,7 +2013,15 @@ public class Crafting implements UseInvTrigger,
 
 	public boolean openFurnaceCategory(Player player, int categoryId) {
 		ProductionSession session;
-		if (categoryId == Smelting.FURNACE_CATEGORY_RINGS) {
+		if (categoryId == Smelting.FURNACE_CATEGORY_JEWELRY) {
+			if (!player.getCarriedItems().hasCatalogID(ItemId.RING_MOULD.id())
+				&& !player.getCarriedItems().hasCatalogID(ItemId.NECKLACE_MOULD.id())
+				&& !player.getCarriedItems().hasCatalogID(MyWorldItemId.BANGLE_MOULD)) {
+				player.message("You need a mould to craft jewelry");
+				return false;
+			}
+			session = createGoldJewelryProductionSession(player);
+		} else if (categoryId == Smelting.FURNACE_CATEGORY_RINGS) {
 			session = createGoldJewelryProductionSession(player, JewelryCategory.RINGS);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_NECKLACES) {
 			session = createGoldJewelryProductionSession(player, JewelryCategory.NECKLACES);

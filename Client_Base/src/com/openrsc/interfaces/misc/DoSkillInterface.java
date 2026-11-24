@@ -50,6 +50,7 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_SMELTING = 3;
 	private static final int PRODUCTION_SMITHING_MATERIAL = 4;
 	private static final int PRODUCTION_FURNACE_CATEGORY = 5;
+	private static final int FURNACE_CATEGORY_JEWELRY = 301;
 	private static final int PRODUCTION_FURNACE_MATERIAL = 6;
 	private static final int PRODUCTION_TELEPORT_DESTINATION = 7;
 	private static final int PRODUCTION_RANGERS_REDEMPTION_CATEGORY = 8;
@@ -444,7 +445,9 @@ public final class DoSkillInterface {
 			} else if (isSmithingMaterialPicker()) {
 				drawStringRightAligned("Requires hammer", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isFurnaceCategoryPicker()) {
-				drawStringRightAligned("No required mould", selectedDetailRightX, footerY + 20, 1, textColour);
+				String hint = selected.getItemId() == FURNACE_CATEGORY_JEWELRY
+					? "Requires a jewelry mould" : "No required mould";
+				drawStringRightAligned(hint, selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isFurnaceMaterialPicker()) {
 				drawStringRightAligned("Choose this metal", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isTeleportDestinationPicker()) {
@@ -628,6 +631,8 @@ public final class DoSkillInterface {
 			case 169:
 			case 1955:
 				return "Bars";
+			case FURNACE_CATEGORY_JEWELRY:
+				return "Jewelry";
 			case 283:
 				return "Rings";
 			case 288:
@@ -1028,6 +1033,13 @@ public final class DoSkillInterface {
 
 	boolean hasCraftingMaterials(ProductionRecipeView recipe) {
 		if (!recipe.isMaterialsMet()) return false;
+		if (inputItemId == CraftingRecipeTabs.GOLD_BAR) {
+			for (int i = 0; i < recipe.getIngredientCount(); i++) {
+				if (getOwnedIngredientCount(recipe.getIngredientItemId(i), recipe.getIngredientFallbackItemId(i))
+						< recipe.getIngredientAmount(i)) return false;
+			}
+			return true;
+		}
 		if (productionInterfaceId != PRODUCTION_SMITHING || inputItemId != -1 || !recipe.hasIngredientDetails()) return true;
 		return mc.getInventoryCount(recipe.getIngredientItemId(0), false) >= recipe.getIngredientAmount(0);
 	}

@@ -257,9 +257,13 @@ final class CraftingWindow {
 			int start = x + gap + i * step;
 			drawItem(session.getDisplayIngredientItemId(item, fallback, required),
 				start + (step - iconWidth) / 2, top, iconWidth, iconHeight);
-			center(fit(owned + "/" + required, font, step - 2), start, y + height - gap,
-				step, font, owned >= required ? GOOD : WARN);
-			if (over(start, top, step, y + height - top)) hover = session.ingredientTooltip(item, fallback, owned, required);
+			boolean reusable = session.inputItemId == CraftingRecipeTabs.GOLD_BAR && CraftingRecipeTabs.isMould(item);
+			String costLabel = reusable ? (owned >= required ? "Tool" : "Need tool") : owned + "/" + required;
+			center(fit(costLabel, font, step - 2), start, y + height - gap, step, font, owned >= required ? GOOD : WARN);
+			if (over(start, top, step, y + height - top)) {
+				hover = reusable ? CraftingRecipeTabs.itemName(item) + " | Required tool"
+					: session.ingredientTooltip(item, fallback, owned, required);
+			}
 		}
 		return hover;
 	}

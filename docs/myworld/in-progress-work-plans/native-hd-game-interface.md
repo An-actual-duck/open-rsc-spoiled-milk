@@ -58,9 +58,11 @@ for in-place stock and currency tabs.
 
 Crafting, smithing and smelting recipe windows group the recipes for the active
 interaction into item families and material tabs. Anvils show recipes for the
-bars in the player's inventory in one catalog. Material costs stay below the
-recipe grid, with recipe and ingredient tooltips above it. A separate panel
-holds quantity, All and the crafting preferences.
+bars in the player's inventory in one catalog. The furnace's Jewelry option
+opens tabs for rings, necklaces and bangles, with plain gold and gem options
+down the left. Material costs stay below the recipe grid, and recipe and
+ingredient tooltips go above it. The cost list marks reusable moulds as tools.
+A separate panel holds quantity, All and the crafting preferences.
 
 The server supplies the batch count and advances it when production completes.
 The bar animates during the server's action delay and appears in the controls
