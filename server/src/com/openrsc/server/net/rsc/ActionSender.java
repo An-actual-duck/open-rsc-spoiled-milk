@@ -13,6 +13,7 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyManager;
 import com.openrsc.server.content.party.PartyPlayer;
+import com.openrsc.server.content.production.PointShopTabs;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionMemory;
 import com.openrsc.server.content.status.ActiveStatusEntry;
@@ -2210,6 +2211,9 @@ public class ActionSender {
 		struct.amount = new int[shopSize];
 		struct.baseAmount = new int[shopSize];
 		struct.price = new int[shopSize];
+		if (player.getAttribute(PointShopTabs.CLIENT_ATTRIBUTE, false)) {
+			struct.displayCategories = new String[shopSize];
+		}
 
 		int idx = 0;
 		for (int i = 0; i < shop.getShopSize(); i++) {
@@ -2218,6 +2222,9 @@ public class ActionSender {
 				continue;
 			struct.catalogIDs[idx] = item.getSafeItemId(player);
 			struct.amount[idx] = item.getAmount();
+			if (struct.displayCategories != null) {
+				struct.displayCategories[idx] = shop.getDisplayCategory(item.getCatalogId());
+			}
 			struct.baseAmount[idx] = shop.getStock(item.getCatalogId());
 			struct.price[idx] = 0; // TODO: get from shop list for early protocols??
 			idx++;

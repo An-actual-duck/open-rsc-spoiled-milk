@@ -67,6 +67,7 @@ public final class DoSkillInterface {
 	private static boolean slayerPointCoinLoadAttempted;
 	private String pointCoinHover = "";
 	private CraftingWindow craftingWindow;
+	private PointShopWindow pointShopWindow;
 	private int craftingProgressItem = -1;
 	private int craftingProgressTotal;
 	private int craftingProgressDone;
@@ -110,7 +111,8 @@ public final class DoSkillInterface {
 		autoHeight = y + height;
 
 		if (productionMode) {
-			if (craftingWindow != null) craftingWindow.render();
+			if (pointShopWindow != null) pointShopWindow.render();
+			else if (craftingWindow != null) craftingWindow.render();
 			else renderProductionInterface();
 			return;
 		}
@@ -598,7 +600,7 @@ public final class DoSkillInterface {
 		return productionInterfaceId == PRODUCTION_RANGERS_REDEMPTION;
 	}
 
-	private boolean isMonsterSlayerRedemptionInterface() {
+	boolean isMonsterSlayerRedemptionInterface() {
 		return productionInterfaceId == PRODUCTION_MONSTER_SLAYER_REDEMPTION;
 	}
 
@@ -739,9 +741,9 @@ public final class DoSkillInterface {
 	}
 	private int pointDigitPadding() { return mc.getSurface().stringWidth(1, "0"); }
 
-	private String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
-	private String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
-	private boolean canAffordPointCost(ProductionRecipeView selected) {
+	String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
+	String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
+	boolean canAffordPointCost(ProductionRecipeView selected) {
 		if (!isMonsterSlayerRedemptionInterface()) return (long)selected.getInputAmount() * productionQuantity <= productionResourceAmount;
 		for (int i = 0; i < selected.getPointCostCount(); i++)
 			if (pointBalance(selected.getPointCostCode(i)) < (long)selected.getPointCostAmount(i) * productionQuantity) return false;
@@ -915,6 +917,13 @@ public final class DoSkillInterface {
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
+	void sendPointShopTab(int tab) {
+		mc.packetHandler.getClientStream().newPacket(199);
+		mc.packetHandler.getClientStream().bufferBits.putByte(30);
+		mc.packetHandler.getClientStream().bufferBits.putByte(tab);
+		mc.packetHandler.getClientStream().finishPacket();
+	}
+
 	void sendProductionClose() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(20);
@@ -951,7 +960,15 @@ public final class DoSkillInterface {
 	public void openProductionInterface(int interfaceId, String title, int inputItemId, int resourceAmount, int selectedRecipeId, int quantity,
 		int[] itemIds, int[] requiredLevels, int[] inputAmounts, int[] outputAmounts, int[] flags,
 		int[][] ingredientItemIds, int[][] ingredientFallbackItemIds, int[][] ingredientAmounts, int uiFlags,
-		int[] pointCodes, int[] pointBalances, int[][] pointCostCodes, int[][] pointCostAmounts, int[] stockAmounts) {
+		int[] pointCodes, int[] pointBalances, int[][] pointCostCodes, int[][] pointCostAmounts, int[] stockAmounts, String[] shopTabs, int selectedShopTab) {
+		boolean shopPreview = mc.usesCraftingInterfacePreview() && shopTabs.length > 0;
+		boolean sameTab = shopPreview && pointShopWindow != null && productionInterfaceId == interfaceId
+			&& pointShopWindow.currentTab() == selectedShopTab;
+		ProductionRecipeView previous = getSelectedRecipe();
+		if (sameTab) {
+			if (previous != null) selectedRecipeId = previous.getItemId();
+			quantity = productionQuantity;
+		}
 		this.title = title;
 		this.productionInterfaceId = interfaceId;
 		this.inputItemId = inputItemId;
@@ -980,6 +997,14 @@ public final class DoSkillInterface {
 		}
 		if (this.selectedRecipeIndex < 0 && !this.productionRecipes.isEmpty()) {
 			this.selectedRecipeIndex = 0;
+		}
+		if (shopPreview) {
+			if (pointShopWindow == null || !java.util.Arrays.equals(pointShopWindow.tabs(), shopTabs)) {
+				pointShopWindow = new PointShopWindow(mc, this);
+			}
+			pointShopWindow.update(shopTabs, selectedShopTab);
+		} else {
+			pointShopWindow = null;
 		}
 		craftingWindow = mc.usesCraftingInterfacePreview() && interfaceId >= PRODUCTION_SMITHING && interfaceId <= PRODUCTION_SMELTING
 			? new CraftingWindow(mc, this, new CraftingRecipeTabs(productionRecipes, inputItemId)) : null;
@@ -1062,15 +1087,22 @@ public final class DoSkillInterface {
 			y + (height + mc.getSurface().fontHeight(font)) / 2 - 2, font, 0xFFFFFF);
 	}
 
+	public boolean isPointShopPreviewVisible() {
+		return visible && pointShopWindow != null;
+	}
+
 	public boolean scrollCraftingWindow(int amount) {
-		if (!visible || craftingWindow == null) return false;
-		craftingWindow.scroll(amount);
+		if (!visible) return false;
+		if (pointShopWindow != null) pointShopWindow.scroll(amount);
+		else if (craftingWindow != null) craftingWindow.scroll(amount);
+		else return false;
 		return true;
 	}
 
 	public void closeProductionInterface() {
 		this.productionMode = false;
 		this.craftingWindow = null;
+		this.pointShopWindow = null;
 		this.productionRecipes.clear();
 		this.selectedRecipeIndex = -1;
 		this.productionQuantity = 1;

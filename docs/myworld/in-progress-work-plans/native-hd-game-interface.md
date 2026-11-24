@@ -51,8 +51,7 @@ the existing item and slot artwork, context menus, equip and remove actions,
 and Items Kept on Death control. The sidebar stays above chat entry and chat tabs
 where they span the same part of the screen.
 
-The bank and shops have their own redesigns. The Monster Slayer reward shop remains a candidate
-for in-place stock and currency tabs.
+The bank has its own redesign.
 
 ## Crafting preview
 
@@ -174,3 +173,15 @@ The private browser selectors are `interface=1080p` and `interface=540p` on loop
 - Inspect native-size screenshots in both clients. Test actions through the displayed controls, including edge clicks, overlapping panels, right-click, scrolling, keyboard entry, and return to normal world input.
 - Repeat browser pointer checks with the viewport fitted at a fractional CSS scale. Verify both world-loading modes and that the 540p path still works.
 - Check sustained play and representative open panels for frame pacing and browser overlay bandwidth. Measure actual world and UI frame submissions.
+
+## Shop preview
+
+Standard shops and general stores share a scrollable stock grid. The side panel
+has separate Buy and Sell sections with preset quantities, All and custom
+amounts. Shops can opt into named stock tabs by mapping catalog IDs to labels.
+The general store and standard shop catalogs start with a single grid.
+
+Monster Slayer currency tiers and Rangers Guild item families open as tabs in
+the catalog. Material tiers within a Rangers family remain visible together.
+The side panel selects a quantity and confirms the purchase. Point prices,
+balances and any required ingredients appear below the item grid.

@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.custom.npcs;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.content.RangersGuildPoints;
+import com.openrsc.server.content.production.PointShopTabs;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
@@ -170,6 +171,10 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 	}
 
 	private static void openCategoryInterface(Player player) {
+		if (player.getAttribute(PointShopTabs.CLIENT_ATTRIBUTE, false)) {
+			openRewardInterface(player, CATEGORIES[0]);
+			return;
+		}
 		List<ProductionRecipe> recipes = new ArrayList<ProductionRecipe>();
 		for (Category category : CATEGORIES) {
 			recipes.add(new ProductionRecipe(category.icon.id(), 1, 1, 1, true, true));
@@ -203,6 +208,16 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 			-1,
 			points,
 			recipes, "rangers-guild-points", null);
+		if (player.getAttribute(PointShopTabs.CLIENT_ATTRIBUTE, false)) {
+			String[] labels = new String[CATEGORIES.length];
+			int selected = 0;
+			for (int i = 0; i < CATEGORIES.length; i++) {
+				labels[i] = CATEGORIES[i].label;
+				if (CATEGORIES[i] == category) selected = i;
+			}
+			session.setPointShopTabs(new PointShopTabs(labels, selected,
+				(buyer, tab) -> openRewardInterface(buyer, CATEGORIES[tab])));
+		}
 		player.setAttribute("production_session", session);
 		player.setAttribute("production_starter", (ProductionStarter) RangersGuildPointsVendor::beginRedemptionFromInterface);
 		ActionSender.showProductionInterface(player, session);

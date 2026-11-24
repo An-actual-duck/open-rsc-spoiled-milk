@@ -940,6 +940,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeShort(s.amount[i]);
 						builder.writeShort(s.baseAmount[i]);
 					}
+					if (s.displayCategories != null) {
+						builder.writeByte((byte) 1);
+						for (String category : s.displayCategories) builder.writeString(category);
+					}
 					break;
 
 				case SEND_AUCTION_PROGRESS: // TODO: unused?
@@ -1177,6 +1181,11 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 								builder.writeInt(production.pointCostAmounts[i][j]);
 							}
 							builder.writeShort((short) (production.stockAmounts == null ? -1 : production.stockAmounts[i]));
+						}
+						if (production.shopTabLabels != null) {
+							builder.writeByte((byte) production.shopTabLabels.length);
+							builder.writeByte((byte) production.selectedShopTab);
+							for (String label : production.shopTabLabels) builder.writeString(label);
 						}
 					}
 					break;

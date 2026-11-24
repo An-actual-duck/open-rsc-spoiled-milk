@@ -9,4 +9,5 @@ public class ShopStruct extends AbstractStruct<OpcodeIn> {
 	public int stockAmount;
 	public int price;
 	public int amount;
+	public boolean sellAll;
 }

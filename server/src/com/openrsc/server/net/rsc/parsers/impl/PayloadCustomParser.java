@@ -386,8 +386,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case BANK_DEPOSIT:
 				return packet.getLength() >= 6;
 			case SHOP_BUY:
-			case SHOP_SELL:
 				return packet.getLength() == 6;
+			case SHOP_SELL:
+				return packet.getLength() == 6 || packet.getLength() == 7;
 			case GROUND_ITEM_USE_ITEM:
 				return packet.getLength() == 8;
 			case ITEM_USE_ITEM:
@@ -655,6 +656,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				s1.catalogID = packet.readShort();
 				s1.stockAmount = packet.readUnsignedShort();
 				s1.amount = packet.readUnsignedShort();
+				s1.sellAll = opcode == OpcodeIn.SHOP_SELL && packet.getReadableBytes() > 0 && packet.readByte() == 1;
 				result = s1;
 				break;
 
@@ -1002,6 +1004,10 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 							os.id = packet.readInt();
 							break;
 					case CANCEL_BATCH:
+					case SHOP_SELECT_TAB:
+						os.value = packet.readByte();
+						break;
+					case SHOP_TABS:
 					case PRODUCTION_TABS:
 					case PRODUCTION_BACK:
 						//nothing

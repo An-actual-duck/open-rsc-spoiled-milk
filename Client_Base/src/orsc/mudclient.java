@@ -1284,6 +1284,8 @@ public final class mudclient implements Runnable {
 	private boolean showDialogMessage = false;
 	private boolean showDialogServerMessage = false;
 	private boolean showDialogShop = false;
+	private volatile StandardShopWindow shopPreview;
+	private boolean shopPreviewTradeExtension;
 	private boolean showDialogTrade = false;
 	private boolean showDialogTradeConfirm = false;
 	private volatile boolean optionsMenuShow = false;
@@ -8704,6 +8706,11 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawDialogShop() {
+		if (usesCraftingInterfacePreview() && shopPreview != null) {
+			shopPreview.render();
+			if (shopPreviewInputAvailable()) mouseButtonClick = 0;
+			return;
+		}
 		try {
 
 			if (this.mouseButtonClick != 0 && this.inputX_Action == InputXAction.ACT_0) {
@@ -13334,6 +13341,9 @@ public final class mudclient implements Runnable {
 				packetHandler.getClientStream().newPacket(199);
 				packetHandler.getClientStream().bufferBits.putByte(28);
 				packetHandler.getClientStream().finishPacket();
+				packetHandler.getClientStream().newPacket(199);
+				packetHandler.getClientStream().bufferBits.putByte(29);
+				packetHandler.getClientStream().finishPacket();
 				craftingTabsRegistered = true;
 			}
 
@@ -13352,7 +13362,7 @@ public final class mudclient implements Runnable {
 			} else if (this.showDialogMessage) {
 				this.drawDialogWelcome(var1 - 4853);
 				this.setInitLoginCleared(false);
-			} else if (this.showDialogServerMessage && !C_CUSTOM_UI) {
+			} else if (this.showDialogServerMessage && (!C_CUSTOM_UI || shopPreviewOpen())) {
 				this.drawDialogServerMessage((byte) -115);
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && !C_CUSTOM_UI) {
@@ -13367,7 +13377,7 @@ public final class mudclient implements Runnable {
 					clan.getClanInterface().onRender(getSurface());
 				} else if (party.getPartyInterface().isVisible()) {
 					party.getPartyInterface().onRender(getSurface());
-				} else if (this.showDialogShop && this.combatTimeout == 0 && !C_CUSTOM_UI) {
+				} else if (this.showDialogShop && this.combatTimeout == 0 && (!C_CUSTOM_UI || shopPreview != null)) {
 					this.drawDialogShop();
 				} else if (S_WANT_SKILL_MENUS && skillGuideInterface.isVisible() && !C_CUSTOM_UI) {
 					this.drawSkillGuide();
@@ -21463,7 +21473,7 @@ public final class mudclient implements Runnable {
 					} else if (this.lastMouseButtonDown == 2) {
 						this.mouseButtonClick = 2;
 					}
-					if (!hasContextMenuInput() && mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
+					if (!shopPreviewOpen() && !hasContextMenuInput() && mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
 						this.mouseButtonClick = 0;
@@ -30107,7 +30117,65 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setShowDialogShop(boolean show) {
+		if (!show || !showDialogShop) {
+			shopPreview = null;
+			shopPreviewTradeExtension = false;
+			if (usesCraftingInterfacePreview()) {
+				setShopSelectedItemIndex(-1);
+				setShopSelectedItemType(-2);
+			}
+		}
 		this.showDialogShop = show;
+	}
+
+	public void updateShopPreview(boolean general, boolean tradeExtension, String[] categories, int count) {
+		if (shopPreview == null) shopPreview = new StandardShopWindow(this);
+		shopPreviewTradeExtension = tradeExtension;
+		shopPreview.update(general, categories, count);
+	}
+
+	public int getShopSlotCapacity() {
+		return shopCategoryID.length;
+	}
+
+	public int getShopStock(int slot) {
+		return shopItemCount[slot];
+	}
+
+	public int getShopUnitPrice(int slot, boolean buy) {
+		return GenUtil.computeItemCost(EntityHandler.getItemDef(shopCategoryID[slot]).getBasePrice(),
+			shopItemPrice[slot], buy ? shopBuyPriceMod : shopSellPriceMod, -30910, buy, 1,
+			shopItemCount[slot], shopPriceMultiplier);
+	}
+
+	private boolean shopPreviewOpen() {
+		return combatTimeout == 0 && (showDialogShop && shopPreview != null
+			|| doSkillInterface != null && doSkillInterface.isPointShopPreviewVisible());
+	}
+
+	public boolean shopPreviewInputAvailable() {
+		return inputX_Action == InputXAction.ACT_0;
+	}
+
+	public void closeShopPreview() {
+		packetHandler.getClientStream().newPacket(166);
+		packetHandler.getClientStream().finishPacket();
+		setShowDialogShop(false);
+	}
+
+	public void promptShopQuantity(boolean buy) {
+		showItemModX(buy ? InputXPrompt.shopBuyX : InputXPrompt.shopSellX,
+			buy ? InputXAction.SHOP_BUY : InputXAction.SHOP_SELL, true);
+	}
+
+	public void sendShopTransaction(int slot, boolean buy, int amount, boolean all) {
+		if (amount <= 0 || shopCategoryID[slot] < 0 || !shopPreviewInputAvailable()) return;
+		packetHandler.getClientStream().newPacket(buy ? 236 : 221);
+		packetHandler.getClientStream().bufferBits.putShort(shopCategoryID[slot]);
+		packetHandler.getClientStream().bufferBits.putShort(shopItemCount[slot]);
+		packetHandler.getClientStream().bufferBits.putShort(Math.min(0xffff, amount));
+		if (!buy && all && shopPreviewTradeExtension) packetHandler.getClientStream().bufferBits.putByte(1);
+		packetHandler.getClientStream().finishPacket();
 	}
 
 	public void setShowPointsToGp(boolean show) {
@@ -32729,6 +32797,11 @@ public final class mudclient implements Runnable {
 		ContextMenuLayout menu = contextMenuLayout;
 		if (menu != null && topMouseMenuVisible) {
 			if (menu.keepsOpenAt(mouseX, mouseY)) contextMenuWheel.addAndGet(x);
+			return;
+		}
+		StandardShopWindow window = shopPreview;
+		if (showDialogShop && window != null) {
+			window.scroll(x);
 			return;
 		}
 		if (doSkillInterface != null && doSkillInterface.scrollCraftingWindow(x)) return;

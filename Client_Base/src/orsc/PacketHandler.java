@@ -2415,7 +2415,7 @@ public class PacketHandler {
 			else if (opcode == 203) mc.setShowDialogBank(false);
 
 				// Shop Dialog
-			else if (opcode == 101) showShopDialog();
+			else if (opcode == 101) showShopDialog(length);
 
 			    // OpenPK gp exchange
 			else if (opcode == 144) showPointsToGp();
@@ -2629,12 +2629,17 @@ public class PacketHandler {
 				pointCostCodes[i][j] = packetsIncoming.getByte() & 0xff;
 				pointCostAmounts[i][j] = packetsIncoming.get32();
 			}
-			stockAmounts[i] = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getShort() : -1;
+			int stock = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getShort() : 0xffff;
+			stockAmounts[i] = stock == 0xffff ? -1 : stock;
 		}
+		int tabCount = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getUnsignedByte() : 0;
+		int selectedTab = tabCount > 0 ? packetsIncoming.getUnsignedByte() : 0;
+		String[] shopTabs = new String[tabCount];
+		for (int i = 0; i < tabCount; i++) shopTabs[i] = packetsIncoming.readString();
 		mc.doSkillInterface.openProductionInterface(interfaceId, title, inputItemId, resourceAmount, selectedRecipeId, quantity,
 			itemIds, requiredLevels, inputAmounts, outputAmounts, flags,
 			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts, uiFlags,
-			pointCodes, pointBalances, pointCostCodes, pointCostAmounts, stockAmounts);
+			pointCodes, pointBalances, pointCostCodes, pointCostAmounts, stockAmounts, shopTabs, selectedTab);
 	}
 
 	private void setIronmanOptions() {
@@ -5527,7 +5532,7 @@ public class PacketHandler {
 		mc.setDuelOfferItemsCount(0);
 	}
 
-	private void showShopDialog() {
+	private void showShopDialog(int packetLength) {
 		mc.setShowDialogShop(true);
 		int shopItemCount = packetsIncoming.getUnsignedByte();
 		int shopType = packetsIncoming.getByte();
@@ -5535,8 +5540,11 @@ public class PacketHandler {
 		mc.setShopBuyPriceMod(packetsIncoming.getUnsignedByte());
 		mc.setShopPriceMultiplier(packetsIncoming.getUnsignedByte());
 
-		for (int i = 0; i < 40; ++i) {
+		boolean modernShop = mc.usesCraftingInterfacePreview();
+		int slots = modernShop ? mc.getShopSlotCapacity() : 40;
+		for (int i = 0; i < slots; ++i) {
 			mc.setShopCategoryID(i, -1);
+			mc.setShopItemNoted(i, false);
 		}
 
 		for (int i = 0; shopItemCount > i; ++i) {
@@ -5545,22 +5553,28 @@ public class PacketHandler {
 			mc.setShopItemPrice(i, packetsIncoming.getShort());
 		}
 
-		// Check through player's inventory items if this is a general store.
-		int lastAvailableShopSlotIndex = 39;
+		boolean shopExtension = packetsIncoming.packetEnd < packetLength && packetsIncoming.getUnsignedByte() == 1;
+		String[] categories = new String[shopItemCount];
+		if (shopExtension) {
+			for (int i = 0; i < shopItemCount; i++) categories[i] = packetsIncoming.readString();
+		}
+		// The enlarged grid shows all general-store inventory candidates, even when stock fills the first page.
+		int lastAvailableShopSlotIndex = modernShop ? shopItemCount : slots - 1;
 		for (int inventoryIndex = 0; inventoryIndex < mc.getInventoryItemCount()
-			&& shopItemCount <= lastAvailableShopSlotIndex; ++inventoryIndex) {
+			&& (modernShop ? lastAvailableShopSlotIndex < slots : shopItemCount <= lastAvailableShopSlotIndex); ++inventoryIndex) {
 
-			// Only show player items if they are in a general store, or it's a note in a specialty store.
+			// The scaled catalog combines noted and unnoted inventory behind the stocked item's tile.
+			// The classic catalog uses separate note tiles.
 			if (!(shopType == 1
-				|| (mc.getInventoryItem(inventoryIndex).getNoted() && mc.shopContains(mc.getInventoryItemID(inventoryIndex)))))
+				|| (!modernShop && mc.getInventoryItem(inventoryIndex).getNoted() && mc.shopContains(mc.getInventoryItemID(inventoryIndex)))))
 				continue;
 
 			boolean foundEquivalentShopItem = false;
-			for (int currentShopSlot = 0; currentShopSlot < 40; ++currentShopSlot) {
+			for (int currentShopSlot = 0; currentShopSlot < slots; ++currentShopSlot) {
 
 				// Can only match if category matches and not noted.
 				if (mc.getInventoryItemID(inventoryIndex) == mc.getShopCategoryID(currentShopSlot)
-					&& mc.getInventoryItem(inventoryIndex).getNoted() == mc.getShopItemNoted(currentShopSlot)) {
+					&& (modernShop || mc.getInventoryItem(inventoryIndex).getNoted() == mc.getShopItemNoted(currentShopSlot))) {
 					foundEquivalentShopItem = true;
 					break;
 				}
@@ -5576,11 +5590,13 @@ public class PacketHandler {
 				mc.setShopItemCount(lastAvailableShopSlotIndex, 0);
 				mc.setShopItemPrice(lastAvailableShopSlotIndex, 0);
 				mc.setShopItemNoted(lastAvailableShopSlotIndex, mc.getInventoryItem(inventoryIndex).getNoted());
-				--lastAvailableShopSlotIndex;
+				lastAvailableShopSlotIndex += modernShop ? 1 : -1;
 			}
 		}
 
-		if (mc.getShopSelectedItemIndex() >= 0 && 40 > mc.getShopSelectedItemIndex()
+		if (modernShop) {
+			mc.updateShopPreview(shopType == 1, shopExtension, categories, lastAvailableShopSlotIndex);
+		} else if (mc.getShopSelectedItemIndex() >= 0 && slots > mc.getShopSelectedItemIndex()
 			&& mc.getShopSelectedItemType() != mc.getShopCategoryID(mc.getShopSelectedItemIndex())) {
 			mc.setShopSelectedItemIndex(-1);
 			mc.setShopSelectedItemType(-2);

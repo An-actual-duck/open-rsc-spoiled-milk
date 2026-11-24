@@ -33,6 +33,8 @@ public class ProductionInterfaceStruct extends AbstractStruct<OpcodeOut> {
 	public int[][] pointCostCodes;
 	public int[][] pointCostAmounts;
 	public int[] stockAmounts;
+	public String[] shopTabLabels;
+	public int selectedShopTab;
 
 	public static ProductionInterfaceStruct open(ProductionSession session) {
 		return open(session, session.getDefaultRecipeId(), 0);
@@ -75,6 +77,10 @@ public class ProductionInterfaceStruct extends AbstractStruct<OpcodeOut> {
 			struct.pointCostCodes = session.getPointShopDetails().getRecipeCostCodes();
 			struct.pointCostAmounts = session.getPointShopDetails().getRecipeCostAmounts();
 			struct.stockAmounts = session.getPointShopDetails().getRecipeStock();
+		}
+		if (session.getPointShopTabs() != null) {
+			struct.shopTabLabels = session.getPointShopTabs().getLabels();
+			struct.selectedShopTab = session.getPointShopTabs().getSelected();
 		}
 		return struct;
 	}

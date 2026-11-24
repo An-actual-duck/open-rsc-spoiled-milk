@@ -25,6 +25,10 @@ public class ProductionSession {
 	private final List<ProductionRecipe> recipes;
 	private final String memoryKey;
 	private final PointShopDetails pointShopDetails;
+	private PointShopTabs pointShopTabs;
+
+	public void setPointShopTabs(PointShopTabs tabs) { pointShopTabs = tabs; }
+	public PointShopTabs getPointShopTabs() { return pointShopTabs; }
 
 	public ProductionSession(int type, String title, int inputItemId, List<ProductionRecipe> recipes) {
 		this(type, title, inputItemId, 0, recipes);

@@ -10,6 +10,7 @@ import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyInvite;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
+import com.openrsc.server.content.production.PointShopTabs;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
 import com.openrsc.server.content.production.ProductionMemory;
@@ -136,6 +137,15 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 				break;
 			case PRODUCTION_TABS:
 				if (player.isUsingCustomClient()) player.setAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, true);
+				break;
+			case SHOP_TABS:
+				if (player.isUsingCustomClient()) player.setAttribute(PointShopTabs.CLIENT_ATTRIBUTE, true);
+				break;
+			case SHOP_SELECT_TAB:
+				ProductionSession shopSession = player.getAttribute("production_session", null);
+				if (shopSession != null && shopSession.getPointShopTabs() != null && !player.isBusy() && !player.inCombat()) {
+					shopSession.getPointShopTabs().open(player, payload.value);
+				}
 				break;
 			case PRODUCTION_BACK:
 				handleProductionBack(player);
@@ -303,7 +313,8 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 					return 1;
 				}
 
-				if (started && ProductionMemory.isKeepOpenEnabled(player) && isPointShop(session)) {
+				if (started && isPointShop(session)
+					&& (session.getPointShopTabs() != null || ProductionMemory.isKeepOpenEnabled(player))) {
 					ActionSender.showProductionInterface(player, session);
 				} else if (started && !ProductionMemory.isKeepOpenEnabled(player)) {
 					clearProductionState(player, session);
