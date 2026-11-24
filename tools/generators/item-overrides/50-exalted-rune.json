@@ -150,8 +150,8 @@
       "appearanceID": 1042,
       "wearableID": 16,
       "wearSlot": 4,
-      "requiredLevel": 90,
-      "requiredSkillID": 19
+      "requiredLevel": 0,
+      "requiredSkillID": -1
     },
     {
       "id": 3274,

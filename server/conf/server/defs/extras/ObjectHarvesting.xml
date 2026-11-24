@@ -2,7 +2,8 @@
 	<entry>
 		<int>72</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>29</prodId>
 			<exp>72</exp>
 			<exhaust>4</exhaust>
@@ -12,7 +13,8 @@
 	<entry>
 		<int>183</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>30</requiredLvl>
+			<minimumShearsTier>5</minimumShearsTier>
+			<yieldBaselineLevel>30</yieldBaselineLevel>
 			<prodId>249</prodId>
 			<exp>88</exp>
 			<exhaust>3</exhaust>
@@ -22,7 +24,8 @@
 	<entry>
 		<int>191</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>348</prodId>
 			<exp>72</exp>
 			<exhaust>4</exhaust>
@@ -32,7 +35,8 @@
 	<entry>
 		<int>313</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>675</prodId>
 			<exp>40</exp>
 			<exhaust>1</exhaust>
@@ -42,7 +46,8 @@
 	<entry>
 		<int>430</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>54</requiredLvl>
+			<minimumShearsTier>8</minimumShearsTier>
+			<yieldBaselineLevel>54</yieldBaselineLevel>
 			<prodId>861</prodId>
 			<exp>176</exp>
 			<exhaust>5</exhaust>
@@ -52,7 +57,8 @@
 	<entry>
 		<int>1243</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>15</requiredLvl>
+			<minimumShearsTier>3</minimumShearsTier>
+			<yieldBaselineLevel>15</yieldBaselineLevel>
 			<prodId>855</prodId>
 			<exp>40</exp>
 			<exhaust>1</exhaust>
@@ -62,7 +68,8 @@
 	<entry>
 		<int>1244</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>22</requiredLvl>
+			<minimumShearsTier>4</minimumShearsTier>
+			<yieldBaselineLevel>22</yieldBaselineLevel>
 			<prodId>863</prodId>
 			<exp>56</exp>
 			<exhaust>1</exhaust>
@@ -72,7 +79,8 @@
 	<entry>
 		<int>1245</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>30</requiredLvl>
+			<minimumShearsTier>5</minimumShearsTier>
+			<yieldBaselineLevel>30</yieldBaselineLevel>
 			<prodId>1348</prodId>
 			<exp>72</exp>
 			<exhaust>2</exhaust>
@@ -82,7 +90,8 @@
 	<entry>
 		<int>1246</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>38</requiredLvl>
+			<minimumShearsTier>6</minimumShearsTier>
+			<yieldBaselineLevel>38</yieldBaselineLevel>
 			<prodId>857</prodId>
 			<exp>112</exp>
 			<exhaust>4</exhaust>
@@ -92,7 +101,8 @@
 	<entry>
 		<int>1247</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>54</requiredLvl>
+			<minimumShearsTier>8</minimumShearsTier>
+			<yieldBaselineLevel>54</yieldBaselineLevel>
 			<prodId>1349</prodId>
 			<exp>144</exp>
 			<exhaust>4</exhaust>
@@ -102,7 +112,8 @@
 	<entry>
 		<int>1248</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>30</requiredLvl>
+			<minimumShearsTier>5</minimumShearsTier>
+			<yieldBaselineLevel>30</yieldBaselineLevel>
 			<prodId>249</prodId>
 			<exp>88</exp>
 			<exhaust>3</exhaust>
@@ -112,7 +123,8 @@
 	<entry>
 		<int>1249</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>62</requiredLvl>
+			<minimumShearsTier>9</minimumShearsTier>
+			<yieldBaselineLevel>62</yieldBaselineLevel>
 			<prodId>1351</prodId>
 			<exp>336</exp>
 			<exhaust>7</exhaust>
@@ -122,7 +134,8 @@
 	<entry>
 		<int>1250</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>54</requiredLvl>
+			<minimumShearsTier>8</minimumShearsTier>
+			<yieldBaselineLevel>54</yieldBaselineLevel>
 			<prodId>1350</prodId>
 			<exp>216</exp>
 			<exhaust>6</exhaust>
@@ -132,7 +145,8 @@
 	<entry>
 		<int>1251</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>54</requiredLvl>
+			<minimumShearsTier>8</minimumShearsTier>
+			<yieldBaselineLevel>54</yieldBaselineLevel>
 			<prodId>861</prodId>
 			<exp>176</exp>
 			<exhaust>5</exhaust>
@@ -142,7 +156,8 @@
 	<entry>
 		<int>1256</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>8</requiredLvl>
+			<minimumShearsTier>2</minimumShearsTier>
+			<yieldBaselineLevel>8</yieldBaselineLevel>
 			<prodId>236</prodId>
 			<exp>40</exp>
 			<exhaust>2</exhaust>
@@ -152,7 +167,8 @@
 	<entry>
 		<int>1257</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>22</requiredLvl>
+			<minimumShearsTier>4</minimumShearsTier>
+			<yieldBaselineLevel>22</yieldBaselineLevel>
 			<prodId>55</prodId>
 			<exp>56</exp>
 			<exhaust>3</exhaust>
@@ -162,7 +178,8 @@
 	<entry>
 		<int>1258</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>38</requiredLvl>
+			<minimumShearsTier>6</minimumShearsTier>
+			<yieldBaselineLevel>38</yieldBaselineLevel>
 			<prodId>765</prodId>
 			<exp>96</exp>
 			<exhaust>5</exhaust>
@@ -172,7 +189,8 @@
 	<entry>
 		<int>1259</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>46</requiredLvl>
+			<minimumShearsTier>7</minimumShearsTier>
+			<yieldBaselineLevel>46</yieldBaselineLevel>
 			<prodId>936</prodId>
 			<exp>152</exp>
 			<exhaust>7</exhaust>
@@ -182,7 +200,8 @@
 	<entry>
 		<int>1260</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>62</requiredLvl>
+			<minimumShearsTier>9</minimumShearsTier>
+			<yieldBaselineLevel>62</yieldBaselineLevel>
 			<prodId>471</prodId>
 			<exp>232</exp>
 			<exhaust>11</exhaust>
@@ -192,7 +211,8 @@
 	<entry>
 		<int>1265</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>348</prodId>
 			<exp>72</exp>
 			<exhaust>4</exhaust>
@@ -202,7 +222,8 @@
 	<entry>
 		<int>1266</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>241</prodId>
 			<exp>88</exp>
 			<exhaust>4</exhaust>
@@ -212,7 +233,8 @@
 	<entry>
 		<int>1267</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>8</requiredLvl>
+			<minimumShearsTier>2</minimumShearsTier>
+			<yieldBaselineLevel>8</yieldBaselineLevel>
 			<prodId>218</prodId>
 			<exp>104</exp>
 			<exhaust>6</exhaust>
@@ -222,7 +244,8 @@
 	<entry>
 		<int>1268</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>15</requiredLvl>
+			<minimumShearsTier>3</minimumShearsTier>
+			<yieldBaselineLevel>15</yieldBaselineLevel>
 			<prodId>320</prodId>
 			<exp>112</exp>
 			<exhaust>8</exhaust>
@@ -232,7 +255,8 @@
 	<entry>
 		<int>1269</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>22</requiredLvl>
+			<minimumShearsTier>4</minimumShearsTier>
+			<yieldBaselineLevel>22</yieldBaselineLevel>
 			<prodId>1353</prodId>
 			<exp>152</exp>
 			<exhaust>10</exhaust>
@@ -242,7 +266,8 @@
 	<entry>
 		<int>1262</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>18</prodId>
 			<exp>96</exp>
 			<exhaust>12</exhaust>
@@ -252,7 +277,8 @@
 	<entry>
 		<int>1263</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>30</requiredLvl>
+			<minimumShearsTier>5</minimumShearsTier>
+			<yieldBaselineLevel>30</yieldBaselineLevel>
 			<prodId>1352</prodId>
 			<exp>208</exp>
 			<exhaust>12</exhaust>
@@ -262,7 +288,8 @@
 	<entry>
 		<int>1264</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>46</requiredLvl>
+			<minimumShearsTier>7</minimumShearsTier>
+			<yieldBaselineLevel>46</yieldBaselineLevel>
 			<prodId>1354</prodId>
 			<exp>296</exp>
 			<exhaust>16</exhaust>
@@ -272,7 +299,8 @@
 	<entry>
 		<int>1282</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>46</requiredLvl>
+			<minimumShearsTier>7</minimumShearsTier>
+			<yieldBaselineLevel>46</yieldBaselineLevel>
 			<prodId>1456</prodId>
 			<exp>180</exp>
 			<exhaust>5</exhaust>
@@ -282,7 +310,8 @@
 	<entry>
 		<int>1283</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>38</requiredLvl>
+			<minimumShearsTier>6</minimumShearsTier>
+			<yieldBaselineLevel>38</yieldBaselineLevel>
 			<prodId>143</prodId>
 			<exp>160</exp>
 			<exhaust>18</exhaust>
@@ -292,7 +321,8 @@
 	<entry>
 		<int>1293</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>70</requiredLvl>
+			<minimumShearsTier>10</minimumShearsTier>
+			<yieldBaselineLevel>70</yieldBaselineLevel>
 			<prodId>1457</prodId>
 			<exp>560</exp>
 			<exhaust>10</exhaust>
@@ -302,7 +332,8 @@
 	<entry>
 		<int>1327</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>422</prodId>
 			<exp>360</exp>
 			<exhaust>16</exhaust>
@@ -312,7 +343,8 @@
 	<entry>
 		<int>1275</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>1569</prodId>
 			<exp>72</exp>
 			<exhaust>16</exhaust>
@@ -322,7 +354,8 @@
 	<entry>
 		<int>34</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>3256</prodId>
 			<exp>50</exp>
 			<exhaust>3</exhaust>
@@ -332,7 +365,8 @@
 	<entry>
 		<int>396</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>3256</prodId>
 			<exp>50</exp>
 			<exhaust>3</exhaust>
@@ -342,7 +376,8 @@
 	<entry>
 		<int>397</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>3256</prodId>
 			<exp>50</exp>
 			<exhaust>3</exhaust>
@@ -352,7 +387,8 @@
 	<entry>
 		<int>398</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>3256</prodId>
 			<exp>50</exp>
 			<exhaust>3</exhaust>
@@ -362,7 +398,8 @@
 	<entry>
 		<int>399</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>3256</prodId>
 			<exp>50</exp>
 			<exhaust>3</exhaust>
@@ -372,7 +409,8 @@
 	<entry>
 		<int>401</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>3256</prodId>
 			<exp>50</exp>
 			<exhaust>3</exhaust>
@@ -382,7 +420,8 @@
 	<entry>
 		<int>402</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>1</requiredLvl>
+			<minimumShearsTier>1</minimumShearsTier>
+			<yieldBaselineLevel>1</yieldBaselineLevel>
 			<prodId>3256</prodId>
 			<exp>50</exp>
 			<exhaust>3</exhaust>
@@ -392,7 +431,8 @@
 	<entry>
 		<int>38</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>8</requiredLvl>
+			<minimumShearsTier>2</minimumShearsTier>
+			<yieldBaselineLevel>8</yieldBaselineLevel>
 			<prodId>3257</prodId>
 			<exp>60</exp>
 			<exhaust>3</exhaust>
@@ -402,7 +442,8 @@
 	<entry>
 		<int>205</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>30</requiredLvl>
+			<minimumShearsTier>5</minimumShearsTier>
+			<yieldBaselineLevel>30</yieldBaselineLevel>
 			<prodId>3258</prodId>
 			<exp>122</exp>
 			<exhaust>4</exhaust>
@@ -412,7 +453,8 @@
 	<entry>
 		<int>37</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>54</requiredLvl>
+			<minimumShearsTier>8</minimumShearsTier>
+			<yieldBaselineLevel>54</yieldBaselineLevel>
 			<prodId>3259</prodId>
 			<exp>312</exp>
 			<exhaust>5</exhaust>
@@ -422,7 +464,8 @@
 	<entry>
 		<int>285</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>70</requiredLvl>
+			<minimumShearsTier>10</minimumShearsTier>
+			<yieldBaselineLevel>70</yieldBaselineLevel>
 			<prodId>3260</prodId>
 			<exp>768</exp>
 			<exhaust>7</exhaust>

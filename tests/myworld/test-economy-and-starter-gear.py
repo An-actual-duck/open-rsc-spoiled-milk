@@ -43,8 +43,10 @@ def main() -> None:
     require(tin_shears.get("isWearable") == 1, "Tin shears should be wearable from item data")
     require(tin_shears.get("wearableID") == 16, "Tin shears should use main-hand wearable data")
     require(tin_shears.get("wearSlot") == 4, "Tin shears should equip to main hand")
-    require(tin_shears.get("requiredLevel") == 1, "Tin shears should require harvesting level 1")
-    require(tin_shears.get("requiredSkillID") == 19, "Tin shears should use the harvesting skill gate")
+    for shears_id in (144, *range(2215, 2224), 3272):
+        shears = items[shears_id]
+        require(shears.get("requiredLevel") == 0 and shears.get("requiredSkillID") == -1,
+                f"Shears {shears_id} should have no equip skill requirement")
 
     expected_tool_prices = {
         144: 40,

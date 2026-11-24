@@ -17,6 +17,9 @@ import static com.openrsc.server.plugins.Functions.*;
 public class Sheep implements UseNpcTrigger, OpNpcTrigger {
 
 	private static final String SHEAR_COMMAND = "shear";
+	private static final int WOOL_MINIMUM_SHEARS_TIER = 1;
+	private static final int WOOL_YIELD_BASELINE_LEVEL = 1;
+	private static final int WOOL_HARVESTING_EXP = 20;
 
 	@Override
 	public boolean blockUseNpc(Player player, Npc npc, Item item) {
@@ -26,16 +29,10 @@ public class Sheep implements UseNpcTrigger, OpNpcTrigger {
 	@Override
 	public void onUseNpc(Player player, Npc npc, Item item) {
 		if (player.getConfig().WANT_MYWORLD) {
-			int equippedTool = Harvesting.getTool(player);
-			if (equippedTool == ItemId.NOTHING.id()) {
-				player.message("You need to equip harvesting shears you can use");
-				return;
-			}
-			startShearing(player, npc, equippedTool);
-			return;
+			shearWithEquippedTool(player, npc);
+		} else {
+			startShearing(player, npc, item.getCatalogId());
 		}
-
-		startShearing(player, npc, item.getCatalogId());
 	}
 
 	@Override
@@ -45,13 +42,14 @@ public class Sheep implements UseNpcTrigger, OpNpcTrigger {
 
 	@Override
 	public void onOpNpc(Player player, Npc npc, String command) {
-		int equippedTool = Harvesting.getTool(player);
-		if (equippedTool == ItemId.NOTHING.id()) {
-			player.message("You need to equip harvesting shears you can use");
-			return;
-		}
+		shearWithEquippedTool(player, npc);
+	}
 
-		startShearing(player, npc, equippedTool);
+	private void shearWithEquippedTool(Player player, Npc npc) {
+		int equippedTool = Harvesting.getToolForResource(player, WOOL_MINIMUM_SHEARS_TIER, "shear this sheep");
+		if (equippedTool != ItemId.NOTHING.id()) {
+			startShearing(player, npc, equippedTool);
+		}
 	}
 
 	private void startShearing(Player player, Npc npc, int shearsId) {
@@ -70,13 +68,7 @@ public class Sheep implements UseNpcTrigger, OpNpcTrigger {
 		thinkbubble(new Item(shearsId));
 		player.message("You attempt to shear the sheep");
 
-		int requiredLevel = Math.max(Harvesting.WOOL_UNLOCK_LEVEL, Harvesting.getShearsRequiredLevel(shearsId));
-		if (player.getSkills().getLevel(Skill.HARVESTING.id()) < requiredLevel) {
-			player.message("You need a harvesting level of " + requiredLevel + " to use those shears");
-			return;
-		}
-
-		int quantity = Formulae.calcGatheringYield(Harvesting.WOOL_UNLOCK_LEVEL, player.getSkills().getLevel(Skill.HARVESTING.id()), Harvesting.getShearsTier(shearsId));
+		int quantity = Formulae.calcGatheringYield(WOOL_YIELD_BASELINE_LEVEL, player.getSkills().getLevel(Skill.HARVESTING.id()), Harvesting.getShearsTier(shearsId));
 		int storedQuantity = Math.min(quantity, player.getCarriedItems().getInventory().getFreeSlots());
 		player.message(storedQuantity > 0 ? "You get some wool" : "You get some wool, but have no room to keep it");
 		if (storedQuantity < quantity) {
@@ -86,7 +78,7 @@ public class Sheep implements UseNpcTrigger, OpNpcTrigger {
 		if (storedQuantity > 0) {
 			give(player, ItemId.WOOL.id(), storedQuantity);
 		}
-		player.incExp(Skill.HARVESTING.id(), Harvesting.WOOL_HARVESTING_EXP * quantity, true);
+		player.incExp(Skill.HARVESTING.id(), WOOL_HARVESTING_EXP * quantity, true);
 
 		delay(2);
 

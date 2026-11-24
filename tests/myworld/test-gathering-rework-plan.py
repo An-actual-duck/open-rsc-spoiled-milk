@@ -123,7 +123,6 @@ def require_gathering_yield_helpers() -> None:
         "calcGatheringYield",
         "DataConversions.random(1, 10) <= progress + 1",
         "public static final int[] harvestingShearsIDs",
-        "public static final int[] harvestingShearsLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1};",
     )
     for snippet in snippets:
         if snippet not in text:
@@ -149,9 +148,7 @@ def require_tool_equip_gates() -> None:
         88: (8, 30), 428: (8, 30), 203: (8, 38), 2023: (8, 46),
         204: (8, 54), 2034: (8, 62), 405: (8, 70), 594: (8, 80),
         1480: (8, 80), 3267: (8, 90),
-        144: (19, 1), 2215: (19, 8), 2216: (19, 15), 2217: (19, 22),
-        2218: (19, 30), 2219: (19, 38), 2220: (19, 46), 2221: (19, 54),
-        2222: (19, 62), 2223: (19, 70), 3272: (19, 90),
+        **dict.fromkeys((144, *range(2215, 2224), 3272), (-1, 0)),
     }
     tool_defaults = {
         "isWearable": 1,
@@ -282,21 +279,18 @@ def require_woodcutting_uses_guaranteed_yield() -> None:
 def require_harvesting_uses_guaranteed_yield() -> None:
     text = HARVESTING_PLUGIN.read_text(encoding="utf-8")
     snippets = (
-        "public static int getTool(Player player)",
-        "public static int getShearsRequiredLevel(int shearsId)",
         "public static int getShearsTier(int shearsId)",
-        "public static int getRequiredShearsTierForLevel(int harvestingRequirement)",
-        "private static int getToolForResource(Player player, int harvestingRequirement, String action)",
+        "public static int getToolForResource(Player player, int minimumTier, String action)",
         "private static int getMinimumShearsRewardTier(int shearsTier)",
-        "private static boolean isInShearsRewardTierRange(int shearsTier, int harvestingRequirement)",
+        "private static boolean isInShearsRewardTierRange(int shearsTier, int produceTier)",
         "public static boolean isShears(int itemId)",
         "calculateHerbDropForShearsTier(prodEnum, getShearsTier(toolId))",
-        "isInShearsRewardTierRange(shearsTier, produce.getLevel())",
-        'getToolForResource(player, prodEnum.produceTable.get(0).getLevel(), "clip")',
-        'getToolForResource(player, def.getReqLevel(), "harvest")',
-        "Formulae.calcGatheringYield(prodEnum.get(prodId).getLevel(), player.getSkills().getLevel(Skill.HARVESTING.id()), getShearsTier(toolId))",
-        "Formulae.calcGatheringYield(def.getReqLevel(), player.getSkills().getLevel(Skill.HARVESTING.id()), getShearsTier(toolId))",
-        "player.incExp(Skill.HARVESTING.id(), prodEnum.get(prodId).getXp() * quantity, true)",
+        "isInShearsRewardTierRange(shearsTier, produce.shearsTier)",
+        'getToolForResource(player, prodEnum.produceTable.get(0).shearsTier, "clip this")',
+        'getToolForResource(player, def.getMinimumShearsTier(), "harvest this")',
+        "Formulae.calcGatheringYield(prodEnum.get(prodId).yieldBaselineLevel, player.getSkills().getLevel(Skill.HARVESTING.id()), getShearsTier(toolId))",
+        "Formulae.calcGatheringYield(def.getYieldBaselineLevel(), player.getSkills().getLevel(Skill.HARVESTING.id()), getShearsTier(toolId))",
+        "player.incExp(Skill.HARVESTING.id(), prodEnum.get(prodId).xp * quantity, true)",
         "player.incExp(Skill.HARVESTING.id(), def.getExp() * quantity, true)",
         "final AtomicInteger evt = new AtomicInteger(HarvestingEvents.NONE.getID());",
         "player.getWorld().replaceGameObject(object, newObject)",
@@ -328,11 +322,9 @@ def require_shearing_uses_harvesting() -> None:
         "Harvesting.isShears(item.getCatalogId())",
         "public class Sheep implements UseNpcTrigger, OpNpcTrigger",
         'private static final String SHEAR_COMMAND = "shear";',
-        "int equippedTool = Harvesting.getTool(player);",
-        'player.message("You need to equip harvesting shears you can use");',
-        "Harvesting.WOOL_UNLOCK_LEVEL",
-        "Formulae.calcGatheringYield(Harvesting.WOOL_UNLOCK_LEVEL, player.getSkills().getLevel(Skill.HARVESTING.id()), Harvesting.getShearsTier(shearsId))",
-        "player.incExp(Skill.HARVESTING.id(), Harvesting.WOOL_HARVESTING_EXP * quantity, true)",
+        'Harvesting.getToolForResource(player, WOOL_MINIMUM_SHEARS_TIER, "shear this sheep")',
+        "Formulae.calcGatheringYield(WOOL_YIELD_BASELINE_LEVEL, player.getSkills().getLevel(Skill.HARVESTING.id()), Harvesting.getShearsTier(shearsId))",
+        "player.incExp(Skill.HARVESTING.id(), WOOL_HARVESTING_EXP * quantity, true)",
         "Any excess falls to the ground because you have no room",
     )
     for snippet in snippets:
