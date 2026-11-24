@@ -4,14 +4,15 @@ import com.openrsc.client.model.Sprite;
 
 /** Views of the installed menu artwork, copied once when the source sprite changes. */
 final class SideToolbarArtwork {
+	private static final int CLASSIC_BUTTON_COUNT = 6;
 	private static final int CLASSIC_BUTTON_STRIDE = 33;
 	private static final int CLASSIC_BAR_OFFSET = 48;
 	private static final int CLASSIC_BANNER_TOP = 23;
 
 	private Sprite iconSource;
-	private final Sprite[] icons = new Sprite[SideToolbarLayout.BUTTON_COUNT];
-	private final Sprite[] bannerSources = new Sprite[SideToolbarLayout.BUTTON_COUNT];
-	private final Sprite[] banners = new Sprite[SideToolbarLayout.BUTTON_COUNT];
+	private final Sprite[] icons = new Sprite[CLASSIC_BUTTON_COUNT];
+	private final Sprite[] bannerSources = new Sprite[CLASSIC_BUTTON_COUNT];
+	private final Sprite[] banners = new Sprite[CLASSIC_BUTTON_COUNT];
 
 	Sprite icon(Sprite source, int index) {
 		if (iconSource != source) {

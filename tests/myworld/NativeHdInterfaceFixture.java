@@ -18,6 +18,7 @@ public final class NativeHdInterfaceFixture {
 			"Selectable resolutions");
 
 		verifyIndependentSizing();
+		verifyAbilityBookSettings();
 		verifySettingRows(preview);
 		for (GameInterfaceSettings.Size size : GameInterfaceSettings.Size.values()) {
 			for (GameInterfaceSettings.TextSize text : GameInterfaceSettings.TextSize.values()) {
@@ -33,6 +34,9 @@ public final class NativeHdInterfaceFixture {
 				verifyAccomplishmentsBounds(1920, 1080, size, text, false);
 				verifyAccomplishmentsBounds(960, 540, size, text, false);
 				verifyAccomplishmentsBounds(960, 540, size, text, true);
+				verifyAbilityBounds(1920, 1080, size, text, false);
+				verifyAbilityBounds(960, 540, size, text, false);
+				verifyAbilityBounds(960, 540, size, text, true);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -197,6 +201,57 @@ public final class NativeHdInterfaceFixture {
 		if (bottomLauncher) {
 			check(panel.bottom < anchor, "Accomplishments stays above the lower toolbar");
 		}
+	}
+
+	private static void verifyAbilityBookSettings() {
+		Properties props = new Properties();
+		props.setProperty(SpellbookLayoutSettings.PROPERTY_KEY, "text");
+		SpellbookLayoutSettings.loadFromClientSettings(props);
+		for (AbilityBook book : AbilityBook.values()) {
+			check(SpellbookLayoutSettings.mode(book) == SpellbookLayoutSettings.Mode.ICONS, "Icons default in " + book);
+			check(AbilityBook.forTab(book.toolbarTab) == book, "Direct routing for " + book);
+			check(SideToolbarLayout.tabAtIndex(SideToolbarLayout.indexOf(book.toolbarTab)) == book.toolbarTab,
+				"Distinct toolbar button for " + book);
+		}
+		SpellbookLayoutSettings.cycleMode(AbilityBook.MAGE);
+		SpellbookLayoutSettings.cycleMode(AbilityBook.PRAYER);
+		SpellbookLayoutSettings.saveToClientSettings(props);
+		SpellbookLayoutSettings.loadFromClientSettings(new Properties());
+		SpellbookLayoutSettings.loadFromClientSettings(props);
+		check(SpellbookLayoutSettings.mode(AbilityBook.MAGE) == SpellbookLayoutSettings.Mode.TEXT, "Mage preference reload");
+		check(SpellbookLayoutSettings.mode(AbilityBook.PRAYER) == SpellbookLayoutSettings.Mode.TEXT, "Prayer preference reload");
+		check(SpellbookLayoutSettings.mode(AbilityBook.CLERIC) == SpellbookLayoutSettings.Mode.ICONS, "Cleric remains independent");
+		check(SpellbookLayoutSettings.mode(AbilityBook.SUMMONING) == SpellbookLayoutSettings.Mode.ICONS, "Summoning remains independent");
+		check(SpellbookLayoutSettings.usesTextLayout(), "Classic combined setting is preserved");
+	}
+
+	private static void verifyAbilityBounds(int width, int height, GameInterfaceSettings.Size size,
+											GameInterfaceSettings.TextSize text, boolean bottomLauncher) {
+		ChatPanelLayout chat = chat(width, height, size, text);
+		int chatRight = chat.left + chat.width;
+		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, bottomLauncher, size, chatRight, chat.entryTop());
+		int anchor = bottomLauncher ? toolbar.top : toolbar.panelTop();
+		AbilityPanelLayout panel = new AbilityPanelLayout(width, anchor, bottomLauncher, chatRight, chat.entryTop(),
+			size, text, chat.lineHeight, chat.tabsHeight - size.pixels(8), size.pixels(112));
+		check(panel.onToggle(panel.toggleLeft, panel.toggleTop()), "First visible toggle pixel is clickable");
+		check(!panel.onToggle(panel.toggleLeft, panel.toggleTop() + panel.toggleHeight()), "Toggle stops at its border");
+		for (boolean textMode : new boolean[] {false, true}) {
+			int last = panel.visibleRows(textMode) * panel.columns(textMode) - 1;
+			check(panel.entryAt(panel.entryX(last, textMode), panel.entryY(last, textMode), 0, 100, textMode) == last,
+				"Last visible entry maps to its action");
+			check(panel.entryAt(panel.entryX(0, textMode), panel.entryY(0, textMode), 1, 100, textMode)
+				== panel.columns(textMode), "Scroll advances the right number of entries");
+			check(panel.entryAt(panel.scrollbarLeft(), panel.firstRowY, 0, 100, textMode) == -1,
+				"Scrollbar can't activate a spell");
+			check(panel.entryAt(panel.entryX(0, textMode), panel.lastRowY, 0, 100, textMode) == -1,
+				"Requirements area can't activate a spell");
+		}
+		int iconX = panel.entryX(0, false);
+		check(panel.entryAt(iconX + panel.iconSize, panel.firstRowY, 0, 100, false) == -1, "Grid gaps aren't actions");
+		if (panel.left < chatRight) {
+			check(panel.bottom <= chat.entryTop(), "Ability book fits above chat");
+		}
+		if (bottomLauncher) check(panel.bottom < anchor, "Ability book fits above the lower toolbar");
 	}
 
 	private static void verifyChatBounds(ChatPanelLayout chat, int width) {

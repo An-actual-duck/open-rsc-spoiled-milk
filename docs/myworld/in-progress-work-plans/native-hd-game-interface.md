@@ -82,6 +82,15 @@ Rows open the existing guides through the same actions.
 - Verify guide readability, list controls and opening the correct guide from
   Accomplishments at 540p and 1080p.
 
+## Ability books preview
+
+Mage, Cleric, Prayer and Summoning each have a toolbar button. M, C, P and S
+stand in for artwork. Each book starts in its icon grid and saves its own
+Icon/Text choice from the button in its header. Spell, prayer and summon
+activation still use the existing game actions. Cleric has its own book for
+Worship levels, Holy power and the sigils made through Blessing. Use the
+preview to compare the width of the expanded toolbar at 540p and 1080p.
+
 ## Right-click menus
 
 Bring the shared right-click menu up to the same visual and readability

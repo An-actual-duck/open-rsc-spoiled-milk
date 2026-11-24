@@ -3,6 +3,7 @@ package orsc;
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.EntityHandler.GUIPARTS;
 import com.openrsc.client.entityhandling.EntityHandler.PROJECTILE_TYPES;
+import com.openrsc.client.entityhandling.defs.ClericCostDef;
 import com.openrsc.client.entityhandling.defs.ClericSpellDef;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.defs.ElementalSpellDisplayMetadata;
@@ -1166,6 +1167,21 @@ public final class mudclient implements Runnable {
 	private final int[] accomplishmentsScroll = new int[2];
 	private final java.util.concurrent.atomic.AtomicInteger accomplishmentsWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private SideToolbarLayout sideToolbarLayout;
+	private AbilityPanelLayout abilityPanelLayout;
+	private int abilityLayoutWidth;
+	private int abilityLayoutAnchor;
+	private int abilityLayoutChatRight;
+	private int abilityLayoutChatTop;
+	private GameInterfaceSettings.Size abilityLayoutSize;
+	private GameInterfaceSettings.TextSize abilityLayoutText;
+	private boolean abilityLayoutBottom;
+	private final int[][] abilityScroll = new int[AbilityBook.values().length][2];
+	private final int[] abilityFocus = new int[AbilityBook.values().length];
+	private final int[] abilityDetailScroll = new int[AbilityBook.values().length];
+	private final java.util.concurrent.atomic.AtomicIntegerArray abilityDetailWheel =
+		new java.util.concurrent.atomic.AtomicIntegerArray(AbilityBook.values().length);
+	private final java.util.concurrent.atomic.AtomicIntegerArray abilityWheel =
+		new java.util.concurrent.atomic.AtomicIntegerArray(AbilityBook.values().length * 2);
 	private final SideToolbarArtwork sideToolbarArtwork = new SideToolbarArtwork();
 	private boolean chatLayoutDirty;
 	private Panel panelPlayerInfo;
@@ -13390,7 +13406,10 @@ public final class mudclient implements Runnable {
 					this.drawUiTabPlayerInfo(acceptTabInput, var1 ^ 0);
 				}
 
-				if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) {
+				AbilityBook abilityBook = chatLayout == null ? null : AbilityBook.forTab(visibleSideMenuTab);
+				if (abilityBook != null) {
+					if (!interfaceOpen) drawAbilityBook(abilityBook, acceptTabInput);
+				} else if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) {
 					this.drawUiTabMagic(acceptTabInput, (byte) -74);
 				}
 
@@ -15028,6 +15047,334 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private boolean slotUsesAbilityPreview(int tab) {
+		return chatLayout != null && AbilityBook.forTab(tab) != null;
+	}
+
+	private AbilityPanelLayout abilityPanelLayout() {
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		MudClientGraphics surface = getSurface();
+		int width = surface.width2;
+		int anchor = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatTop = chatLayout.entryTop();
+		if (abilityPanelLayout == null || abilityLayoutWidth != width || abilityLayoutAnchor != anchor
+			|| abilityLayoutChatRight != chatRight || abilityLayoutChatTop != chatTop
+			|| abilityLayoutSize != size || abilityLayoutText != text || abilityLayoutBottom != C_CUSTOM_UI) {
+			int toggleWidth = Math.max(surface.stringWidth(text.labelFont, "Text view"),
+				surface.stringWidth(text.labelFont, "Icon view")) + 2 * size.pixels(10);
+			abilityPanelLayout = new AbilityPanelLayout(width, anchor, C_CUSTOM_UI, chatRight, chatTop, size,
+				text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont), toggleWidth);
+			abilityLayoutWidth = width;
+			abilityLayoutAnchor = anchor;
+			abilityLayoutChatRight = chatRight;
+			abilityLayoutChatTop = chatTop;
+			abilityLayoutSize = size;
+			abilityLayoutText = text;
+			abilityLayoutBottom = C_CUSTOM_UI;
+		}
+		return abilityPanelLayout;
+	}
+
+	private static int abilityWheelIndex(AbilityBook book, SpellbookLayoutSettings.Mode mode) {
+		return book.ordinal() * 2 + mode.ordinal();
+	}
+
+	private void drawAbilityBook(AbilityBook book, boolean acceptsInput) {
+		AbilityPanelLayout layout = abilityPanelLayout();
+		MudClientGraphics surface = getSurface();
+		boolean toggleHovered = acceptsInput && layout.onToggle(mouseX, mouseY);
+		if (toggleHovered && mouseButtonClick == 1) {
+			abilityWheel.set(abilityWheelIndex(book, SpellbookLayoutSettings.mode(book)), 0);
+			SpellbookLayoutSettings.cycleMode(book);
+			saveSpellbookLayoutSettings();
+			mouseButtonClick = 0;
+		}
+		SpellbookLayoutSettings.Mode mode = SpellbookLayoutSettings.mode(book);
+		boolean text = mode == SpellbookLayoutSettings.Mode.TEXT;
+		int width = layout.right - layout.left;
+		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, 0x182333, 228);
+		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, 0x667993);
+		surface.drawString(book.title, layout.left + layout.padding,
+			layout.top + (layout.headerHeight + layout.labelHeight) / 2 - 3, 0xFFDC82, layout.labelFont);
+		drawInterfacePreviewTab(layout.toggleLeft, layout.toggleTop(), layout.right - layout.padding - layout.toggleLeft,
+			layout.toggleHeight(), text ? "Icon view" : "Text view", layout.labelFont,
+			layout.top + (layout.headerHeight + layout.labelHeight) / 2 - 3, false, toggleHovered);
+
+		int bookIndex = book.ordinal();
+		int count = abilityCount(book);
+		int maxScroll = layout.maxScroll(count, text);
+		int scroll = Math.max(0, Math.min(maxScroll,
+			abilityScroll[bookIndex][mode.ordinal()] + abilityWheel.getAndSet(abilityWheelIndex(book, mode), 0)));
+		int listHeight = layout.lastRowY - layout.firstRowY;
+		if (maxScroll > 0 && acceptsInput && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
+			&& mouseX < layout.right - layout.padding && mouseY >= layout.firstRowY && mouseY < layout.lastRowY) {
+			scroll = (mouseY - layout.firstRowY) * maxScroll / Math.max(1, listHeight - 1);
+			mouseButtonClick = 0;
+		}
+		abilityScroll[bookIndex][mode.ordinal()] = scroll;
+		int hovered = acceptsInput ? layout.entryAt(mouseX, mouseY, scroll, count, text) : -1;
+		if (hovered >= 0 && abilityFocus[bookIndex] != hovered) {
+			abilityFocus[bookIndex] = hovered;
+			abilityDetailScroll[bookIndex] = 0;
+			abilityDetailWheel.set(bookIndex, 0);
+		}
+		int columns = layout.columns(text);
+		int first = scroll * columns;
+		int last = Math.min(count, first + layout.visibleRows(text) * columns);
+		int summonLevel = book == AbilityBook.SUMMONING ? summoningBaseLevel() : 0;
+		int prayerFree = book == AbilityBook.PRAYER
+			? Math.max(0, getPrayerAllocationPoints() - getAllocatedPrayerPoints()) : 0;
+		for (int index = first; index < last; index++) {
+			int id = abilityId(book, index);
+			drawAbilityEntry(layout, book, id, index - first, text, index == hovered,
+				abilityState(book, id, summonLevel, prayerFree));
+		}
+		if (maxScroll > 0) {
+			int thumbSize = Math.min(listHeight, Math.max(layout.padding * 2, listHeight * layout.visibleRows(text)
+				/ (layout.visibleRows(text) + maxScroll)));
+			int thumbY = layout.firstRowY + (listHeight - thumbSize) * scroll / maxScroll;
+			surface.drawBox(layout.scrollbarLeft() + 1, layout.firstRowY, layout.scrollWidth - 2, listHeight, 0x283548);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbY, layout.scrollWidth - 4, thumbSize, 0x8799B2);
+		}
+		if (count > 0) {
+			int focus = Math.min(abilityFocus[bookIndex], count - 1);
+			drawAbilityDetails(layout, book, abilityId(book, focus), prayerFree);
+		} else {
+			surface.drawString("No abilities available", layout.left + layout.padding, layout.firstRowY + layout.lineHeight,
+				0xC4D0E0, layout.bodyFont);
+		}
+		if (hovered >= 0 && mouseButtonClick == 1) {
+			int id = abilityId(book, hovered);
+			switch (book) {
+				case MAGE: activateMagicMenuSpell(id); break;
+				case CLERIC: activateClericSpell(id); break;
+				case PRAYER: togglePrayerMenuPrayer(id); break;
+				case SUMMONING: castSummon(id); break;
+			}
+			mouseButtonClick = 0;
+		}
+	}
+
+	private int abilityCount(AbilityBook book) {
+		switch (book) {
+			case MAGE: return getVisibleMagicSpellCount();
+			case CLERIC: return clericSpellbook.size();
+			case PRAYER: return EntityHandler.prayerCount();
+			case SUMMONING: return SUMMONING_NAMES.length;
+			default: throw new AssertionError(book);
+		}
+	}
+
+	private int abilityId(AbilityBook book, int index) {
+		if (book == AbilityBook.MAGE) return getMagicMenuSpellIndex(index);
+		if (book == AbilityBook.CLERIC) return clericSpellbook.codeAtIndex(index);
+		return index;
+	}
+
+	private String abilityName(AbilityBook book, int id) {
+		switch (book) {
+			case MAGE: return EntityHandler.getSpellDef(id).getName();
+			case CLERIC: return clericSpellbook.get(id).getName();
+			case PRAYER: return EntityHandler.getPrayerDef(id).getName();
+			case SUMMONING: return SUMMONING_NAMES[id];
+			default: throw new AssertionError(book);
+		}
+	}
+
+	private int abilityRequirement(AbilityBook book, int id) {
+		switch (book) {
+			case MAGE: return EntityHandler.getSpellDef(id).getReqLevel();
+			case CLERIC: return clericSpellbook.get(id).getWorshipLevel();
+			case PRAYER: return getPrayerPointCost(id);
+			case SUMMONING: return SUMMONING_LEVELS[id];
+			default: throw new AssertionError(book);
+		}
+	}
+
+	private int summoningBaseLevel() {
+		int index = skillNameLongArray.indexOf("Summoning");
+		return index < 0 ? Integer.MAX_VALUE : playerStatBase[index];
+	}
+
+	private enum AbilityState {
+		READY("", 0xFFFFFF), LOCKED("", 0xAAB8C9), SELECTED("Selected", 0xFFDC82),
+		AUTO_CAST("Auto-cast", 0x9FE0AC), ACTIVE("Active", 0x9FE0AC);
+		final String label;
+		final int color;
+		AbilityState(String label, int color) {
+			this.label = label;
+			this.color = color;
+		}
+	}
+
+	private AbilityState abilityState(AbilityBook book, int id, int summonLevel, int prayerFree) {
+		switch (book) {
+			case MAGE:
+				if (autoCastSpell == id) return AbilityState.AUTO_CAST;
+				if (selectedSpell == id) return AbilityState.SELECTED;
+				return playerStatCurrent[6] >= abilityRequirement(book, id) && hasSpellRunes(id)
+					? AbilityState.READY : AbilityState.LOCKED;
+			case CLERIC:
+				ClericSpellDef spell = clericSpellbook.get(id);
+				return hasClericWorshipLevel(spell) && hasClericSigils(spell) ? AbilityState.READY : AbilityState.LOCKED;
+			case PRAYER:
+				if (prayerOn[id]) return AbilityState.ACTIVE;
+				return prayerFree >= getPrayerPointCost(id) && (id != GOD_BOLTS_PRAYER_INDEX || hasMatchingGodCrossbow())
+					? AbilityState.READY : AbilityState.LOCKED;
+			case SUMMONING:
+				if (summonLevel < SUMMONING_LEVELS[id]) return AbilityState.LOCKED;
+				for (int item = 0; item < SUMMONING_COST_ITEM_IDS[id].length; item++) {
+					if (getInventoryCount(SUMMONING_COST_ITEM_IDS[id][item], false) < SUMMONING_COST_AMOUNTS[id][item]) {
+						return AbilityState.LOCKED;
+					}
+				}
+				return AbilityState.READY;
+			default: throw new AssertionError(book);
+		}
+	}
+
+	private void drawAbilityEntry(AbilityPanelLayout layout, AbilityBook book, int id, int visible,
+								  boolean text, boolean hovered, AbilityState state) {
+		MudClientGraphics surface = getSurface();
+		int x = layout.entryX(visible, text);
+		int y = layout.entryY(visible, text);
+		int width = text ? layout.scrollbarLeft() - x - 1 : layout.iconSize;
+		int height = text ? layout.rowHeight - 1 : layout.iconSize;
+		boolean active = !state.label.isEmpty();
+		surface.drawBoxAlpha(x, y, width, height,
+			hovered ? 0x54647C : active ? 0x345949 : state == AbilityState.LOCKED ? 0x232D3D : 0x34455C, 230);
+		if (hovered || active || !text) {
+			surface.drawBoxBorder(x, width, y, height, hovered ? 0xFFDC82 : active ? state.color : 0x667993);
+		}
+
+		if (text) {
+			int baseline = y + (height + layout.lineHeight) / 2 - 3;
+			String status = active ? state.label : (book == AbilityBook.PRAYER ? "Pts " : "Lv. ") + abilityRequirement(book, id);
+			int statusX = x + width - layout.padding - surface.stringWidth(layout.bodyFont, status);
+			surface.drawString(status, statusX, baseline, state.color, layout.bodyFont);
+			surface.setClip(x + 1, statusX - layout.padding, y + height, y);
+			try {
+				surface.drawString(abilityName(book, id), x + layout.padding, baseline, state.color, layout.bodyFont);
+			} finally {
+				surface.clearClip();
+			}
+			return;
+		}
+
+		Sprite icon;
+		switch (book) {
+			case MAGE: icon = getSpellIconSprite(id); break;
+			case CLERIC: icon = getClericIconSprite(id); break;
+			case PRAYER: icon = getPrayerIconSprite(id); break;
+			case SUMMONING: icon = getSummoningIconSprite(id); break;
+			default: throw new AssertionError(book);
+		}
+		int inset = Math.max(3, layout.iconSize / 10);
+		int iconSize = layout.iconSize - 2 * inset;
+		if (icon != null) {
+			surface.drawSprite(icon, x + inset, y + inset, iconSize, iconSize, 5924);
+		} else if (book == AbilityBook.CLERIC) {
+			ItemDef def = EntityHandler.getItemDef(clericSpellbook.get(id).getSpellbookIconItemId());
+			if (def != null) drawInventoryPreviewIcon(def, false, x + inset, y + inset, iconSize, iconSize);
+		} else {
+			surface.drawColoredStringCentered(x + width / 2, getSpellInitials(abilityName(book, id)), state.color,
+				0, layout.labelFont, y + (height + layout.labelHeight) / 2 - 2);
+		}
+		if (state == AbilityState.LOCKED && (icon != null || book == AbilityBook.CLERIC)) {
+			surface.drawBoxAlpha(x + 1, y + 1, width - 2, height - 2, 0x101825, 120);
+		}
+	}
+
+	private void drawAbilityDetails(AbilityPanelLayout layout, AbilityBook book, int id, int prayerFree) {
+		MudClientGraphics surface = getSurface();
+		String requirement;
+		String description;
+		StringJoiner costs = new StringJoiner(", ");
+		int required = abilityRequirement(book, id);
+		switch (book) {
+			case MAGE:
+				SpellDef spell = EntityHandler.getSpellDef(id);
+				requirement = "Magic level " + required;
+				description = getBriefSpellDescription(spell, ElementalSpellDisplayMetadata.resolve(id, spell));
+				for (Entry<Integer, Integer> reagent : spell.getRunesRequired()) {
+					addAbilityCost(costs, reagent.getKey(), reagent.getValue(), null);
+				}
+				break;
+			case CLERIC:
+				ClericSpellDef cleric = clericSpellbook.get(id);
+				requirement = "Worship level " + required
+					+ (clericHolyPowerKnown ? "   Holy power: " + playerStatEquipment[7] : "");
+				description = ClericSpellSummary.describe(cleric);
+				for (ClericCostDef cost : cleric.getCosts()) {
+					addAbilityCost(costs, cost.getItemId(), cost.getCount(), false);
+				}
+				break;
+			case PRAYER:
+				PrayerDef prayer = EntityHandler.getPrayerDef(id);
+				requirement = "Reserves " + required + " points. " + prayerFree + "/" + getPrayerAllocationPoints() + " free.";
+				description = prayer.getDescription();
+				String baseCost = "Reserve " + prayer.getPointCost() + " prayer points. ";
+				if (description != null && description.startsWith(baseCost)) {
+					description = description.substring(baseCost.length());
+				}
+				break;
+			case SUMMONING:
+				requirement = "Summoning level " + required;
+				description = SUMMONING_DESCRIPTIONS[id];
+				for (int item = 0; item < SUMMONING_COST_ITEM_IDS[id].length; item++) {
+					addAbilityCost(costs, SUMMONING_COST_ITEM_IDS[id][item], SUMMONING_COST_AMOUNTS[id][item], false);
+				}
+				break;
+			default: throw new AssertionError(book);
+		}
+		int x = layout.left + layout.padding;
+		int contentRight = layout.right - layout.padding - layout.scrollWidth;
+		int width = contentRight - x;
+		int titleY = layout.lastRowY + layout.labelHeight + layout.padding;
+		int contentTop = titleY + 3;
+		surface.drawLineHoriz(x, layout.lastRowY + 2, layout.right - layout.padding - x, 0x667993);
+		surface.drawString(abilityName(book, id), x, titleY - 3, 0xFFDC82, layout.labelFont);
+
+		java.util.List<String> lines = new java.util.ArrayList<>();
+		lines.addAll(ClericTextLayout.wrap(requirement, width, text -> surface.stringWidth(layout.bodyFont, text)));
+		if (costs.length() > 0) {
+			lines.addAll(ClericTextLayout.wrap(costs.toString(), width, text -> surface.stringWidth(layout.bodyFont, text)));
+		}
+		if (description != null) {
+			lines.addAll(ClericTextLayout.wrap(description, width, text -> surface.stringWidth(layout.bodyFont, text)));
+		}
+
+		int bookIndex = book.ordinal();
+		int height = layout.bottom - contentTop - 2;
+		int visible = Math.max(1, height / layout.lineHeight);
+		int max = Math.max(0, lines.size() - visible);
+		int scroll = Math.max(0, Math.min(max, abilityDetailScroll[bookIndex] + abilityDetailWheel.getAndSet(bookIndex, 0)));
+		abilityDetailScroll[bookIndex] = scroll;
+		surface.setClip(x, contentRight, layout.bottom - 2, contentTop);
+		try {
+			for (int index = scroll; index < Math.min(lines.size(), scroll + visible); index++) {
+				surface.drawString(lines.get(index), x, contentTop + (index - scroll + 1) * layout.lineHeight - 3,
+					0xFFFFFF, layout.bodyFont);
+			}
+		} finally {
+			surface.clearClip();
+		}
+		if (max > 0 && height > 0) {
+			int thumb = Math.max(8, height * visible / lines.size());
+			int thumbY = contentTop + (height - thumb) * scroll / max;
+			surface.drawBox(contentRight + 2, contentTop, layout.scrollWidth - 3, height, 0x283548);
+			surface.drawBox(contentRight + 3, thumbY, layout.scrollWidth - 5, thumb, 0x8799B2);
+		}
+	}
+
+	private void addAbilityCost(StringJoiner costs, int id, int required, Boolean noted) {
+		int available = getInventoryCount(id, noted);
+		ItemDef item = EntityHandler.getItemDef(id);
+		costs.add(item.getName() + " " + (available >= required ? "@gre@" : "@red@") + available + "/" + required + "@whi@");
+	}
+
 	// spells menu
 	private int getAbilitiesExtraHeight() {
 		return isAndroid() && this.magicOrPrayerList == 0
@@ -15707,7 +16054,7 @@ public final class mudclient implements Runnable {
 		this.packetHandler.getClientStream().finishPacket();
 		this.selectedSpell = -1;
 		this.selectedItemInventoryIndex = -1;
-		this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+		this.showUiTab = chatLayout == null ? Config.MAGIC_AND_PRAYER_TAB : AbilityBook.CLERIC.toolbarTab;
 		this.magicOrPrayerList = 0;
 	}
 
@@ -15984,7 +16331,7 @@ public final class mudclient implements Runnable {
 		this.packetHandler.getClientStream().finishPacket();
 		this.selectedSpell = -1;
 		this.selectedItemInventoryIndex = -1;
-		this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+		this.showUiTab = chatLayout == null ? Config.MAGIC_AND_PRAYER_TAB : AbilityBook.SUMMONING.toolbarTab;
 		this.magicOrPrayerList = 2;
 	}
 
@@ -17405,8 +17752,9 @@ public final class mudclient implements Runnable {
 		index = addSettingsRow(index,
 			"@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
 
-		index = addSettingsRow(index,
-			"@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65);
+		if (chatLayout == null) {
+			index = addSettingsRow(index, "@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65);
+		}
 
 		index = addSettingsRow(index, HitSplatDisplaySettings.optionLabel(), HitSplatDisplaySettings.OPTION_ACTION);
 
@@ -22573,15 +22921,22 @@ public final class mudclient implements Runnable {
 		int iconInset = (toolbar.buttonSize - SideToolbarLayout.ICON_SIZE) / 2;
 		for (int index = 0; index < SideToolbarLayout.BUTTON_COUNT; index++) {
 			int x = toolbar.leftOf(index);
-			int tab = Config.OPTIONS_TAB - index;
+			int tab = SideToolbarLayout.tabAtIndex(index);
 			boolean pinned = tab == Config.MINIMAP_AND_COMPASS_TAB ? minimapPinned : pinnedSideMenuTab == tab;
 			boolean selected = active == tab || pinned;
 			surface.drawVerticalGradient(x, toolbar.top, toolbar.buttonSize, toolbar.buttonSize,
 				selected ? 0x596A83 : 0x34425A, selected ? 0x344258 : 0x252F41);
 			int border = hovered == index ? 0xD5E1F2 : selected ? 0xD2B873 : 0x667993;
 			surface.drawBoxBorder(x, toolbar.buttonSize, toolbar.top, toolbar.buttonSize, border);
-			Sprite icon = sideToolbarArtwork.icon(strip, index);
-			if (icon != null) surface.drawSprite(icon, x + iconInset, toolbar.top + iconInset);
+			AbilityBook book = AbilityBook.forTab(tab);
+			if (book == null) {
+				Sprite icon = sideToolbarArtwork.icon(strip, Config.OPTIONS_TAB - tab);
+				if (icon != null) surface.drawSprite(icon, x + iconInset, toolbar.top + iconInset);
+			} else {
+				int font = 6;
+				surface.drawColoredStringCentered(x + toolbar.buttonSize / 2, book.letter,
+					selected ? 0xFFDC82 : 0xFFFFFF, 0, font, toolbar.top + (toolbar.buttonSize + surface.fontHeight(font)) / 2 - 3);
+			}
 			if (pinned) {
 				surface.drawLineHoriz(x + 3, toolbar.bottom() - 3, toolbar.buttonSize - 6, 0xD2B873);
 			}
@@ -22617,7 +22972,7 @@ public final class mudclient implements Runnable {
 	private boolean handlePreviewToolbar(SideToolbarLayout toolbar) {
 		int index = toolbar.buttonAt(mouseX, mouseY);
 		if (index >= 0 && (!C_CUSTOM_UI || mouseButtonClick == 1)) {
-			int tab = Config.OPTIONS_TAB - index;
+			int tab = SideToolbarLayout.tabAtIndex(index);
 			if (tab == Config.MINIMAP_AND_COMPASS_TAB) {
 				if (mouseButtonClick == 1) {
 					togglePinnedMinimap();
@@ -22662,6 +23017,9 @@ public final class mudclient implements Runnable {
 			if (preview != null) return preview.contains(x, y);
 		}
 
+		if (chatLayout != null && AbilityBook.forTab(getVisibleSideMenuTab()) != null) {
+			return abilityPanelLayout().contains(x, y);
+		}
 		if (C_CUSTOM_UI) {
 			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
@@ -22898,8 +23256,9 @@ public final class mudclient implements Runnable {
 			}
 			int panelOffset = getAuthenticSidebarPanelTop() - 36;
 			int hoverLeft = getSurface().width2 - TOP_MENU_BAR_WIDTH;
-			if (toolbar != null && showUiTab > 0 && showUiTab <= SideToolbarLayout.BUTTON_COUNT) {
-				hoverLeft = Math.min(hoverLeft, toolbar.leftOf(Config.OPTIONS_TAB - showUiTab));
+			int toolbarIndex = SideToolbarLayout.indexOf(showUiTab);
+			if (toolbar != null && toolbarIndex >= 0) {
+				hoverLeft = Math.min(hoverLeft, toolbar.leftOf(toolbarIndex));
 			}
 
 			InventoryEquipmentLayout inventory = this.showUiTab == Config.INVENTORY_TAB ? inventoryEquipmentLayout() : null;
@@ -22931,7 +23290,10 @@ public final class mudclient implements Runnable {
 			}
 
 			// If we are on Android, this area needs to be larger in the Y direction for the "cast last spell" box
-			if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isCurrentSideMenuHomeTab()) {
+			if (slotUsesAbilityPreview(showUiTab) && !isCurrentSideMenuHomeTab()) {
+				AbilityPanelLayout panel = abilityPanelLayout();
+				if (mouseX < Math.min(hoverLeft, panel.left) || mouseY >= panel.bottom) closeOrRestorePinnedSideMenu();
+			} else if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isCurrentSideMenuHomeTab()) {
 				if (isAndroid()) {
 					if (this.mouseX < hoverLeft || this.mouseY > 300 + panelOffset) {
 						this.closeOrRestorePinnedSideMenu();
@@ -26632,6 +26994,11 @@ public final class mudclient implements Runnable {
 			accomplishmentsLayout = null;
 			java.util.Arrays.fill(accomplishmentsScroll, 0);
 			accomplishmentsWheel.set(0);
+			for (int[] scroll : abilityScroll) java.util.Arrays.fill(scroll, 0);
+			java.util.Arrays.fill(abilityFocus, 0);
+			java.util.Arrays.fill(abilityDetailScroll, 0);
+			for (int index = 0; index < abilityWheel.length(); index++) abilityWheel.set(index, 0);
+			for (int index = 0; index < abilityDetailWheel.length(); index++) abilityDetailWheel.set(index, 0);
 			this.packetHandler.resetLayeredSceneProtocolState();
 			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.systemUpdate = 0;
@@ -31791,6 +32158,16 @@ public final class mudclient implements Runnable {
 			}
 		} else if (visibleSideMenuTab == Config.OPTIONS_TAB) { // Settings wrench menu
 			panelSettings.scrollMethodCustomList(controlSettingPanel, x, 1);
+		} else if (slotUsesAbilityPreview(visibleSideMenuTab)) {
+			AbilityBook book = AbilityBook.forTab(visibleSideMenuTab);
+			AbilityPanelLayout panel = abilityPanelLayout();
+			if (panel.contains(mouseX, mouseY) && !skillGuideInterface.isVisible() && !questGuideInterface.isVisible()) {
+				if (mouseY >= panel.lastRowY) {
+					abilityDetailWheel.addAndGet(book.ordinal(), x);
+				} else if (mouseY >= panel.firstRowY) {
+					abilityWheel.addAndGet(abilityWheelIndex(book, SpellbookLayoutSettings.mode(book)), x);
+				}
+			}
 		} else if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) { // Magic and prayer book list.
 			if (SpellbookLayoutSettings.usesTextLayout()) {
 				this.panelMagic.scrollMethodList(this.controlMagicPanel, x);

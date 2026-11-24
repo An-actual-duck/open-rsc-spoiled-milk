@@ -2,7 +2,12 @@ package orsc;
 
 /** Screen-space dimensions shared by the toolbar's drawing and pointer handling. */
 final class SideToolbarLayout {
-	static final int BUTTON_COUNT = 6;
+	private static final int[] TABS = {
+		Config.OPTIONS_TAB, Config.FRIENDS_TAB, AbilityBook.MAGE.toolbarTab, AbilityBook.CLERIC.toolbarTab,
+		AbilityBook.PRAYER.toolbarTab, AbilityBook.SUMMONING.toolbarTab, Config.SKILLS_AND_QUESTS_TAB,
+		Config.MINIMAP_AND_COMPASS_TAB, Config.INVENTORY_TAB
+	};
+	static final int BUTTON_COUNT = TABS.length;
 	static final int ICON_SIZE = 32;
 	static final int BANNER_HEIGHT = 10;
 	final int left;
@@ -27,8 +32,9 @@ final class SideToolbarLayout {
 		this.size = size;
 		this.chatRight = chatRight;
 		this.chatEntryTop = chatEntryTop;
-		buttonSize = Math.max(ICON_SIZE + 4, size.pixels(42));
 		gap = size.pixels(3);
+		int maxSize = (surfaceWidth - size.pixels(6) - gap * (BUTTON_COUNT - 1)) / BUTTON_COUNT;
+		buttonSize = Math.min(maxSize, Math.max(ICON_SIZE + 4, size.pixels(42)));
 		pitch = buttonSize + gap;
 		width = pitch * BUTTON_COUNT - gap;
 		right = surfaceWidth - size.pixels(3);
@@ -44,6 +50,17 @@ final class SideToolbarLayout {
 					int chatRight, int chatEntryTop) {
 		return this.surfaceWidth == surfaceWidth && this.gameHeight == gameHeight && this.bottomLauncher == bottomLauncher
 			&& this.size == size && this.chatRight == chatRight && this.chatEntryTop == chatEntryTop;
+	}
+
+	static int tabAtIndex(int index) {
+		return TABS[index];
+	}
+
+	static int indexOf(int tab) {
+		for (int index = 0; index < TABS.length; index++) {
+			if (TABS[index] == tab) return index;
+		}
+		return -1;
 	}
 
 	int leftOf(int index) {
