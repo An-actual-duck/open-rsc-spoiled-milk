@@ -1212,8 +1212,8 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(348, "1", "Potato - T1 shears"));
 				skillMenuEntries.add(new SkillMenuItem(241, "1", "Onion - T1 shears"));
 				skillMenuEntries.add(new SkillMenuItem(18, "1", "Cabbage - T1 shears"));
+				skillMenuEntries.add(new SkillMenuItem(675, "1", "Flax - T1 Tin shears"));
 				skillMenuEntries.add(new SkillMenuItem(218, "8", "Garlic - T2 shears"));
-				skillMenuEntries.add(new SkillMenuItem(675, "15", "Flax - T3 shears"));
 				skillMenuEntries.add(new SkillMenuItem(320, "15", "Tomato - T3 shears"));
 				skillMenuEntries.add(new SkillMenuItem(1353, "22", "Corn - T4 shears"));
 				skillMenuEntries.add(new SkillMenuItem(1569, "1", "Lily's Pumpkin - T1 shears"));

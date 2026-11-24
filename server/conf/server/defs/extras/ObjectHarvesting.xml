@@ -32,7 +32,7 @@
 	<entry>
 		<int>313</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>15</requiredLvl>
+			<requiredLvl>1</requiredLvl>
 			<prodId>675</prodId>
 			<exp>40</exp>
 			<exhaust>1</exhaust>

@@ -26,7 +26,7 @@ GUIDE_OBJECT_LEVELS = (
     (72, 1),     # Grain
     (183, 30),   # Banana tree
     (191, 1),    # Potato
-    (313, 15),   # Flax
+    (313, 1),   # Flax
     (430, 54),   # Pineapple tree
     (1243, 15),  # Lemon tree
     (1244, 22),  # Lime tree
@@ -133,7 +133,7 @@ def main() -> None:
     require(entity_handler, '"Pineapple tree", "A tree with nice ripe pineapples growing on it", "WalkTo", "Harvest"', "Client pineapple action must mirror Harvest")
     require(entity_handler, '"Pineapple tree", "There are no pineapples left on the tree", "WalkTo", "Examine"', "Client empty pineapple tree must not expose Harvest")
     require(skill_guide, 'new SkillMenuItem(29, "1", "Grain - T1 shears")', "Harvesting guide is missing grain")
-    require(skill_guide, 'new SkillMenuItem(675, "15", "Flax - T3 shears")', "Harvesting guide is missing flax")
+    require(skill_guide, 'new SkillMenuItem(675, "1", "Flax - T1 Tin shears")', "Harvesting guide is missing flax")
     require(skill_guide, 'new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP")', "Harvesting guide is missing event pumpkins")
     require(skill_guide, 'new SkillMenuItem(933, "70", "Torstol rare chance - T10 shears")', "Harvesting guide is missing torstol")
     require(harvesting_plugin, "new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TORSTOL.id(), 70, 960)", "Harvesting herb table is missing torstol")
