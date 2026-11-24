@@ -1434,7 +1434,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			boolean zoomable = !scrollableMessagePanel && !mayBeScrollable;
 
 
-			if (mudclient.hasDialogueChoiceInput()) {
+			if (mudclient.hasDialogueChoiceInput() || mudclient.hasContextMenuInput()) {
 				e.consume();
 				mudclient.runScroll(e.getWheelRotation());
 				return;

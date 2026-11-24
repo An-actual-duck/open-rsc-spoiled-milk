@@ -712,6 +712,9 @@ public final class mudclient implements Runnable {
 	public int[] achievementProgress = new int[500];
 	public int showUiTab = 0;
 	public boolean topMouseMenuVisible = false;
+	private volatile ContextMenuLayout contextMenuLayout;
+	private int contextMenuFirstRow;
+	private final java.util.concurrent.atomic.AtomicInteger contextMenuWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private static final LegacySoftwareScalingSettings.SettingsStore LEGACY_SCALING_SETTINGS_STORE =
 		new LegacySoftwareScalingSettings.SettingsStore() {
 			@Override
@@ -3711,27 +3714,7 @@ public final class mudclient implements Runnable {
 						this.mouseButtonClick = 0;
 					} else if (!this.optionMouseButtonOne && this.mouseButtonClick == 2
 						|| this.optionMouseButtonOne && this.mouseButtonClick == 1) {
-						int menuWidth = this.menuCommon.getWidth();
-						int var7 = this.menuCommon.getHeight();
-						this.menuX = this.mouseX - menuWidth / 2;
-						this.topMouseMenuVisible = true;
-						this.menuY = this.mouseY - 7;
-						if (this.menuX < 0) {
-							this.menuX = 0;
-						}
-
-						if (this.menuY < 0) {
-							this.menuY = 0;
-						}
-
-						this.mouseButtonClick = 0;
-						if (this.menuY + var7 > getGameHeight() - 19) {
-							this.menuY = getGameHeight() - 19 - var7;
-						}
-
-						if (menuWidth + this.menuX > getGameWidth() - 2) {
-							this.menuX = getGameWidth() - 2 - menuWidth;
-						}
+						openTopMouseMenu(var3);
 					}
 				}
 
@@ -3739,6 +3722,46 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var8) {
 			throw GenUtil.makeThrowable(var8, "client.H(" + var1 + ')');
 		}
+	}
+
+	private void openTopMouseMenu(int itemCount) {
+		topMouseMenuVisible = true;
+		mouseButtonClick = 0;
+		if (chatLayout == null) {
+			contextMenuLayout = null;
+			int width = menuCommon.getWidth();
+			int height = menuCommon.getHeight();
+			menuX = Math.min(Math.max(0, mouseX - width / 2), getGameWidth() - 2 - width);
+			menuY = Math.min(Math.max(0, mouseY - 7), getGameHeight() - 19 - height);
+			return;
+		}
+
+		String[] labels = new String[itemCount];
+		for (int item = 0; item < itemCount; item++) {
+			String actor = menuCommon.getItemActor(item);
+			String label = String.valueOf(menuCommon.getItemLabel(item));
+			labels[item] = actor == null || actor.isEmpty() ? label : label + " " + actor;
+		}
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		ContextMenuLayout layout = new ContextMenuLayout(getGameWidth(), getGameHeight(), mouseX, mouseY,
+			GameInterfaceSettings.size(), text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+			menuCommon.getTitle(), labels, label -> surface.stringWidth(text.bodyFont, label),
+			label -> surface.stringWidth(text.labelFont, label));
+		menuX = layout.left;
+		menuY = layout.top;
+		contextMenuFirstRow = 0;
+		contextMenuWheel.set(0);
+		contextMenuLayout = layout;
+	}
+
+	public boolean hasContextMenuInput() {
+		return contextMenuLayout != null && topMouseMenuVisible;
+	}
+
+	private void closeTopMouseMenu() {
+		topMouseMenuVisible = false;
+		contextMenuLayout = null;
 	}
 
 	public final RSModel createWallObjectModel(int x, int y, int type, int dir, int index) {
@@ -7601,6 +7624,7 @@ public final class mudclient implements Runnable {
 	private static final String[] CHAT_TAB_LABELS = {"All", "Local", "Game", "Private", "Clan"};
 
 	private void handleScaledChatTabSelection() {
+		if (hasContextMenuInput()) return;
 		int tabIndex = chatLayout.tabAt(mouseX, mouseY);
 		if (tabIndex < 0) {
 			return;
@@ -7741,7 +7765,7 @@ public final class mudclient implements Runnable {
 			} else {
 				width = 175;
 			}
-			if (this.mouseButtonClick != 0) {
+			if (this.mouseButtonClick != 0 && !hasContextMenuInput()) {
 				for (int row = 1; row < 5; ++row) {
 					if (row > 0 && sx < this.mouseX && this.mouseX < width + sx && this.mouseY > row * 20 + sy
 						&& row * 20 + sy + 20 > this.mouseY) {
@@ -7948,6 +7972,7 @@ public final class mudclient implements Runnable {
 
 					if (this.mouseButtonClick == 2) {
 						if (mouseX_Local > 216 && mouseY_Local > 30 && mouseX_Local < 462 && mouseY_Local < 235) {
+							contextMenuLayout = null;
 							int w = this.menuCommon.getWidth();
 							int h = this.menuCommon.getHeight();
 							this.menuX = this.mouseX - w / 2;
@@ -9036,6 +9061,7 @@ public final class mudclient implements Runnable {
 
 						if (this.mouseButtonClick == 2) {
 							if (mouseLX > 216 && mouseLY > 30 && mouseLX < 462 && mouseLY < 235) {
+								contextMenuLayout = null;
 								int w = this.menuCommon.getWidth();
 								int h = this.menuCommon.getHeight();
 								this.menuY = this.mouseY - 7;
@@ -10767,6 +10793,8 @@ public final class mudclient implements Runnable {
 					this.drawUi(0);
 					this.getSurface().loggedIn = false;
 					this.drawChatMessageTabs(var1 - 8);
+					ContextMenuLayout menu = contextMenuLayout;
+					if (menu != null && topMouseMenuVisible) renderScaledContextMenu(menu);
 					if (TRACE_BROWSER_FRAME_STAGES) browserUiDrawMs = (System.nanoTime() - browserUiStart) / 1_000_000f;
 					RenderTelemetry.recordClientDrawPreparation(beforeSceneNanos, residentObjectsNanos,
 						worldOverlayNanos, RenderTelemetry.elapsedSince(uiOverlayStart));
@@ -11756,6 +11784,11 @@ public final class mudclient implements Runnable {
 
 	private void drawMenu() {
 		try {
+			ContextMenuLayout layout = contextMenuLayout;
+			if (layout != null) {
+				handleScaledContextMenu(layout);
+				return;
+			}
 
 			if (this.mouseButtonClick == 0) {
 				int width = this.menuCommon.getWidth();
@@ -11781,6 +11814,58 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "client.DB(" + "dummy" + ')');
 		}
+	}
+
+	private void handleScaledContextMenu(ContextMenuLayout layout) {
+		contextMenuFirstRow = layout.clampScroll(contextMenuFirstRow + contextMenuWheel.getAndSet(0));
+		if (layout.viewportWidth != getGameWidth() || layout.viewportHeight != getGameHeight()) {
+			closeTopMouseMenu();
+			mouseButtonClick = 0;
+			return;
+		}
+		if (mouseButtonClick == 1 && layout.overScrollbar(mouseX, mouseY)) {
+			contextMenuFirstRow = layout.scrollFor(mouseY);
+			mouseButtonClick = 0;
+		} else if (mouseButtonClick != 0) {
+			int selected = layout.itemAt(mouseX, mouseY, contextMenuFirstRow);
+			closeTopMouseMenu();
+			if (selected >= 0) handleMenuItemClicked(false, selected);
+			mouseButtonClick = 0;
+		} else if (!layout.keepsOpenAt(mouseX, mouseY)) {
+			closeTopMouseMenu();
+		}
+	}
+
+	private void renderScaledContextMenu(ContextMenuLayout layout) {
+		int hovered = layout.itemAt(mouseX, mouseY, contextMenuFirstRow);
+		MudClientGraphics surface = getSurface();
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.height, 0x182333, 244);
+		if (layout.title != null) {
+			surface.drawVerticalGradient(layout.left, layout.top, layout.width, layout.headerHeight, 0x3B4C67, 0x28354A);
+			surface.drawString(layout.title, layout.left + layout.padding,
+				layout.top + (layout.headerHeight + layout.titleLine) / 2 - 3, 0xFFDC82, layout.titleFont);
+			surface.drawLineHoriz(layout.left + 1, layout.rowsTop() - 1, layout.width - 2, 0x667993);
+		}
+		int rowWidth = Math.min(layout.width - 2, layout.scrollbarLeft() - layout.left - 1);
+		for (int row = 0; row < layout.visibleRows; row++) {
+			int action = contextMenuFirstRow + row;
+			int y = layout.rowTop(row);
+			if (action == hovered) {
+				surface.drawBox(layout.left + 1, y, rowWidth, layout.rowHeight, 0x3A4C67);
+			}
+			surface.drawString(layout.label(action), layout.left + layout.padding,
+				y + (layout.rowHeight + layout.bodyLine) / 2 - 3, action == hovered ? 0xFFDC82 : 0xFFFFFF, layout.bodyFont);
+		}
+		if (layout.maxScroll() > 0) {
+			int body = layout.rowsHeight();
+			int thumb = Math.max(layout.padding, body * layout.visibleRows / (layout.visibleRows + layout.maxScroll()));
+			int y = layout.rowsTop() + (body - thumb) * contextMenuFirstRow / layout.maxScroll();
+			int x = layout.scrollbarLeft();
+			int width = layout.left + layout.width - x;
+			surface.drawBox(x, layout.rowsTop(), width - 1, body, 0x283548);
+			surface.drawBox(x + 2, y, width - 4, thumb, 0x8799B2);
+		}
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.height, 0x667993);
 	}
 
 	private boolean drawMenuMessage(String otherAccountName, int var2, String otherDisplayName) {
@@ -13320,6 +13405,9 @@ public final class mudclient implements Runnable {
 				this.drawDialogWildWarn(120);
 			}
 
+			if (hasContextMenuInput() && (!var2 || optionsMenuShow || inputX_Action != InputXAction.ACT_0)) {
+				closeTopMouseMenu();
+			}
 			if (this.inputX_Action != InputXAction.ACT_0) {
 				this.drawInputX();
 			}
@@ -13389,6 +13477,7 @@ public final class mudclient implements Runnable {
 					}
 				}
 
+				if (interfaceOpen && hasContextMenuInput()) closeTopMouseMenu();
 				boolean mustDrawMenu = !dialogueOwnsInput && !this.optionsMenuShow && !this.topMouseMenuVisible;
 				if (mustDrawMenu) {
 					this.menuCommon.recalculateSize(0);
@@ -21180,8 +21269,10 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
+					if (!hasContextMenuInput()) {
+						this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+					}
 					auctionHouse.myAuctions.handleMouse(this.mouseX, this.mouseY,
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
 					auctionHouse.auctionMenu.handleMouse(this.mouseX, this.mouseY,
@@ -21319,7 +21410,7 @@ public final class mudclient implements Runnable {
 					} else if (this.lastMouseButtonDown == 2) {
 						this.mouseButtonClick = 2;
 					}
-					if (mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
+					if (!hasContextMenuInput() && mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
 						this.mouseButtonClick = 0;
@@ -23570,6 +23661,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean handleTabUIClick() {
+		if (hasContextMenuInput()) return false;
 		if (settingsTuningDrag.isActive()) return mouseButtonClick != 0;
 		if (C_CUSTOM_UI) {
 			repositionCustomUI();
@@ -29337,7 +29429,7 @@ public final class mudclient implements Runnable {
 		dialogueChoicesPanel = null;
 		dialogueScroll.set(0);
 		if (show && usesDialogueChoicesPanel()) {
-			topMouseMenuVisible = false;
+			closeTopMouseMenu();
 		}
 		optionsMenuShow = show;
 	}
@@ -32548,6 +32640,11 @@ public final class mudclient implements Runnable {
 	public void runScroll(int x) {
 		if (hasDialogueChoiceInput()) {
 			dialogueScroll.addAndGet(Integer.signum(x));
+			return;
+		}
+		ContextMenuLayout menu = contextMenuLayout;
+		if (menu != null && topMouseMenuVisible) {
+			if (menu.keepsOpenAt(mouseX, mouseY)) contextMenuWheel.addAndGet(x);
 			return;
 		}
 		if (x > 1)

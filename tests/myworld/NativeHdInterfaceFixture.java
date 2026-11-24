@@ -44,6 +44,8 @@ public final class NativeHdInterfaceFixture {
 				verifySettingsBounds(1920, 1080, size, text, false);
 				verifySettingsBounds(960, 540, size, text, false);
 				verifySettingsBounds(960, 540, size, text, true);
+				verifyContextMenu(1920, 1068, size, text);
+				verifyContextMenu(960, 528, size, text);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -359,6 +361,44 @@ public final class NativeHdInterfaceFixture {
 		drag.finish(actions);
 		check(committed[0] == 1, "Returning to the initial value skips persistence");
 		RendererColorDiagnosticSettings.setGammaLevel(before);
+	}
+
+	private static void verifyContextMenu(int width, int height, GameInterfaceSettings.Size size,
+										  GameInterfaceSettings.TextSize text) {
+		String[] actions = new String[20];
+		for (int index = 0; index < actions.length; index++) actions[index] = "Action " + index;
+		int[] fontHeight = {12, 14, 14, 15, 15, 19, 24, 29};
+		ContextMenuLayout menu = new ContextMenuLayout(width, height, width - 1, height - 1, size, text,
+			fontHeight[text.bodyFont], fontHeight[text.labelFont], "Choose option", actions,
+			label -> label.length() * 10, label -> label.length() * 8);
+		check(menu.left >= 0 && menu.left + menu.width <= width, "Context menu fits the right edge");
+		check(menu.top >= 0 && menu.top + menu.height <= height, "Context menu fits the bottom edge");
+		check(menu.keepsOpenAt(width - 1, height - 1), "Opening at an edge keeps the menu open");
+		check(!menu.keepsOpenAt(0, 0), "Moving away dismisses the menu");
+		int x = menu.left + 1;
+		check(menu.itemAt(x, menu.rowsTop() - 1, 0) == -1, "The menu heading is not an action");
+		check(menu.itemAt(x, menu.rowsTop(), 0) == 0, "The first drawn row maps to the first action");
+		check(menu.itemAt(x, menu.rowTop(1), 0) == 1, "A row starts where the previous row ends");
+		check(menu.itemAt(x, menu.rowsTop() + menu.rowsHeight(), 0) == -1, "The frame below the items is not an action");
+		int finalY = menu.rowsTop() + menu.rowsHeight() - 1;
+		if (menu.maxScroll() > 0) {
+			check(menu.overScrollbar(menu.scrollbarLeft(), finalY), "Long lists have a scrollbar");
+			check(menu.itemAt(menu.scrollbarLeft(), finalY, 0) == -1, "The scrollbar cannot select an action");
+			check(menu.scrollFor(finalY) == menu.maxScroll(), "The scrollbar can reach the end");
+		}
+		int last = menu.itemAt(x, finalY, menu.clampScroll(actions.length));
+		check(last == actions.length - 1 && menu.label(last).equals(actions[last]), "Scrolling preserves the original action indices");
+		check(menu.clampScroll(-10) == 0, "Scroll stays inside the action list");
+
+		String longLabel = "Use @lre@" + String.join("", Collections.nCopies(30, "Very long target "));
+		java.util.function.ToIntFunction<String> measure = label -> label.replaceAll("@...@", "").length() * 9;
+		ContextMenuLayout narrow = new ContextMenuLayout(512, 346, 0, 0, size, text,
+			fontHeight[text.bodyFont], fontHeight[text.labelFont], "Choose option",
+			new String[]{longLabel}, measure, measure);
+		check(narrow.label(0).startsWith("Use @lre@") && narrow.label(0).endsWith("..."),
+			"A long actor label keeps the action and its colour");
+		check(measure.applyAsInt(narrow.label(0)) <= narrow.width - 2 * narrow.padding, "A long label fits the frame");
+		check(narrow.keepsOpenAt(0, 0), "Opening at the top-left remains possible");
 	}
 
 	private static void verifyChatBounds(ChatPanelLayout chat, int width) {

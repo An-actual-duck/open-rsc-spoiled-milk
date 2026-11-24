@@ -127,13 +127,14 @@ graphics choices can be changed.
 
 ## Right-click menus
 
-Bring the shared right-click menu up to the same visual and readability
-standard as the other panels. Use the UI size setting for padding and row
-spacing, and the text size setting for labels. Use the same row bounds for
-drawing, highlighting and selecting an action. Keep the existing action order,
-default click behavior and dismissal. Start verification with Inventory and
-Equipment, then check world targets and menus near the viewport edges at 540p
-and 1080p.
+The shared game menu uses the UI size setting for padding and row spacing
+and the text size setting for labels. Inventory, Equipment, chat and world
+actions use the same row bounds to draw, highlight and select an action.
+The menu stays inside the viewport. When a list is taller than the available
+space, the scroll wheel or scrollbar reaches the remaining actions without
+changing their order. Moving away and clicking outside still dismiss the menu.
+Trade, duel and other dedicated window menus are part of their respective
+window updates.
 
 ## Preview
 

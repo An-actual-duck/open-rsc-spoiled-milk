@@ -286,6 +286,10 @@ public final class Menu {
 		}
 	}
 
+	public String getTitle() {
+		return menuTitle;
+	}
+
 	public final int handleClick(int mouseX, int menuX, int menuY, int mouseY) {
 		try {
 
