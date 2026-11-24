@@ -1371,7 +1371,7 @@ public class Crafting implements UseInvTrigger,
 
 		int repeat = 1;
 		if (player.getConfig().BATCH_PROGRESSION) {
-			repeat = Math.min(30, player.getCarriedItems().getInventory().countId(gem.getCatalogId(), Optional.of(false)));
+			repeat = player.getCarriedItems().getInventory().countId(gem.getCatalogId(), Optional.of(false));
 		}
 
 		startbatch(repeat);
@@ -1505,9 +1505,9 @@ public class Crafting implements UseInvTrigger,
 
 		int repeat = 1;
 		if (player.getConfig().BATCH_PROGRESSION) {
-			repeat = Math.min(30, Math.max(1, Math.min(
+			repeat = Math.min(
 				availableMaterial / piece.materialCost,
-				getAvailableThreadUses(player) / threadCost)));
+				getAvailableThreadUses(player) / threadCost);
 		}
 
 		startbatch(repeat);
