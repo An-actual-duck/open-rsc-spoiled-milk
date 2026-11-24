@@ -571,7 +571,7 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
         self.assertFalse(capture.exists())
         self.assertFalse(layered_capture.exists())
 
-    def test_manager_collects_exact_external_handoff_without_merging(self) -> None:
+    def test_manager_reviews_and_integrates_revised_external_handoff(self) -> None:
         f = self.fixture
         f.run("ai-workspace.sh", "create", "ai-1")
         contributor = f.base / "external-contributor"
@@ -608,6 +608,57 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
         )
         self.assertNotEqual(refused.returncode, 0)
         self.assertIn("moved", refused.stderr)
+
+        (contributor / "external.txt").write_text("revised after review\n", encoding="utf-8")
+        f.git("commit", "-am", "Address review", cwd=contributor)
+        revised_head = f.git("rev-parse", "HEAD", cwd=contributor).stdout.strip()
+        f.git("push", "origin", branch, cwd=contributor)
+
+        refused = f.run("ai-manager.sh", "merge", branch, check=False)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("does not match", refused.stderr)
+        self.assertEqual(f.state(1)["head"], expected_head)
+
+        f.run("ai-workspace.sh", "create", "ai-2")
+        refused = f.run("ai-manager.sh", "collect-contributor", "ai-2", branch, revised_head, check=False)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("original review slot", refused.stderr)
+
+        local_edit = f.slot(1) / "local-notes.txt"
+        local_edit.write_text("preserve local changes\n", encoding="utf-8")
+        refused = f.run("ai-manager.sh", "collect-contributor", "ai-1", branch, revised_head, check=False)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("is dirty", refused.stderr)
+        self.assertEqual(f.state(1)["head"], expected_head)
+        self.assertEqual(local_edit.read_text(), "preserve local changes\n")
+        local_edit.unlink()
+
+        f.run("ai-manager.sh", "collect-contributor", "ai-1", branch, revised_head)
+        self.assertEqual(f.state(1)["phase"], "READY")
+        self.assertEqual(f.state(1)["head"], revised_head)
+        self.assertEqual((f.slot(1) / "external.txt").read_text(), "revised after review\n")
+        self.assertEqual(f.git("rev-parse", "main").stdout.strip(), f.git("rev-parse", "spoiled-milk/main").stdout.strip())
+
+        # Simulate a rewritten remote branch without changing either worktree.
+        f.git(
+            "push",
+            f"--force-with-lease=refs/heads/{branch}:{revised_head}",
+            "origin",
+            f"{expected_head}:refs/heads/{branch}",
+            cwd=contributor,
+        )
+        refused = f.run("ai-manager.sh", "collect-contributor", "ai-1", branch, expected_head, check=False)
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("does not descend", refused.stderr)
+        self.assertEqual(f.state(1)["head"], revised_head)
+
+        f.git("push", "origin", branch, cwd=contributor)
+        f.run("ai-manager.sh", "collect-contributor", "ai-1", branch, revised_head)
+        f.run("ai-manager.sh", "merge", branch)
+        f.git("push", "spoiled-milk", "main")
+        f.run("ai-workspace.sh", "recycle", "ai-1")
+        self.assertEqual(f.state(1)["phase"], "IDLE")
+        f.git("merge-base", "--is-ancestor", revised_head, "main")
 
     def test_start_rejects_non_idle_state_and_status_survives_missing_slot(self) -> None:
         f = self.fixture

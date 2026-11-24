@@ -1,5 +1,8 @@
 # External AI Contributor Workflow
 
+For instructions you can give directly to Claude, see the
+[Claude contributor onboarding guide](../contributor-guides/claude-onboarding.md).
+
 This is the safe contribution path for someone who uses AI tools but is not a
 Spoiled Milk maintainer. It keeps `main`, releases, and the public server under
 Justin's manager AI while still producing the same kind of exact, durable
@@ -256,8 +259,11 @@ The following commands are for Justin's manager checkout, not the contributor.
 
 4. Inspect the diff and run relevant tests in the printed slot path. Collection
    marks the verified commit READY but does not merge it.
-5. If review fails, leave the branch unchanged and request a new contributor
-   handoff. Do not silently repair or force-update their remote branch.
+5. If review fails, leave the branch unchanged and request a new handoff on
+   the same branch. When it arrives, run `collect-contributor` with the original
+   slot and the new exact commit. Review and test the updated checkout. See the
+   [manager guide](manager.md#external-contributor-collection) for the refresh
+   requirements.
 6. If review passes, return to the manager checkout and run:
 
    ```bash
@@ -269,15 +275,11 @@ The following commands are for Justin's manager checkout, not the contributor.
 8. Release and live deployment remain separate owner operations. Contributor
    approval or a merged pull request never authorizes a public-server restart.
 
-## Optional GitHub Protection
+## GitHub Main Protection
 
-Repository-level branch protection is still recommended because local tooling
-cannot control every browser or API action:
+The [maintainer-controlled main ruleset][main-ruleset] applies to `main`.
+Only the maintainer account can bypass the update restriction. Contributors
+can push their task branches and open pull requests for manager review.
+Contributor setup is local and does not alter GitHub settings.
 
-- require a pull request for `main`
-- require Justin's approval
-- dismiss stale approval after new commits
-- require conversation resolution
-- block force pushes and branch deletion
-
-These are recommendations only. Onboarding does not alter GitHub settings.
+[main-ruleset]: https://github.com/An-actual-duck/open-rsc-spoiled-milk/rules/28013985
