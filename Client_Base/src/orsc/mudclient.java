@@ -32717,6 +32717,10 @@ public final class mudclient implements Runnable {
 		return chatLayout != null;
 	}
 
+	public int getCraftingPanelBottom() {
+		return chatLayout == null ? getGameHeight() : Math.min(getGameHeight(), chatLayout.tabsTop());
+	}
+
 	public void runScroll(int x) {
 		if (hasDialogueChoiceInput()) {
 			dialogueScroll.addAndGet(Integer.signum(x));

@@ -65,20 +65,27 @@ final class CraftingWindow {
 		int dockWidth = Math.min(Math.max(size(218), measure(font, "Keep window open") + 5 * gap), available / 3);
 		int width = Math.min(size(600), available - dockWidth - gap);
 		int x = (client.getGameWidth() - width - dockWidth - gap) / 2;
-		int header = Math.max(size(37), surface.fontHeight(titleFont) + 2 * gap);
-		int tabHeight = Math.max(size(26), line + gap);
-		int tabColumns = Math.max(1, (width - gap) / Math.max(size(110), measure(font, "Ammunition") + 2 * gap));
+		int panelBottom = client.getCraftingPanelBottom();
+		int height = Math.min(size(428), panelBottom - 2 * gap);
+		int y = Math.min((client.getGameHeight() - height) / 2, panelBottom - height - gap);
+		boolean compactHeight = height < size(370);
+		int verticalGap = compactHeight ? Math.max(4, gap / 2) : gap;
+		int header = Math.max(size(compactHeight ? 28 : 37), surface.fontHeight(titleFont) + 2 * verticalGap);
+		int tabHeight = Math.max(size(compactHeight ? 22 : 26), line + verticalGap);
+		int tabWidth = size(88);
+		for (CraftingRecipeTabs.Family family : tabs.families) {
+			tabWidth = Math.max(tabWidth, measure(font, family.name) + 2 * gap);
+		}
+		int tabColumns = Math.max(1, (width - gap) / tabWidth);
 		int tabRows = Math.max(1, (tabs.families.size() + tabColumns - 1) / tabColumns);
 		int tabsHeight = tabRows * (tabHeight + gap / 2);
-		int tooltipHeight = 2 * line + gap;
-		int costHeight = Math.max(size(82), 2 * line + size(40));
-		int height = Math.min(size(428), client.getGameHeight() - 2 * gap);
-		int y = (client.getGameHeight() - height) / 2;
-		int tabsY = y + header + gap;
-		int tooltipY = tabsY + tabsHeight + gap;
-		int contentY = tooltipY + tooltipHeight + gap;
+		int tooltipHeight = 2 * line + verticalGap;
+		int costHeight = Math.max(size(compactHeight ? 69 : 82), 2 * line + size(40));
+		int tabsY = y + header + verticalGap;
+		int tooltipY = tabsY + tabsHeight + verticalGap;
+		int contentY = tooltipY + tooltipHeight + verticalGap;
 		int costY = y + height - costHeight;
-		int contentHeight = costY - contentY - gap;
+		int contentHeight = costY - contentY - verticalGap;
 		int materialWidth = Math.min(Math.max(size(148), measure(font, "Materials") + 3 * gap), (width - 4 * gap) / 2);
 		int gridX = x + materialWidth + 2 * gap;
 		int gridWidth = x + width - gap - gridX;
@@ -174,9 +181,9 @@ final class CraftingWindow {
 
 	private String drawRecipes(int x, int y, int width, int height, int gap, int font) {
 		int cellWidth = size(64);
-		int cellHeight = size(47);
 		int columns = Math.max(1, width / (cellWidth + gap));
 		int pageHeight = Math.max(size(24), client.getSurface().fontHeight(font) + gap / 2);
+		int cellHeight = Math.min(size(47), Math.max(pageHeight, height - pageHeight));
 		int rows = Math.max(1, (height - pageHeight) / (cellHeight + gap));
 		recipeArea = new Rectangle(x, y, width, height);
 		List<Integer> recipes = visibleRecipes();
@@ -195,8 +202,8 @@ final class CraftingWindow {
 			if (button(cellX, cellY, cellWidth, cellHeight, "", font, session.selectedRecipeIndex == index, true)) {
 				session.selectedRecipeIndex = index;
 			}
-			int spriteWidth = size(48);
-			int spriteHeight = size(32);
+			int spriteHeight = Math.min(size(32), cellHeight - 4);
+			int spriteWidth = Math.min(size(48), spriteHeight * 3 / 2);
 			drawItem(recipe.getItemId(), cellX + (cellWidth - spriteWidth) / 2,
 				cellY + (cellHeight - spriteHeight) / 2, spriteWidth, spriteHeight);
 			if (!isCraftable(recipe)) client.getSurface().drawBoxAlpha(cellX + 1, cellY + 1, cellWidth - 2, cellHeight - 2, 0, 100);
