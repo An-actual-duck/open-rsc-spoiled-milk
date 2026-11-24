@@ -79,7 +79,6 @@ abstract class ShopWindow {
 		int chrome = header + tabSpace + tabHeight * 2 + detailHeight + 5 * gap;
 		int bottom = client.getCraftingPanelBottom();
 		int height = Math.min(bottom - 2 * gap, chrome + 3 * (cellHeight + gap / 2));
-		int rows = Math.max(1, (height - chrome) / (cellHeight + gap / 2));
 		int y = Math.max(gap, (bottom - height) / 2);
 		int top = y + header + gap;
 		int tabStep = (inside + gap / 2) / tabColumns;
@@ -105,7 +104,12 @@ abstract class ShopWindow {
 		}
 		int nameY = top + tabSpace + line;
 		int gridY = top + tabSpace + tabHeight + gap;
-		int gridHeight = rows * (cellHeight + gap / 2);
+		int detailsY = y + height - detailHeight;
+		int gridSpace = detailsY - gridY - tabHeight - gap;
+		cellHeight = Math.min(cellHeight, Math.max(line + 2, gridSpace - gap / 2));
+		int rowStep = cellHeight + gap / 2;
+		int rows = clamp(gridSpace / rowStep, 1, 3);
+		int gridHeight = rows * rowStep;
 		catalogBounds = new Rectangle(contentX, gridY, inside, gridHeight);
 		int count = 0;
 		for (int i = 0; i < itemCount(); i++) if (includes(i)) count++;
@@ -120,7 +124,7 @@ abstract class ShopWindow {
 		for (int i = 0; i < itemCount() && visible < perPage; i++) {
 			if (!includes(i) || catalogIndex++ < firstItem) continue;
 			int cellX = contentX + visible % columns * cellStep;
-			int cellY = gridY + visible / columns * (cellHeight + gap / 2);
+			int cellY = gridY + visible / columns * rowStep;
 			int tileWidth = cellStep - gap / 2;
 			if (button(cellX, cellY, tileWidth, cellHeight, "", font, i == selectedIndex(), true)) selectItem(i);
 			if (contains(cellX, cellY, tileWidth, cellHeight)) hovered = i;
@@ -143,7 +147,6 @@ abstract class ShopWindow {
 		int selected = selectedIndex();
 		String name = hovered >= 0 ? itemName(hovered) : selected >= 0 ? itemName(selected) : "Select an item";
 		draw(fit(name, font, inside), contentX, nameY, font, GOLD);
-		int detailsY = y + height - detailHeight;
 		client.getSurface().drawLineHoriz(contentX, detailsY, inside, BORDER);
 		if (selected >= 0) drawDetails(selected, contentX, detailsY + line, inside, line, font);
 		drawControls(selected, dockX + gap, top, dockWidth - 2 * gap, height - header - 2 * gap, gap, line, font);
