@@ -5113,9 +5113,8 @@ public class PacketHandler {
 
 	private void showTradeDialog() {
 		int serverIndex = packetsIncoming.getShort();
-		if (mc.getPlayerFromServer(serverIndex) != null) {
-			mc.setTradeRecipientName(mc.getPlayerFromServer(serverIndex).displayName);
-		}
+		ORSCharacter recipient = mc.getPlayerFromServer(serverIndex);
+		mc.setTradeRecipientName(recipient == null ? "" : recipient.displayName);
 
 		mc.setShowDialogTrade(true);
 		mc.setTradeRecipientItemsCount(0);

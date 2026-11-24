@@ -14,7 +14,7 @@ Use the existing Classic bitmap lettering and approved assets for development. S
 | Right-click menus | Inventory, Equipment, ground items, objects and characters. Scale the menu frame, text, row spacing and hit targets. |
 | World interaction | Overhead speech and status bars, item labels, action feedback, NPC responses and keyboard shortcuts. |
 | In-game guides | Skill guides, quest guides and their existing guide tabs. Give longer entries room for requirements, progress and rewards, and improve scrolling at both resolutions. |
-| Gameplay windows | Bank and PIN, shop, auction house, trade and duel through confirmation. Crafting and other skill actions, social and party management, achievements, rewards, point configuration, account options, death and recovery, territory and minigame displays. |
+| Gameplay windows | Bank and PIN, shop, auction house, trade through confirmation. Crafting and other skill actions, social and party management, achievements, rewards, point configuration, account options, death and recovery, territory and minigame displays. |
 | Session screens and modal states | Login and registration, appearance, loading and reconnect, welcome and notices, reporting, input prompts, confirmations, password and recovery pages, sleep, and logout. |
 | In-game developer tools | World Builder panels, definitions browser and selection controls. Check their hit regions against terrain picking in the same viewport. |
 
@@ -160,8 +160,8 @@ actions use the same row bounds to draw, highlight and select an action.
 The menu stays inside the viewport. When a list is taller than the available
 space, the scroll wheel or scrollbar reaches the remaining actions without
 changing their order. Moving away and clicking outside still dismiss the menu.
-Trade, duel and other dedicated window menus are part of their respective
-window updates.
+Trade uses the shared scaled menu frame for Offer and Remove quantities.
+The hidden Duel feature and its menus are deferred to the full Duel rework.
 
 ## Preview
 
@@ -202,3 +202,13 @@ The right panel contains the deposit-all action, inventory and equipment views,
 preset entry and quick loads, withdrawal form, and rearrangement controls.
 The preset screen offers the existing save and load actions. Fixed empty slots
 are a separate layout change.
+
+
+## Trade preview
+
+Trade places both offers beside the carried inventory. Compact viewports put
+the three grids in a row to preserve space for item icons. The grids and buttons
+follow UI size, with independent text size. Click a carried or offered item for
+the standard quantity, or right-click for 1, 5, 10, All or a custom amount. The confirmation screen lists items given and received,
+including the exact quantity and note status. Long offers scroll on compact
+layouts. The existing trade handshake, server rules and final confirmation apply.

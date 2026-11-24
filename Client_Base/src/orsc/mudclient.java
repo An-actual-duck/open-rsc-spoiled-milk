@@ -1422,6 +1422,10 @@ public final class mudclient implements Runnable {
 	private boolean tradeConfirmAccepted = false;
 	private int tradeConfirmItemsCount = 0;
 	private int tradeDoX_Slot;
+	private volatile ContextMenuLayout tradePreviewMenu;
+	private final java.util.concurrent.atomic.AtomicInteger tradePreviewWheel = new java.util.concurrent.atomic.AtomicInteger();
+	private int tradePreviewFirstRow, tradeReviewFirstRow;
+	private TradeQuantityTarget tradePreviewTarget;
 	private int tradeItemCount = 0;
 	private boolean tradeRecipientAccepted = false;
 	private int tradeRecipientConfirmItemsCount = 0;
@@ -9022,7 +9026,316 @@ public final class mudclient implements Runnable {
 		return false;
 	}
 
+	private boolean usesTradePreview() {
+		return chatLayout != null && (showDialogTrade || showDialogTradeConfirm);
+	}
+
+	private TradeWindowLayout tradeWindowLayout(boolean review) {
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		return new TradeWindowLayout(getGameWidth(), chatLayout.entryTop(), inventoryCapacity, review,
+			Math.max(tradeConfirmItemsCount, tradeRecipientConfirmItemsCount), GameInterfaceSettings.size(), text, getSurface().fontHeight(text.labelFont), getSurface().fontHeight(text.bodyFont));
+	}
+
+	private void drawTradePreview() {
+		TradeWindowLayout layout = tradeWindowLayout(false);
+		int offered = layout.give.slotAt(mouseX, mouseY);
+		int carried = layout.inventory.slotAt(mouseX, mouseY);
+		int received = layout.receive.slotAt(mouseX, mouseY);
+		handleTradePreviewInput(layout, offered, carried);
+		if (!showDialogTrade) return;
+
+		drawTradeFrame(layout, tradeRecipientName.isEmpty() ? "Trade" : "Trade with " + tradeRecipientName);
+		drawTradeGrid(layout, layout.give, trade, tradeItemCount, offered, "Your offer");
+		drawTradeGrid(layout, layout.receive, tradeRecipient, tradeRecipientItemsCount, received, "Their offer");
+		drawTradeGrid(layout, layout.inventory, inventory, inventoryItemCount, carried, "Inventory");
+		String status = tradeAccepted ? "Waiting for the other player" : tradeRecipientAccepted ? "The other player has accepted" : "";
+		drawTradeText(status, layout.firstColumn, layout.statusY, layout.window.width - 2 * layout.padding,
+			layout.labelFont, 0xFFDC82);
+		Item hovered = carried >= 0 && carried < inventoryItemCount ? inventory[carried]
+			: offered >= 0 && offered < tradeItemCount ? trade[offered]
+			: received >= 0 && received < tradeRecipientItemsCount ? tradeRecipient[received] : null;
+		if (hovered != null && hovered.getItemDef() != null) {
+			drawTradeText(tradeItemName(hovered) + "  " + hovered.getItemDef().getDescription(), layout.firstColumn,
+				layout.detailY, layout.window.width - 2 * layout.padding, layout.labelFont, 0xD8E1EE);
+		}
+		drawTradeButton(layout.accept, tradeAccepted ? "Accepted" : "Accept", layout.bodyFont, !tradeAccepted);
+		drawTradeButton(layout.decline, "Decline", layout.bodyFont, true);
+		if (tradePreviewMenu != null) renderScaledContextMenu(tradePreviewMenu, tradePreviewFirstRow);
+	}
+
+	private void handleTradePreviewInput(TradeWindowLayout layout, int offered, int carried) {
+		if (inputX_Action != InputXAction.ACT_0) {
+			mouseButtonItemCountIncrement = 0;
+			return;
+		}
+		ContextMenuLayout menu = tradePreviewMenu;
+		if (menu != null) {
+			tradePreviewFirstRow = menu.clampScroll(tradePreviewFirstRow + tradePreviewWheel.getAndSet(0));
+			if (menu.viewportWidth != getGameWidth() || menu.viewportHeight != getGameHeight()) {
+				tradePreviewMenu = null;
+			} else if (mouseButtonClick == 1 && menu.overScrollbar(mouseX, mouseY)) {
+				tradePreviewFirstRow = menu.scrollFor(mouseY);
+			} else if (mouseButtonClick != 0) {
+				int row = menu.itemAt(mouseX, mouseY, tradePreviewFirstRow);
+				tradePreviewMenu = null;
+				if (mouseButtonClick == 1 && row >= 0) selectTradePreviewQuantity(row);
+			} else if (!menu.keepsOpenAt(mouseX, mouseY)) {
+				tradePreviewMenu = null;
+			}
+			mouseButtonClick = 0;
+			mouseButtonItemCountIncrement = 0;
+			return;
+		}
+
+		boolean inInventory = carried >= 0 && carried < inventoryItemCount;
+		boolean inOffer = offered >= 0 && offered < tradeItemCount;
+		if (mouseButtonClick != 0 && !layout.window.contains(mouseX, mouseY)) {
+			declineTradePreview();
+		} else if (mouseButtonClick == 2) {
+			if (inInventory || inOffer) openTradePreviewMenu(inInventory ? inventory[carried] : trade[offered], inInventory);
+		} else if (mouseButtonClick == 1 && layout.decline.contains(mouseX, mouseY)) {
+			declineTradePreview();
+		} else if (mouseButtonClick == 1 && !tradeAccepted && layout.accept.contains(mouseX, mouseY)) {
+			tradeAccepted = true;
+			sendTradePreviewPacket(55);
+		} else if (mouseButtonClick == 1 || mouseButtonItemCountIncrement > 0) {
+			mouseButtonItemCountIncrement = Math.max(1, mouseButtonItemCountIncrement);
+			if (inInventory && inventory[carried].getItemDef() != null) tradeOffer(-1, carried);
+			else if (inOffer && trade[offered].getItemDef() != null) tradeRemove(-1, (byte) 124, offered);
+		}
+		mouseButtonClick = 0;
+		mouseButtonItemCountIncrement = 0;
+	}
+
+	private void openTradePreviewMenu(Item item, boolean offer) {
+		if (item.getItemDef() == null) return;
+		String action = offer ? "Offer " : "Remove ";
+		String[] labels = {action + "1", action + "5", action + "10", action + "All", action + "X"};
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		tradePreviewTarget = new TradeQuantityTarget(item.getItemDef().id, item.getNoted(), offer);
+		tradePreviewFirstRow = 0;
+		tradePreviewWheel.set(0);
+		tradePreviewMenu = new ContextMenuLayout(getGameWidth(), getGameHeight(), mouseX, mouseY,
+			GameInterfaceSettings.size(), text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+			tradeItemName(item), labels, label -> surface.stringWidth(text.bodyFont, label),
+			label -> surface.stringWidth(text.labelFont, label));
+	}
+
+	private void selectTradePreviewQuantity(int row) {
+		if (row == 4) {
+			TradeQuantityTarget target = tradePreviewTarget;
+			showItemModX(target.offer ? InputXPrompt.tradeOfferX : InputXPrompt.tradeRemoveX,
+				target.offer ? InputXAction.TRADE_OFFER : InputXAction.TRADE_REMOVE, true);
+		} else {
+			int[] quantities = {1, 5, 10, Integer.MAX_VALUE};
+			applyTradePreviewQuantity(quantities[row]);
+		}
+	}
+
+	private void applyTradePreviewQuantity(int quantity) {
+		TradeQuantityTarget target = tradePreviewTarget;
+		tradePreviewTarget = null;
+		if (target == null || !showDialogTrade || quantity <= 0) return;
+		Item[] items = target.offer ? inventory : trade;
+		int count = target.offer ? inventoryItemCount : tradeItemCount;
+		for (int slot = 0; slot < count; slot++) {
+			Item item = items[slot];
+			if (item.getItemDef() == null || item.getItemDef().id != target.id || item.getNoted() != target.noted) continue;
+			if (target.offer) tradeOffer(quantity, slot);
+			else tradeRemove(quantity, (byte) 124, slot);
+			return;
+		}
+	}
+
+	private boolean isTradePreviewQuantityPrompt() {
+		return tradePreviewTarget != null && (inputX_Action == InputXAction.TRADE_OFFER || inputX_Action == InputXAction.TRADE_REMOVE);
+	}
+
+	private void drawTradePreviewQuantityPrompt() {
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		MudClientGraphics surface = getSurface();
+		if (!inputTextCurrent.isEmpty()) inputTextCurrent = inputTextCurrent.replaceAll("[^0-9]", "");
+		int padding = size.pixels(14);
+		int row = Math.max(size.pixels(38), surface.fontHeight(text.bodyFont) + 8);
+		int width = Math.min(getGameWidth() - 2 * padding, size.pixels(330));
+		int height = 4 * padding + 3 * row;
+		Rectangle box = new Rectangle((getGameWidth() - width) / 2, (getCraftingPanelBottom() - height) / 2, width, height);
+		int buttonY = box.y + height - padding - row;
+		int buttonWidth = (width - 3 * padding) / 2;
+		Rectangle accept = new Rectangle(box.x + padding, buttonY, buttonWidth, row);
+		Rectangle cancel = new Rectangle(box.x + 2 * padding + buttonWidth, buttonY, buttonWidth, row);
+		boolean submit = !inputTextFinal.isEmpty() || (mouseButtonClick == 1 && accept.contains(mouseX, mouseY));
+		boolean dismiss = mouseButtonClick == 1 && (cancel.contains(mouseX, mouseY) || !box.contains(mouseX, mouseY));
+		mouseButtonClick = 0;
+		if (submit || dismiss) {
+			if (submit) {
+				String digits = inputTextFinal.isEmpty() ? inputTextCurrent : inputTextFinal;
+				long amount = 0;
+				for (int i = 0; i < digits.length(); i++) {
+					char digit = digits.charAt(i);
+					if (digit >= '0' && digit <= '9') amount = Math.min(Integer.MAX_VALUE, amount * 10 + digit - '0');
+				}
+				applyTradePreviewQuantity((int) amount);
+			} else tradePreviewTarget = null;
+			inputX_Action = InputXAction.ACT_0;
+			inputTextCurrent = inputTextFinal = "";
+			return;
+		}
+		surface.drawBox(box.x, box.y, width, height, 0x182333);
+		surface.drawBoxBorder(box.x, width, box.y, height, 0x8799B2);
+		drawTradeText(tradePreviewTarget.offer ? "Amount to offer" : "Amount to remove", box.x + padding,
+			tradeTextBaseline(box.y + padding, row, text.labelFont), width - 2 * padding, text.labelFont, 0xFFDC82);
+		int inputY = box.y + row + 2 * padding;
+		surface.drawBox(box.x + padding, inputY, width - 2 * padding, row, 0x233144);
+		surface.drawBoxBorder(box.x + padding, width - 2 * padding, inputY, row, 0x667993);
+		drawTradeText(inputTextCurrent + "*", box.x + padding + 6, tradeTextBaseline(inputY, row, text.bodyFont),
+			width - 2 * padding - 12, text.bodyFont, 0xFFFFFF);
+		drawTradeButton(accept, "OK", text.bodyFont, true);
+		drawTradeButton(cancel, "Cancel", text.bodyFont, true);
+	}
+
+	private void drawTradeReviewPreview() {
+		TradeWindowLayout layout = tradeWindowLayout(true);
+		int maxScroll = Math.max(0, Math.max(tradeConfirmItemsCount, tradeRecipientConfirmItemsCount) - layout.reviewRows);
+		tradeReviewFirstRow = Math.max(0, Math.min(maxScroll, tradeReviewFirstRow + tradePreviewWheel.getAndSet(0)));
+		if (mouseButtonClick == 1) {
+			if (!layout.window.contains(mouseX, mouseY) || layout.decline.contains(mouseX, mouseY)) {
+				declineTradePreview();
+			} else if (!tradeConfirmAccepted && layout.accept.contains(mouseX, mouseY)) {
+				tradeConfirmAccepted = true;
+				sendTradePreviewPacket(104);
+			} else if (maxScroll > 0 && layout.reviewUp.contains(mouseX, mouseY)) {
+				tradeReviewFirstRow = Math.max(0, tradeReviewFirstRow - 1);
+			} else if (maxScroll > 0 && layout.reviewDown.contains(mouseX, mouseY)) {
+				tradeReviewFirstRow = Math.min(maxScroll, tradeReviewFirstRow + 1);
+			}
+		}
+		mouseButtonClick = 0;
+		if (!showDialogTradeConfirm) return;
+
+		drawTradeFrame(layout, "Confirm trade with " + tradeRecipientConfirmName);
+		drawTradeReviewColumn(layout, layout.firstColumn, "You give", tradeConfirm, tradeConfirmItemsCount);
+		drawTradeReviewColumn(layout, layout.secondColumn, "You receive", tradeRecipientConfirm, tradeRecipientConfirmItemsCount);
+		if (maxScroll > 0) {
+			int end = tradeReviewFirstRow + layout.reviewRows;
+			drawTradeText((tradeReviewFirstRow + 1) + "-" + end + " / " + (layout.reviewRows + maxScroll),
+				layout.secondColumn + layout.columnWidth / 2, tradeTextBaseline(layout.reviewUp.y, layout.labelHeight, layout.labelFont),
+				layout.reviewUp.x - layout.secondColumn - layout.columnWidth / 2 - 3, layout.labelFont, 0xB6C6DE);
+			drawTradeButton(layout.reviewUp, "^", layout.labelFont, tradeReviewFirstRow > 0);
+			drawTradeButton(layout.reviewDown, "v", layout.labelFont, tradeReviewFirstRow < maxScroll);
+		}
+		drawTradeText(tradeConfirmAccepted ? "Waiting for the other player" : "Check both offers. A completed trade cannot be reversed.",
+			layout.firstColumn, layout.statusY, layout.window.width - 2 * layout.padding, layout.labelFont, 0xFFDC82);
+		drawTradeButton(layout.accept, tradeConfirmAccepted ? "Confirmed" : "Confirm", layout.bodyFont, !tradeConfirmAccepted);
+		drawTradeButton(layout.decline, "Decline", layout.bodyFont, true);
+	}
+
+	private void declineTradePreview() {
+		setShowDialogTrade(false);
+		setShowDialogTradeConfirm(false);
+		sendTradePreviewPacket(230);
+	}
+
+	private void sendTradePreviewPacket(int opcode) {
+		packetHandler.getClientStream().newPacket(opcode);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	private void drawTradeFrame(TradeWindowLayout layout, String title) {
+		Rectangle bounds = layout.window;
+		MudClientGraphics surface = getSurface();
+		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, 0x182333, 246);
+		surface.drawVerticalGradient(bounds.x, bounds.y, bounds.width, layout.headerHeight, 0x3B4C67, 0x28354A);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, 0x667993);
+		drawTradeText(title, layout.firstColumn, tradeTextBaseline(bounds.y, layout.headerHeight, layout.bodyFont),
+			bounds.width - 2 * layout.padding, layout.bodyFont, 0xFFDC82);
+	}
+
+	private void drawTradeGrid(TradeWindowLayout layout, TradeWindowLayout.Grid grid, Item[] items, int count, int hover, String title) {
+		drawTradeText(title, grid.x, tradeTextBaseline(grid.y - layout.labelHeight, layout.labelHeight, layout.labelFont),
+			grid.columns * grid.cellWidth, layout.labelFont, 0xD8E1EE);
+		MudClientGraphics surface = getSurface();
+		for (int slot = 0; slot < grid.capacity; slot++) {
+			int x = grid.x(slot), y = grid.y(slot);
+			surface.drawBox(x, y, grid.cellWidth - 1, grid.cellHeight - 1, hover == slot ? 0x3A4C67 : 0x233144);
+			surface.drawBoxBorder(x, grid.cellWidth - 1, y, grid.cellHeight - 1, 0x465872);
+			if (slot >= count || items[slot].getItemDef() == null) continue;
+			Item item = items[slot];
+			int iconHeight = grid.cellHeight - 4;
+			int iconWidth = Math.min(grid.cellWidth - 4, 3 * iconHeight / 2);
+			drawInventoryPreviewIcon(item.getItemDef(), item.getNoted(), x + (grid.cellWidth - iconWidth) / 2,
+				y + 2, iconWidth, iconHeight);
+			if (item.getNoted() || item.getItemDef().isStackable()) {
+				drawInventoryPreviewCount(item.getAmount(), x + 3, y + 1, grid.cellWidth - 6, grid.cellHeight, layout.labelFont);
+			}
+		}
+	}
+
+	private void drawTradeReviewColumn(TradeWindowLayout layout, int x, String title, Item[] items, int count) {
+		int headerTop = layout.reviewTop - layout.labelHeight;
+		drawTradeText(title, x, tradeTextBaseline(headerTop, layout.labelHeight, layout.labelFont),
+			layout.columnWidth, layout.labelFont, 0xD8E1EE);
+		if (count == 0) {
+			drawTradeText("Nothing", x, tradeTextBaseline(layout.reviewTop, layout.lineHeight, layout.bodyFont),
+				layout.columnWidth, layout.bodyFont, 0xB6C6DE);
+			return;
+		}
+		for (int row = 0; row < layout.reviewRows && tradeReviewFirstRow + row < count; row++) {
+			Item item = items[tradeReviewFirstRow + row];
+			if (item.getItemDef() == null) continue;
+			int y = layout.reviewTop + row * layout.lineHeight;
+			getSurface().drawBox(x, y, layout.columnWidth, layout.lineHeight - 1, 0x233144);
+			String amount = item.getNoted() || item.getItemDef().isStackable()
+				? Integer.toString(item.getAmount()) : "";
+			int amountWidth = getSurface().stringWidth(layout.labelFont, amount);
+			int baseline = tradeTextBaseline(y, layout.lineHeight, layout.labelFont);
+			drawTradeText(tradeItemName(item), x + 5, baseline, layout.columnWidth - amountWidth - 15, layout.labelFont, 0xFFFFFF);
+			getSurface().drawString(amount, x + layout.columnWidth - 5 - amountWidth, baseline, 0xFFDC82, layout.labelFont);
+		}
+	}
+
+	private String tradeItemName(Item item) {
+		return item.getItemDef().getName() + (item.getNoted() ? " (Noted)" : "");
+	}
+
+	private void drawTradeButton(Rectangle bounds, String label, int font, boolean enabled) {
+		MudClientGraphics surface = getSurface();
+		boolean hover = enabled && bounds.contains(mouseX, mouseY);
+		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, hover ? 0x3A4C67 : 0x28354A);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, enabled ? 0x667993 : 0x465872);
+		surface.drawColoredStringCentered(bounds.x + bounds.width / 2, label,
+			enabled ? 0xFFFFFF : 0xB6C6DE, 0, font, tradeTextBaseline(bounds.y, bounds.height, font));
+	}
+
+	private int tradeTextBaseline(int y, int height, int font) {
+		return y + (height + getSurface().fontHeight(font)) / 2 - 3;
+	}
+
+	private void drawTradeText(String text, int x, int y, int width, int font, int color) {
+		MudClientGraphics surface = getSurface();
+		if (width <= 0) return;
+		String label = ContextMenuLayout.fitLabel(text, width, value -> surface.stringWidth(font, value));
+		surface.drawString(label, x, y, color, font);
+	}
+
+	private static final class TradeQuantityTarget {
+		final int id;
+		final boolean noted, offer;
+
+		TradeQuantityTarget(int id, boolean noted, boolean offer) {
+			this.id = id;
+			this.noted = noted;
+			this.offer = offer;
+		}
+	}
+
 	private void drawDialogTrade() {
+		if (usesTradePreview()) {
+			drawTradePreview();
+			return;
+		}
 		try {
 
 			int clickOp = -1;
@@ -10820,6 +11133,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawInputX() {
+		if (isTradePreviewQuantityPrompt()) {
+			drawTradePreviewQuantityPrompt();
+			return;
+		}
 		try {
 			if (this.inputTextFinal.length() <= 0 && !this.inputX_OK) {
 				if (this.inputX_Action.requiresNumeric()) {
@@ -11848,7 +12165,11 @@ public final class mudclient implements Runnable {
 	}
 
 	private void renderScaledContextMenu(ContextMenuLayout layout) {
-		int hovered = layout.itemAt(mouseX, mouseY, contextMenuFirstRow);
+		renderScaledContextMenu(layout, contextMenuFirstRow);
+	}
+
+	private void renderScaledContextMenu(ContextMenuLayout layout, int firstRow) {
+		int hovered = layout.itemAt(mouseX, mouseY, firstRow);
 		MudClientGraphics surface = getSurface();
 		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.height, 0x182333, 244);
 		if (layout.title != null) {
@@ -11859,7 +12180,7 @@ public final class mudclient implements Runnable {
 		}
 		int rowWidth = Math.min(layout.width - 2, layout.scrollbarLeft() - layout.left - 1);
 		for (int row = 0; row < layout.visibleRows; row++) {
-			int action = contextMenuFirstRow + row;
+			int action = firstRow + row;
 			int y = layout.rowTop(row);
 			if (action == hovered) {
 				surface.drawBox(layout.left + 1, y, rowWidth, layout.rowHeight, 0x3A4C67);
@@ -11870,7 +12191,7 @@ public final class mudclient implements Runnable {
 		if (layout.maxScroll() > 0) {
 			int body = layout.rowsHeight();
 			int thumb = Math.max(layout.padding, body * layout.visibleRows / (layout.visibleRows + layout.maxScroll()));
-			int y = layout.rowsTop() + (body - thumb) * contextMenuFirstRow / layout.maxScroll();
+			int y = layout.rowsTop() + (body - thumb) * firstRow / layout.maxScroll();
 			int x = layout.scrollbarLeft();
 			int width = layout.left + layout.width - x;
 			surface.drawBox(x, layout.rowsTop(), width - 1, body, 0x283548);
@@ -13086,6 +13407,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawTradeConfirmDialog(int var1) {
+		if (usesTradePreview()) {
+			drawTradeReviewPreview();
+			return;
+		}
 		try {
 
 			byte var2 = 22;
@@ -21861,6 +22186,12 @@ public final class mudclient implements Runnable {
 							return;
 						}
 					}
+					if (isTradePreviewQuantityPrompt() && (key == 27 || desktopKeyCode == 27)) {
+						tradePreviewTarget = null;
+						inputX_Action = InputXAction.ACT_0;
+						inputTextCurrent = inputTextFinal = "";
+						return;
+					}
 					if ((key == '\n' || key == '\r') && (this.inputX_Action == InputXAction.BANK_DEPOSIT || this.inputX_Action == InputXAction.BANK_WITHDRAW)) {
 						this.inputX_OK = true;
 					}
@@ -29973,6 +30304,14 @@ public final class mudclient implements Runnable {
 
 	public void setShowDialogTrade(boolean show) {
 		this.showDialogTrade = show;
+		tradePreviewMenu = null;
+		tradePreviewTarget = null;
+		tradePreviewWheel.set(0);
+		if (chatLayout != null && (inputX_Action == InputXAction.TRADE_OFFER || inputX_Action == InputXAction.TRADE_REMOVE)) {
+			inputX_Action = InputXAction.ACT_0;
+			inputX_OK = false;
+			inputTextCurrent = inputTextFinal = "";
+		}
 	}
 
 	public int getTradeRecipientItemsCount() {
@@ -30043,6 +30382,8 @@ public final class mudclient implements Runnable {
 
 	public void setShowDialogTradeConfirm(boolean confirm) {
 		this.showDialogTradeConfirm = confirm;
+		tradeReviewFirstRow = 0;
+		tradePreviewWheel.set(0);
 	}
 
 	public void setTradeConfirmAccepted(boolean confirm) {
@@ -31826,10 +32167,7 @@ public final class mudclient implements Runnable {
 				if (id == getTradeItemID(tSlot) && item.getNoted() == getTradeItem(tSlot).getNoted()) {
 					if (def.isStackable() || item.getNoted()) {
 						if (count >= 0) {
-							setTradeItemSize(tSlot, getTradeItemSize(tSlot) + count);
-							if (getTradeItemSize(tSlot) > getInventoryItemSize(slot)) {
-								setTradeItemSize(tSlot, getInventoryItemSize(slot));
-							}
+							setTradeItemSize(tSlot, (int) Math.min((long) getTradeItemSize(tSlot) + count, getInventoryItemSize(slot)));
 
 							offerSuccess = true;
 						} else {
@@ -32793,7 +33131,15 @@ public final class mudclient implements Runnable {
 		return chatLayout == null ? getGameHeight() : Math.min(getGameHeight(), chatLayout.tabsTop());
 	}
 
+	public boolean hasTradePreviewInput() {
+		return usesTradePreview();
+	}
+
 	public void runScroll(int x) {
+		if (usesTradePreview()) {
+			if (tradePreviewMenu != null || showDialogTradeConfirm) tradePreviewWheel.addAndGet(x);
+			return;
+		}
 		if (hasDialogueChoiceInput()) {
 			dialogueScroll.addAndGet(Integer.signum(x));
 			return;

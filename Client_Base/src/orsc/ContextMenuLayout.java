@@ -60,7 +60,7 @@ final class ContextMenuLayout {
 		}
 	}
 
-	private static String fitLabel(String label, int width, ToIntFunction<String> measure) {
+	static String fitLabel(String label, int width, ToIntFunction<String> measure) {
 		if (measure.applyAsInt(label) <= width) return label;
 		int limit = width - measure.applyAsInt("...");
 		int end = label.length();
