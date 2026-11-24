@@ -1011,6 +1011,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 						os.slot = packet.readUnsignedByte();
 						os.name = packet.readString();
 						break;
+					case QUEST_COMPLETION_PRESENTATION:
 					case BANK_FILTER_TABS:
 					case SHOP_TABS:
 					case PRODUCTION_TABS:

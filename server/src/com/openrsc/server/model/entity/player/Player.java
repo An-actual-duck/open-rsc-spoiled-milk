@@ -1,5 +1,6 @@
 package com.openrsc.server.model.entity.player;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.GameStateUpdater;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.*;
@@ -5098,9 +5099,11 @@ public final class Player extends Mob {
 			return;
 		}
 		if (getQuestStage(questId) != -1) {
-			getWorld().getQuest(questId).handleReward(this);
-			updateQuestStage(questId, -1);
-			ActionSender.sendStats(this);
+			QuestCompletionPresentation.award(this, questId, () -> {
+				getWorld().getQuest(questId).handleReward(this);
+				updateQuestStage(questId, -1);
+				ActionSender.sendStats(this);
+			});
 			getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(this,
 				"has completed the " + getWorld().getQuest(questId).getQuestName()
 					+ " quest and now has " + this.getQuestPoints() + " quest points!"));

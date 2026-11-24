@@ -1,5 +1,6 @@
 package com.openrsc.server.net.rsc.handlers;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.constants.*;
 import com.openrsc.server.constants.custom.*;
 import com.openrsc.server.content.clan.Clan;
@@ -138,6 +139,11 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 				break;
 			case PRODUCTION_TABS:
 				if (player.isUsingCustomClient()) player.setAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, true);
+				break;
+			case QUEST_COMPLETION_PRESENTATION:
+				if (QuestCompletionPresentation.enabled() && player.isUsingCustomClient()) {
+					player.setAttribute(QuestCompletionPresentation.CLIENT_ATTRIBUTE, true);
+				}
 				break;
 			case BANK_FILTER_TABS:
 				if (player.isUsingCustomClient() && player.getConfig().WANT_CUSTOM_BANKS) {

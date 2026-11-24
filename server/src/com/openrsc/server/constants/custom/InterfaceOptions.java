@@ -37,7 +37,8 @@ public enum InterfaceOptions {
 	SHOP_TABS(29),
 	SHOP_SELECT_TAB(30),
 	BANK_FILTER_TABS(31),
-	BANK_SAVE_FILTER_TAB(32);
+	BANK_SAVE_FILTER_TAB(32),
+	QUEST_COMPLETION_PRESENTATION(33);
 
 	private int option;
 

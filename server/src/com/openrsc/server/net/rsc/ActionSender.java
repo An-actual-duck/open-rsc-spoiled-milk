@@ -947,7 +947,7 @@ public class ActionSender {
 			LOGGER.info(server.getConfig().GROUND_ITEM_NAMES + " 89");
 			LOGGER.info(server.getConfig().WANT_NATURE_RUNE_PROTECTION + " 90");
 		}
-		Packet p = prepareServerConfigs(server, false);
+		Packet p = prepareServerConfigs(server, false, false);
 		// ConnectionAttachment attachment = new ConnectionAttachment();
 		// channel.attr(RSCConnectionHandler.attachment).set(attachment);
 		if (p != null)
@@ -956,12 +956,12 @@ public class ActionSender {
 	}
 
 	static void sendServerConfigs(Player player) {
-		Packet p = prepareServerConfigs(player.getWorld().getServer(), DialoguePresentation.enabled());
+		Packet p = prepareServerConfigs(player.getWorld().getServer(), DialoguePresentation.enabled(), QuestCompletionPresentation.enabled());
 		if (p != null)
 			player.write(p);
 	}
 
-	private static Packet prepareServerConfigs(Server server, boolean dialoguePreview) {
+	private static Packet prepareServerConfigs(Server server, boolean dialoguePreview, boolean questPreview) {
 		PayloadCustomGenerator generator = new PayloadCustomGenerator();
 		ServerConfigsStruct struct = new ServerConfigsStruct();
 
@@ -1067,6 +1067,7 @@ public class ActionSender {
 		if (dialoguePreview) {
 			configs.add(DialoguePresentation.CONFIG_TAG);
 		}
+		if (questPreview) configs.add(QuestCompletionPresentation.CONFIG_TAG);
 		struct.configs = configs;
 		struct.setOpcode(OpcodeOut.SEND_SERVER_CONFIGS);
 		return generator.generate(struct, null);

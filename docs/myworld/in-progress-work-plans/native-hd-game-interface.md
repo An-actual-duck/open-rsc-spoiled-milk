@@ -20,7 +20,8 @@ Use the existing Classic bitmap lettering and approved assets for development. S
 
 Chat and dialogue responses take their dimensions from the UI size setting and their fonts from the text size setting. The two preferences appear under **Options → Graphics → Interface preview** and use the existing local client settings store.
 
-Quest completion rewards are the next gameplay window to update.
+Quest completion rewards use the preview below. Activity rewards stay tied to
+their respective windows.
 
 ## Needs further exploration
 
@@ -228,3 +229,18 @@ follow UI size, with independent text size. Click a carried or offered item for
 the standard quantity, or right-click for 1, 5, 10, All or a custom amount. The confirmation screen lists items given and received,
 including the exact quantity and note status. Long offers scroll on compact
 layouts. The existing trade handshake, server rules and final confirmation apply.
+
+
+## Quest completion preview
+
+The completion window lists quest points, experience actually gained, items
+received, and whether they were banked or placed on the ground. A quest can also
+provide text for a verified unlock. The Cook's Assistant preview includes use of
+the Cook's range. The panel uses the independent UI and text sizes.
+
+The server reports grants from the quest completion script, including dialogue
+shortcuts and the items they award after updating the quest stage. Rewards
+collected in a separate interaction continue through their existing screens and
+messages. The server flag `-Dspoiledmilk.questRewardPreview=true` advertises the
+optional window to preview clients. Minigame and activity rewards stay with
+their respective activities.

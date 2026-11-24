@@ -558,6 +558,7 @@ public class PacketHandler {
 		put(164, "SURFACE_SCENERY_CELL");
 		put(155, "SEND_HISCORES");
 		put(157, "LAYERED_SCENE_CONTEXT");
+		put(167, "QUEST_COMPLETION_PRESENTATION");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
 		put(254, "UPDATE_EQUIPMENT");
 		put(255, "UPDATE_EQUIPMENT_SLOT");
@@ -913,6 +914,7 @@ public class PacketHandler {
 			else if (opcode == 19) setServerConfiguration(length);
 
 			else if (opcode == 166) updateDialoguePresentation(length);
+			else if (opcode == 167) showQuestReward(length);
 
 			else this.handlePacket2(opcode, length);
 
@@ -3188,15 +3190,7 @@ public class PacketHandler {
 			groundItemNames = packetsIncoming.getUnsignedByte(); // 89
 			wantNatureRuneProtection = packetsIncoming.getUnsignedByte(); // 90
 			wantHiscores = packetsIncoming.getUnsignedByte(); // 91
-			if (RenderSurfaceSettings.isInterfacePreviewEnabled() && !Config.isAndroid()) {
-				String tag = "dialogue-presentation/1";
-				if (length - packetsIncoming.packetEnd == tag.length() + 1
-					&& packetsIncoming.dataBuffer[length - 1] == 10
-					&& tag.equals(packetsIncoming.readString())) {
-					clientStream.newPacket(157);
-					clientStream.finishPacket();
-				}
-			}
+			requestInterfacePreviews(length);
 		}
 
 		if (Config.DEBUG) {
@@ -4972,6 +4966,52 @@ public class PacketHandler {
 		}
 		int dialogueId = length - packetsIncoming.packetEnd == Integer.BYTES ? packetsIncoming.get32() : 0;
 		mc.showOptionsMenu(dialogueId);
+	}
+
+	private void requestInterfacePreviews(int length) {
+		if (!RenderSurfaceSettings.isInterfacePreviewEnabled() || Config.isAndroid()
+			|| length > packetsIncoming.dataBuffer.length || length - packetsIncoming.packetEnd > 128) return;
+		while (packetsIncoming.packetEnd < length) {
+			int start = packetsIncoming.packetEnd;
+			int end = start;
+			while (end < length && packetsIncoming.dataBuffer[end] != 10) end++;
+			if (end == length) return;
+			String tag = new String(packetsIncoming.dataBuffer, start, end - start, java.nio.charset.StandardCharsets.US_ASCII);
+			packetsIncoming.packetEnd = end + 1;
+			if ("dialogue-presentation/1".equals(tag)) {
+				clientStream.newPacket(157);
+				clientStream.finishPacket();
+			} else if ("quest-completion/1".equals(tag)) {
+				clientStream.newPacket(199);
+				clientStream.bufferBits.putByte(33);
+				clientStream.finishPacket();
+			}
+		}
+	}
+
+	private void showQuestReward(int length) {
+		if (!RenderSurfaceSettings.isInterfacePreviewEnabled() || Config.isAndroid() || length > packetsIncoming.dataBuffer.length
+			|| length - packetsIncoming.packetEnd < 3 || packetsIncoming.getUnsignedByte() != 1) return;
+		String quest = readQuestRewardText(length);
+		if (quest == null || quest.isEmpty() || packetsIncoming.packetEnd >= length) return;
+		int count = packetsIncoming.getUnsignedByte();
+		if (count > 120) return;
+		java.util.List<String> rewards = new java.util.ArrayList<>(count);
+		for (int row = 0; row < count; row++) {
+			String reward = readQuestRewardText(length);
+			if (reward == null) return;
+			rewards.add(reward);
+		}
+		if (packetsIncoming.packetEnd == length) mc.showQuestReward(quest, rewards);
+	}
+
+	private String readQuestRewardText(int length) {
+		if (packetsIncoming.packetEnd >= length) return null;
+		int bytes = packetsIncoming.getUnsignedByte();
+		int start = packetsIncoming.packetEnd;
+		if (bytes > 240 || bytes > length - start) return null;
+		packetsIncoming.packetEnd += bytes;
+		return new String(packetsIncoming.dataBuffer, start, bytes, java.nio.charset.StandardCharsets.UTF_8);
 	}
 
 	private void updateDialoguePresentation(int length) {

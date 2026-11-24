@@ -1283,6 +1283,10 @@ public final class mudclient implements Runnable {
 	private boolean showDialogDuelConfirm = false;
 	private boolean showDialogMessage = false;
 	private boolean showDialogServerMessage = false;
+	private volatile QuestRewardWindow questRewardWindow;
+	private final java.util.ArrayDeque<QuestRewardWindow> pendingQuestRewards = new java.util.ArrayDeque<>();
+	private final java.util.concurrent.atomic.AtomicInteger questRewardWheel = new java.util.concurrent.atomic.AtomicInteger();
+	private volatile boolean questRewardDismiss;
 	private boolean showDialogShop = false;
 	private volatile StandardShopWindow shopPreview;
 	private boolean shopPreviewTradeExtension;
@@ -8662,6 +8666,28 @@ public final class mudclient implements Runnable {
 		mouseButtonClick = 0;
 	}
 
+	void showQuestReward(String quest, java.util.List<String> rewards) {
+		QuestRewardWindow window = new QuestRewardWindow(quest, rewards);
+		if (questRewardWindow == null) questRewardWindow = window;
+		else pendingQuestRewards.addLast(window);
+	}
+
+	public boolean hasQuestRewardInput() {
+		return questRewardWindow != null && chatLayout != null && !optionsMenuShow
+			&& inputX_Action == InputXAction.ACT_0 && !showDialogMessage && !showDialogServerMessage && showUiWildWarn != 1;
+	}
+
+	private void drawQuestRewardWindow() {
+		QuestRewardWindow window = questRewardWindow;
+		if (window == null) return;
+		if (questRewardDismiss || window.draw(this, chatLayout.entryTop(), questRewardWheel.getAndSet(0))) {
+			questRewardDismiss = false;
+			questRewardWheel.set(0);
+			questRewardWindow = pendingQuestRewards.pollFirst();
+		}
+		mouseButtonClick = 0;
+	}
+
 	private void drawDialogServerMessage(byte var1) {
 		try {
 
@@ -13693,6 +13719,8 @@ public final class mudclient implements Runnable {
 			} else if (this.showDialogServerMessage && (!C_CUSTOM_UI || shopPreviewOpen()
 				|| isShowDialogBank() && bank.usesWorkspace())) {
 				this.drawDialogServerMessage((byte) -115);
+			} else if (hasQuestRewardInput()) {
+				drawQuestRewardWindow();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -21661,7 +21689,7 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					if (!hasContextMenuInput()) {
+					if (!hasContextMenuInput() && !hasQuestRewardInput()) {
 						this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 					}
@@ -21802,7 +21830,8 @@ public final class mudclient implements Runnable {
 					} else if (this.lastMouseButtonDown == 2) {
 						this.mouseButtonClick = 2;
 					}
-					if (!shopPreviewOpen() && !hasContextMenuInput() && mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
+					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput()
+						&& mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
 						this.mouseButtonClick = 0;
@@ -22123,6 +22152,12 @@ public final class mudclient implements Runnable {
 
 			if (var1 > 105) {
 				if (this.currentViewMode == GameMode.GAME) {
+					if (hasQuestRewardInput()) {
+						if (key == 27 || key == '\n' || key == '\r' || desktopKeyCode == 27 || desktopKeyCode == 10) {
+							questRewardDismiss = true;
+						}
+						return;
+					}
 					if (this.showAppearanceChange) {
 						this.panelAppearance.keyPress(key);
 						return;
@@ -28018,6 +28053,10 @@ public final class mudclient implements Runnable {
 
 	private void resetLoginScreenVariables(byte var1) {
 		try {
+			questRewardWindow = null;
+			pendingQuestRewards.clear();
+			questRewardWheel.set(0);
+			questRewardDismiss = false;
 			clearDialoguePresentation();
 			setOptionsMenuShow(false);
 			setWorldEditorBuildMode(false);
@@ -33136,6 +33175,10 @@ public final class mudclient implements Runnable {
 	}
 
 	public void runScroll(int x) {
+		if (hasQuestRewardInput()) {
+			questRewardWheel.addAndGet(x);
+			return;
+		}
 		if (usesTradePreview()) {
 			if (tradePreviewMenu != null || showDialogTradeConfirm) tradePreviewWheel.addAndGet(x);
 			return;

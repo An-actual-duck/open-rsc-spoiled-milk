@@ -1,5 +1,6 @@
 package com.openrsc.server.model.container;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.constants.IronmanMode;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.database.impl.mysql.queries.logging.DeathLog;
@@ -170,6 +171,7 @@ public class Inventory {
 
 	public Boolean add(Item itemToAdd, boolean sendInventory) {
 		synchronized (list) {
+			final int requestedAmount = itemToAdd.getAmount();
 			final int MAXSTACK = !player.getConfig().SHORT_MAX_STACKS ? Integer.MAX_VALUE : (Short.MAX_VALUE - Short.MIN_VALUE);
 
 			// Confirm we aren't attempting to add 0 or less of the item.
@@ -324,6 +326,8 @@ public class Inventory {
 					}
 				}
 			}
+			if (!transactionStaging) QuestCompletionPresentation.item(player, itemToAdd.getCatalogId(), requestedAmount, itemToAdd.getNoted(),
+				QuestCompletionPresentation.Destination.INVENTORY);
 			return true;
 		}
 	}

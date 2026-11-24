@@ -1,5 +1,6 @@
 package com.openrsc.server.model.world;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.Server;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.avatargenerator.AvatarGenerator;
@@ -918,6 +919,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 					}
 				});
 			}
+			QuestCompletionPresentation.groundItem(i);
 		} catch (Exception e) {
 			i.remove();
 			LOGGER.error("Exception in registerItem", e);
