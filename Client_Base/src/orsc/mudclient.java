@@ -1487,6 +1487,10 @@ public final class mudclient implements Runnable {
 	private BankPinInterface bankPinInterface;
 	private FishingTrawlerInterface fishingTrawlerInterface;
 	private String skillGuideChosen;
+	private static final int COOKS_ASSISTANT_QUEST = 1;
+	private volatile QuestGuideWindow questGuidePreview;
+	private final java.util.concurrent.atomic.AtomicInteger questGuideWheel = new java.util.concurrent.atomic.AtomicInteger();
+	private volatile boolean questGuideDismiss;
 	private String questGuideChosen;
 	private int questGuideProgress;
 	private String questGuideStartWho;
@@ -13721,6 +13725,8 @@ public final class mudclient implements Runnable {
 				this.drawDialogServerMessage((byte) -115);
 			} else if (hasQuestRewardInput()) {
 				drawQuestRewardWindow();
+			} else if (hasQuestGuidePreviewInput()) {
+				drawQuestGuidePreview();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -20276,6 +20282,9 @@ public final class mudclient implements Runnable {
 		setQuestGuideStartWhere(quest);
 		setQuestGuideRequirement(quest);
 		setQuestGuideReward(quest);
+		questGuideWheel.set(0);
+		questGuideDismiss = false;
+		questGuidePreview = chatLayout != null && quest == COOKS_ASSISTANT_QUEST ? cooksAssistantGuide() : null;
 		questGuideInterface.setVisible(true);
 		if (!C_CUSTOM_UI) showUiTab = 0;
 	}
@@ -21689,7 +21698,7 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					if (!hasContextMenuInput() && !hasQuestRewardInput()) {
+					if (!hasContextMenuInput() && !hasQuestRewardInput() && !hasQuestGuidePreviewInput()) {
 						this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 					}
@@ -21830,7 +21839,7 @@ public final class mudclient implements Runnable {
 					} else if (this.lastMouseButtonDown == 2) {
 						this.mouseButtonClick = 2;
 					}
-					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput()
+					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput() && !hasQuestGuidePreviewInput()
 						&& mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
@@ -22156,6 +22165,10 @@ public final class mudclient implements Runnable {
 						if (key == 27 || key == '\n' || key == '\r' || desktopKeyCode == 27 || desktopKeyCode == 10) {
 							questRewardDismiss = true;
 						}
+						return;
+					}
+					if (hasQuestGuidePreviewInput()) {
+						if (key == 27 || desktopKeyCode == 27) questGuideDismiss = true;
 						return;
 					}
 					if (this.showAppearanceChange) {
@@ -28057,6 +28070,7 @@ public final class mudclient implements Runnable {
 			pendingQuestRewards.clear();
 			questRewardWheel.set(0);
 			questRewardDismiss = false;
+			closeQuestGuidePreview();
 			clearDialoguePresentation();
 			setOptionsMenuShow(false);
 			setWorldEditorBuildMode(false);
@@ -32980,8 +32994,44 @@ public final class mudclient implements Runnable {
 		hiscoreData.clear();
 	}
 
+	private QuestGuideWindow cooksAssistantGuide() {
+		return new QuestGuideWindow("Cook's Assistant", new QuestGuideWindow.Section[] {
+			new QuestGuideWindow.Section("Start", "Speak to " + getQuestGuideStartWho() + " in the Lumbridge Castle kitchen."),
+			new QuestGuideWindow.Section("Requirements", "No quests or skill levels are required to start."),
+			new QuestGuideWindow.Section("Items to bring", "An egg, a bucket of milk, and a pot of flour.")
+		}, "Speak to the Cook in the Lumbridge Castle kitchen.",
+			"Bring the Cook an egg, a bucket of milk, and a pot of flour.",
+			"You helped the Cook prepare for the banquet. You can now use the Cook's range.",
+			new QuestGuideWindow.Section[] {
+				new QuestGuideWindow.Section("Quest rewards", "1 quest point", "An apron and a chef's hat", "Access to the Cook's range"),
+				new QuestGuideWindow.Section("Cooking experience",
+					"Base Cooking XP is 250 plus 50 per Cooking level. World XP rates affect the final award.")
+			});
+	}
+
+	private boolean hasQuestGuidePreviewInput() {
+		return questGuidePreview != null && chatLayout != null && questGuideInterface.isVisible() && !hasQuestRewardInput()
+			&& !optionsMenuShow && inputX_Action == InputXAction.ACT_0 && !showDialogMessage && !showDialogServerMessage
+			&& showUiWildWarn != 1 && !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank() && !showDialogShop;
+	}
+
+	private void drawQuestGuidePreview() {
+		QuestGuideWindow guide = questGuidePreview;
+		if (questGuideDismiss || guide.draw(this, chatLayout.entryTop(), questStages[COOKS_ASSISTANT_QUEST], questGuideWheel.getAndSet(0))) {
+			closeQuestGuidePreview();
+		}
+		mouseButtonClick = 0;
+	}
+
+	private void closeQuestGuidePreview() {
+		if (questGuidePreview != null && questGuideInterface != null) questGuideInterface.setVisible(false);
+		questGuidePreview = null;
+		questGuideWheel.set(0);
+		questGuideDismiss = false;
+	}
+
 	private void drawQuestGuide() {
-		questGuideInterface.onRender(this.getSurface());
+		if (questGuidePreview == null) questGuideInterface.onRender(getSurface());
 	}
 
 	public String getQuestGuideChosen() {
@@ -33177,6 +33227,10 @@ public final class mudclient implements Runnable {
 	public void runScroll(int x) {
 		if (hasQuestRewardInput()) {
 			questRewardWheel.addAndGet(x);
+			return;
+		}
+		if (hasQuestGuidePreviewInput()) {
+			questGuideWheel.addAndGet(x);
 			return;
 		}
 		if (usesTradePreview()) {

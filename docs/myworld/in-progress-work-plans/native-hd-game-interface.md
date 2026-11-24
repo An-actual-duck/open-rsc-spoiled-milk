@@ -116,7 +116,16 @@ bonuses and overall totals. Quest names wrap and the journal shows quest
 points and progress. Both lists scroll, and clicks use the visible row bounds.
 Rows open the existing guides through the same actions.
 
-### In-game guides to update later
+### Quest guide preview
+
+Cook's Assistant opens from Accomplishments → Quests. Its Overview page lists
+the start contact, location, requirements and ingredients. Progress reads the
+player's current quest stage, and Rewards describes the expected rewards and
+how Cooking XP is calculated. Tabs, scrolling and text follow the interface
+preferences. Use this guide to review the layout before migrating the rest of
+the quest list.
+
+### Remaining in-game guides
 
 - Give skill guides room for longer training and unlock lists, levels and
   requirements, with clear tabs and scrolling.
