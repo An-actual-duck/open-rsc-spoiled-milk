@@ -30,11 +30,20 @@ manager can verify the remote branch and choose when to remove it.
 
 ## Collaborator Access
 
-Start conservatively:
+For a new Spoiled Milk contributor using the manager handoff workflow:
 
-- New contributors: pull requests from forks or limited write access.
-- Trusted contributors: write access after they understand the workflow.
-- `main`: protected for everyone except controlled owner merges.
+1. Get the contributor's exact GitHub username or profile link.
+2. In the repository's **Settings → Collaborators**, use **Add people** and
+   select the matching account.
+3. Have the contributor accept the invitation while signed in to that
+   account. Confirm collaborator access before their first task-branch push.
+
+The contributor needs their own repository collaborator access, even if
+someone else has contributed to Spoiled Milk before. The manager collects
+from a topic branch pushed to this repository. Give them the
+[Claude onboarding guide](claude-onboarding.md) to set up and validate their
+local workflow.
+[GitHub invitation instructions](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/inviting-collaborators-to-a-personal-repository)
 
 ## Code Owners
 

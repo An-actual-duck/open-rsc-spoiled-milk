@@ -8,7 +8,12 @@ Spoiled Milk maintainer. It keeps `main`, releases, and the public server under
 Justin's manager AI while still producing the same kind of exact, durable
 handoff as an internal worker.
 
-## Current Goutan Setup
+## Previous onboarding example
+
+The commands below use `Goutan` as an example from an earlier onboarding.
+Use your own GitHub username, email and branch name for a new setup. Start with
+the Claude onboarding guide for account creation, repository access and
+sign-in.
 
 - GitHub contributor: `Goutan`
 - Operating system: Windows

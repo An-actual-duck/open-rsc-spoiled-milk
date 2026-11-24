@@ -14,47 +14,105 @@ an existing task from its branch. If you only have a chat window, ask for the
 output of the relevant command before saying that a check, commit or push
 succeeded.
 
-If the contributor is using Claude Code, have them open their local clone
-as the project folder so it can load the repo's `CLAUDE.md`. If they are
-starting in a chat before cloning, have them share this guide and ask Claude
-to begin with Part 1.
-[Claude Code project instructions](https://code.claude.com/docs/en/memory)
+Recommend Claude Code for work in the local clone. If the contributor is
+starting from a browser chat, they can paste this guide into their chat
+and use this prompt:
 
-## Part 1. Set up Git and explore the project
+```text
+I'm new to Git and GitHub. Walk me through Part 1 of the Spoiled Milk
+onboarding guide one step at a time. Tell me where to click or type and
+what I should see. Wait for my result before moving on. Help me switch
+to Claude Code once it can open my local copy of the repo.
+```
 
-### 1. Verify the tools and access
+## Part 1. Set up GitHub, Git and Claude Code
 
-Ask which operating system and terminal they use. Use PowerShell on Windows
-for the examples below. On macOS or Linux, use their usual terminal and replace
-`py -3` with `python3`. If Windows has Python but no `py` launcher, use
-`python` after checking its version. Use Python 3.9 or newer.
+### 1. Create and secure a GitHub account
+
+Explain that GitHub is the website where the project and its pull requests
+live. Git is the command-line tool that copies the project to their computer
+and saves their work. GitHub Desktop is an optional app. This guide uses
+the Git command line and GitHub in the browser.
+
+1. Have the contributor sign up for a personal GitHub account or sign in to
+   an existing one. Have them follow the email verification prompt and open
+   the verification message from GitHub. [GitHub signup](https://github.com/signup)
+2. Have them check **Settings → Emails** for their verified address. If they
+   prefer to keep it private in public commits, help them find and copy their
+   GitHub-provided no-reply address for step 4. [GitHub email settings](https://github.com/settings/emails)
+3. Walk them through two-factor authentication and have them store the
+   recovery codes privately. They enter their own passwords and codes on
+   the official site. Keep passwords, codes, tokens and recovery keys out
+   of the chat and repository. [GitHub two-factor setup](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication)
+4. Have them send Justin their **GitHub username** or profile link. The
+   username is the account handle shown on their profile. Wait for Justin's
+   Spoiled Milk collaborator invitation, then have them open it and accept
+   while signed in as that same account. They can install tools, clone and
+   explore the public repository while the invitation is pending.
+   [GitHub collaborator invitations](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/inviting-collaborators-to-a-personal-repository)
+
+Before their first push, confirm they've accepted the invitation for
+`An-actual-duck/open-rsc-spoiled-milk`. A successful clone of this public
+repository proves read access. The first assigned task's checkpoint verifies
+that the local credentials can push. If access is still pending, ask Justin
+before trying a different remote. The manager collects topic branches from
+the Spoiled Milk repository.
+
+### 2. Install and check Git and Python
+
+Ask which operating system they use. On Windows, have them open PowerShell
+from the Start menu. Open a new window after installing a tool so it can see
+the updated command search path. Help them run the checks one at a time and
+look for a version number after each one.
 
 ```powershell
 git --version
 py -3 --version
 ```
 
-If a tool is missing, guide them through installing it and rerunning the check.
+On Windows, install Git for Windows with Git Credential Manager enabled.
+Install a supported Python 3 release. The contributor helper needs 3.9 or
+newer. On macOS or Linux, use their usual terminal and substitute `python3`
+for `py -3`. If Windows has Python but no `py` launcher, use `python` after
+confirming it reports a suitable version.
 [Git downloads](https://git-scm.com/downloads) · [Python downloads](https://www.python.org/downloads/)
 
-Ask for their GitHub username and whether Justin granted permission to push
-topic branches to the Spoiled Milk repository. They can clone and explore while
-access is pending. If they lack push access at submission time, ask Justin
-which route to use. The manager's collection command looks for the topic
-branch on the Spoiled Milk repository, so a fork-only PR needs a separate
-manager-side intake decision.
+### 3. Install Claude Code
 
-For HTTPS sign-in on Windows, have the contributor complete the Git Credential
-Manager browser prompt if it appears. Keep passwords, tokens and two-factor
-codes out of chat and the repository.
-[GitHub's credential setup guide](https://docs.github.com/en/get-started/git-basics/caching-your-github-credentials-in-git?platform=windows)
+Help the contributor check whether their own Claude account has Claude Code
+access. Anthropic lists eligible subscriptions and the Claude Console option
+in its quickstart. If sign-in asks them to upgrade or add credits, let them
+decide whether to proceed. They can still use browser chat for coaching and
+run commands themselves in the meantime.
+[Claude Code access and installation](https://code.claude.com/docs/en/quickstart)
 
-### 2. Clone and confirm the folder
+On Windows, if WinGet is available, run the official package command in
+PowerShell:
+
+```powershell
+winget install Anthropic.ClaudeCode
+```
+
+For other systems, or if WinGet is unavailable, use Anthropic's installation
+instructions for that platform. Open a new terminal and check:
+
+```powershell
+claude --version
+```
+
+If the command is still missing, check Anthropic's installation
+troubleshooting for the contributor's platform before trying another
+installer. They'll launch and sign in to Claude Code from the project folder
+in step 5. [Claude Code setup and troubleshooting](https://code.claude.com/docs/en/setup)
+
+### 4. Clone, set up Git identity and connect to GitHub
 
 Explain that a clone is a local copy of the project and its Git history. Open
-the terminal in the parent folder where the contributor wants that copy. Skip
-the clone command if they already have the correct clone. In that case, open
-their existing repository folder and run the last three checks.
+the terminal in the parent folder where the contributor wants that copy.
+Show them `Get-Location` in PowerShell or `pwd` on macOS or Linux if they
+need to check where they are. Run the first two commands only if they need a
+new clone. If they already have one, open the existing folder and start with
+the last three checks.
 
 ```powershell
 git clone https://github.com/An-actual-duck/open-rsc-spoiled-milk.git
@@ -68,45 +126,85 @@ Check that the path points to the contributor's own copy and that `origin`
 points to `An-actual-duck/open-rsc-spoiled-milk`. A fresh clone should show
 local `main` tracking `origin/main` and no files listed below the branch.
 If an existing folder has edits or an unexpected branch, inspect its status
-before making changes. Open this same folder in one Claude coding session.
+before making changes.
 
-Check the existing commit identity. If either value is missing, configure it
-for this clone using the contributor's chosen display name and GitHub email.
-They can use the no-reply address shown in their GitHub email settings. The
-email identifies the author of a commit. GitHub sign-in handles access.
-
-```powershell
-git config --get user.name
-git config --get user.email
-git config --local user.name "YOUR DISPLAY NAME"
-git config --local user.email "YOUR GITHUB EMAIL OR NO-REPLY ADDRESS"
-```
-
-The last two commands are setup examples. Replace the placeholders before
-running them. Then configure the repo's contributor helper with the actual
-GitHub username. This sets up a username prefix and enables the local Git hook
-that blocks direct pushes to `main`.
-
-```powershell
-py -3 scripts/contributor-workspace.py setup --username YOUR_GITHUB_USERNAME --remote origin
-py -3 scripts/contributor-workspace.py status
-```
-
-If setup reports a custom Git hooks path or an unexpected remote, show the
-message to Justin before changing the configuration.
-
-An existing clone may be behind published `main`. If the helper or this guide
-is missing, you can update a clean local `main` by running the commands below.
-First verify that `origin` is the Spoiled Milk repository. If the contributor
-is already on a task branch or has local edits, preserve that work and consult
-Justin before switching branches.
+If an existing clone lacks the helper or this guide, verify that `origin`
+is the Spoiled Milk repository and `git status` shows a clean `main` before
+updating. Fetch downloads the published history. The second command advances
+their local branch only if Git can do so without a merge commit. If they're
+on a task branch or have local edits, preserve that work and consult Justin
+before switching branches.
 
 ```powershell
 git fetch origin
 git merge --ff-only origin/main
 ```
 
-### 3. Do a read-only tour with the contributor
+Check the existing commit identity:
+
+```powershell
+git config --get user.name
+git config --get user.email
+```
+
+If either value is missing or belongs to a different person, set the
+contributor's chosen display name and verified email or GitHub no-reply
+address in this clone. Explain that these values appear on commits. The
+browser or credential helper handles GitHub sign-in separately. Have them
+substitute their real values, keeping the quotation marks, then rerun the
+two checks above.
+
+```powershell
+git config --local user.name "YOUR DISPLAY NAME"
+git config --local user.email "YOUR GITHUB EMAIL OR NO-REPLY ADDRESS"
+```
+
+When Git Credential Manager asks them to sign in over HTTPS, have the
+contributor complete its browser flow with the account that accepted Justin's
+invitation. This prompt may first appear on their first checkpoint. On
+macOS or Linux, follow GitHub's instructions for their platform and existing
+credential helper. If Git shows a raw password prompt, check the credential
+helper setup before continuing.
+[GitHub credential setup](https://docs.github.com/en/get-started/git-basics/caching-your-github-credentials-in-git)
+
+Configure the repo's contributor helper with the contributor's actual GitHub
+username. This sets up their branch prefix and enables the local Git hook that
+blocks direct pushes to `main`.
+
+```powershell
+py -3 scripts/contributor-workspace.py setup --username YOUR_GITHUB_USERNAME --remote origin
+py -3 scripts/contributor-workspace.py status
+```
+
+Check that setup reports `Main push protection: enabled` and that status
+shows their username and `origin/main` as the published base.
+If setup reports a custom Git hooks path or an unexpected remote, show the
+message to Justin before changing the configuration.
+
+### 5. Open the repo in Claude Code and take a read-only tour
+
+From the same folder where `git rev-parse --show-toplevel` confirmed the
+contributor's clone, run:
+
+```powershell
+claude
+```
+
+On first launch, have them follow Claude Code's browser login for their Claude
+account, then return to the terminal. If prompted to trust the folder, have
+them verify it is their Spoiled Milk clone before accepting. Claude Code can
+load the project instructions in `CLAUDE.md` from this folder.
+[Claude Code first session](https://code.claude.com/docs/en/quickstart#step-2-start-your-first-session) · [Project instructions](https://code.claude.com/docs/en/memory)
+
+Give the contributor a first prompt to paste into Claude Code:
+
+```text
+I'm onboarding as an external Spoiled Milk contributor. Read CLAUDE.md,
+AGENTS.md and docs/contributor-guides/claude-onboarding.md. Confirm my
+project folder, Git status and contributor setup, then walk me through
+the read-only tour. Explain any terminal commands before you run them.
+Wait for Justin's first assignment before editing or pushing.
+```
 
 Read `AGENTS.md`, `README.md`, `CONTRIBUTING.md`,
 `docs/myworld/README.md`, and
@@ -124,7 +222,7 @@ focused task and supplied the relevant issue or plan, where applicable.
 
 ## Part 2. Work as an external AI worker
 
-### 4. Start one assigned task
+### 6. Start one assigned task
 
 Inside the contributor's clone, check Git and contributor status, then start a
 descriptive task branch. Replace the example branch name with the assigned
@@ -149,7 +247,7 @@ acceptance check. A suitable request would name one paragraph to clarify and
 ask you to verify its referenced path or command. The task can then exercise
 the entire checkpoint and review process without requiring a game build.
 
-### 5. Review, test and checkpoint
+### 7. Review, test and checkpoint
 
 Walk the contributor through `git status --short` and `git diff`. Use
 `git diff --cached` for staged changes and open untracked files separately.
@@ -169,7 +267,7 @@ preserve it with the documented
 [`rescue` workflow](../workspaces/external-contributor.md#if-work-becomes-dirty-or-confusing)
 and contact Justin. Avoid cleanup commands that discard or rewrite work.
 
-### 6. Hand off the exact commit
+### 8. Hand off the exact commit
 
 Before handoff, checkpoint any final edits and walk the contributor through
 the full set of committed changes with `git diff main...HEAD`. Then run
@@ -198,7 +296,7 @@ Checks: <what ran and what happened>
 Open items: <anything the manager should review>
 ```
 
-### 7. Address review feedback and finish
+### 9. Address review feedback and finish
 
 If Justin requests changes, return to the same local branch and use new
 commits. Keep the history so the manager can update its original review
@@ -215,7 +313,7 @@ publishes the merge, the maintainer can recycle its review slot and remove
 the completed remote task branch. For the next assignment, run `start` again
 in the same clone to create a fresh task branch from published `main`.
 
-### 8. Recover from common interruptions
+### 10. Recover from common interruptions
 
 | What Claude sees | What to do |
 | --- | --- |
