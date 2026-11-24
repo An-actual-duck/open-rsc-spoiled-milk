@@ -31608,7 +31608,8 @@ public final class mudclient implements Runnable {
 							this.scene.fogSmoothingStartDistance = 2300;
 							this.scene.fogZFalloff = 1;
 							this.scene.setDiffuseDir(-50, -10, true, -50);
-							this.world = new World(this.scene, this.getSurface());
+							this.world = new World(this.scene, this.getSurface(),
+								isAndroid() || !RenderSurfaceSettings.isInterfacePreviewEnabled());
 							this.world.baseMediaSprite = mudclient.spriteMedia;
 							this.loadTexturesAuthentic();
 							this.loadExternalAltarWorldSprites();
@@ -31648,7 +31649,8 @@ public final class mudclient implements Runnable {
 							this.scene.fogSmoothingStartDistance = 2300;
 							this.scene.fogZFalloff = 1;
 							this.scene.setDiffuseDir(-50, -10, true, -50);
-							this.world = new World(this.scene, this.getSurface());
+							this.world = new World(this.scene, this.getSurface(),
+								isAndroid() || !RenderSurfaceSettings.isInterfacePreviewEnabled());
 							this.world.baseMediaSprite = mudclient.spriteMedia;
 							this.loadTextures();
 							this.loadExternalAltarWorldSprites();

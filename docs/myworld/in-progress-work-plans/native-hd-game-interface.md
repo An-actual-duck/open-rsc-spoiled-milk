@@ -70,6 +70,12 @@ is under review. The placeholder accepts no movement or camera commands. The
 map, compass and navigation controls will be decided in the minimap design
 pass. The standard client still uses the current minimap.
 
+The preview's terrain loaders and browser terrain worker skip generating,
+transferring and publishing the old raster. Gameplay collision and draw
+models use the same terrain inputs in both clients. Existing experimental
+Whole-RAM catalogues retain their baked data format. The preview skips
+reconstructing the minimap sprite when a catalogue entry is activated.
+
 ## Accomplishments preview
 
 Stats and Quests use the sidebar layout and the current UI and text settings.

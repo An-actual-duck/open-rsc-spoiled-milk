@@ -351,7 +351,8 @@ const natives = {
     if (deployment.publicAlpha&&!deployment.streaming || stopped || typeof Worker !== 'function') return false;
     const {createBrowserSurfaceMeshWorker} = await import('./browser-surface-mesh-worker-client.js');
     if (stopped) return false;
-    surfaceMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion);
+    surfaceMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion, false,
+      displayProperties.length !== 0);
     surfaceSceneryMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion, true);
     window.browserProof.surfaceMeshWorker = surfaceMeshWorker.stats;
     window.browserProof.surfaceSceneryMeshWorker = surfaceSceneryMeshWorker.stats;

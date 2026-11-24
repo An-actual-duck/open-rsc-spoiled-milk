@@ -254,6 +254,7 @@ public final class World {
 	// private final byte[][] wallsNorthSouth = new byte[4][2304];
 	// private final byte[][] wallsRoof = new byte[4][2304];
 	private GraphicsController minimapGraphics;
+	private final boolean minimapEnabled;
 	private Scene scene;
 	private RSModel modelAccumulate;
 	private RSModel[] modelLandscapeGrid = new RSModel[MODEL_GRID_COUNT];
@@ -340,10 +341,27 @@ public final class World {
             for(int n=0;n<9;n++){int[] data=pool.ints(d[at++]);if(data.length!=2304*4)throw new IllegalStateException("Prepared sector dimensions");Sector sector=w.sectors[n];boolean isLoaded=loaded[n]!=0;if(sector==null||sector.isLoaded()!=isLoaded)sector=isLoaded?Sector.blankLoaded():new Sector();for(int i=0;i<2304;i++){Tile t=sector.getTile(i);t.groundElevation=data[i*4];t.diagonalWalls=data[i*4+1];int a=data[i*4+2],b=data[i*4+3];t.groundTexture=(byte)a;t.groundOverlay=(byte)(a>>>8);t.roofTexture=(byte)(a>>>16);t.horizontalWall=(byte)(a>>>24);t.verticalWall=(byte)b;t.editorPaintedOverlay=(b&256)!=0;}w.sectors[n]=sector;}at+=9;
             for(int x=0;x<12;x++)for(int z=0;z<12;z++)copyPage(pool.ints(d[at++]),w.collisionFlags,x,z);
             for(int x=0;x<12;x++)for(int z=0;z<12;z++)copyPage(pool.ints(d[at++]),w.tileElevationCache,x,z);
-            int[] pixels=new int[429*429];for(int x=0;x<12;x++)for(int z=0;z<12;z++){int width=Math.min(36,429-x*36),height=Math.min(36,429-z*36);int[] page=pool.ints(d[at++]);if(page.length!=width*height)throw new IllegalStateException("Prepared minimap page");for(int y=0;y<height;y++)System.arraycopy(page,y*width,pixels,(z*36+y)*429+x*36,width);}
-            w.minimapGraphics.blackScreen(true);w.minimapGraphics.publishMinimapRaster(pixels,429,429);w.modelWallGrid[0]=walls;w.modelRoofGrid[0]=roofs;for(RSModel model:walls)if(model!=null)w.scene.addModel(model);for(RSModel model:roofs)if(model!=null)w.scene.addModel(model);
+            if (w.minimapEnabled) {
+                int[] pixels = new int[NATIVE_MINIMAP_PIXEL_SIZE * NATIVE_MINIMAP_PIXEL_SIZE];
+                for (int x = 0; x < 12; x++) {
+                    for (int z = 0; z < 12; z++) {
+                        int width = Math.min(36, NATIVE_MINIMAP_PIXEL_SIZE - x * 36);
+                        int height = Math.min(36, NATIVE_MINIMAP_PIXEL_SIZE - z * 36);
+                        int[] page = pool.ints(d[at++]);
+                        if (page.length != width * height) throw new IllegalStateException("Prepared minimap page");
+                        for (int y = 0; y < height; y++) {
+                            System.arraycopy(page, y * width, pixels,
+                                (z * 36 + y) * NATIVE_MINIMAP_PIXEL_SIZE + x * 36, width);
+                        }
+                    }
+                }
+                w.minimapGraphics.blackScreen(true);
+                w.minimapGraphics.publishMinimapRaster(pixels, NATIVE_MINIMAP_PIXEL_SIZE, NATIVE_MINIMAP_PIXEL_SIZE);
+            }
+            w.modelWallGrid[0]=walls;w.modelRoofGrid[0]=roofs;for(RSModel model:walls)if(model!=null)w.scene.addModel(model);for(RSModel model:roofs)if(model!=null)w.scene.addModel(model);
             w.nativeTerrainAuthorityOnlyActive=true;w.nativeLayeredTerrainAppliedSectionX=carrierX;w.nativeLayeredTerrainAppliedSectionY=carrierY;w.nativeLayeredTerrainAppliedTiles=d[4];w.nativeLayeredTerrainNonVoidTiles=d[5];
-            return modelBytes[0]+9L*2304*16+144L*144*8+429L*429*4;
+            long minimapBytes = w.minimapEnabled ? (long) NATIVE_MINIMAP_PIXEL_SIZE * NATIVE_MINIMAP_PIXEL_SIZE * Integer.BYTES : 0L;
+            return modelBytes[0]+9L*2304*16+144L*144*8+minimapBytes;
         }
         public long[] roofBits(){return (long[])pool.get(d[d.length-2]);}
         public int roofCount(){return d[d.length-1];}
@@ -358,7 +376,12 @@ public final class World {
     }
 
 	public World(Scene var1, GraphicsController var2) {
+		this(var1, var2, true);
+	}
+
+	public World(Scene var1, GraphicsController var2, boolean minimapEnabled) {
 		try {
+			this.minimapEnabled = minimapEnabled;
 			this.minimapGraphics = var2;
 			this.scene = var1;
 
@@ -1268,6 +1291,11 @@ public final class World {
 
 	static PreparedLocalTerrain readSurfaceGameplayWords(int[] words, String scope, long revision,
 		int x, int z, boolean includeRoofs) throws IOException {
+		return readSurfaceGameplayWords(words, scope, revision, x, z, includeRoofs, true);
+	}
+
+	private static PreparedLocalTerrain readSurfaceGameplayWords(int[] words, String scope, long revision,
+		int x, int z, boolean includeRoofs, boolean includeMinimap) throws IOException {
 		if (words.length < 5 || words.length > SURFACE_GAMEPLAY_MAX_BYTES / Integer.BYTES
 			|| words[0] != SURFACE_GAMEPLAY_WORD_MAGIC || words[1] != scope.length() || words[2] != (includeRoofs ? 1 : 0)
 			|| words[3] <= 0 || words[4] <= 0 || words.length != 5L + words[1] + words[3] + words[4]) {
@@ -1280,7 +1308,7 @@ public final class World {
 		Renderer3DWorldChunkFrame.ChunkMesh mesh = Renderer3DWorldChunkFrame.ChunkMesh.readDetachedTerrainWords(
 			words, meshStart, words[3], x, z);
 		PreparedLocalTerrain ready = PreparedLocalTerrain.readWordProduct(words, meshStart + words[3], words.length,
-			scope, revision, x, z, includeRoofs);
+			scope, revision, x, z, includeRoofs, includeMinimap);
 		ready.detachedDrawMesh = mesh;
 		return ready;
 	}
@@ -1303,7 +1331,8 @@ public final class World {
 				long receivedAt = traceReply ? System.nanoTime() : 0L;
 				if (words != null && words.length != 0) {
 					try {
-						PreparedLocalTerrain ready = readSurfaceGameplayWords(words, terrain.scopeIdentity(), revision, x, z, includeRoofs);
+						PreparedLocalTerrain ready = readSurfaceGameplayWords(words, terrain.scopeIdentity(), revision, x, z,
+							includeRoofs, minimapEnabled);
 						acceptedSurfaceGameplayWordReplies++;
 						if (incoming != null) offerIncomingCollision(incoming, x, z, ready.collision);
 						if (traceReply) SurfaceSceneryMeshPreparation.traceTerrainReply("terrain-gameplay-words", startedAt, x, z,
@@ -1323,7 +1352,8 @@ public final class World {
 				}
 				Renderer3DWorldChunkFrame.ChunkMesh mesh = readSurfaceMesh(input, x, z);
 				if (mesh == null) throw new IOException("Surface gameplay product has no query geometry");
-				PreparedLocalTerrain ready = PreparedLocalTerrain.readProduct(input, terrain.scopeIdentity(), revision, x, z, includeRoofs);
+				PreparedLocalTerrain ready = PreparedLocalTerrain.readProduct(input, terrain.scopeIdentity(), revision, x, z,
+					includeRoofs, minimapEnabled);
 				if (input.read() != -1) throw new IOException("Trailing surface gameplay product");
 				ready.detachedDrawMesh = mesh;
 				if (incoming != null) offerIncomingCollision(incoming, x, z, ready.collision);
@@ -1885,25 +1915,29 @@ public final class World {
 		}
 	}
 
-	private static PreparedLocalTerrain prepareLocalTerrain(String scope, long revision, int sectionX, int sectionY,
+	private PreparedLocalTerrain prepareLocalTerrain(String scope, long revision, int sectionX, int sectionY,
 		boolean includeRoofs, CpuSectionWindow window, WorldModelProduct product, TerrainPredictionSlice slice) {
 		Sector[] tiles = new Sector[ACTIVE_SECTION_COUNT];
 		window.copyInto(tiles);
 		int[][] collision = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
-		NativeMinimapRaster minimap = new NativeMinimapRaster(NATIVE_MINIMAP_FACE_TILE_COUNT);
+		NativeMinimapRaster minimap = minimapEnabled ? new NativeMinimapRaster(NATIVE_MINIMAP_FACE_TILE_COUNT) : null;
 		// The worker rasterizes palette indices. The render owner resolves each distinct resource once.
-		Map<Integer, Integer> colors = new LinkedHashMap<>();
+		Map<Integer, Integer> colors = minimap != null ? new LinkedHashMap<>() : null;
 		int work = 0;
 		for (TerrainTileFaceInput face : product.terrainInput.tileFaces) {
 			applyTerrainFaceCollision(collision, face);
-			paintMinimapTile(minimap, face.x, face.z, face.bridge00_11,
-				minimapPaletteIndex(colors, face.colorResource), minimapPaletteIndex(colors, face.res01) + 1);
+			if (minimap != null) {
+				paintMinimapTile(minimap, face.x, face.z, face.bridge00_11,
+					minimapPaletteIndex(colors, face.colorResource), minimapPaletteIndex(colors, face.res01) + 1);
+			}
 			if (slice != null && (++work & 127) == 0) slice.checkpoint();
 		}
-		for (TerrainOverlayFaceInput face : product.terrainInput.overlayFaces) {
-			if (minimap.containsFace(face.x, face.z)) {
-				int color = minimapPaletteIndex(colors, face.texture);
-				paintMinimapTile(minimap, face.x, face.z, 0, color, color + 1);
+		if (minimap != null) {
+			for (TerrainOverlayFaceInput face : product.terrainInput.overlayFaces) {
+				if (minimap.containsFace(face.x, face.z)) {
+					int color = minimapPaletteIndex(colors, face.texture);
+					paintMinimapTile(minimap, face.x, face.z, 0, color, color + 1);
+				}
 			}
 		}
 		if (slice != null) slice.checkpoint();
@@ -1913,7 +1947,7 @@ public final class World {
 			if (Objects.requireNonNull(EntityHandler.getDoorDef(segment.wallID)).getDoorType() != 0) {
 				applyWallSegmentCollision(collision, segment);
 			}
-			drawWallSegmentMinimap(minimap, segment, PreparedLocalTerrain.WALL_PIXEL);
+			if (minimap != null) drawWallSegmentMinimap(minimap, segment, PreparedLocalTerrain.WALL_PIXEL);
 			if (slice != null && (++work & 127) == 0) slice.checkpoint();
 		}
 		RSModel[] walls = splitWallModels(model);
@@ -1924,12 +1958,15 @@ public final class World {
 			emitRoofFaceProduct(model, product.roofInput);
 			roofs = splitRoofModels(model);
 		}
-		int[] resources = new int[colors.size()];
-		for (Map.Entry<Integer,Integer> color : colors.entrySet()) {
-			resources[(color.getValue() - PreparedLocalTerrain.PALETTE_START) / 2] = color.getKey();
+		int[] resources = null;
+		if (colors != null) {
+			resources = new int[colors.size()];
+			for (Map.Entry<Integer,Integer> color : colors.entrySet()) {
+				resources[(color.getValue() - PreparedLocalTerrain.PALETTE_START) / 2] = color.getKey();
+			}
 		}
 		return new PreparedLocalTerrain(scope, revision, sectionX, sectionY, includeRoofs, tiles, window,
-			collision, product.roofInput, minimap.pixels, resources, walls, roofs);
+			collision, product.roofInput, minimap == null ? null : minimap.pixels, resources, walls, roofs);
 	}
 
 	private static int minimapPaletteIndex(Map<Integer,Integer> colors, int resource) {
@@ -2011,17 +2048,7 @@ public final class World {
 		installedDetachedTerrain = prepared.detachedDrawMesh == null ? null : prepared;
 		if (installedDetachedTerrain != null) detachedSurfaceGameplayInstalls++;
 		long started = RenderTelemetry.boundaryDiagnosticsNow();
-		int[] palette = new int[PreparedLocalTerrain.PALETTE_START + prepared.resources.length * 2];
-		palette[PreparedLocalTerrain.WALL_PIXEL] = 6316128;
-		for (int i = 0; i < prepared.resources.length; i++) {
-			int color = scene.resourceToColor(prepared.resources[i], true);
-			int index = PreparedLocalTerrain.PALETTE_START + i * 2;
-			palette[index] = (color >> 1) & 0x7F7F7F;
-			palette[index + 1] = (0xFEFEFF & color) >> 1;
-		}
-		int[] pixels = prepared.minimap;
-		for (int i = 0; i < pixels.length; i++) pixels[i] = palette[pixels[i]];
-		minimapGraphics.publishMinimapRaster(pixels, NATIVE_MINIMAP_PIXEL_SIZE, NATIVE_MINIMAP_PIXEL_SIZE);
+		if (minimapEnabled) publishPreparedMinimap(prepared);
 		System.arraycopy(prepared.tiles, 0, sectors, 0, sectors.length);
 		collisionFlags = prepared.collision;
 		prepared.roofInput.copyElevationsInto(tileElevationCache);
@@ -2038,8 +2065,23 @@ public final class World {
 		return true;
 	}
 
+	private void publishPreparedMinimap(PreparedLocalTerrain prepared) {
+		int[] palette = new int[PreparedLocalTerrain.PALETTE_START + prepared.resources.length * 2];
+		palette[PreparedLocalTerrain.WALL_PIXEL] = 6316128;
+		for (int i = 0; i < prepared.resources.length; i++) {
+			int color = scene.resourceToColor(prepared.resources[i], true);
+			int index = PreparedLocalTerrain.PALETTE_START + i * 2;
+			palette[index] = (color >> 1) & 0x7F7F7F;
+			palette[index + 1] = (0xFEFEFF & color) >> 1;
+		}
+		int[] pixels = prepared.minimap;
+		for (int i = 0; i < pixels.length; i++) pixels[i] = palette[pixels[i]];
+		minimapGraphics.publishMinimapRaster(pixels, NATIVE_MINIMAP_PIXEL_SIZE, NATIVE_MINIMAP_PIXEL_SIZE);
+	}
+
 	private boolean matchesPreparedLocalTerrain(PreparedLocalTerrain prepared, int plane, int sectionX, int sectionZ) {
-		return prepared != null && plane == 0 && prepared.sectionX == sectionX && prepared.sectionY == sectionZ
+		return prepared != null && (!minimapEnabled || prepared.minimap != null)
+			&& plane == 0 && prepared.sectionX == sectionX && prepared.sectionY == sectionZ
 			&& nativeLayeredTerrainSnapshot != null && prepared.scope.equals(nativeLayeredTerrainSnapshot.scopeIdentity())
 			&& prepared.revision == worldEditorTerrainRevision.get() && prepared.includeRoofs == !Config.C_HIDE_ROOFS
 			&& shouldUseNativeTerrainAuthorityOnly() && !shouldLoadUpperPlaneModels(plane);
@@ -2054,6 +2096,8 @@ public final class World {
 
 	private static final class PreparedLocalTerrain {
 		private static final int WALL_PIXEL = 1, PALETTE_START = 2;
+		// The resource count announces an omitted raster without changing the standard packet layout.
+		private static final int NO_MINIMAP = -1;
 		private static final long MODEL_PRODUCT_BUDGET = 8L * 1024 * 1024;
 		private static final int WORD_TILE_COUNT = ACTIVE_SECTION_COUNT * (1 + 4 * SECTION_SIZE * SECTION_SIZE);
 		private static final int WORD_GRID_COUNT = LOCAL_TILE_COUNT * LOCAL_TILE_COUNT;
@@ -2107,9 +2151,11 @@ public final class World {
 			}
 			for (int[] row : collision) for (int value : row) output.writeInt(value);
 			for (int[] row : roofInput.finalElevations) for (int value : row) output.writeInt(value);
-			output.writeInt(resources.length);
-			for (int value : resources) output.writeInt(value);
-			for (int value : minimap) output.writeInt(value);
+			output.writeInt(resources == null ? NO_MINIMAP : resources.length);
+			if (minimap != null) {
+				for (int value : resources) output.writeInt(value);
+				for (int value : minimap) output.writeInt(value);
+			}
 			WholeRamData.Pool pool = new WholeRamData.Pool(MODEL_PRODUCT_BUDGET);
 			for (RSModel model : walls) output.writeInt(RSModel.capturePreparedState(model, pool));
 			for (RSModel model : roofs) output.writeInt(RSModel.capturePreparedState(model, pool));
@@ -2124,10 +2170,11 @@ public final class World {
 				modelRefs[i + MODEL_GRID_COUNT] = RSModel.capturePreparedState(roofs[i], pool);
 			}
 			int poolSize = pool.wordCount();
-			int[] words = new int[4 + WORD_TILE_COUNT + 2 * WORD_GRID_COUNT + WORD_MINIMAP_COUNT + resources.length + modelRefs.length + poolSize];
+			int minimapWords = minimap == null ? 0 : WORD_MINIMAP_COUNT + resources.length;
+			int[] words = new int[4 + WORD_TILE_COUNT + 2 * WORD_GRID_COUNT + minimapWords + modelRefs.length + poolSize];
 			words[0] = appliedTiles;
 			words[1] = nonVoidTiles;
-			words[2] = resources.length;
+			words[2] = resources == null ? NO_MINIMAP : resources.length;
 			words[3] = poolSize;
 			int at = 4;
 			for (Sector sector : tiles) {
@@ -2147,22 +2194,27 @@ public final class World {
 					at += row.length;
 				}
 			}
-			for (int[] array : new int[][]{resources, minimap, modelRefs}) {
-				System.arraycopy(array, 0, words, at, array.length);
-				at += array.length;
+			if (minimap != null) {
+				System.arraycopy(resources, 0, words, at, resources.length);
+				at += resources.length;
+				System.arraycopy(minimap, 0, words, at, minimap.length);
+				at += minimap.length;
 			}
+			System.arraycopy(modelRefs, 0, words, at, modelRefs.length);
+			at += modelRefs.length;
 			pool.writeWords(words, at);
 			return words;
 		}
 
 		private static PreparedLocalTerrain readWordProduct(int[] words, int start, int end, String scope, long revision,
-			int sectionX, int sectionZ, boolean includeRoofs) throws IOException {
+			int sectionX, int sectionZ, boolean includeRoofs, boolean includeMinimap) throws IOException {
 			if (start < 0 || end > words.length || end - start < 4) throw new IOException("Surface gameplay word bounds");
 			int at = start;
 			int applied = words[at++], nonVoid = words[at++], resourceCount = words[at++], poolSize = words[at++];
-			long expected = 4L + WORD_TILE_COUNT + 2 * WORD_GRID_COUNT + WORD_MINIMAP_COUNT + resourceCount + 2 * MODEL_GRID_COUNT + poolSize;
-			if (applied < 0 || applied > WORD_GRID_COUNT || nonVoid < 0 || nonVoid > applied || resourceCount < 0
-				|| resourceCount > WORD_GRID_COUNT * 2 || poolSize <= 0 || expected != end - start) {
+			long minimapWords = includeMinimap ? WORD_MINIMAP_COUNT + (long) resourceCount : 0L;
+			long expected = 4L + WORD_TILE_COUNT + 2 * WORD_GRID_COUNT + minimapWords + 2 * MODEL_GRID_COUNT + poolSize;
+			if (applied < 0 || applied > WORD_GRID_COUNT || nonVoid < 0 || nonVoid > applied
+				|| !validMinimapResourceCount(resourceCount, includeMinimap) || poolSize <= 0 || expected != end - start) {
 				throw new IOException("Surface gameplay word shape");
 			}
 			Sector[] tiles = new Sector[ACTIVE_SECTION_COUNT];
@@ -2190,12 +2242,15 @@ public final class World {
 					at += row.length;
 				}
 			}
-			int[] resources = Arrays.copyOfRange(words, at, at + resourceCount);
-			at += resourceCount;
-			int[] pixels = Arrays.copyOfRange(words, at, at + WORD_MINIMAP_COUNT);
-			at += WORD_MINIMAP_COUNT;
-			for (int value : pixels) {
-				if (value < 0 || value >= PALETTE_START + resourceCount * 2) throw new IOException("Surface gameplay minimap palette");
+			int[] resources = null, pixels = null;
+			if (includeMinimap) {
+				resources = Arrays.copyOfRange(words, at, at + resourceCount);
+				at += resourceCount;
+				pixels = Arrays.copyOfRange(words, at, at + WORD_MINIMAP_COUNT);
+				at += WORD_MINIMAP_COUNT;
+				for (int value : pixels) {
+					if (value < 0 || value >= PALETTE_START + resourceCount * 2) throw new IOException("Surface gameplay minimap palette");
+				}
 			}
 			int[] models = Arrays.copyOfRange(words, at, at + MODEL_GRID_COUNT * 2);
 			at += models.length;
@@ -2204,7 +2259,7 @@ public final class World {
 		}
 
 		private static PreparedLocalTerrain readProduct(DataInput input, String scope, long revision,
-			int sectionX, int sectionZ, boolean includeRoofs) throws IOException {
+			int sectionX, int sectionZ, boolean includeRoofs, boolean includeMinimap) throws IOException {
 			int applied = input.readInt(), nonVoid = input.readInt();
 			if (applied < 0 || applied > LOCAL_TILE_COUNT * LOCAL_TILE_COUNT || nonVoid < 0 || nonVoid > applied) {
 				throw new IOException("Surface gameplay tile counts");
@@ -2226,21 +2281,28 @@ public final class World {
 			}
 			int[][] collision = readProductGrid(input), heights = readProductGrid(input);
 			int resourceCount = input.readInt();
-			if (resourceCount < 0 || resourceCount > LOCAL_TILE_COUNT * LOCAL_TILE_COUNT * 2) {
+			if (!validMinimapResourceCount(resourceCount, includeMinimap)) {
 				throw new IOException("Surface gameplay minimap resource count");
 			}
-			int[] resources = new int[resourceCount];
-			for (int i = 0; i < resources.length; i++) resources[i] = input.readInt();
-			int[] pixels = new int[NATIVE_MINIMAP_PIXEL_SIZE * NATIVE_MINIMAP_PIXEL_SIZE];
-			for (int i = 0; i < pixels.length; i++) {
-				int value = input.readInt();
-				if (value < 0 || value >= PALETTE_START + resourceCount * 2) throw new IOException("Surface gameplay minimap palette");
-				pixels[i] = value;
+			int[] resources = null, pixels = null;
+			if (includeMinimap) {
+				resources = new int[resourceCount];
+				for (int i = 0; i < resources.length; i++) resources[i] = input.readInt();
+				pixels = new int[WORD_MINIMAP_COUNT];
+				for (int i = 0; i < pixels.length; i++) {
+					int value = input.readInt();
+					if (value < 0 || value >= PALETTE_START + resourceCount * 2) throw new IOException("Surface gameplay minimap palette");
+					pixels[i] = value;
+				}
 			}
 			int[] models = new int[MODEL_GRID_COUNT * 2];
 			for (int i = 0; i < models.length; i++) models[i] = input.readInt();
 			WholeRamData.Pool pool = WholeRamData.Pool.read(input);
 			return recreate(scope, revision, sectionX, sectionZ, includeRoofs, tiles, applied, nonVoid, collision, heights, pixels, resources, models, pool);
+		}
+
+		private static boolean validMinimapResourceCount(int count, boolean includeMinimap) {
+			return includeMinimap ? count >= 0 && count <= WORD_GRID_COUNT * 2 : count == NO_MINIMAP;
 		}
 
 		private static PreparedLocalTerrain recreate(String scope, long revision, int sectionX, int sectionZ, boolean includeRoofs,
@@ -3616,8 +3678,9 @@ public final class World {
 					includeRoofGeometry,
 					!showWallOnMinimap && plane > 0);
 				productNanos = System.nanoTime() - phaseStartNanos;
+				boolean buildMinimap = minimapEnabled && showWallOnMinimap;
 				NativeMinimapRaster nativeMinimap =
-					nativeTerrainAuthorityOnly && showWallOnMinimap
+					nativeTerrainAuthorityOnly && buildMinimap
 						? new NativeMinimapRaster(
 							NATIVE_MINIMAP_FACE_TILE_COUNT)
 						: null;
@@ -3625,15 +3688,17 @@ public final class World {
 					phaseStartNanos = System.nanoTime();
 					long detailPhaseStartedNanos =
 						RenderTelemetry.boundaryDiagnosticsNow();
-					this.minimapGraphics.blackScreen(true);
-					RenderTelemetry.recordBoundaryPhase(
-						"minimap",
-						"clear",
-						detailPhaseStartedNanos,
-						detailPhaseStartedNanos == 0L
-							? 0L
-							: System.nanoTime()
-								- detailPhaseStartedNanos);
+					if (buildMinimap) {
+						this.minimapGraphics.blackScreen(true);
+						RenderTelemetry.recordBoundaryPhase(
+							"minimap",
+							"clear",
+							detailPhaseStartedNanos,
+							detailPhaseStartedNanos == 0L
+								? 0L
+								: System.nanoTime()
+									- detailPhaseStartedNanos);
+					}
 
 					detailPhaseStartedNanos =
 						RenderTelemetry.boundaryDiagnosticsNow();
@@ -4746,6 +4811,7 @@ public final class World {
 		NativeMinimapRaster nativeMinimap) {
 		for (TerrainTileFaceInput face : input.tileFaces) {
 			applyTerrainFaceCollision(this.collisionFlags, face);
+			if (!minimapEnabled) continue;
 			if (nativeMinimap == null) {
 				this.drawMinimapTile(
 					face.x,
@@ -4757,22 +4823,24 @@ public final class World {
 				this.drawMinimapTile(nativeMinimap, face);
 			}
 		}
-		for (TerrainOverlayFaceInput overlay : input.overlayFaces) {
-			if (nativeMinimap == null) {
-				this.drawMinimapTile(
-					overlay.x,
-					overlay.z,
-					0,
-					overlay.texture,
-					overlay.texture);
-			} else {
-				this.drawMinimapTile(
-					nativeMinimap,
-					overlay.x,
-					overlay.z,
-					0,
-					overlay.texture,
-					overlay.texture);
+		if (minimapEnabled) {
+			for (TerrainOverlayFaceInput overlay : input.overlayFaces) {
+				if (nativeMinimap == null) {
+					this.drawMinimapTile(
+						overlay.x,
+						overlay.z,
+						0,
+						overlay.texture,
+						overlay.texture);
+				} else {
+					this.drawMinimapTile(
+						nativeMinimap,
+						overlay.x,
+						overlay.z,
+						0,
+						overlay.texture,
+						overlay.texture);
+				}
 			}
 		}
 		this.publishTerrainElevationProduct();
@@ -5036,13 +5104,14 @@ public final class World {
 		boolean showWallOnMinimap,
 		NativeMinimapRaster nativeMinimap) {
 		final int wallColor = 6316128;
+		boolean drawMinimapWalls = minimapEnabled && showWallOnMinimap;
 		for (WallSegmentInput segment : input.segments) {
 			applyWallSegmentTerrainLight(segment);
 			emitWallSegmentModel(this.modelAccumulate, segment);
 			if (showWallOnMinimap && Objects.requireNonNull(EntityHandler.getDoorDef(segment.wallID)).getDoorType() != 0) {
 				applyWallSegmentCollision(this.collisionFlags, segment);
 			}
-			if (showWallOnMinimap
+			if (drawMinimapWalls
 				&& (nativeMinimap != null
 					|| isLegacyMinimapFaceTile(segment.x, segment.z))) {
 				if (nativeMinimap == null) {
@@ -5054,7 +5123,7 @@ public final class World {
 			}
 		}
 
-		if (showWallOnMinimap && nativeMinimap == null) {
+		if (drawMinimapWalls && nativeMinimap == null) {
 			this.minimapGraphics.copyPixelDataToSurface(GraphicsController.SPRITE_LAYER.MINIMAP, 0, 0,
 				MINIMAP_PIXEL_SIZE, MINIMAP_PIXEL_SIZE);
 		}

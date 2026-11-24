@@ -53,7 +53,7 @@ public final class BrowserSurfaceMeshWorker {
             Config.S_WANT_CUSTOM_SPRITES = customSprites;
             if (!WorldBuilderTerrainBootstrap.isNativeOnly()) throw new IllegalStateException("Missing signed map profile");
             EntityHandler.load(true);
-            world = new World(null, null);
+            world = new World(null, null, !Boolean.getBoolean("spoiledmilk.nativeHdInterface"));
             custom = customSprites;
         }
         if (custom != customSprites) throw new IllegalStateException("Surface worker definitions changed");
