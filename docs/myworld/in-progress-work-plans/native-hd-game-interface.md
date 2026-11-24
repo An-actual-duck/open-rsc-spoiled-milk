@@ -91,6 +91,26 @@ activation still use the existing game actions. Cleric has its own book for
 Worship levels, Holy power and the sigils made through Blessing. Use the
 preview to compare the width of the expanded toolbar at 540p and 1080p.
 
+## Social preview
+
+The Social sidebar has Friends, Clan, Party and Display Online along the top.
+It scales tabs, member rows and actions with the existing UI and text settings.
+Keep the current friend messaging and removal, clan search and setup, and party
+creation and management actions available from the sidebar. Honor the existing
+server option for clan availability.
+
+Display Online is a placeholder. The working online player list stays in
+Settings until its redesign is ready to move into Social.
+
+### Social windows to update later
+
+- Update friend invite and add-friend prompts, along with the private message
+  prompt.
+- Update party creation, invitations and member management windows.
+- Update clan creation, search, joining, invitations and management windows.
+- Rework the online player list inside Social and migrate the existing entry
+  from Settings once the new list is usable.
+
 ## Right-click menus
 
 Bring the shared right-click menu up to the same visual and readability

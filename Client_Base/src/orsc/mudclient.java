@@ -1217,6 +1217,10 @@ public final class mudclient implements Runnable {
 	private Panel panelClan;
 	private SocialPopupMode panelSocialPopup_Mode = SocialPopupMode.NONE;
 	private int panelSocialTab = 0;
+	private SocialPanelLayout socialPanelLayout;
+	private final int[] socialScroll = new int[SocialPanelLayout.ONLINE + 1];
+	private final java.util.concurrent.atomic.AtomicIntegerArray socialWheel =
+		new java.util.concurrent.atomic.AtomicIntegerArray(SocialPanelLayout.ONLINE + 1);
 	private int socialPartySelectedMember = -1;
 	private PasswordChangeMode panelPasswordChange_Mode = PasswordChangeMode.NONE;
 	private String oldPassword;
@@ -13414,7 +13418,14 @@ public final class mudclient implements Runnable {
 				}
 
 				if (visibleSideMenuTab == Config.FRIENDS_TAB) {
-					this.drawUiTab5(acceptTabInput, false);
+					SocialPanelLayout social = socialPanelLayout();
+					if (social == null) {
+						this.drawUiTab5(acceptTabInput, false);
+					} else if (!interfaceOpen && !onlineList.isVisible() && inputX_Action == InputXAction.ACT_0) {
+						drawSocialPreview(social, acceptTabInput);
+					} else {
+						m_wk = -1;
+					}
 				}
 
 				if (visibleSideMenuTab == Config.OPTIONS_TAB) {
@@ -14579,6 +14590,258 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private SocialPanelLayout socialPanelLayout() {
+		if (chatLayout == null) return null;
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		int anchor = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatTop = chatLayout.entryTop();
+		if (socialPanelLayout == null || !socialPanelLayout.matches(surface.width2, anchor, C_CUSTOM_UI,
+			chatRight, chatTop, size, text, S_WANT_CLANS)) {
+			socialPanelLayout = new SocialPanelLayout(surface.width2, anchor, C_CUSTOM_UI, chatRight, chatTop,
+				size, text, S_WANT_CLANS, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+				label -> surface.stringWidth(text.labelFont, label));
+		}
+		return socialPanelLayout;
+	}
+
+	private void drawSocialPreview(SocialPanelLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		m_wk = -1;
+		if (!S_WANT_CLANS && panelSocialTab == SocialPanelLayout.CLAN) panelSocialTab = SocialPanelLayout.FRIENDS;
+		int hoveredTab = acceptInput ? layout.tabAt(mouseX, mouseY) : -1;
+		if (hoveredTab >= 0 && mouseButtonClick == 1) {
+			panelSocialTab = hoveredTab;
+			mouseButtonClick = 0;
+		}
+		int tab = panelSocialTab;
+		int width = layout.right - layout.left;
+		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, 0x182333, 228);
+		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, 0x667993);
+		for (int index = SocialPanelLayout.FRIENDS; index <= SocialPanelLayout.ONLINE; index++) {
+			if (layout.tabWidth(index) > 0) {
+				drawInterfacePreviewTab(layout.tabLeft(index), layout.top, layout.tabWidth(index), layout.tabHeight,
+					layout.tabLabel(index), layout.labelFont, layout.top + (layout.tabHeight + layout.labelLine) / 2 - 3,
+					index == tab, index == hoveredTab);
+			}
+		}
+
+		switch (tab) {
+			case SocialPanelLayout.FRIENDS:
+				drawSocialText(layout, "Select an online friend to message.", layout.contentTop(), 0xC4D0E0);
+				drawSocialMembers(layout, tab, SocialLists.friendListCount, acceptInput);
+				drawSocialAction(layout, 0, 1, "Add Friend", acceptInput, this::openAddFriendPrompt);
+				break;
+			case SocialPanelLayout.CLAN:
+				drawSocialClan(layout, acceptInput);
+				break;
+			case SocialPanelLayout.PARTY:
+				drawSocialParty(layout, acceptInput);
+				break;
+			case SocialPanelLayout.ONLINE:
+				String message = S_WANT_PLAYER_COMMANDS && !insideTutorial
+					? "For now, open the online player list from Settings."
+					: "The online player list will appear here in a future update.";
+				drawSocialText(layout, message, layout.contentTop(), 0xC4D0E0);
+				break;
+		}
+		if (acceptInput && layout.contains(mouseX, mouseY) && mouseButtonClick == 1) mouseButtonClick = 0;
+	}
+
+	private void drawSocialText(SocialPanelLayout layout, String value, int top, int color) {
+		getSurface().drawWrappedCenteredString(value, layout.left + (layout.right - layout.left) / 2,
+			top + layout.bodyLine - 3, layout.bodyRight() - layout.bodyLeft(), layout.bodyFont, color, false);
+	}
+
+	private void drawSocialClan(SocialPanelLayout layout, boolean acceptInput) {
+		if (clan.inClan()) {
+			drawSocialName(layout, "Clan: " + clan.getClanName(), layout.bodyLeft(), layout.contentTop() + layout.bodyLine - 3,
+				layout.bodyRight(), 0xFFDC82);
+			drawSocialName(layout, "Tag: " + clan.getClanTag(), layout.bodyLeft(), layout.contentTop() + 2 * layout.bodyLine - 3,
+				layout.bodyRight(), 0xC4D0E0);
+			drawSocialName(layout, "Leader: " + clan.getClanLeaderUsername(), layout.bodyLeft(),
+				layout.contentTop() + 3 * layout.bodyLine - 3, layout.bodyRight(), 0xC4D0E0);
+			drawSocialMembers(layout, SocialPanelLayout.CLAN, SocialLists.clanListCount, acceptInput);
+			drawSocialAction(layout, 0, 2, "Leave Clan", acceptInput, () ->
+				showItemModX(new String[]{"Are you sure you want to leave the clan?"}, InputXAction.CLAN_LEAVE, false));
+			drawSocialAction(layout, 1, 2, "Clan Setup", acceptInput, () -> clan.showClanSetupInterface(true));
+		} else {
+			drawSocialText(layout, "You are not currently in a clan.", layout.contentTop(), 0xC4D0E0);
+			drawSocialAction(layout, 0, 2, "Clan Search", acceptInput, () -> {
+				clan.showClanSetupInterface(false);
+				clan.getClanInterface().clanActivePanel = 3;
+				clan.getClanInterface().resetAll();
+				clan.getClanInterface().sendClanSearch();
+			});
+			drawSocialAction(layout, 1, 2, "Clan Setup", acceptInput, () -> clan.showClanSetupInterface(false));
+		}
+	}
+
+	private void drawSocialParty(SocialPanelLayout layout, boolean acceptInput) {
+		if (!party.inParty()) {
+			drawSocialText(layout, "Create a party to invite up to four other players.", layout.contentTop(), 0xC4D0E0);
+			drawSocialAction(layout, 0, 1, "Create Party", acceptInput, () -> party.showPartySetupInterface(false));
+			return;
+		}
+		drawSocialMembers(layout, SocialPanelLayout.PARTY, Math.min(5, SocialLists.partyListCount), acceptInput);
+		drawSocialAction(layout, 0, 3, "Invite", acceptInput,
+			() -> showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true));
+		drawSocialAction(layout, 1, 3, "Manage", acceptInput, () -> party.showPartySetupInterface(true));
+		drawSocialAction(layout, 2, 3, "Leave", acceptInput, () -> party.getPartyInterface().sendPartyLeave());
+	}
+
+	private void drawSocialAction(SocialPanelLayout layout, int index, int count, String label,
+								  boolean acceptInput, Runnable action) {
+		int left = layout.actionLeft(index, count);
+		int right = layout.actionLeft(index + 1, count) - layout.padding;
+		int top = layout.actionTop();
+		boolean hover = acceptInput && mouseX >= left && mouseX < right && mouseY >= top && mouseY < top + layout.actionHeight;
+		drawInterfacePreviewTab(left, top, right - left, layout.actionHeight, label, layout.labelFont,
+			top + (layout.actionHeight + layout.labelLine) / 2 - 3, false, hover);
+		if (hover && mouseButtonClick == 1) {
+			mouseButtonClick = 0;
+			action.run();
+		}
+	}
+
+	private void drawSocialMembers(SocialPanelLayout layout, int tab, int count, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int top = layout.listTop(tab, clan.inClan());
+		int visible = layout.visibleRows(top);
+		int maxScroll = Math.max(0, count - visible);
+		int scroll = Math.max(0, Math.min(maxScroll, socialScroll[tab] + socialWheel.getAndSet(tab, 0)));
+		int listHeight = layout.listBottom() - top;
+		if (maxScroll > 0 && visible > 0) {
+			if (acceptInput && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
+				&& layout.isOverList(mouseX, mouseY, top)) {
+				scroll = (mouseY - top) * maxScroll / Math.max(1, listHeight - 1);
+				mouseButtonClick = 0;
+			}
+			int thumb = Math.min(listHeight, Math.max(layout.padding, listHeight * visible / count));
+			int thumbTop = top + (listHeight - thumb) * scroll / maxScroll;
+			surface.drawBox(layout.scrollbarLeft() + 1, top, layout.scrollWidth - 2, listHeight, 0x283548);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbTop, layout.scrollWidth - 4, thumb, 0x8799B2);
+		}
+		socialScroll[tab] = scroll;
+		if (count == 0 && tab == SocialPanelLayout.FRIENDS) {
+			drawSocialText(layout, "Your friends list is empty.", top, 0xC4D0E0);
+		}
+		int hovered = acceptInput ? layout.rowAt(mouseX, mouseY, top, scroll, count) : -1;
+		int removeLeft = layout.scrollbarLeft() - surface.stringWidth(layout.bodyFont, "Remove") - 2 * layout.padding;
+		for (int index = scroll; index < Math.min(count, scroll + visible); index++) {
+			int y = top + (index - scroll) * layout.rowHeight;
+			int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
+			surface.drawBoxAlpha(layout.bodyLeft(), y, layout.scrollbarLeft() - layout.bodyLeft(),
+				layout.rowHeight - 1, index == hovered ? 0x3A4C67 : 0x29374E, 192);
+			int nameX = layout.bodyLeft() + layout.padding;
+			if (tab == SocialPanelLayout.FRIENDS) {
+				int status = SocialLists.friendListOnlineStatus[index];
+				int color = (status & 2) != 0 ? 0x69E875 : (status & 4) != 0 ? 0xFFDC82 : 0xFF8585;
+				drawSocialName(layout, SocialLists.friendList[index], nameX, baseline, removeLeft - layout.padding, color);
+				boolean remove = index == hovered && mouseX >= removeLeft;
+				if (remove) surface.drawBoxAlpha(removeLeft, y, layout.scrollbarLeft() - removeLeft,
+					layout.rowHeight - 1, 0x526784, 210);
+				surface.drawString("Remove", removeLeft + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
+			} else if (tab == SocialPanelLayout.CLAN) {
+				drawSocialName(layout, clan.username[index], nameX, baseline, layout.scrollbarLeft() - layout.padding,
+					clan.onlineClanMember[index] != 0 ? 0x69E875 : 0xC4D0E0);
+			} else {
+				drawSocialPartyMember(layout, index, nameX, y, baseline);
+			}
+		}
+		if (hovered < 0) return;
+		if (tab == SocialPanelLayout.FRIENDS) {
+			boolean remove = mouseX >= removeLeft;
+			m_wk = remove ? -(hovered + 2) : hovered;
+			if (mouseButtonClick == 1) {
+				String name = SocialLists.friendList[hovered];
+				if (remove) {
+					removeFriend(name, (byte) 69);
+					m_wk = -1;
+				} else if ((SocialLists.friendListOnlineStatus[hovered] & 4) != 0) {
+					openFriendMessagePrompt(name);
+				}
+			}
+		} else if (mouseButtonClick == 2) {
+			if (tab == SocialPanelLayout.CLAN) addClanMemberActions(clan.username[hovered]);
+			else addPartyMemberActions(party.username[hovered]);
+		}
+	}
+
+	private void drawSocialName(SocialPanelLayout layout, String value, int x, int baseline, int right, int color) {
+		if (value == null) return;
+		MudClientGraphics surface = getSurface();
+		int available = right - x;
+		if (surface.stringWidth(layout.bodyFont, value) > available) {
+			int end = value.length();
+			int ellipsis = surface.stringWidth(layout.bodyFont, "...");
+			while (end > 0 && surface.stringWidth(layout.bodyFont, value.substring(0, end)) + ellipsis > available) end--;
+			value = value.substring(0, end) + "...";
+		}
+		surface.drawString(value, x, baseline, color, layout.bodyFont);
+	}
+
+	private void drawSocialPartyMember(SocialPanelLayout layout, int index, int x, int y, int baseline) {
+		MudClientGraphics surface = getSurface();
+		int right = layout.scrollbarLeft() - layout.padding;
+		int barWidth = (right - x) / 4;
+		String level = "Lvl " + party.cbLvl[index];
+		int levelX = right - barWidth - layout.padding - surface.stringWidth(layout.bodyFont, level);
+		String name = party.username[index] == null ? "Unknown" : party.username[index];
+		drawSocialName(layout, name, x, baseline, levelX - layout.padding,
+			party.onlinePartyMember[index] != 0 ? 0x69E875 : 0xFF8585);
+		surface.drawString(level, levelX, baseline, 0xC4D0E0, layout.bodyFont);
+		int maxHits = Math.max(1, party.maxHp[index]);
+		int hits = Math.max(0, Math.min(maxHits, party.curHp[index]));
+		int barHeight = Math.max(3, layout.padding / 2);
+		int barY = y + (layout.rowHeight - barHeight) / 2;
+		surface.drawBox(right - barWidth, barY, barWidth, barHeight, 0xAA3030);
+		surface.drawBox(right - barWidth, barY, hits * barWidth / maxHits, barHeight, 0x50C96A);
+	}
+
+	private void openAddFriendPrompt() {
+		inputTextFinal = "";
+		inputTextCurrent = "";
+		panelSocialPopup_Mode = SocialPopupMode.ADD_FRIEND;
+		if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+	}
+
+	private void openFriendMessagePrompt(String name) {
+		panelSocialPopup_Mode = SocialPopupMode.MESSAGE_FRIEND;
+		chatMessageTarget = name;
+		chatMessageInputCommit = "";
+		chatMessageInput = "";
+		if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+	}
+
+	private void addPartyMemberActions(String name) {
+		if (name == null || StringUtil.displayNameToKey(name).equals(StringUtil.displayNameToKey(localPlayer.accountName))) return;
+		if (party.isAllowed(0)) {
+			menuCommon.addItem_With2Strings("Kick user", "@whi@" + name, name, MenuItemAction.PARTY_MENU_KICK, name);
+		}
+		menuCommon.addItem_With2Strings("Message", "@whi@" + name, name, MenuItemAction.CHAT_MESSAGE, name);
+	}
+
+	private void addClanMemberActions(String name) {
+		if (name == null) return;
+		String key = StringUtil.displayNameToKey(name);
+		if (key.equals(StringUtil.displayNameToKey(localPlayer.accountName))) return;
+		if (clan.isClanLeader() || clan.isAllowed(0)) {
+			menuCommon.addItem_With2Strings("Kick user", "@whi@" + name, name, MenuItemAction.CLAN_MENU_KICK, name);
+		}
+		for (int index = 0; index < SocialLists.friendListCount; index++) {
+			if (key.equals(StringUtil.displayNameToKey(SocialLists.friendList[index]))) {
+				if ((SocialLists.friendListOnlineStatus[index] & 4) != 0) {
+					menuCommon.addItem_With2Strings("Message", "@whi@" + name, name, MenuItemAction.CHAT_MESSAGE, name);
+				}
+				return;
+			}
+		}
+		menuCommon.addItem_With2Strings("Add friend", "@whi@" + name, name, MenuItemAction.CHAT_ADD_FRIEND, name);
+	}
+
 	// social tab
 	private void drawUiTab5(boolean var1, boolean var2) {
 
@@ -14880,25 +15143,14 @@ public final class mudclient implements Runnable {
 							if (this.mouseX > minWidth) { // Remove Friend
 								this.removeFriend(SocialLists.friendList[index], (byte) 69);
 							} else if ((SocialLists.friendListOnlineStatus[index] & 4) != 0) { // Message Friend
-								this.panelSocialPopup_Mode = SocialPopupMode.MESSAGE_FRIEND;
-								this.chatMessageTarget = SocialLists.friendList[index];
-								this.chatMessageInputCommit = "";
-								this.chatMessageInput = "";
-								if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) {
-									clientPort.drawKeyboard();
-								}
+								openFriendMessagePrompt(SocialLists.friendList[index]);
 							}
 						}
 					}
 
 					// add friend
 					if (var15 > 166 && this.mouseButtonClick == 1 && this.panelSocialTab == 0) {
-						this.inputTextFinal = "";
-						this.inputTextCurrent = "";
-						this.panelSocialPopup_Mode = SocialPopupMode.ADD_FRIEND;
-						if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) {
-							clientPort.drawKeyboard();
-						}
+						openAddFriendPrompt();
 					}
 
 					this.mouseButtonClick = 0;
@@ -14908,16 +15160,7 @@ public final class mudclient implements Runnable {
 				else if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 225 && this.panelSocialTab == 2) {
 					if (this.mouseButtonClick == 2 && this.socialPartySelectedMember >= 0
 						&& this.socialPartySelectedMember < SocialLists.partyListCount) {
-						final String memberName = this.party.username[this.socialPartySelectedMember];
-						if (memberName != null && !StringUtil.displayNameToKey(memberName)
-							.equals(StringUtil.displayNameToKey(this.localPlayer.accountName))) {
-							if (this.party.isAllowed(0)) {
-								this.menuCommon.addItem_With2Strings("Kick user", "@whi@" + memberName, memberName,
-									MenuItemAction.PARTY_MENU_KICK, memberName);
-							}
-							this.menuCommon.addItem_With2Strings("Message", "@whi@" + memberName, memberName,
-								MenuItemAction.CHAT_MESSAGE, memberName);
-						}
+						addPartyMemberActions(party.username[socialPartySelectedMember]);
 					}
 				}
 
@@ -14925,41 +15168,10 @@ public final class mudclient implements Runnable {
 				else if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 295 && this.panelSocialTab == 1 && S_WANT_CLANS) {
 					this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					if (this.mouseButtonClick >= 1 && this.panelSocialTab == 1) {
+					if (this.mouseButtonClick == 2) {
 						index = this.panelClan.getControlSelectedListIndex(this.controlClanPanel);
 						if (index >= 0 && this.mouseX < maxWidth) {
-							if (mouseButtonClick == 2) {
-								if (StringUtil.displayNameToKey(clan.username[index]).equals(StringUtil.displayNameToKey(this.localPlayer.accountName))) {
-									return;
-								}
-								if (clan.isClanLeader() || clan.isAllowed(0)) { // Kick From Clan
-									this.menuCommon.addItem_With2Strings("Kick user",
-										"@whi@" + clan.username[index], clan.username[index],
-										MenuItemAction.CLAN_MENU_KICK, clan.username[index]);
-								}
-								boolean isOnFriendList = false;
-								boolean isOnline = false;
-
-								for (int i = 0; i < SocialLists.friendListCount; ++i) {
-									if (StringUtil.displayNameToKey(clan.username[index]).equals(StringUtil.displayNameToKey(SocialLists.friendList[i]))) {
-										isOnFriendList = true;
-										if ((4 & SocialLists.friendListOnlineStatus[i]) != 0) {
-											isOnline = true;
-										}
-										break;
-									}
-								}
-								if (isOnFriendList) {
-									if (isOnline) {
-										this.menuCommon.addItem_With2Strings("Message", "@whi@" + clan.username[index], clan.username[index],
-											MenuItemAction.CHAT_MESSAGE, clan.username[index]);
-									}
-								} else {
-									this.menuCommon.addItem_With2Strings("Add friend", "@whi@" + clan.username[index], clan.username[index],
-										MenuItemAction.CHAT_ADD_FRIEND, clan.username[index]);
-
-								}
-							}
+							addClanMemberActions(clan.username[index]);
 						}
 					}
 				}
@@ -23020,6 +23232,10 @@ public final class mudclient implements Runnable {
 		if (chatLayout != null && AbilityBook.forTab(getVisibleSideMenuTab()) != null) {
 			return abilityPanelLayout().contains(x, y);
 		}
+		if (getVisibleSideMenuTab() == Config.FRIENDS_TAB) {
+			SocialPanelLayout preview = socialPanelLayout();
+			if (preview != null) return preview.contains(x, y);
+		}
 		if (C_CUSTOM_UI) {
 			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
@@ -23305,7 +23521,10 @@ public final class mudclient implements Runnable {
 				}
 			}
 
-			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isCurrentSideMenuHomeTab()))
+			SocialPanelLayout social = showUiTab == Config.FRIENDS_TAB ? socialPanelLayout() : null;
+			if (social != null && !isCurrentSideMenuHomeTab()) {
+				if (mouseX < Math.min(hoverLeft, social.left) || mouseY >= social.bottom) closeOrRestorePinnedSideMenu();
+			} else if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isCurrentSideMenuHomeTab()))
 				&& (this.mouseX < hoverLeft || this.mouseY > panelOffset + (this.panelSocialTab == 1 ? 307 : 240))) {
 				this.closeOrRestorePinnedSideMenu();
 			}
@@ -32182,7 +32401,7 @@ public final class mudclient implements Runnable {
 			} else {
 				this.scrollSummoningIconMenu(x);
 			}
-		} else if (visibleSideMenuTab == Config.FRIENDS_TAB) { // Friend list and ignore list.
+		} else if (visibleSideMenuTab == Config.FRIENDS_TAB && chatLayout == null) {
 			if (this.panelSocialTab == 2 || this.panelSocialTab == 0) {
 				panelSocial.scrollMethodList(controlSocialPanel, x);
 			} else if (this.panelSocialTab == 1) {
@@ -32218,6 +32437,15 @@ public final class mudclient implements Runnable {
 			}
 		} else if (experienceConfigInterface.isVisible() && experienceConfigInterface.selectSkillMenu) {
 			experienceConfigInterface.experienceConfig.scrollMethodList(experienceConfigInterface.experienceConfigScroll, x);
+		} else if (visibleSideMenuTab == Config.FRIENDS_TAB && chatLayout != null
+			&& inputX_Action == InputXAction.ACT_0 && panelSocialPopup_Mode == SocialPopupMode.NONE) {
+			int tab = panelSocialTab;
+			SocialPanelLayout layout = socialPanelLayout();
+			boolean hasList = tab == SocialPanelLayout.FRIENDS || (tab == SocialPanelLayout.CLAN && clan.inClan())
+				|| (tab == SocialPanelLayout.PARTY && party.inParty());
+			if (hasList && layout.isOverList(mouseX, mouseY, layout.listTop(tab, clan.inClan()))) {
+				socialWheel.addAndGet(tab, x);
+			}
 		} else if (!controlPressed && chatLayout == null) {
 			int control = chatHistoryControl(messageTabSelected);
 			if (control >= 0) {

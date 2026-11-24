@@ -37,6 +37,9 @@ public final class NativeHdInterfaceFixture {
 				verifyAbilityBounds(1920, 1080, size, text, false);
 				verifyAbilityBounds(960, 540, size, text, false);
 				verifyAbilityBounds(960, 540, size, text, true);
+				verifySocialBounds(1920, 1080, size, text, false);
+				verifySocialBounds(960, 540, size, text, false);
+				verifySocialBounds(960, 540, size, text, true);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -252,6 +255,40 @@ public final class NativeHdInterfaceFixture {
 			check(panel.bottom <= chat.entryTop(), "Ability book fits above chat");
 		}
 		if (bottomLauncher) check(panel.bottom < anchor, "Ability book fits above the lower toolbar");
+	}
+
+	private static void verifySocialBounds(int width, int height, GameInterfaceSettings.Size size,
+											GameInterfaceSettings.TextSize text, boolean bottomLauncher) {
+		ChatPanelLayout chat = chat(width, height, size, text);
+		int chatRight = chat.left + chat.width;
+		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, bottomLauncher, size, chatRight, chat.entryTop());
+		int anchor = bottomLauncher ? toolbar.top : toolbar.panelTop();
+		for (boolean clans : new boolean[]{true, false}) {
+			SocialPanelLayout panel = new SocialPanelLayout(width, anchor, bottomLauncher, chatRight, chat.entryTop(),
+				size, text, clans, chat.lineHeight, chat.tabsHeight - size.pixels(8),
+				label -> label.length() * (text == GameInterfaceSettings.TextSize.EXTRA_LARGE ? 12 : 8));
+			check(panel.left >= 0 && panel.right <= width, "Social panel fits the screen");
+			if (panel.left < chatRight) check(panel.bottom <= chat.entryTop(), "Social panel fits above chat");
+			if (bottomLauncher) check(panel.bottom < anchor, "Social panel fits above the lower toolbar");
+			for (int tab = SocialPanelLayout.FRIENDS; tab <= SocialPanelLayout.ONLINE; tab++) {
+				int left = panel.tabLeft(tab);
+				int tabWidth = panel.tabWidth(tab);
+				if (tab == SocialPanelLayout.CLAN && !clans) {
+					check(tabWidth == 0, "Disabled clans leave no dead tab space");
+				} else {
+					check(panel.tabAt(left, panel.top) == tab && panel.tabAt(left + tabWidth - 1, panel.top) == tab,
+						"Social tab owns both visible edges");
+				}
+			}
+			check(panel.tabAt(panel.left, panel.top + panel.tabHeight) == -1, "Social tabs end at the content");
+			int listTop = panel.listTop(SocialPanelLayout.CLAN, true);
+			int rows = panel.visibleRows(listTop);
+			check(rows > 0, "Clan details leave room for members");
+			check(panel.rowAt(panel.bodyLeft(), listTop + (rows - 1) * panel.rowHeight, listTop, 2, 100) == rows + 1,
+				"Social hit testing honors scroll and last full row");
+			check(panel.rowAt(panel.scrollbarLeft(), listTop, listTop, 2, 100) == -1, "Scrollbar excludes row actions");
+			check(panel.rowAt(panel.bodyLeft(), panel.actionTop(), listTop, 2, 100) == -1, "Footer excludes row actions");
+		}
 	}
 
 	private static void verifyChatBounds(ChatPanelLayout chat, int width) {
