@@ -27,9 +27,42 @@ their respective windows.
 
 - **Minimap**. Keep the scaled frame and placeholder until the owner describes
   the map, compass, and navigation behavior.
-- **Pre-login screens**. Preserve the Classic appearance of sign-in and
-  initial world loading. The account creation and password recovery screens
-  wait for the owner's design notes. The target recovery flow is below.
+
+## Pre-login screens
+
+Preserve the Classic first impression from the initial loading screen through
+the main account screen and sign-in. Use the existing screens as the visual
+reference for the backgrounds, composition, controls, and transitions.
+Higher-resolution redraws and a more readable font are options where needed.
+Match the original look at both preview resolutions. The main screen offers
+**Create Account** and **Log In**.
+
+### Create Account
+
+Keep the game username, password, and password confirmation. Replace the
+email field with optional **Discord Username**. Show the reason beside it.
+
+> This is not required but is necessary if you want to have access to account/password recovery.
+
+When the Discord field is blank, ask **“Are you sure you don't want to link a
+Discord account?”** **Yes** continues registration without a link. **No**
+returns to the form with the entered information intact. After the server
+confirms registration, return automatically to the main screen and show
+**Account created** there.
+
+A supplied Discord username starts a pending link. Confirm control of the
+Discord account before saving its user ID as the recovery identity. Account
+creation can complete while the link is pending. Update client registration
+and server handling together so the Discord username reaches the linking flow.
+
+### Log In and password recovery
+
+Keep the normal login controls and place **I forgot my password** in the
+existing recovery entry point. Open a form with one **Username** field for
+the game account and a **Send** button in place of the question form. After
+the recovery request is submitted, show the same status for every username.
+
+> If this account is linked to Discord, check your DMs for a recovery request.
 
 ## Retired from the player interface
 
@@ -45,12 +78,15 @@ their respective windows.
 
 Use a linked Discord account as the primary identity for account recovery.
 The server already pairs a signed-in game account with a Discord user ID and
-supports a password reset initiated in a DM with the bot. The planned sign-in
-flow starts with the player entering their game username and choosing
-**I forgot my password**. The bot sends a private confirmation to the linked
-Discord account. Only after the player confirms does the server reset their
-password and DM a temporary password. The player can then sign in and change
-it in Settings.
+supports a password reset initiated in a DM with the bot. In the planned
+flow, **Send** on the recovery form starts a reset request for the verified
+Discord link. The bot DMs the linked account to confirm the request. After
+confirmation, the server resets the password and the bot sends a temporary
+password by DM. The player can sign in and change it in Settings.
+
+Review the bot and server capabilities during the account rework, including
+how to end an active game session after a confirmed reset for a compromised
+account. The current bot reset requires the character to log out first.
 
 The account rework will retire recovery questions and email-based recovery.
 Remove email and personal contact information from the account forms that
