@@ -1502,6 +1502,8 @@ public final class mudclient implements Runnable {
 	private int spellsSubtab = SPELLS_SUBTAB_MAGE;
 	private final ClericSpellbookCatalog clericSpellbook = new ClericSpellbookCatalog();
 	private Panel menuNewUser;
+	private AccountEntryPreview accountEntryPreview;
+	private int accountEntryWelcomeStatus;
 	private int menuNewUserUsername;
 	private int menuNewUserPassword;
 	private int menuNewUserConfirmPassword;
@@ -3353,6 +3355,7 @@ public final class mudclient implements Runnable {
 	private void createLoginPanels(int var1) {
 		try {
 
+			boolean preview = !isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled();
 			this.panelLoginWelcome = new Panel(this.getSurface(), 50);
 			byte yOffsetWelcome = 40;
 			int yOffsetLogin = 0;
@@ -3368,8 +3371,8 @@ public final class mudclient implements Runnable {
 				panelLoginWelcome.addButtonBackground(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
 				panelLoginWelcome.addButtonBackground(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
 
-				panelLoginWelcome.addCenteredText(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, "New User", 5, false);
-				panelLoginWelcome.addCenteredText(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, "Existing User", 5, false);
+				panelLoginWelcome.addCenteredText(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, preview ? "Create Account" : "New User", preview ? 4 : 5, false);
+				panelLoginWelcome.addCenteredText(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, preview ? "Log In" : "Existing User", 5, false);
 
 				loginButtonNewUser = panelLoginWelcome.addButton(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
 				loginButtonExistingUser = panelLoginWelcome.addButton(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
@@ -3380,13 +3383,17 @@ public final class mudclient implements Runnable {
 				panelLoginWelcome.addButtonBackground(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
 				panelLoginWelcome.addButtonBackground(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
 
-				panelLoginWelcome.addCenteredText(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, "New User", 5, false);
-				panelLoginWelcome.addCenteredText(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, "Existing User", 5, false);
+				panelLoginWelcome.addCenteredText(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, preview ? "Create Account" : "New User", preview ? 4 : 5, false);
+				panelLoginWelcome.addCenteredText(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, preview ? "Log In" : "Existing User", 5, false);
 
 				loginButtonNewUser = panelLoginWelcome.addButton(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
 				loginButtonExistingUser = panelLoginWelcome.addButton(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
 			}
 
+			if (preview) {
+				accountEntryWelcomeStatus = panelLoginWelcome.addCenteredText(halfGameWidth(),
+					halfGameHeight() + (wantMembers() ? 155 : 145), "", 4, true);
+			}
 			this.panelLogin = new Panel(this.getSurface(), 50);
 			short androidHeightOffset = isAndroid() ? (short) 30 : 230;
 			this.controlLoginStatus1 = this.panelLogin.addCenteredText(halfGameWidth(), halfGameHeight() + 35 + yOffsetLogin, "", 4, true);
@@ -3425,9 +3432,11 @@ public final class mudclient implements Runnable {
 			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 113 + yOffsetLogin, "Cancel", 4, false);
 			this.m_Xi = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 113 + yOffsetLogin, 120, 25);
 			this.panelLogin.setFocus(this.controlLoginUser);
-			this.panelLogin.addButtonBackground(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, 120, 25);
-			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, "Forgot password", 4, false);
-			this.lostPasswordButtonIdx = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, 120, 25);
+			int recoveryWidth = preview ? 150 : 120;
+			this.panelLogin.addButtonBackground(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, recoveryWidth, 25);
+			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin,
+				preview ? "I forgot my password" : "Forgot password", 4, false);
+			this.lostPasswordButtonIdx = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, recoveryWidth, 25);
 
 			//int offRememb = -1;
 			//int offHide = -1;
@@ -3453,6 +3462,11 @@ public final class mudclient implements Runnable {
 				this.panelLogin.addButtonBackground(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, 60, 40);
 				this.panelLogin.addCenteredText(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, "Save", 3, false);
 				this.rememberButtonIdx = this.panelLogin.addButton(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, 60, 40);
+			}
+
+			if (preview) {
+				accountEntryPreview = new AccountEntryPreview(getSurface(), halfGameWidth(), halfGameHeight());
+				return;
 			}
 
 			/* Registration setup */
@@ -12401,7 +12415,8 @@ public final class mudclient implements Runnable {
 				this.panelLoginWelcome.drawPanel();
 			}
 			if (this.loginScreenNumber == 1) {
-				menuNewUser.drawPanel();
+				if (accountEntryPreview == null) menuNewUser.drawPanel();
+				else accountEntryPreview.drawRegistration();
 			}
 			if (this.loginScreenNumber == 2) {
 				String var4 = this.panelLogin.getControlText(this.controlLoginStatus1);
@@ -12415,7 +12430,8 @@ public final class mudclient implements Runnable {
 				panelLoginOptions.drawPanel();
 			}
 			if (this.loginScreenNumber == 4) {
-				this.panelRecovery.drawPanel();
+				if (accountEntryPreview == null) panelRecovery.drawPanel();
+				else accountEntryPreview.drawRecovery();
 			}
 
 			this.getSurface().drawSpriteClipping(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, getGameHeight(), getGameWidth(), 10, 0, 0, 0, false, 0, 1);
@@ -22655,6 +22671,10 @@ public final class mudclient implements Runnable {
 		try {
 
 			if (this.currentViewMode == GameMode.LOGIN) {
+				if (accountEntryPreview != null && (loginScreenNumber == 1 || loginScreenNumber == 4)) {
+					accountEntryPreview.keyPressed(loginScreenNumber, key, desktopKeyCode);
+					return;
+				}
 				if (this.loginScreenNumber == 0 && this.panelLoginWelcome != null) {
 					this.panelLoginWelcome.keyPress(key);
 				}
@@ -22793,6 +22813,11 @@ public final class mudclient implements Runnable {
 			}
 
 
+			if (accountEntryPreview != null && (loginScreenNumber == 1 || loginScreenNumber == 4)) {
+				handleAccountEntryPreview();
+				return;
+			}
+
 			if (this.loginScreenNumber != 0) {
 				if (loginScreenNumber == 1) {
 					menuNewUser.handleMouse(this.mouseX, this.mouseY, this.currentMouseButtonDown,
@@ -22904,6 +22929,11 @@ public final class mudclient implements Runnable {
 					}
 
 					if (this.panelLogin.isClicked(this.lostPasswordButtonIdx)) {
+						if (accountEntryPreview != null) {
+							accountEntryPreview.startRecovery(panelLogin.getControlText(controlLoginUser));
+							loginScreenNumber = 4;
+							return;
+						}
 						this.username = this.panelLogin.getControlText(this.controlLoginUser);
 						this.username = DataOperations.addCharacters(this.username, 20);
 						if (this.username.trim().length() == 0) {
@@ -23089,6 +23119,12 @@ public final class mudclient implements Runnable {
 				} else if (panelLoginWelcome.isClicked(loginButtonNewUser)) {
 					if (isAndroid()) clientPort.drawKeyboard();
 					loginScreenNumber = 1;
+					if (accountEntryPreview != null) {
+						panelLoginWelcome.setText(accountEntryWelcomeStatus, "");
+						accountEntryPreview.startRegistration();
+						enterPressed = false;
+						return;
+					}
 					this.menuNewUser.setText(this.menuNewUserStatus, "Please fill in all fields");
 					this.menuNewUser.setText(this.menuNewUserStatus2, "and click submit.");
 					menuNewUser.setFocus(menuNewUserUsername);
@@ -23103,11 +23139,33 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void handleAccountEntryPreview() {
+		boolean enter = enterPressed;
+		enterPressed = false;
+		if (loginScreenNumber == 4) {
+			if (accountEntryPreview.updateRecovery(mouseX, mouseY, currentMouseButtonDown, lastMouseButtonDown, enter)) {
+				loginScreenNumber = 2;
+				panelLogin.setFocus(controlLoginUser);
+			}
+			return;
+		}
+		AccountEntryPreview.RegistrationAction action = accountEntryPreview.updateRegistration(
+			mouseX, mouseY, currentMouseButtonDown, lastMouseButtonDown, enter, !wantEmail());
+		if (action == AccountEntryPreview.RegistrationAction.CANCEL) {
+			accountEntryPreview.startRegistration();
+			loginScreenNumber = 0;
+		} else if (action == AccountEntryPreview.RegistrationAction.CREATE) {
+			showLoginScreenStatus("Please wait...", "Creating new account");
+			sendRegister(accountEntryPreview.username(), accountEntryPreview.password(), accountEntryPreview.repeatPassword(), "");
+		}
+	}
+
 	private void sendRegister(String user, String pass, String confirm, String email) {
 		this.m_Zb = 1500;
-		username = user;
+		boolean preview = accountEntryPreview != null;
+		if (!preview) username = user;
 		user = DataOperations.addCharacters(user, 20);
-		password = pass;
+		if (!preview) password = pass;
 		pass = DataOperations.addCharacters(pass, 20);
 		confirm = DataOperations.addCharacters(confirm, 20);
 
@@ -23135,7 +23193,7 @@ public final class mudclient implements Runnable {
 			showLoginScreenStatus("Password is too long, please use", "password with length of 4-20");
 			return;
 		}
-		if (!isValidEmailAddress(email)) {
+		if (wantEmail() && !isValidEmailAddress(email)) {
 			showLoginScreenStatus("Invalid email address", "please use a valid email address");
 		}
 		try {
@@ -23153,7 +23211,7 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().newPacket(2);
 			this.packetHandler.getClientStream().bufferBits.putString(user);
 			this.packetHandler.getClientStream().bufferBits.putString(pass);
-			if (wantEmail()) {
+			if (wantEmail() || preview) {
 				this.packetHandler.getClientStream().bufferBits.putString(email);
 			}
 			this.packetHandler.getClientStream().finishPacketAndFlush();
@@ -23162,6 +23220,13 @@ public final class mudclient implements Runnable {
 
 			System.out.println("Registration response:" + registerResponse);
 			if (registerResponse == 0) {
+				if (preview) {
+					accountEntryPreview.startRegistration();
+					loginScreenNumber = 0;
+					panelLoginWelcome.setText(accountEntryWelcomeStatus, "@gre@Account created");
+					drawLogin();
+					return;
+				}
 				// panelLogin.setText(controlLoginUser, username.replaceAll("[^=,\\da-zA-Z\\s]|(?<!,)\\s", " ").trim());
 				// panelLogin.setText(controlLoginPass, password);
 
@@ -23204,6 +23269,8 @@ public final class mudclient implements Runnable {
 		} catch (Exception e) {
 			this.showLoginScreenStatus("Sorry! Unable to connect.", "Check internet settings");
 			e.printStackTrace();
+		} finally {
+			if (preview) closeClientStreamOnly();
 		}
 	}
 
@@ -28967,7 +29034,9 @@ public final class mudclient implements Runnable {
 					this.panelLogin.setText(this.controlLoginStatus2, a);
 				}
 			}
-			if (loginScreenNumber == 1) {
+			if (loginScreenNumber == 1 && accountEntryPreview != null) {
+				accountEntryPreview.showRegistrationStatus(a, b == null ? "" : b);
+			} else if (loginScreenNumber == 1) {
 				if (b != null && b.length() >= 1) {
 					menuNewUser.setText(menuNewUserStatus, a);
 					menuNewUser.setText(menuNewUserStatus2, b);

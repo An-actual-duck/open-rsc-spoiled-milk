@@ -59,6 +59,14 @@ the recovery request is submitted, show the same status for every username.
 
 > If this account is linked to Discord, check your DMs for a recovery request.
 
+The private UI preview keeps the original loading sequence, rotating login
+backgrounds and sign-in control positions. Account creation with a blank
+Discord field works against the preview server's email-free registration
+configuration. It returns to the main screen after the server accepts the
+account. A supplied Discord name stays in the form until the player clears
+it or the linking flow is available. The recovery form labels its response
+as a preview while Discord delivery is pending.
+
 ## Retired from the player interface
 
 - **Change Contact Details**. Hide the settings entry in the scaled and
