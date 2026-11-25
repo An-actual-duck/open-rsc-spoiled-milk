@@ -1233,6 +1233,7 @@ public final class mudclient implements Runnable {
 	private volatile PartyWindow partyInvitation;
 	boolean deathItemsSupported;
 	private volatile DeathItemsWindow deathItemsWindow;
+	private volatile ItemQuantityPrompt itemQuantityPrompt;
 	private int deathItemsRequestId;
 	private final java.util.concurrent.atomic.AtomicInteger deathItemsWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private int panelSocialTab = 0;
@@ -11640,10 +11641,7 @@ public final class mudclient implements Runnable {
 						if (intOverflowCheck < Integer.MAX_VALUE) {
 							var4 = Integer.parseInt(str);
 						}
-						this.packetHandler.getClientStream().newPacket(246);
-						this.packetHandler.getClientStream().bufferBits.putShort(dropInventorySlot);
-						this.packetHandler.getClientStream().bufferBits.putInt(var4);
-						this.packetHandler.getClientStream().finishPacket();
+						sendInventoryDrop(dropInventorySlot, var4);
 						dropInventorySlot = -1;
 					} catch (NumberFormatException var13) {
 						System.out.println("Drop X number format exception: " + var13);
@@ -13825,6 +13823,8 @@ public final class mudclient implements Runnable {
 				drawSocialPrompt();
 			} else if (hasDeathItemsInput()) {
 				drawDeathItemsWindow();
+			} else if (hasItemQuantityInput()) {
+				drawItemQuantityPrompt();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -21890,7 +21890,7 @@ public final class mudclient implements Runnable {
 
 				if (!this.isSleeping) {
 					if (chatLayout != null) {
-						if (!hasSessionNoticeInput()) handleScaledChatTabSelection();
+						if (!hasSessionNoticeInput() && !hasItemQuantityInput()) handleScaledChatTabSelection();
 					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
 						if (mouseX > 15 + (halfGameWidth() - 256) && mouseX < 96 + (halfGameWidth() - 256)
 							&& lastMouseButtonDown == 1)
@@ -21926,8 +21926,8 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					boolean sessionNoticeOwnsInput = hasSessionNoticeInput();
-					if (!sessionNoticeOwnsInput) {
+					boolean modalOwnsInput = hasSessionNoticeInput() || hasItemQuantityInput();
+					if (!modalOwnsInput) {
 						if (!hasContextMenuInput() && !hasQuestRewardInput()
 							&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
 							&& !hasDeathItemsInput()) {
@@ -21950,7 +21950,7 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					if (!sessionNoticeOwnsInput && this.panelMessageTabs.isClicked(this.panelMessageEntry)) {
+					if (!modalOwnsInput && this.panelMessageTabs.isClicked(this.panelMessageEntry)) {
 						String var11 = this.panelMessageTabs.getControlText(this.panelMessageEntry);
 						this.panelMessageTabs.setText(this.panelMessageEntry, "");
 						if (var11.startsWith("::")) {
@@ -22074,7 +22074,7 @@ public final class mudclient implements Runnable {
 					}
 					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput()
 						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
-						&& !hasDeathItemsInput() && !hasSessionNoticeInput()
+						&& !hasDeathItemsInput() && !modalOwnsInput
 						&& mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
@@ -23194,8 +23194,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case ITEM_DROP_X: {
-					dropInventorySlot = indexOrX;
-					this.showItemModX(InputXPrompt.dropX, InputXAction.DROP_X, true);
+					promptDropQuantity(indexOrX);
 					break;
 				}
 				case ITEM_DROP_ALL: {
@@ -28203,6 +28202,7 @@ public final class mudclient implements Runnable {
 			partyWindow = null;
 			partyInvitation = null;
 			closeDeathItemsWindow();
+			itemQuantityPrompt = null;
 			onlineSidebarPlayers = null;
 			lastOnlineSidebarRequest = 0;
 			socialScroll[SocialPanelLayout.ONLINE] = 0;
@@ -28321,6 +28321,7 @@ public final class mudclient implements Runnable {
 			partyWindow = null;
 			partyInvitation = null;
 			closeDeathItemsWindow();
+			itemQuantityPrompt = null;
 			questRewardWindow = null;
 			pendingQuestRewards.clear();
 			questRewardWheel.set(0);
@@ -30777,6 +30778,8 @@ public final class mudclient implements Runnable {
 
 	public void setShowDialogShop(boolean show) {
 		if (!show || !showDialogShop) {
+			ItemQuantityPrompt prompt = itemQuantityPrompt;
+			if (show || prompt != null && prompt.action.isShop()) itemQuantityPrompt = null;
 			shopPreview = null;
 			shopPreviewTradeExtension = false;
 			if (usesCraftingInterfacePreview()) {
@@ -30813,7 +30816,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean shopPreviewInputAvailable() {
-		return inputX_Action == InputXAction.ACT_0;
+		return inputX_Action == InputXAction.ACT_0 && itemQuantityPrompt == null;
 	}
 
 	public void closeShopPreview() {
@@ -30822,9 +30825,11 @@ public final class mudclient implements Runnable {
 		setShowDialogShop(false);
 	}
 
-	public void promptShopQuantity(boolean buy) {
-		showItemModX(buy ? InputXPrompt.shopBuyX : InputXPrompt.shopSellX,
-			buy ? InputXAction.SHOP_BUY : InputXAction.SHOP_SELL, true);
+	public void promptShopQuantity(int slot, boolean buy) {
+		int id = shopCategoryID[slot];
+		if (id < 0) return;
+		ItemQuantityPrompt.Action action = buy ? ItemQuantityPrompt.Action.BUY : ItemQuantityPrompt.Action.SELL;
+		openItemQuantityPrompt(action, id, slot, !buy && getInventoryCount(id, true) > 0);
 	}
 
 	public void sendShopTransaction(int slot, boolean buy, int amount, boolean all) {
@@ -33571,6 +33576,100 @@ public final class mudclient implements Runnable {
 		deathItemsWheel.set(0);
 	}
 
+	private void promptDropQuantity(int slot) {
+		if (chatLayout == null) {
+			dropInventorySlot = slot;
+			showItemModX(InputXPrompt.dropX, InputXAction.DROP_X, true);
+		} else if (slot >= 0 && slot < inventoryItemCount) {
+			Item item = getInventoryItem(slot);
+			openItemQuantityPrompt(ItemQuantityPrompt.Action.DROP, item.getCatalogID(), slot, item.getNoted());
+		}
+	}
+
+	private void sendInventoryDrop(int slot, int amount) {
+		packetHandler.getClientStream().newPacket(246);
+		packetHandler.getClientStream().bufferBits.putShort(slot);
+		packetHandler.getClientStream().bufferBits.putInt(amount);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	private void openItemQuantityPrompt(ItemQuantityPrompt.Action action, int id, int slot, boolean noted) {
+		closeTopMouseMenu();
+		itemQuantityPrompt = new ItemQuantityPrompt(action, id, slot, noted);
+		mouseButtonClick = 0;
+	}
+
+	public boolean hasItemQuantityInput() {
+		ItemQuantityPrompt prompt = itemQuantityPrompt;
+		return prompt != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& !isShowDialogBank() && !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails
+			&& (prompt.action.isShop() ? showDialogShop && shopPreview != null : !showDialogShop);
+	}
+
+	public boolean handleItemQuantityKey(char key, int code, boolean shortcut) {
+		ItemQuantityPrompt prompt = itemQuantityPrompt;
+		if (prompt == null || !hasItemQuantityInput()) return false;
+		prompt.keyPressed(key, code, shortcut);
+		return true;
+	}
+
+	private void drawItemQuantityPrompt() {
+		ItemQuantityPrompt prompt = itemQuantityPrompt;
+		if (prompt == null) return;
+		if (prompt.action.isShop() && combatTimeout == 0) drawDialogShop();
+		int slot = resolveQuantitySlot(prompt);
+		int maximum = slot < 0 ? 0 : quantityLimit(prompt, slot);
+		ItemDef item = EntityHandler.getItemDef(prompt.itemId);
+		String itemName = item.getName();
+		if (prompt.noted) itemName += S_WANT_CERT_AS_NOTES ? " (noted)" : " (certificate)";
+		int amount = prompt.draw(this, chatLayout.entryTop(), item, itemName, maximum);
+		mouseButtonClick = 0;
+		if (amount == ItemQuantityPrompt.OPEN) return;
+		itemQuantityPrompt = null;
+		if (amount == ItemQuantityPrompt.CANCEL) return;
+		if (prompt.action.isShop()) {
+			sendShopTransaction(slot, prompt.action == ItemQuantityPrompt.Action.BUY, amount, false);
+		} else {
+			sendInventoryDrop(slot, amount);
+		}
+	}
+
+	private int resolveQuantitySlot(ItemQuantityPrompt prompt) {
+		if (prompt.action.isShop()) {
+			// The shop may restock while the prompt is open. Its selection follows the item ID.
+			int slot = getShopSelectedItemIndex();
+			return combatTimeout == 0 && slot >= 0 && shopCategoryID[slot] == prompt.itemId ? slot : -1;
+		}
+		if (matchesDropItem(prompt, prompt.originalSlot)) return prompt.originalSlot;
+		for (int slot = 0; slot < inventoryItemCount; slot++) {
+			if (matchesDropItem(prompt, slot)) return slot;
+		}
+		return -1;
+	}
+
+	private boolean matchesDropItem(ItemQuantityPrompt prompt, int slot) {
+		return slot >= 0 && slot < inventoryItemCount && getInventoryItemID(slot) == prompt.itemId
+			&& getInventoryItem(slot).getNoted() == prompt.noted;
+	}
+
+	private int quantityLimit(ItemQuantityPrompt prompt, int slot) {
+		if (prompt.action == ItemQuantityPrompt.Action.BUY) {
+			return Math.max(0, Math.min(0xffff, getShopStock(slot)));
+		}
+		int owned = getInventoryCount(prompt.itemId, prompt.noted);
+		if (prompt.action == ItemQuantityPrompt.Action.SELL) {
+			// The existing sell packet always targets notes first if they are present.
+			if ((getInventoryCount(prompt.itemId, true) > 0) != prompt.noted) return 0;
+			return Math.max(0, Math.min(owned, 0xffff - getShopStock(slot)));
+		}
+		return Math.max(0, owned);
+	}
+
 	private void drawTerritorySignup() {
 		territorySignupInterface.onRender();
 	}
@@ -33593,7 +33692,7 @@ public final class mudclient implements Runnable {
 			if (notice != null) notice.scroll(x);
 			return;
 		}
-		if (hasSocialPromptInput()) return;
+		if (hasSocialPromptInput() || hasItemQuantityInput()) return;
 		if (hasDeathItemsInput()) {
 			deathItemsWheel.addAndGet(x);
 			return;

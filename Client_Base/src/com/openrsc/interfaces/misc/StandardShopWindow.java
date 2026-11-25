@@ -99,7 +99,7 @@ public final class StandardShopWindow extends ShopWindow {
 			String label = all ? "All" : custom ? "X" : Integer.toString(AMOUNTS[i]);
 			if (button(left + i % 3 * step, buttonY + i / 3 * (buttonHeight + inset),
 				step - inset, buttonHeight, label, font, false, enabled)) {
-				if (custom) client.promptShopQuantity(buy);
+				if (custom) client.promptShopQuantity(index, buy);
 				else client.sendShopTransaction(index, buy, all ? available : Math.min(available, AMOUNTS[i]), all);
 			}
 		}

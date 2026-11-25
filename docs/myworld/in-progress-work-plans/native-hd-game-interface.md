@@ -269,6 +269,15 @@ The side panel selects a quantity and confirms the purchase. Point prices,
 balances and any required ingredients appear below the item grid.
 
 
+## Custom quantity prompts
+
+Buy X and Sell X in standard shops and Drop X in the Inventory menu show the
+item, available quantity and a focused numeric field. Enter confirms a valid
+amount and Escape cancels. Amounts above the current stock or matching
+inventory count stay in the prompt for correction. Sell X shows the noted item
+when the shop will sell notes first. Drop X tracks the selected item and its
+note status even if its inventory slot changes.
+
 ## Bank preview
 
 The bank grid sits below its tab strip. Players start with one tab and can use
