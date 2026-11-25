@@ -221,6 +221,18 @@ changing their order. Moving away and clicking outside still dismiss the menu.
 Trade uses the shared scaled menu frame for Offer and Remove quantities.
 The hidden Duel feature and its menus are deferred to the full Duel rework.
 
+## Welcome, server notices, and logout
+
+The welcome window respects the existing hide-IP setting and keeps the
+security tip and pending recovery request actions. General server notices
+wrap and scroll with their original paragraph breaks and inline colors.
+Use the wheel, the page buttons, or Page Up and Page Down to read long
+notices. Enter and Escape dismiss ordinary notices. Pending recovery changes
+offer explicit choices to keep or cancel the request.
+
+Log out uses the existing action and shows scaled progress while the server
+responds. These windows capture game input while open.
+
 ## Preview
 
 The private browser selectors are `interface=1080p` and `interface=540p` on loopback. Standalone development uses `-Dspoiledmilk.nativeHdInterface=true` with a render surface such as `-Dspoiledmilk.renderSurfaceMode=1920x1080`. Choose both UI and text sizes in each resolution and confirm the selections persist after restarting with the same client profile.

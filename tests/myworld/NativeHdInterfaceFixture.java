@@ -21,6 +21,7 @@ public final class NativeHdInterfaceFixture {
 		verifyAbilityBookSettings();
 		verifySettingRows(preview);
 		verifyGraphicsTuningDrag();
+		verifySessionNoticeWrapping();
 		for (GameInterfaceSettings.Size size : GameInterfaceSettings.Size.values()) {
 			for (GameInterfaceSettings.TextSize text : GameInterfaceSettings.TextSize.values()) {
 				verifyChatBounds(chat(1920, 1080, size, text), 1920);
@@ -52,6 +53,16 @@ public final class NativeHdInterfaceFixture {
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
+	}
+
+	private static void verifySessionNoticeWrapping() {
+		java.util.List<String> lines = SessionNoticeWindow.wrap("@yel@alpha beta%%@whi@omega", 5, String::length);
+		check(lines.size() == 4 && lines.get(0).equals("@yel@alpha") && lines.get(1).equals("@yel@beta")
+			&& lines.get(2).isEmpty() && lines.get(3).endsWith("@whi@omega"),
+			"Server notice wrapping preserves colors and explicit paragraph breaks");
+		lines = SessionNoticeWindow.wrap("~120~a bcdefg\r\nz", 4, String::length);
+		check(lines.equals(java.util.Arrays.asList("a", "bcde", "fg", "z")),
+			"Long notice words wrap without dropping characters or carrying legacy pixel offsets");
 	}
 
 	private static void verifySettingRows(boolean preview) {

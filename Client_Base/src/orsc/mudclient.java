@@ -1294,6 +1294,11 @@ public final class mudclient implements Runnable {
 	private boolean showDialogDuelConfirm = false;
 	private boolean showDialogMessage = false;
 	private boolean showDialogServerMessage = false;
+	private volatile SessionNoticeWindow welcomeNotice;
+	private volatile SessionNoticeWindow serverNotice;
+	private boolean welcomeNoticeIncludesIp;
+	private final SessionNoticeWindow logoutNotice = new SessionNoticeWindow(
+		"Logging out", "Waiting for the server...", null, null, 370, true);
 	private volatile QuestRewardWindow questRewardWindow;
 	private final java.util.ArrayDeque<QuestRewardWindow> pendingQuestRewards = new java.util.ArrayDeque<>();
 	private final java.util.concurrent.atomic.AtomicInteger questRewardWheel = new java.util.concurrent.atomic.AtomicInteger();
@@ -1453,6 +1458,14 @@ public final class mudclient implements Runnable {
 	private String welcomeLastLoggedInHost = null;
 	private String welcomeLastLoggedInIp;
 	private int welcomeTipOfDay;
+	private static final String[][] WELCOME_SECURITY_TIPS = {
+		{"Don't tell ANYONE your password or recovery questions!", "Not even people claiming to be Jagex staff."},
+		{"Never enter your password or recovery questions into ANY", "website other than this one - Not even if it looks similar."},
+		{"Don't use RuneScape cheats, helpers, or automaters.", "These programs WILL steal your password."},
+		{"Watch out for fake emails, and fake staff. Real staff", "will NEVER ask you for your password or recovery questions!"},
+		{"Use a password your friends won't guess. Do NOT use your name!", "Choose a unique password which you haven't used anywhere else"},
+		{"If possible only play runescape from your own computer", "Other machines could have been tampered with to steal your pass"}
+	};
 	private int welcomeRecoverySetDays = 0;
 	private boolean welcomeScreenShown = false;
 	//private int welcomeUnreadMessages = 0;
@@ -8516,6 +8529,11 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawDialogLogout() {
+		if (usesSessionNotices()) {
+			logoutNotice.draw(this, chatLayout.entryTop());
+			mouseButtonClick = 0;
+			return;
+		}
 		try {
 
 			this.getSurface().drawBox((getGameWidth() - 260) / 2, (getGameHeight() - 60) / 2, 260, 60, 0);
@@ -8706,6 +8724,17 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawDialogServerMessage(byte var1) {
+		if (usesSessionNotices()) {
+			if (serverNotice == null) {
+				serverNotice = new SessionNoticeWindow("Server notice", serverMessage, "Close", null,
+					serverMessageBoxTop ? 680 : 500, !serverMessageBoxTop);
+			}
+			if (serverNotice.draw(this, chatLayout.entryTop()) == SessionNoticeWindow.Action.DISMISS) {
+				setShowDialogServerMessage(false);
+			}
+			mouseButtonClick = 0;
+			return;
+		}
 		try {
 
 			short var2 = 400;
@@ -9828,7 +9857,73 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private boolean usesSessionNotices() {
+		return chatLayout != null && !isAndroid();
+	}
+
+	public boolean hasSessionNoticeInput() {
+		return usesSessionNotices() && currentViewMode == GameMode.GAME && !isSleeping
+			&& (logoutTimeout > 0 || showDialogMessage || showDialogServerMessage);
+	}
+
+	private SessionNoticeWindow activeSessionNotice() {
+		if (logoutTimeout > 0) return null;
+		return showDialogMessage ? welcomeNotice : serverNotice;
+	}
+
+	public boolean handleSessionNoticeKey(int code) {
+		if (!hasSessionNoticeInput()) return false;
+		SessionNoticeWindow notice = activeSessionNotice();
+		if (notice != null) notice.keyPressed(code);
+		return true;
+	}
+
+	private void drawWelcomeNotice() {
+		boolean hasLastLogin = welcomeLastLoggedInIp != null && !"0.0.0.0".equalsIgnoreCase(welcomeLastLoggedInIp);
+		boolean includeIp = hasLastLogin && settingsHideIP != null && settingsHideIP != 1;
+		if (welcomeNotice == null || welcomeNoticeIncludesIp != includeIp) {
+			String account = localPlayer.accountName == null ? getUsername() : localPlayer.accountName;
+			StringBuilder body = new StringBuilder("Welcome to ").append(getServerName()).append(", ")
+				.append(account).append('.');
+			if (hasLastLogin) {
+				body.append("%You last logged in ").append(welcomeDayLabel(welcomeLastLoggedInDays));
+				if (includeIp) body.append(" from ").append(getHostnameFromIP());
+				body.append('.');
+			}
+			boolean recovery = welcomeRecoverySetDays > 0;
+			if (recovery) {
+				body.append("%%@lre@Recovery question change pending@whi@%You requested new recovery questions ")
+					.append(welcomeDayLabel(14 - welcomeRecoverySetDays)).append(". They will activate in ")
+					.append(welcomeRecoverySetDays).append(welcomeRecoverySetDays == 1 ? " day." : " days.")
+					.append("%If you do not remember making this request, cancel it and change your password immediately.");
+			} else {
+				String[] tip = WELCOME_SECURITY_TIPS[welcomeTipOfDay];
+				body.append("%%@yel@Security tip of the day@whi@%").append(tip[0]).append(' ').append(tip[1]);
+			}
+			welcomeNoticeIncludesIp = includeIp;
+			welcomeNotice = new SessionNoticeWindow("Welcome", body.toString(), recovery ? "Keep request" : "Continue",
+				recovery ? "Cancel request" : null, 660, true);
+		}
+		SessionNoticeWindow.Action action = welcomeNotice.draw(this, chatLayout.entryTop());
+		if (action == SessionNoticeWindow.Action.CANCEL_RECOVERY) {
+			packetHandler.getClientStream().newPacket(196);
+			packetHandler.getClientStream().finishPacket();
+		}
+		if (action != SessionNoticeWindow.Action.NONE) setShowDialogMessage(false);
+		mouseButtonClick = 0;
+	}
+
+	private static String welcomeDayLabel(int days) {
+		if (days == 0) return "earlier today";
+		if (days == 1) return "yesterday";
+		return days + " days ago";
+	}
+
 	private void drawDialogWelcome(int var1) {
+		if (usesSessionNotices()) {
+			drawWelcomeNotice();
+			return;
+		}
 		try {
 
 			//int var2 = 65;
@@ -9919,45 +10014,8 @@ public final class mudclient implements Runnable {
 				var3 += 7;
 				this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Security tip of the day", 0xFF0000, 0, 1, var3);
 				var3 += 15;
-				if (this.welcomeTipOfDay == 0) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Don't tell ANYONE your password or recovery questions!", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Not even people claiming to be Jagex staff.", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 1) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Never enter your password or recovery questions into ANY", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "website other than this one - Not even if it looks similar.", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 2) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Don't use RuneScape cheats, helpers, or automaters.", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "These programs WILL steal your password.", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 3) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Watch out for fake emails, and fake staff. Real staff", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "will NEVER ask you for your password or recovery questions!", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 4) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Use a password your friends won't guess. Do NOT use your name!", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Choose a unique password which you haven't used anywhere else", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 5) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "If possible only play runescape from your own computer", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Other machines could have been tampered with to steal your pass", 0xFFFFFF, 0, 1, var3);
+				for (String line : WELCOME_SECURITY_TIPS[welcomeTipOfDay]) {
+					this.getSurface().drawColoredStringCentered(welcomeWindowX + 200, line, 0xFFFFFF, 0, 1, var3);
 					var3 += 15;
 				}
 
@@ -13729,7 +13787,7 @@ public final class mudclient implements Runnable {
 			} else if (this.showDialogMessage) {
 				this.drawDialogWelcome(var1 - 4853);
 				this.setInitLoginCleared(false);
-			} else if (this.showDialogServerMessage && (!C_CUSTOM_UI || shopPreviewOpen()
+			} else if (this.showDialogServerMessage && (usesSessionNotices() || !C_CUSTOM_UI || shopPreviewOpen()
 				|| isShowDialogBank() && bank.usesWorkspace())) {
 				this.drawDialogServerMessage((byte) -115);
 			} else if (hasQuestRewardInput()) {
@@ -21807,7 +21865,7 @@ public final class mudclient implements Runnable {
 
 				if (!this.isSleeping) {
 					if (chatLayout != null) {
-						handleScaledChatTabSelection();
+						if (!hasSessionNoticeInput()) handleScaledChatTabSelection();
 					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
 						if (mouseX > 15 + (halfGameWidth() - 256) && mouseX < 96 + (halfGameWidth() - 256)
 							&& lastMouseButtonDown == 1)
@@ -21843,28 +21901,31 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					if (!hasContextMenuInput() && !hasQuestRewardInput()
-						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
-						&& !hasDeathItemsInput()) {
-						this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
+					boolean sessionNoticeOwnsInput = hasSessionNoticeInput();
+					if (!sessionNoticeOwnsInput) {
+						if (!hasContextMenuInput() && !hasQuestRewardInput()
+							&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
+							&& !hasDeathItemsInput()) {
+							this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
+								this.currentMouseButtonDown, this.lastMouseButtonDown);
+						}
+						auctionHouse.myAuctions.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						auctionHouse.auctionMenu.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						clan.getClanInterface().clanSetupPanel.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						party.getPartyInterface().partySetupPanel.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						bank.bank.handleMouse(this.mouseX, this.mouseY,
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 					}
-					auctionHouse.myAuctions.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					auctionHouse.auctionMenu.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					clan.getClanInterface().clanSetupPanel.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					party.getPartyInterface().partySetupPanel.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					bank.bank.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
 					if (chatLayout == null && this.messageTabSelected != MessageTab.ALL && this.mouseX >= 494
 						&& this.mouseY >= this.getGameHeight() - 66) {
 						this.lastMouseButtonDown = 0;
 					}
 
-					if (this.panelMessageTabs.isClicked(this.panelMessageEntry)) {
+					if (!sessionNoticeOwnsInput && this.panelMessageTabs.isClicked(this.panelMessageEntry)) {
 						String var11 = this.panelMessageTabs.getControlText(this.panelMessageEntry);
 						this.panelMessageTabs.setText(this.panelMessageEntry, "");
 						if (var11.startsWith("::")) {
@@ -21988,7 +22049,7 @@ public final class mudclient implements Runnable {
 					}
 					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput()
 						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
-						&& !hasDeathItemsInput()
+						&& !hasDeathItemsInput() && !hasSessionNoticeInput()
 						&& mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
@@ -28104,6 +28165,8 @@ public final class mudclient implements Runnable {
 
 	private void resetGame(int var1, boolean preparingBrowser) {
 		try {
+			setShowDialogMessage(false);
+			setShowDialogServerMessage(false);
 			this.browserPreparedLogin=null;this.browserPreparedLoginSequence=0;
             if(this.playerMovementRatePercent!=null)java.util.Arrays.fill(this.playerMovementRatePercent,0);
 			clearDialoguePresentation();
@@ -28228,6 +28291,8 @@ public final class mudclient implements Runnable {
 
 	private void resetLoginScreenVariables(byte var1) {
 		try {
+			setShowDialogMessage(false);
+			setShowDialogServerMessage(false);
 			socialTextPrompt = null;
 			partyWindow = null;
 			partyInvitation = null;
@@ -31423,6 +31488,8 @@ public final class mudclient implements Runnable {
 
 	public void setShowDialogMessage(boolean show) {
 		this.showDialogMessage = show;
+		welcomeNotice = null;
+		if (show && usesSessionNotices()) closeTopMouseMenu();
 	}
 
 	public void setWelcomeLastLoggedInHost(String i) {
@@ -31431,10 +31498,13 @@ public final class mudclient implements Runnable {
 
 	public void setServerMessage(String i) {
 		this.serverMessage = i;
+		serverNotice = null;
 	}
 
 	public void setShowDialogServerMessage(boolean show) {
 		this.showDialogServerMessage = show;
+		if (!show) serverNotice = null;
+		else if (usesSessionNotices()) closeTopMouseMenu();
 	}
 
 	public void setServerMessageBoxTop(boolean boxTop) {
@@ -33493,6 +33563,11 @@ public final class mudclient implements Runnable {
 	}
 
 	public void runScroll(int x) {
+		if (hasSessionNoticeInput()) {
+			SessionNoticeWindow notice = activeSessionNotice();
+			if (notice != null) notice.scroll(x);
+			return;
+		}
 		if (hasSocialPromptInput()) return;
 		if (hasDeathItemsInput()) {
 			deathItemsWheel.addAndGet(x);
