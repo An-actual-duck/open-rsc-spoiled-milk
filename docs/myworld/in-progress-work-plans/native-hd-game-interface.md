@@ -23,6 +23,14 @@ Chat and dialogue responses take their dimensions from the UI size setting and t
 Quest completion rewards use the preview below. Activity rewards stay tied to
 their respective windows.
 
+## Waiting for the owner's design notes
+
+- **Minimap**. Keep the scaled frame and placeholder until the owner describes
+  the map, compass, and navigation behavior.
+- **Pre-login screens**. Preserve the Classic appearance of sign-in and
+  initial world loading. Account creation, password recovery, and other
+  pre-login updates wait for the owner's instructions.
+
 ## Needs further exploration
 
 Revisit these after the more straightforward UI updates are complete.
@@ -114,10 +122,10 @@ and colours. The minimap slot opens the frame described below.
 ## Minimap frame preview
 
 The preview has a scaled frame and keeps the existing launcher, pinning and
-top-right placement. The pane displays a placeholder while the minimap itself
-is under review. The placeholder accepts no movement or camera commands. The
-map, compass and navigation controls will be decided in the minimap design
-pass. The standard client still uses the current minimap.
+top-right placement. The pane displays a placeholder while the minimap awaits
+the owner's design notes. The placeholder accepts no movement or camera
+commands. The map, compass and navigation controls will be decided in the
+minimap design pass. The standard client still uses the current minimap.
 
 The preview's terrain loaders and browser terrain worker skip generating,
 transferring and publishing the old raster. Gameplay collision and draw
@@ -221,7 +229,7 @@ changing their order. Moving away and clicking outside still dismiss the menu.
 Trade uses the shared scaled menu frame for Offer and Remove quantities.
 The hidden Duel feature and its menus are deferred to the full Duel rework.
 
-## Welcome, server notices, and logout
+## Welcome, server notices, logout, and reconnect
 
 The welcome window respects the existing hide-IP setting and keeps the
 security tip and pending recovery request actions. General server notices
@@ -232,6 +240,10 @@ offer explicit choices to keep or cancel the request.
 
 Log out uses the existing action and shows scaled progress while the server
 responds. These windows capture game input while open.
+
+The scaled reconnect notice appears when an established game connection
+drops and the client starts its normal retry. Sign-in and initial loading
+use their Classic presentations.
 
 ## Preview
 

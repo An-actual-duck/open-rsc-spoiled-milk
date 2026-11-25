@@ -1299,6 +1299,9 @@ public final class mudclient implements Runnable {
 	private boolean welcomeNoticeIncludesIp;
 	private final SessionNoticeWindow logoutNotice = new SessionNoticeWindow(
 		"Logging out", "Waiting for the server...", null, null, 370, true);
+	private final SessionNoticeWindow reconnectNotice = new SessionNoticeWindow(
+		"Connection lost", "Reconnecting to the server...", null, null, 400, true);
+	private boolean drawingReconnectNotice;
 	private volatile QuestRewardWindow questRewardWindow;
 	private final java.util.ArrayDeque<QuestRewardWindow> pendingQuestRewards = new java.util.ArrayDeque<>();
 	private final java.util.concurrent.atomic.AtomicInteger questRewardWheel = new java.util.concurrent.atomic.AtomicInteger();
@@ -13501,6 +13504,28 @@ public final class mudclient implements Runnable {
 			throw GenUtil.makeThrowable(var8, "client.MD(" + (line2 != null ? "{...}" : "null") + ',' + var2 + ','
 				+ (line1 != null ? "{...}" : "null") + ')');
 		}
+	}
+
+	private void drawReconnectNotice() {
+		if (!usesSessionNotices()) {
+			drawTextBox("Attempting to re-establish", (byte) -64, "Connection lost! Please wait...");
+			return;
+		}
+		drawingReconnectNotice = true;
+		try {
+			MudClientGraphics surface = getSurface();
+			surface.beginRenderer2DFrame();
+			surface.blackScreen(true);
+			surface.setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
+			reconnectNotice.draw(this, getGameHeight());
+			clientPort.draw();
+		} finally {
+			drawingReconnectNotice = false;
+		}
+	}
+
+	public boolean isDrawingReconnectNotice() {
+		return drawingReconnectNotice;
 	}
 
 	private void drawTradeConfirmDialog(int var1) {
@@ -27603,8 +27628,7 @@ public final class mudclient implements Runnable {
 							if (isAndroid())
 								clientPort.closeKeyboard(); // close the keyboard if still open
 						} else {
-							this.drawTextBox("Attempting to re-establish", (byte) -64,
-								"Connection lost! Please wait...");
+							drawReconnectNotice();
 						}
 
 						this.closeClientStreamOnly();
@@ -29988,7 +30012,8 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean isFullScreenModalUiActive() {
-		return this.deathScreenTimeout != 0
+		return drawingReconnectNotice
+			|| this.deathScreenTimeout != 0
 			|| this.showAppearanceChange
 			|| this.showSetRecoveryQuestion
 			|| this.showSetContactDetails

@@ -756,7 +756,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 	public final void draw() {
 		if (mudclient != null
-			&& mudclient.shouldRetainLastPresentedFrame()) {
+			&& mudclient.shouldRetainLastPresentedFrame()
+			&& !mudclient.isDrawingReconnectNotice()) {
 			RenderTelemetry.recordBoundaryPresentationRetention();
 			return;
 		}
