@@ -209,6 +209,7 @@ public class PayloadProcessorManager {
 			OpcodeIn.LAYERED_TERRAIN_STAGE_READY,
 			LayeredTerrainStageReadyHandler.class);
 		bind(OpcodeIn.HISCORE_REQUEST, HiscoreRequestHandler.class);
+		bind(OpcodeIn.ONLINE_SIDEBAR_REQUEST, OnlineSidebarRequestHandler.class);
 	}
 
 	private static void bind(OpcodeIn opcode, Class<?> clazz) {
@@ -279,7 +280,7 @@ public class PayloadProcessorManager {
 
 	private static void checkIfShouldCancelMenu(Player player, OpcodeIn opcode) {
 		// most player actions other than choosing a dialogue choice must cancel the menu handler and set them non-busy
-		// HISCORE_REQUEST is exempt: the client fires it automatically while the hiscores view is open
+		// Read-only refresh requests leave the current dialogue open.
 		if (!OpcodeIn.QUESTION_DIALOG_ANSWER.equals(opcode)
 			&& !OpcodeIn.HEARTBEAT.equals(opcode)
 			&& !OpcodeIn.DIALOGUE_PRESENTATION_READY.equals(opcode)
@@ -291,7 +292,8 @@ public class PayloadProcessorManager {
 			&& !OpcodeIn.COMBAT_STYLE_CHANGED.equals(opcode)
 			&& !OpcodeIn.GAME_SETTINGS_CHANGED.equals(opcode)
 			&& !OpcodeIn.PRIVACY_SETTINGS_CHANGED.equals(opcode)
-			&& !OpcodeIn.HISCORE_REQUEST.equals(opcode)) {
+			&& !OpcodeIn.HISCORE_REQUEST.equals(opcode)
+			&& !OpcodeIn.ONLINE_SIDEBAR_REQUEST.equals(opcode)) {
 
 			player.cancelMenuHandler();
 		}

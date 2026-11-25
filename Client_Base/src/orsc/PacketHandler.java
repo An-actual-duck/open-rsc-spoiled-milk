@@ -814,7 +814,7 @@ public class PacketHandler {
 			else if (opcode == 132) updateAuctionHouse();
 
 				// Online List
-			else if (opcode == 136) refreshOnlineList();
+			else if (opcode == 136) refreshOnlineList(length);
 
 				// Fishing Trawler
 			else if (opcode == 133) fishingTrawlerUpdate();
@@ -2682,13 +2682,35 @@ public class PacketHandler {
 		}
 	}
 
-	private void refreshOnlineList() {
-		mc.getOnlineList().reset();
-		int onlinePlayerCount = packetsIncoming.getShort();
-		for (int i = 0; i < onlinePlayerCount; i++) {
-			mc.getOnlineList().addOnlineUser(packetsIncoming.readString(), packetsIncoming.get32(), packetsIncoming.readString(), i == (onlinePlayerCount - 1));
+	private void refreshOnlineList(int length) {
+		if (length - packetsIncoming.packetEnd < 2) return;
+		int count = packetsIncoming.getShort();
+		if (count < 0 || count > (length - packetsIncoming.packetEnd) / 6) return;
+		List<OnlinePlayerEntry> players = new ArrayList<>(count);
+		for (int i = 0; i < count; i++) {
+			String name = readOnlineListString(length);
+			if (name == null || length - packetsIncoming.packetEnd < 4) return;
+			int crown = packetsIncoming.get32();
+			String location = readOnlineListString(length);
+			if (location == null) return;
+			players.add(new OnlinePlayerEntry(name, crown, location));
 		}
-		mc.getOnlineList().setVisible(true);
+		if (packetsIncoming.packetEnd == length) {
+			mc.getOnlineList().reset();
+			for (OnlinePlayerEntry player : players) {
+				mc.getOnlineList().addOnlineUser(player.name, player.crown, player.location);
+			}
+			mc.getOnlineList().setVisible(true);
+		} else if (length - packetsIncoming.packetEnd == 1 && packetsIncoming.getUnsignedByte() == 1) {
+			mc.receiveOnlineSidebar(players);
+		}
+	}
+
+	private String readOnlineListString(int length) {
+		for (int i = packetsIncoming.packetEnd; i < length; i++) {
+			if (packetsIncoming.dataBuffer[i] == 10) return packetsIncoming.readString();
+		}
+		return null;
 	}
 
 	private void fishingTrawlerUpdate() {
@@ -2983,6 +3005,7 @@ public class PacketHandler {
 	}
 
 	private void setServerConfiguration(int length) {
+		mc.onlineSidebarSupported = false;
 		Properties props = new Properties();
 		String serverName, serverNameWelcome, welcomeText;
 		int playerLevelLimit, spawnAuctionNpcs, spawnIronManNpcs;
@@ -4981,6 +5004,8 @@ public class PacketHandler {
 			if ("dialogue-presentation/1".equals(tag)) {
 				clientStream.newPacket(157);
 				clientStream.finishPacket();
+			} else if ("online-sidebar/1".equals(tag)) {
+				mc.onlineSidebarSupported = true;
 			} else if ("quest-completion/1".equals(tag)) {
 				clientStream.newPacket(199);
 				clientStream.bufferBits.putByte(33);

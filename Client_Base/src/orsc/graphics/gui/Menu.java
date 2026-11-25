@@ -411,6 +411,7 @@ public final class Menu {
 				for (i = 0; this.itemCount > i; ++i) {
 					MenuItem tmp = this.menuItems[i];
 					priority[i] = tmp.actionID.priority();
+				if (tmp.actionID == MenuItemAction.ONLINE_PLAYER_ACTION) priority[i] += tmp.dir;
 					src[i] = tmp;
 				}
 

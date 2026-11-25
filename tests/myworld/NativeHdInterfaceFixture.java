@@ -291,12 +291,20 @@ public final class NativeHdInterfaceFixture {
 			}
 			check(panel.tabAt(panel.left, panel.top + panel.tabHeight) == -1, "Social tabs end at the content");
 			int listTop = panel.listTop(SocialPanelLayout.CLAN, true);
-			int rows = panel.visibleRows(listTop);
+			int rows = panel.visibleRows(SocialPanelLayout.CLAN, listTop);
 			check(rows > 0, "Clan details leave room for members");
-			check(panel.rowAt(panel.bodyLeft(), listTop + (rows - 1) * panel.rowHeight, listTop, 2, 100) == rows + 1,
+			check(panel.rowAt(SocialPanelLayout.CLAN, panel.bodyLeft(), listTop + (rows - 1) * panel.rowHeight, listTop, 2, 100) == rows + 1,
 				"Social hit testing honors scroll and last full row");
-			check(panel.rowAt(panel.scrollbarLeft(), listTop, listTop, 2, 100) == -1, "Scrollbar excludes row actions");
-			check(panel.rowAt(panel.bodyLeft(), panel.actionTop(), listTop, 2, 100) == -1, "Footer excludes row actions");
+			check(panel.rowAt(SocialPanelLayout.CLAN, panel.scrollbarLeft(), listTop, listTop, 2, 100) == -1, "Scrollbar excludes row actions");
+			check(panel.rowAt(SocialPanelLayout.CLAN, panel.bodyLeft(), panel.actionTop(), listTop, 2, 100) == -1,
+				"Footer excludes row actions");
+			int onlineTop = panel.listTop(SocialPanelLayout.ONLINE, false);
+			int onlineRows = panel.visibleRows(SocialPanelLayout.ONLINE, onlineTop);
+			check(onlineRows > 0 && panel.listBottom(SocialPanelLayout.ONLINE) > panel.actionTop(),
+				"Online players can use the space below the other tabs' lists");
+			int lastOnlineY = onlineTop + (onlineRows - 1) * panel.rowHeight;
+			check(panel.rowAt(SocialPanelLayout.ONLINE, panel.bodyLeft(), lastOnlineY, onlineTop, onlineRows, onlineRows * 2)
+				== onlineRows * 2 - 1, "The online list can select its last scrolled entry");
 		}
 	}
 

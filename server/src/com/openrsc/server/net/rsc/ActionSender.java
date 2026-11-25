@@ -1,5 +1,6 @@
 package com.openrsc.server.net.rsc;
 
+import com.openrsc.server.content.OnlinePlayerList;
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.custom.MyWorldItemId;
@@ -1068,6 +1069,7 @@ public class ActionSender {
 			configs.add(DialoguePresentation.CONFIG_TAG);
 		}
 		if (questPreview) configs.add(QuestCompletionPresentation.CONFIG_TAG);
+		if (server.getConfig().PLAYER_COMMANDS) configs.add(OnlinePlayerList.SIDEBAR_CAPABILITY);
 		struct.configs = configs;
 		struct.setOpcode(OpcodeOut.SEND_SERVER_CONFIGS);
 		return generator.generate(struct, null);
@@ -2644,7 +2646,9 @@ public class ActionSender {
 		}
 	}
 
-	public static void sendOnlineList(Player player, ArrayList<Player> players, ArrayList<String> locations, int online, final boolean retroClientListsAll) {
+	public static void sendOnlineList(Player player, ArrayList<Player> players, ArrayList<String> locations,
+									  boolean retroClientListsAll, boolean sidebar) {
+		int online = players.size();
 	    if (!player.isUsingCustomClient()) {
 			if (player.getClientLimitations().supportsMessageBox) {
 				StringBuilder onlinePlayers = new StringBuilder(String.format("@lre@Players online @gre@(%d) %%", online));
@@ -2701,6 +2705,7 @@ public class ActionSender {
 			}
         } else {
 			OnlineListStruct struct = new OnlineListStruct();
+			struct.sidebar = sidebar;
 			struct.numberOnline = online;
 			int count = players.size();
 			struct.playerCount = count;

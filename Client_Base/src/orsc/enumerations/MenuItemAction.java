@@ -14,6 +14,7 @@ public enum MenuItemAction {
 	CHAT_ADD_FRIEND(2831),
 	CHAT_ADD_IGNORE(2832),
 	CHAT_MESSAGE(2830),
+	ONLINE_PLAYER_ACTION(2870), // 2870–2889 preserve online row action order
 	CANCEL(4000),
 	WALL_CAST_SPELL(300),
 	WALL_USE_ITEM(310),

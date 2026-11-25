@@ -113,6 +113,7 @@ public class Opcodes {
 		LAYERED_TERRAIN_READY(154),
 		LAYERED_TERRAIN_STAGE_READY(155),
 		HISCORE_REQUEST(156),
+		ONLINE_SIDEBAR_REQUEST(159),
 		;
 
 		private int opcode;

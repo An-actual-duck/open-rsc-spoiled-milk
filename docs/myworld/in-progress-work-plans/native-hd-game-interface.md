@@ -157,8 +157,13 @@ Keep the current friend messaging and removal, clan search and setup, and party
 creation and management actions available from the sidebar. Honor the existing
 server option for clan availability.
 
-Display Online is a placeholder. The working online player list stays in
-Settings until its redesign is ready to move into Social.
+Display Online requests the visible player list on entry, then every 15 seconds
+while the tab is visible. It keeps the current list on screen during refreshes
+and preserves the scroll anchor when that player stays online. Rows show
+player names and crowns, with the existing right-click actions. The server
+uses the same privacy and staff rules as the online list command and rate
+limits requests. Servers without sidebar support still offer the list in
+Settings.
 
 ### Social windows to update later
 
@@ -166,8 +171,6 @@ Settings until its redesign is ready to move into Social.
   prompt.
 - Update party creation, invitations and member management windows.
 - Update clan creation, search, joining, invitations and management windows.
-- Rework the online player list inside Social and migrate the existing entry
-  from Settings once the new list is usable.
 
 ## Settings preview
 

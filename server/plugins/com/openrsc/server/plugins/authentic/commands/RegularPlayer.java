@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.authentic.commands;
 
+import com.openrsc.server.content.OnlinePlayerList;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.content.clan.ClanInvite;
 import com.openrsc.server.database.GameDatabaseException;
@@ -724,45 +725,7 @@ public final class RegularPlayer implements CommandTrigger {
 	}
 
 	public static void queryOnlinePlayers(Player player, boolean retroClientListsAll, boolean wantLocations) {
-		int online = 0;
-		ArrayList<Player> players = new ArrayList<>();
-		ArrayList<String> locations = new ArrayList<>();
-		if (player.isMod() && wantLocations) {
-			for (Player targetPlayer : player.getWorld().getPlayers()) {
-				if (targetPlayer.getGroupID() >= player.getGroupID()) {
-					players.add(targetPlayer);
-					locations.add(
-						targetPlayer.getLocation().returnLocationName()
-					);
-					online++;
-				}
-			}
-		} else {
-			for (Player targetPlayer : player.getWorld().getPlayers()) {
-				byte privacy = targetPlayer.getSettings().getPrivacySetting(PlayerSettings.PRIVACY_BLOCK_PRIVATE_MESSAGES, targetPlayer.isUsingCustomClient());
-
-				boolean privacyAllows = false;
-				if (privacy == PlayerSettings.BlockingMode.None.id()) {
-					privacyAllows = true;
-				} else if (privacy == PlayerSettings.BlockingMode.NonFriends.id() && targetPlayer.getSocial().isFriendsWith(player.getUsernameHash())) {
-					// mods, pmods, admins, may only appear in the online list if their privacy block isn't set to block all
-					if (player.isDefaultUser()) {
-						privacyAllows = true;
-					}
-				}
-				if (targetPlayer.isInvisibleTo(player)) {
-					privacyAllows = false;
-				}
-
-				if (privacyAllows || player.isMod()) {
-					players.add(targetPlayer);
-					locations.add(""); // No locations.
-					online++;
-				}
-			}
-		}
-
-		ActionSender.sendOnlineList(player, players, locations, online, retroClientListsAll);
+		OnlinePlayerList.send(player, retroClientListsAll, wantLocations, false);
 	}
 
 	private void confirmQOLOptOut(Player player) {

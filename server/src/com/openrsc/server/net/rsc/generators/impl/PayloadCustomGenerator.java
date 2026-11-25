@@ -1276,6 +1276,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeInt(ol.icon[i]);
 						builder.writeString(ol.location[i]);
 					}
+					if (ol.sidebar) builder.writeByte(1);
 					break;
 
 				case SEND_HISCORES:

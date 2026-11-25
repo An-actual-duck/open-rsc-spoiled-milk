@@ -93,7 +93,7 @@ final class SocialPanelLayout {
 	int bodyLeft() { return left + padding; }
 	int bodyRight() { return right - padding; }
 	int actionTop() { return bottom - padding - actionHeight; }
-	int listBottom() { return actionTop() - padding; }
+	int listBottom(int tab) { return tab == ONLINE ? bottom - padding : actionTop() - padding; }
 	int scrollbarLeft() { return bodyRight() - scrollWidth; }
 
 	int tabAt(int x, int y) {
@@ -106,23 +106,23 @@ final class SocialPanelLayout {
 
 	int listTop(int tab, boolean inClan) {
 		if (tab == CLAN && inClan) return contentTop() + 3 * bodyLine + padding;
-		if (tab == FRIENDS) return contentTop() + bodyLine + padding;
+		if (tab == FRIENDS || tab == ONLINE) return contentTop() + bodyLine + padding;
 		return contentTop();
 	}
 
-	int visibleRows(int listTop) {
-		return Math.max(0, (listBottom() - listTop) / rowHeight);
+	int visibleRows(int tab, int listTop) {
+		return Math.max(0, (listBottom(tab) - listTop) / rowHeight);
 	}
 
-	int rowAt(int x, int y, int listTop, int scroll, int count) {
+	int rowAt(int tab, int x, int y, int listTop, int scroll, int count) {
 		if (x < bodyLeft() || x >= scrollbarLeft() || y < listTop) return -1;
 		int row = (y - listTop) / rowHeight;
 		int index = scroll + row;
-		return row < visibleRows(listTop) && index < count ? index : -1;
+		return row < visibleRows(tab, listTop) && index < count ? index : -1;
 	}
 
-	boolean isOverList(int x, int y, int listTop) {
-		return x >= bodyLeft() && x < bodyRight() && y >= listTop && y < listBottom();
+	boolean isOverList(int tab, int x, int y, int listTop) {
+		return x >= bodyLeft() && x < bodyRight() && y >= listTop && y < listBottom(tab);
 	}
 
 	int actionLeft(int index, int count) {

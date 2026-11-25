@@ -278,6 +278,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case 156:
 				opcode = OpcodeIn.HISCORE_REQUEST;
 				break;
+			case 159:
+				opcode = OpcodeIn.ONLINE_SIDEBAR_REQUEST;
+				break;
 			case 0:
 				opcode = OpcodeIn.LOGIN;
 				break;
@@ -474,6 +477,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case DUEL_DECLINED:
 			case DUEL_SECOND_ACCEPTED:
 			case DIALOGUE_PRESENTATION_READY:
+			case ONLINE_SIDEBAR_REQUEST:
 			case HEARTBEAT:
 			case SKIP_TUTORIAL:
 			case ON_BLACK_HOLE:
@@ -1188,6 +1192,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				break;
 
 			case DIALOGUE_PRESENTATION_READY:
+			case ONLINE_SIDEBAR_REQUEST:
 			case HEARTBEAT:
 			case SKIP_TUTORIAL:
 			case ON_BLACK_HOLE:

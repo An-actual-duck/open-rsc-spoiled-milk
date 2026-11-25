@@ -1230,6 +1230,10 @@ public final class mudclient implements Runnable {
 	private SocialPopupMode panelSocialPopup_Mode = SocialPopupMode.NONE;
 	private int panelSocialTab = 0;
 	private SocialPanelLayout socialPanelLayout;
+	private static final long ONLINE_SIDEBAR_INTERVAL_NS = 15_000_000_000L;
+	boolean onlineSidebarSupported;
+	private List<OnlinePlayerEntry> onlineSidebarPlayers;
+	private long lastOnlineSidebarRequest;
 	private final int[] socialScroll = new int[SocialPanelLayout.ONLINE + 1];
 	private final java.util.concurrent.atomic.AtomicIntegerArray socialWheel =
 		new java.util.concurrent.atomic.AtomicIntegerArray(SocialPanelLayout.ONLINE + 1);
@@ -15147,13 +15151,60 @@ public final class mudclient implements Runnable {
 				drawSocialParty(layout, acceptInput);
 				break;
 			case SocialPanelLayout.ONLINE:
-				String message = S_WANT_PLAYER_COMMANDS && !insideTutorial
-					? "For now, open the online player list from Settings."
-					: "The online player list will appear here in a future update.";
-				drawSocialText(layout, message, layout.contentTop(), 0xC4D0E0);
+				drawOnlinePlayers(layout, acceptInput);
 				break;
 		}
 		if (acceptInput && layout.contains(mouseX, mouseY) && mouseButtonClick == 1) mouseButtonClick = 0;
+	}
+
+	private void drawOnlinePlayers(SocialPanelLayout layout, boolean acceptInput) {
+		if (!S_WANT_PLAYER_COMMANDS || insideTutorial) {
+			drawSocialText(layout, "The online player list is unavailable here.", layout.contentTop(), 0xC4D0E0);
+			return;
+		}
+		if (!onlineSidebarSupported) {
+			drawSocialText(layout, "Open the online list from Settings on this server.", layout.contentTop(), 0xC4D0E0);
+			return;
+		}
+		long now = System.nanoTime();
+		if (lastOnlineSidebarRequest == 0 || now - lastOnlineSidebarRequest >= ONLINE_SIDEBAR_INTERVAL_NS) {
+			lastOnlineSidebarRequest = now;
+			packetHandler.getClientStream().newPacket(Opcodes.Out.ONLINE_SIDEBAR_REQUEST.getOpcode());
+			packetHandler.getClientStream().finishPacket();
+		}
+		if (onlineSidebarPlayers == null) {
+			drawSocialText(layout, "Loading online players...", layout.contentTop(), 0xC4D0E0);
+			return;
+		}
+		int count = onlineSidebarPlayers.size();
+		drawSocialText(layout, count == 0 ? "No players are visible." : "Online players (" + count + ")",
+			layout.contentTop(), 0xC4D0E0);
+		if (count > 0) drawSocialMembers(layout, SocialPanelLayout.ONLINE, count, acceptInput);
+	}
+
+	void receiveOnlineSidebar(List<OnlinePlayerEntry> players) {
+		if (!onlineSidebarSupported) return;
+		players.sort(Comparator.comparing(entry -> entry.name, String.CASE_INSENSITIVE_ORDER));
+		int scroll = socialScroll[SocialPanelLayout.ONLINE];
+		if (onlineSidebarPlayers != null && scroll > 0 && scroll < onlineSidebarPlayers.size()) {
+			String first = onlineSidebarPlayers.get(scroll).name;
+			for (int index = 0; index < players.size(); index++) {
+				if (players.get(index).name.equals(first)) {
+					socialScroll[SocialPanelLayout.ONLINE] = index;
+					break;
+				}
+			}
+		}
+		onlineSidebarPlayers = players;
+	}
+
+	private void addOnlinePlayerActions(String username) {
+		for (OnlinePlayerAction action : OnlinePlayerAction.values()) {
+			if (action.isAvailable(localPlayer)) {
+				menuCommon.addItem(0, action.label, action.ordinal(), 0, "@whi@" + username, 0, null,
+					MenuItemAction.ONLINE_PLAYER_ACTION, 0, null, username);
+			}
+		}
 	}
 
 	private void drawSocialText(SocialPanelLayout layout, String value, int top, int color) {
@@ -15215,13 +15266,13 @@ public final class mudclient implements Runnable {
 	private void drawSocialMembers(SocialPanelLayout layout, int tab, int count, boolean acceptInput) {
 		MudClientGraphics surface = getSurface();
 		int top = layout.listTop(tab, clan.inClan());
-		int visible = layout.visibleRows(top);
+		int visible = layout.visibleRows(tab, top);
 		int maxScroll = Math.max(0, count - visible);
 		int scroll = Math.max(0, Math.min(maxScroll, socialScroll[tab] + socialWheel.getAndSet(tab, 0)));
-		int listHeight = layout.listBottom() - top;
+		int listHeight = layout.listBottom(tab) - top;
 		if (maxScroll > 0 && visible > 0) {
 			if (acceptInput && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
-				&& layout.isOverList(mouseX, mouseY, top)) {
+				&& layout.isOverList(tab, mouseX, mouseY, top)) {
 				scroll = (mouseY - top) * maxScroll / Math.max(1, listHeight - 1);
 				mouseButtonClick = 0;
 			}
@@ -15234,7 +15285,7 @@ public final class mudclient implements Runnable {
 		if (count == 0 && tab == SocialPanelLayout.FRIENDS) {
 			drawSocialText(layout, "Your friends list is empty.", top, 0xC4D0E0);
 		}
-		int hovered = acceptInput ? layout.rowAt(mouseX, mouseY, top, scroll, count) : -1;
+		int hovered = acceptInput ? layout.rowAt(tab, mouseX, mouseY, top, scroll, count) : -1;
 		int removeLeft = layout.scrollbarLeft() - surface.stringWidth(layout.bodyFont, "Remove") - 2 * layout.padding;
 		for (int index = scroll; index < Math.min(count, scroll + visible); index++) {
 			int y = top + (index - scroll) * layout.rowHeight;
@@ -15253,8 +15304,13 @@ public final class mudclient implements Runnable {
 			} else if (tab == SocialPanelLayout.CLAN) {
 				drawSocialName(layout, clan.username[index], nameX, baseline, layout.scrollbarLeft() - layout.padding,
 					clan.onlineClanMember[index] != 0 ? 0x69E875 : 0xC4D0E0);
-			} else {
+			} else if (tab == SocialPanelLayout.PARTY) {
 				drawSocialPartyMember(layout, index, nameX, y, baseline);
+			} else {
+				OnlinePlayerEntry player = onlineSidebarPlayers.get(index);
+				int available = layout.scrollbarLeft() - layout.padding - nameX - (player.crown > 0 ? 22 : 0);
+				String name = ContextMenuLayout.fitLabel(player.name, available, value -> surface.stringWidth(layout.bodyFont, value));
+				surface.drawColoredString(nameX, baseline, name, layout.bodyFont, 0xFFFFFF, player.crown);
 			}
 		}
 		if (hovered < 0) return;
@@ -15272,7 +15328,8 @@ public final class mudclient implements Runnable {
 			}
 		} else if (mouseButtonClick == 2) {
 			if (tab == SocialPanelLayout.CLAN) addClanMemberActions(clan.username[hovered]);
-			else addPartyMemberActions(party.username[hovered]);
+			else if (tab == SocialPanelLayout.PARTY) addPartyMemberActions(party.username[hovered]);
+			else addOnlinePlayerActions(onlineSidebarPlayers.get(hovered).name);
 		}
 	}
 
@@ -19534,7 +19591,7 @@ public final class mudclient implements Runnable {
 		addSocialSetting(rows, SocialSetting.TRADE, "Allow trade requests - " + privacySettingLabel(settingsBlockTrade));
 		if (!insideTutorial) {
 			rows.add(new RendererSettingsPanel.Row("@yel@Player lists", RendererSettingsPanel.SECTION_ROW));
-			if (S_WANT_PLAYER_COMMANDS) addSocialSetting(rows, SocialSetting.ONLINE_LIST, "Display online list");
+			if (S_WANT_PLAYER_COMMANDS && !onlineSidebarSupported) addSocialSetting(rows, SocialSetting.ONLINE_LIST, "Display online list");
 			addSocialSetting(rows, SocialSetting.IGNORED_LIST, "View ignored list");
 		}
 		if (insideTutorial) addSocialSetting(rows, SocialSetting.SKIP_TUTORIAL, "Skip the tutorial");
@@ -23201,6 +23258,10 @@ public final class mudclient implements Runnable {
 				}
 
 
+				case ONLINE_PLAYER_ACTION: {
+					OnlinePlayerAction.values()[dir].execute(this, var9);
+					break;
+				}
 				case CHAT_ADD_FRIEND: {
 					this.addFriend(var9);
 					break;
@@ -27971,6 +28032,10 @@ public final class mudclient implements Runnable {
 				doSkillInterface.closeProductionInterface();
 			}
 			craftingTabsRegistered = false;
+			onlineSidebarPlayers = null;
+			lastOnlineSidebarRequest = 0;
+			socialScroll[SocialPanelLayout.ONLINE] = 0;
+			socialWheel.set(SocialPanelLayout.ONLINE, 0);
 			setOptionsMenuShow(false);
 			accomplishmentsLayout = null;
 			java.util.Arrays.fill(accomplishmentsScroll, 0);
@@ -33430,8 +33495,9 @@ public final class mudclient implements Runnable {
 			int tab = panelSocialTab;
 			SocialPanelLayout layout = socialPanelLayout();
 			boolean hasList = tab == SocialPanelLayout.FRIENDS || (tab == SocialPanelLayout.CLAN && clan.inClan())
-				|| (tab == SocialPanelLayout.PARTY && party.inParty());
-			if (hasList && layout.isOverList(mouseX, mouseY, layout.listTop(tab, clan.inClan()))) {
+				|| (tab == SocialPanelLayout.PARTY && party.inParty())
+				|| (tab == SocialPanelLayout.ONLINE && onlineSidebarPlayers != null);
+			if (hasList && layout.isOverList(tab, mouseX, mouseY, layout.listTop(tab, clan.inClan()))) {
 				socialWheel.addAndGet(tab, x);
 			}
 		} else if (!controlPressed && chatLayout == null) {
