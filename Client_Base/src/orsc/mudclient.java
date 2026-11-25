@@ -101,6 +101,12 @@ public final class mudclient implements Runnable {
 	private static final int GROUND_ITEM_INITIAL_CAPACITY = 5000;
 	private static final int CHARACTER_OVERLAY_INITIAL_CAPACITY = 150;
 	private static final long SCENE_OBJECT_DEBUG_HOVER_THROTTLE_MILLIS = 1000L;
+	private static final GUIPARTS[] YELLOW_CLICK_FRAMES = {
+		GUIPARTS.YELLOWX1, GUIPARTS.YELLOWX2, GUIPARTS.YELLOWX3, GUIPARTS.YELLOWX4
+	};
+	private static final GUIPARTS[] RED_CLICK_FRAMES = {
+		GUIPARTS.REDX1, GUIPARTS.REDX2, GUIPARTS.REDX3, GUIPARTS.REDX4
+	};
 	private static final int GROUND_ITEM_NAMEPLATE_LINE_HEIGHT = 12;
 	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
@@ -3689,6 +3695,7 @@ public final class mudclient implements Runnable {
 
 				int var4;
 				int var5;
+				String socialHint = null;
 				if (this.getVisibleSideMenuTab() == Config.FRIENDS_TAB) {
 					String var9 = null;
 					if (this.panelSocialTab == 0 && this.m_wk != -1) {
@@ -3721,9 +3728,7 @@ public final class mudclient implements Runnable {
 						}
 					}
 
-					if (var9 != null) {
-						this.getSurface().drawString(var9, 6, 14, 0xFFFF00, 1);
-					}
+					socialHint = var9;
 				}
 
 				var3 = this.menuCommon.getItemCount(-27153);
@@ -3757,9 +3762,7 @@ public final class mudclient implements Runnable {
 						var11 = var11 + "@whi@ / " + (var3 - 1) + " more options";
 					}
 
-					if (null != var11) {
-						this.getSurface().drawString(var11, 6, 14, 0xFFFF00, 1);
-					}
+					drawTopMouseHint(var11 == null ? socialHint : var11);
 
 					if (!this.optionMouseButtonOne && this.mouseButtonClick == 1
 						|| this.optionMouseButtonOne && this.mouseButtonClick == 1 && var3 == 1) {
@@ -3777,12 +3780,32 @@ public final class mudclient implements Runnable {
 						|| this.optionMouseButtonOne && this.mouseButtonClick == 1) {
 						openTopMouseMenu(var3);
 					}
+				} else {
+					drawTopMouseHint(socialHint);
 				}
 
 			}
 		} catch (RuntimeException var8) {
 			throw GenUtil.makeThrowable(var8, "client.H(" + var1 + ')');
 		}
+	}
+
+	private void drawTopMouseHint(String hint) {
+		if (hint == null) return;
+		MudClientGraphics surface = getSurface();
+		int font = hudLabelFont();
+		int x = chatLayout == null ? 6 : hudPixels(5);
+		int baseline = chatLayout == null ? 14 : hudPixels(3) + surface.fontHeight(font) - 3;
+		if (chatLayout != null) {
+			int width = getGameWidth() / 2 - GameInterfaceSettings.size().pixels(190) - x;
+			hint = ContextMenuLayout.fitLabel(hint, width, label -> surface.stringWidth(font, label));
+		}
+		surface.drawString(hint, x, baseline, 0xFFFF00, font);
+	}
+
+	private int xpFocusTop() {
+		return chatLayout == null ? COMBAT_XP_ALLOCATION_Y
+			: hudPixels(5) + getSurface().fontHeight(hudLabelFont());
 	}
 
 	private void openTopMouseMenu(int itemCount) {
@@ -7883,7 +7906,7 @@ public final class mudclient implements Runnable {
 	private void drawDialogCombatStyle(boolean acceptScaledInput) {
 		if (chatLayout != null) {
 			boolean hits = shouldDrawHitsXpFocusMenu();
-			int selected = GameplayHud.drawFocus(this, COMBAT_XP_ALLOCATION_X, COMBAT_XP_ALLOCATION_Y,
+			int selected = GameplayHud.drawFocus(this, COMBAT_XP_ALLOCATION_X, xpFocusTop(),
 				hits ? getHitsXpFocusLabels() : getGatheringFocusLabels(), hits ? hitsXpFocus : combatStyle,
 				acceptScaledInput && !hasContextMenuInput() && inputX_Action == InputXAction.ACT_0);
 			if (selected >= 0) {
@@ -11106,47 +11129,7 @@ public final class mudclient implements Runnable {
 
 					this.drawCharacterOverlay();
 
-					if (this.mouseClickXStep > 0) {
-						switch ((24 - this.mouseClickXStep) / 6) {
-							case 0:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.YELLOWX1.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 1:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.YELLOWX2.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 2:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.YELLOWX3.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 3:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.YELLOWX4.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-						}
-					} else if (this.mouseClickXStep < 0) {
-						switch ((this.mouseClickXStep + 24) / 6) {
-							case 0:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.REDX1.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 1:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.REDX2.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 2:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.REDX3.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 3:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.REDX4.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-						}
-						//this.getSurface().drawSprite(spriteSelect(18 + mudclient.spriteMedia + (this.mouseClickXStep + 24) / 6),
-						//	this.mouseWalkX - 8, this.mouseWalkY - 8);
-					}
+					drawWorldClickIndicator();
 
 					if (systemUpdate != 0) {
 						int x = chatLayout == null ? 256 : chatLayout.left + chatLayout.width / 2;
@@ -11460,6 +11443,20 @@ public final class mudclient implements Runnable {
 			}
 		} catch (RuntimeException var14) {
 			throw GenUtil.makeThrowable(var14, "client.AB(" + var1 + ')');
+		}
+	}
+
+	private void drawWorldClickIndicator() {
+		if (mouseClickXStep == 0) return;
+		GUIPARTS[] frames = mouseClickXStep > 0 ? YELLOW_CLICK_FRAMES : RED_CLICK_FRAMES;
+		int frame = (24 - Math.abs(mouseClickXStep)) / 6;
+		if (frame < 0 || frame >= frames.length) return;
+		Sprite sprite = spriteSelect(frames[frame].getDef());
+		if (chatLayout == null) {
+			getSurface().drawSprite(sprite, mouseWalkX - 8, mouseWalkY - 8);
+		} else {
+			int size = hudPixels(16);
+			getSurface().drawSprite(sprite, mouseWalkX - size / 2, mouseWalkY - size / 2, size, size, 5924);
 		}
 	}
 
@@ -11986,6 +11983,14 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawGroundItemNames() {
+		if (groundItems.isEmpty()) return;
+		MudClientGraphics surface = getSurface();
+		int font = chatLayout == null ? 0 : hudLabelFont();
+		int lineHeight = chatLayout == null ? GROUND_ITEM_NAMEPLATE_LINE_HEIGHT
+			: Math.max(hudPixels(GROUND_ITEM_NAMEPLATE_LINE_HEIGHT), surface.fontHeight(font) + 2);
+		int ascent = chatLayout == null ? 10 : surface.fontHeight(font);
+		int padding = hudPixels(2);
+		int verticalGap = hudPixels(GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING);
 		LinkedHashMap<GroundItemNameplateKey, GroundItemNameplateGroup> groups =
 			new LinkedHashMap<GroundItemNameplateKey, GroundItemNameplateGroup>();
 		for (GroundItem groundItem : groundItems) {
@@ -12006,7 +12011,7 @@ public final class mudclient implements Runnable {
 		Collections.sort(sortedGroups, new Comparator<GroundItemNameplateGroup>() {
 			@Override
 			public int compare(GroundItemNameplateGroup left, GroundItemNameplateGroup right) {
-				int yCompare = left.getBaseY() - right.getBaseY();
+				int yCompare = Integer.compare(left.getTopItemY(), right.getTopItemY());
 				if (yCompare != 0) {
 					return yCompare;
 				}
@@ -12020,40 +12025,33 @@ public final class mudclient implements Runnable {
 			if (lines.isEmpty()) {
 				continue;
 			}
-			int maxWidth = getGroundItemNameplateMaxWidth(lines);
+			int maxWidth = getGroundItemNameplateMaxWidth(lines, font);
 			int anchorX = group.getAnchorX();
-			int topY = group.getBaseY() - (lines.size() - 1) * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
-			Rectangle bounds = createGroundItemNameplateBounds(anchorX, topY, maxWidth, lines.size());
+			int topY = group.getTopItemY() - verticalGap - (lines.size() - 1) * lineHeight;
+			Rectangle bounds = new Rectangle(anchorX - maxWidth / 2 - padding, topY - ascent,
+				maxWidth + 2 * padding, lines.size() * lineHeight + padding);
 			while (intersectsAnyGroundItemNameplate(bounds, occupiedNameplateBounds)) {
-				topY -= GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
-				bounds.y -= GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
+				topY -= lineHeight;
+				bounds.y -= lineHeight;
 			}
 			occupiedNameplateBounds.add(bounds);
 
 			for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
 				String itemName = lines.get(lineIndex).getDisplayText();
-				int displayWidth = getSurface().stringWidth(0, itemName);
+				int displayWidth = surface.stringWidth(font, itemName);
 				int x = anchorX - displayWidth / 2;
-				int y = topY + lineIndex * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
-				getSurface().drawShadowText(itemName, x, y, 0xFFFFFF, 0, false);
+				int y = topY + lineIndex * lineHeight;
+				surface.drawShadowText(itemName, x, y, 0xFFFFFF, font, false);
 			}
 		}
 	}
 
-	private int getGroundItemNameplateMaxWidth(ArrayList<GroundItemNameplateLine> lines) {
+	private int getGroundItemNameplateMaxWidth(ArrayList<GroundItemNameplateLine> lines, int font) {
 		int maxWidth = 0;
 		for (GroundItemNameplateLine line : lines) {
-			maxWidth = Math.max(maxWidth, getSurface().stringWidth(0, line.getDisplayText()));
+			maxWidth = Math.max(maxWidth, getSurface().stringWidth(font, line.getDisplayText()));
 		}
 		return maxWidth;
-	}
-
-	private Rectangle createGroundItemNameplateBounds(int anchorX, int topY, int maxWidth, int lineCount) {
-		return new Rectangle(
-			anchorX - maxWidth / 2 - 2,
-			topY - 10,
-			maxWidth + 4,
-			lineCount * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT + 2);
 	}
 
 	private boolean intersectsAnyGroundItemNameplate(Rectangle candidate, ArrayList<Rectangle> occupiedBounds) {
@@ -12133,8 +12131,8 @@ public final class mudclient implements Runnable {
 			return (this.minCenterX + this.maxCenterX) / 2;
 		}
 
-		int getBaseY() {
-			return this.minY == Integer.MAX_VALUE ? 0 : this.minY - GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING;
+		int getTopItemY() {
+			return this.minY;
 		}
 
 		ArrayList<GroundItemNameplateLine> getSortedLines() {
@@ -18349,7 +18347,7 @@ public final class mudclient implements Runnable {
 		if (chatLayout != null) {
 			rowHeight = Math.max(rowHeight, line + 2 * gap);
 			width = Math.max(width, iconWidth + surface.stringWidth(font, "000:00:00") + 3 * gap);
-			top = COMBAT_XP_ALLOCATION_Y + 5 * GameplayHud.focusRowHeight(surface) + gap;
+			top = xpFocusTop() + 5 * GameplayHud.focusRowHeight(surface) + gap;
 			rowsPerColumn = Math.max(1, Math.min(rowsPerColumn, (chatLayout.historyTop() - top - rowHeight) / rowHeight));
 		}
 
@@ -24398,8 +24396,14 @@ public final class mudclient implements Runnable {
 		if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
 			String count = inventoryItemCount + "/" + inventoryCapacity;
 			int color = (0x00FFFFFF << (inventoryItemCount / 15 * 8)) & 0x00FFFFFF;
-			surface.drawShadowText(count, toolbar.right - 4 - surface.stringWidth(1, count),
-				toolbar.bottom() - 5, color, 1, false);
+			int font = hudLabelFont();
+			int inset = Math.max(3, toolbar.gap);
+			int width = surface.stringWidth(font, count);
+			while (font > 1 && width > toolbar.buttonSize - 2 * inset) {
+				width = surface.stringWidth(--font, count);
+			}
+			surface.drawShadowText(count, toolbar.right - inset - width,
+				toolbar.bottom() - inset, color, font, false);
 		}
 	}
 

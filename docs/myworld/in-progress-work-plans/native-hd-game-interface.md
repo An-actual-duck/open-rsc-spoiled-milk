@@ -367,6 +367,18 @@ tags keep their colors, speech keeps its Classic style, and combat health bars
 and hit splats follow the interface at 1080p. Classic bitmap fonts provide the
 larger text. The health and progress bars retain their existing art and colors.
 
+## Small in-game indicators
+
+The top-left action hint uses the selected text size and has space above the
+XP focus selector. Ground item names use larger Classic glyphs and keep their
+per-tile grouping, duplicate counts, and collision handling. The satchel count
+fits its toolbar button. Walk and interaction clicks reuse the original
+four-frame markers at a readable size on the preview surface.
+
+The appearance picker belongs with the classic account entry screens. Review
+the same picker through the Makeover Mage when updating that flow. Sleep and
+the kill feed are disabled in the MyWorld configurations.
+
 ## Preview
 
 The private browser selectors are `interface=1080p` and `interface=540p` on loopback. Standalone development uses `-Dspoiledmilk.nativeHdInterface=true` with a render surface such as `-Dspoiledmilk.renderSurfaceMode=1920x1080`. Choose both UI and text sizes in each resolution and confirm the selections persist after restarting with the same client profile.
