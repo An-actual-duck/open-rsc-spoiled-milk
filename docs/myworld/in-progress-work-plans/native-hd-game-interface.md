@@ -27,6 +27,8 @@ their respective windows.
 
 Revisit these after the more straightforward UI updates are complete.
 
+- **Clans**. Defer the UI redesign until the owner has reviewed the existing
+  creation, search, joining, invitations, and member management flows in game.
 - **Bank PINs**. Trace how players reach PIN setup, including any chat commands
   or banker options. Exercise setup, change, removal, and first bank access
   after relogging before deciding where the PIN controls belong.
@@ -180,10 +182,6 @@ Manage Party shows the roster with rank, health and combat level. Owners
 can change who can kick or invite from the Permissions tab. Select a
 member to change their rank, transfer leadership or kick them when your
 rank permits it. The window confirms transfers, kicks and leaving a party.
-
-### Social windows to update later
-
-- Update clan creation, search, joining, invitations and management windows.
 
 ## Settings preview
 
