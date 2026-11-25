@@ -97,7 +97,7 @@ def main() -> None:
             "client does not accept the optional overflow suffix")
     require(model, "ClericSpellbookCatalog", "mixed status model cannot validate enrichment")
     require(client, "POTION_HUD_ROWS_PER_COLUMN = 8", "multiple effects are not laid out in bounded columns")
-    require(client, "POTION_HUD_Y + row * POTION_HUD_ROW_HEIGHT", "potion rows can overlap")
+    require(client, "top + i % rowsPerColumn * rowHeight", "potion rows can overlap")
     require(client, "itemDef.getName()", "hover does not show the exact item name")
     require(model, "compact(nowMillis)",
             "expired effects do not disappear without another packet")

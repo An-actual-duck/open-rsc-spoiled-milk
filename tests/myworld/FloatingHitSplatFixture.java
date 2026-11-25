@@ -104,11 +104,11 @@ public final class FloatingHitSplatFixture {
         FloatingHitSplatRenderer r = new FloatingHitSplatRenderer();
         try {
             java.lang.reflect.Method sprite = FloatingHitSplatRenderer.class.getDeclaredMethod(
-                "sprite", int.class, int.class, MudClientGraphics.class);
+                "sprite", int.class, int.class, MudClientGraphics.class, int.class);
             sprite.setAccessible(true);
             com.openrsc.client.model.Sprite wound = (com.openrsc.client.model.Sprite) sprite.invoke(
                 new FloatingHitSplatRenderer(FloatingHitSplatRenderer.Style.TEXT),
-                ORSCharacter.HIT_SPLAT_BLEED, 3, surface);
+                ORSCharacter.HIT_SPLAT_BLEED, 3, surface, 0);
             check(Arrays.stream(wound.getPixels()).anyMatch(pixel -> pixel == 0xB82E3A),
                 "bleed retains deep-crimson glyph pixels");
             check(Arrays.stream(wound.getPixels()).anyMatch(pixel -> pixel == 0xE04A42),

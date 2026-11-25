@@ -28,12 +28,19 @@ public final class FloatingHitSplatRenderer {
     public void beginFrame() { frame.clear(); collected.clear(); }
 
     public void collect(ORSCharacter owner, int centerX, int headY, long now, MudClientGraphics surface) {
+        collect(owner, centerX, headY, now, surface, 0);
+    }
+
+    public void collect(ORSCharacter owner, int centerX, int headY, long now, MudClientGraphics surface, int font) {
         if (collected.put(owner, Boolean.TRUE) != null) return;
+        int lineHeight = surface.fontHeight(font);
+        int extraHeight = Math.max(0, lineHeight - surface.fontHeight(0));
+        double riseScale = font == 0 ? 1.0 : Math.max(1.0, (lineHeight + 4.0) / FloatingHitSplatState.ROW_GAP);
         for (FloatingHitSplatState.Entry e : owner.floatingHitSplats.advance(now)) {
             if (frame.size() >= MAX_FRAME_VALUES) break;
-            Sprite sprite = sprite(e.type, e.amount, surface);
-            int y = headY - HEAD_GAP - sprite.getHeight() - (int) Math.round(e.rise);
-            frame.add(new Placement(owner, e, centerX, y, sprite, e.opacity(now)));
+            Sprite sprite = sprite(e.type, e.amount, surface, font);
+            int y = headY - HEAD_GAP - extraHeight / 2 - sprite.getHeight() - (int) Math.round(e.rise * riseScale);
+            frame.add(new Placement(owner, e, centerX, y, sprite, e.opacity(now), MAX_HORIZONTAL_SHIFT + extraHeight * 2));
         }
     }
 
@@ -47,7 +54,7 @@ public final class FloatingHitSplatRenderer {
             p.x = desired;
             int bestCollisions = Integer.MAX_VALUE;
             // Prefer nearby horizontal space; never detach far from the owner or stack above the height cap.
-            for (int delta = 0; delta <= MAX_HORIZONTAL_SHIFT; delta += 2) {
+            for (int delta = 0; delta <= p.maxShift; delta += 2) {
                 for (int sign : new int[] {1, -1}) {
                     int candidate = desired + sign * delta;
                     if (candidate < 0 || candidate + p.width > screenWidth) continue;
@@ -77,22 +84,22 @@ public final class FloatingHitSplatRenderer {
         } finally { surface.setRenderer2DPhase(previousPhase); }
     }
 
-    private Sprite sprite(int type, int amount, MudClientGraphics surface) {
+    private Sprite sprite(int type, int amount, MudClientGraphics surface, int font) {
         Style style = getStyle();
         String digits = Integer.toString(amount);
-        String key = style + ":" + type + ":" + digits;
+        String key = style + ":" + font + ":" + type + ":" + digits;
         Sprite cached = sprites.get(key);
         if (cached != null) return cached;
         if (style == Style.BACKGROUND) {
-            cached = backgroundSprite(type, digits, surface);
+            cached = backgroundSprite(type, digits, surface, font);
         } else {
             // Retain native text placement; bleed gets a one-pixel red rim for dark scenes.
-            int width = surface.stringWidth(0, digits) + 4;
-            int height = surface.fontHeight(0) + 2;
+            int width = surface.stringWidth(font, digits) + 4;
+            int height = surface.fontHeight(font) + 2;
             MudClientGraphics scratch = new MudClientGraphics(width, height, 1);
             scratch.beginSoftwareOwnedRenderer2DFrame();
             if (type == ORSCharacter.HIT_SPLAT_BLEED) {
-                scratch.drawString(digits, 2, height - 3, textColor(type), 0);
+                scratch.drawString(digits, 2, height - 3, textColor(type), font);
                 int[] glyph = scratch.pixelData.clone();
                 for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
                     if (glyph[y * width + x] == 0) continue;
@@ -102,7 +109,7 @@ public final class FloatingHitSplatRenderer {
                             && glyph[yy * width + xx] == 0) scratch.pixelData[yy * width + xx] = 0xE04A42;
                     }
                 }
-            } else scratch.drawShadowText(digits, 2, height - 3, textColor(type), 0, false);
+            } else scratch.drawShadowText(digits, 2, height - 3, textColor(type), font, false);
             cached = new Sprite(scratch.pixelData, width, height);
         }
         sprites.put(key, cached);
@@ -110,16 +117,16 @@ public final class FloatingHitSplatRenderer {
     }
 
 
-    private Sprite backgroundSprite(int type, String digits, MudClientGraphics surface) {
+    private Sprite backgroundSprite(int type, String digits, MudClientGraphics surface, int font) {
         // Advance width includes bearings/trailing space, and line height includes baseline
         // space. Measure the native foreground raster instead so 1, 28 and 100 all
         // have identical visible padding, without clipping their actual glyphs.
-        int measureWidth = surface.stringWidth(0, digits) + 12;
-        int measureHeight = surface.fontHeight(0) + 12;
+        int measureWidth = surface.stringWidth(font, digits) + 12;
+        int measureHeight = surface.fontHeight(font) + 12;
         int originX = 6, baseline = measureHeight - 6;
         MudClientGraphics measure = new MudClientGraphics(measureWidth, measureHeight, 1);
         measure.beginSoftwareOwnedRenderer2DFrame();
-        measure.drawString(digits, originX, baseline, 0xFFFFFF, 0);
+        measure.drawString(digits, originX, baseline, 0xFFFFFF, font);
         int left = measureWidth, top = measureHeight, right = -1, bottom = -1;
         for (int y = 0; y < measureHeight; y++) {
             for (int x = 0; x < measureWidth; x++) {
@@ -130,13 +137,13 @@ public final class FloatingHitSplatRenderer {
             }
         }
         if (right < left || bottom < top) throw new IllegalStateException("Missing native hit-number glyphs");
-        int padding = 2;
+        int padding = Math.max(2, surface.fontHeight(font) / 6);
         int width = right - left + 1 + padding * 2;
         int height = bottom - top + 1 + padding * 2;
         MudClientGraphics scratch = new MudClientGraphics(width, height, 1);
         scratch.beginSoftwareOwnedRenderer2DFrame();
         scratch.drawBoxAlpha(0, 0, width, height, backgroundColor(type), 256);
-        scratch.drawShadowText(digits, originX + padding - left, baseline + padding - top, 0xFFFFFF, 0, false);
+        scratch.drawShadowText(digits, originX + padding - left, baseline + padding - top, 0xFFFFFF, font, false);
         return new Sprite(scratch.pixelData, width, height);
     }
 
@@ -177,9 +184,10 @@ public final class FloatingHitSplatRenderer {
         public final int anchorX, y, width, height, opacity;
         public int x;
         private final Sprite sprite;
-        private Placement(ORSCharacter owner, FloatingHitSplatState.Entry entry, int anchorX, int y, Sprite sprite, int opacity) {
+        private final int maxShift;
+        private Placement(ORSCharacter owner, FloatingHitSplatState.Entry entry, int anchorX, int y, Sprite sprite, int opacity, int maxShift) {
             this.owner = owner; this.entry = entry; this.anchorX = anchorX; this.y = y; this.sprite = sprite;
-            this.width = sprite.getWidth(); this.height = sprite.getHeight(); this.opacity = opacity;
+            this.width = sprite.getWidth(); this.height = sprite.getHeight(); this.opacity = opacity; this.maxShift = maxShift;
         }
     }
 }

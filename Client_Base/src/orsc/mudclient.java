@@ -511,6 +511,7 @@ public final class mudclient implements Runnable {
 	private long gatheringFocusMenuHideAt = 0L;
 	private int[] characterDialogHalfWidth = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int[] characterDialogHeight = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private String[][] characterDialogRows = new String[CHARACTER_OVERLAY_INITIAL_CAPACITY][];
 	private String[] characterDialogString = new String[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int[] characterDialogX = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int[] characterDialogY = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
@@ -7494,10 +7495,64 @@ public final class mudclient implements Runnable {
 		return spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.EQUIPSLOT_HELM.id() + clientSlot));
 	}
 
+
+	private int addCharacterSpeech(String message, int x, int baseline) {
+		ensureCharacterDialogCapacity(characterDialogCount + 1);
+		int index = characterDialogCount++;
+		int font = hudLabelFont();
+		int width = getSurface().stringWidth(font, message);
+		int lineHeight = getSurface().fontHeight(font);
+		int wrapWidth = chatLayout == null ? 300 : Math.min(getGameWidth() / 2, hudPixels(240));
+		String[] rows = null;
+		int extraHeight = width / wrapWidth * lineHeight;
+		if (chatLayout != null) {
+			extraHeight = 0;
+			if (width > wrapWidth) {
+				rows = ClericTextLayout.wrap(message, wrapWidth, line -> getSurface().stringWidth(font, line)).toArray(new String[0]);
+				extraHeight = Math.max(0, rows.length - 1) * lineHeight;
+				baseline -= extraHeight;
+			}
+		}
+		characterDialogHalfWidth[index] = Math.min(width, wrapWidth) / 2;
+		characterDialogHeight[index] = extraHeight;
+		characterDialogX[index] = x;
+		characterDialogY[index] = baseline;
+		characterDialogString[index] = message;
+		characterDialogRows[index] = rows;
+		return baseline - lineHeight;
+	}
+
+	private int drawPlayerNametag(ORSCharacter player, int center, int headY) {
+		if (!S_SHOW_FLOATING_NAMETAGS || !C_NAME_CLAN_TAG_OVERLAY || (!C_CUSTOM_UI && showUiTab != 0)) return headY;
+		MudClientGraphics surface = getSurface();
+		int font = chatLayout == null ? 0 : hudLabelFont();
+		int line = surface.fontHeight(font);
+		int clanY = headY - hudPixels(5);
+		int nameY = chatLayout == null ? headY - 14 : clanY - line;
+		int top = headY;
+		Renderer2DFrame.Phase previousPhase = surface.getRenderer2DPhase();
+		surface.setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		try {
+			if (player.displayName != null) {
+				String name = player.getStaffName();
+				surface.drawShadowText(name, center - surface.stringWidth(font, name) / 2, nameY, 0xFFFF00, font, false);
+				top = nameY - line;
+			}
+			if (player.clanTag != null) {
+				surface.drawColoredStringCentered(center, "< " + player.clanTag + " >", 0x7CADDA, 0, font, clanY);
+				top = Math.min(top, clanY - line);
+			}
+		} finally {
+			surface.setRenderer2DPhase(previousPhase);
+		}
+		return chatLayout == null ? headY : top;
+	}
+
 	private void drawCharacterOverlay() {
 		try {
+			int font = hudLabelFont();
+			int minLineHeight = getSurface().fontHeight(font);
 			for (int i = 0; this.characterDialogCount > i; ++i) {
-				int minLineHeight = this.getSurface().fontHeight(1);
 				int x = this.characterDialogX[i];
 				int y = this.characterDialogY[i];
 				int halfWidth = this.characterDialogHalfWidth[i];
@@ -7519,8 +7574,19 @@ public final class mudclient implements Runnable {
 				}
 
 				this.characterDialogY[i] = y;
-				this.getSurface().drawWrappedCenteredString(this.characterDialogString[i], x, y, 300, 1, 0xFFFF00,
-					false);
+				if (chatLayout == null) {
+					getSurface().drawWrappedCenteredString(characterDialogString[i], x, y, 300, font, 0xFFFF00, false);
+				} else {
+					String[] rows = characterDialogRows[i];
+					if (rows == null) {
+						getSurface().drawColoredStringCentered(x, characterDialogString[i], 0xFFFF00, 0, font, y);
+					} else {
+						for (String row : rows) {
+							getSurface().drawColoredStringCentered(x, row, 0xFFFF00, 0, font, y);
+							y += minLineHeight;
+						}
+					}
+				}
 			}
 
 
@@ -7548,12 +7614,14 @@ public final class mudclient implements Runnable {
 				}
 			}
 
-			for (int i = 0; i < this.characterHealthCount; ++i) {
-				int x = this.characterHealthX[i];
-				int y = this.characterHealthY[i];
-				int percent = this.characterHealthBar[i];
-				this.getSurface().drawBoxAlpha(x - 15, y - 3, percent, 5, 0x00FF00, 192);
-				this.getSurface().drawBoxAlpha(percent - 15 + x, y - 3, 30 - percent, 5, 0xFF0000, 192);
+			int barWidth = hudPixels(30);
+			int barHeight = hudPixels(5);
+			for (int i = 0; i < characterHealthCount; ++i) {
+				int left = characterHealthX[i] - barWidth / 2;
+				int top = characterHealthY[i] - hudPixels(3);
+				int fill = Math.max(0, Math.min(barWidth, characterHealthBar[i] * barWidth / 30));
+				getSurface().drawBoxAlpha(left, top, fill, barHeight, 0x00FF00, 192);
+				getSurface().drawBoxAlpha(left + fill, top, barWidth - fill, barHeight, 0xFF0000, 192);
 			}
 
 			floatingHitSplatRenderer.draw(this.getSurface());
@@ -11080,45 +11148,25 @@ public final class mudclient implements Runnable {
 						//	this.mouseWalkX - 8, this.mouseWalkY - 8);
 					}
 
-					if (this.systemUpdate != 0) {
-						centerX = this.systemUpdate / 50;
-						centerZ = centerX / 60;
-						centerX %= 60;
-						if (centerX < 10) {
-							this.getSurface().drawColoredStringCentered(256,
-								"Automatic server restart in: " + centerZ + ":0" + centerX, 0xFFFF00, 0, 1,
-								this.getGameHeight() - 7);
-						} else {
-							this.getSurface().drawColoredStringCentered(256,
-								"Automatic server restart in: " + centerZ + ":" + centerX, 0xFFFF00, 0, 1,
-								this.getGameHeight() - 7);
-						}
+					if (systemUpdate != 0) {
+						int x = chatLayout == null ? 256 : chatLayout.left + chatLayout.width / 2;
+						int y = chatLayout == null ? getGameHeight() - 7 : chatLayout.historyTop() - hudPixels(6);
+						getSurface().drawColoredStringCentered(x,
+							"Automatic server restart in: " + formatMinutesCountdown(systemUpdate / 50), 0xFFFF00, 0, hudLabelFont(), y);
 					}
 
-					if (S_WANT_EXPERIENCE_ELIXIRS && this.elixirTimer != 0) {
-						centerX = this.elixirTimer / 50;
-						centerZ = centerX / 60;
-						centerX %= 60;
-						if (inWild) {
-							if (centerX < 10) {
-								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 53,
-									"EXP Elixir: " + centerZ + ":0" + centerX, 0x9139e7, 0, 0,
-									this.getGameHeight() - 62);
-							} else {
-								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 53,
-									"EXP Elixir: " + centerZ + ":" + centerX, 0x9139e7, 0, 0,
-									this.getGameHeight() - 62);
-							}
-						} else if (!inWild) {
-							if (centerX < 10) {
-								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 53,
-									"EXP Elixir: " + centerZ + ":0" + centerX, 0x9139e7, 0, 1,
-									this.getGameHeight() - 7);
-							} else {
-								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 53,
-									"EXP Elixir: " + centerZ + ":" + centerX, 0x9139e7, 0, 1,
-									this.getGameHeight() - 7);
-							}
+					if (S_WANT_EXPERIENCE_ELIXIRS && elixirTimer != 0) {
+						String label = "EXP Elixir: " + formatMinutesCountdown(elixirTimer / 50);
+						if (chatLayout == null) {
+							getSurface().drawColoredStringCentered(getGameWidth() - 53, label, 0x9139e7, 0,
+								inWild ? 0 : 1, getGameHeight() - (inWild ? 62 : 7));
+						} else {
+							int font = hudLabelFont();
+							SideToolbarLayout toolbar = sideToolbarLayout();
+							int bottom = C_CUSTOM_UI && toolbar != null ? toolbar.top : chatLayout.entryTop();
+							int y = Math.min(bottom, chatLayout.entryTop()) - hudPixels(getLocalPlayerWildernessDepth() > 0 ? 39 : 6);
+							int x = getGameWidth() - hudPixels(5) - getSurface().stringWidth(font, label);
+							getSurface().drawString(label, x, y, 0x9139e7, font);
 						}
 					}
 					if (C_KILL_FEED) {
@@ -11181,31 +11229,33 @@ public final class mudclient implements Runnable {
 					int i2 = 75;
 					int index;
 					int var12;
-					this.drawActivePotionEffectsHud();
+					int effectsBottom = drawActivePotionEffectsHud();
 					if (S_SIDE_MENU_TOGGLE && C_SIDE_MENU_OVERLAY) {
 						this.drawPlayerStatusHud();
-						int i = 130;
+						int hudFont = hudLabelFont();
+						int readoutLine = getSurface().fontHeight(hudFont);
+						int i = chatLayout == null ? 130 : Math.max(hudPixels(130), effectsBottom + readoutLine);
 						//this.getSurface().drawString("FPS: @gre@(@whi@" + FPS + "@gre@)", 7, i, 0xffffff, 1);
 						//i += 14;
 						if (C_TOTAL_NPC_KC) {
 							this.getSurface().drawString(
-								"Kills: " + getStatKills2() + "@whi@", 7, i, 0xffffff, 1);
-							i += 14;
+								"Kills: " + getStatKills2() + "@whi@", 7, i, 0xffffff, hudFont);
+							i += readoutLine;
 						}
 						if (C_RECENT_NPC_KC) {
 							if (getLastNpcKilledId() != -1) {
 								this.getSurface().drawString(
-									"Last NPC Kills: " + getStatKills3() + "@whi@", 7, i, 0xffffff, 1);
+									"Last NPC Kills: " + getStatKills3() + "@whi@", 7, i, 0xffffff, hudFont);
 							} else {
 								this.getSurface().drawString(
-									"Last NPC Kills: None@whi@", 7, i, 0xffffff, 1);
+									"Last NPC Kills: None@whi@", 7, i, 0xffffff, hudFont);
 							}
-							i += 14;
+							i += readoutLine;
 						}
 						if (Config.S_WANT_FATIGUE) {
-							i += 14;
+							i += readoutLine;
 							this.getSurface().drawString(
-								"Fatigue: " + this.statFatigue + "%", 7, i, 0xffffff, 1);
+								"Fatigue: " + this.statFatigue + "%", 7, i, 0xffffff, hudFont);
 						}
 						if (Config.DEBUG) {
 							i += 14;
@@ -12984,19 +13034,10 @@ public final class mudclient implements Runnable {
 			drawCombatEffectOverlay(npc, x, y, width1, height);
 			drawClericCurseOverlay(npc, x, y, width1, height);
 
+			int hitSplatAnchor = y;
 			if (npc.messageTimeout > 0) {
-				ensureCharacterDialogCapacity(this.characterDialogCount + 1);
-				this.characterDialogHalfWidth[this.characterDialogCount] = this.getSurface().stringWidth(1, npc.message)
-					/ 2;
-				if (this.characterDialogHalfWidth[this.characterDialogCount] > 150) {
-					this.characterDialogHalfWidth[this.characterDialogCount] = 150;
-				}
-
-				this.characterDialogHeight[this.characterDialogCount] = this.getSurface().stringWidth(1, npc.message)
-					/ 300 * this.getSurface().fontHeight(1);
-				this.characterDialogX[this.characterDialogCount] = width1 / 2 + x;
-				this.characterDialogY[this.characterDialogCount] = y;
-				this.characterDialogString[this.characterDialogCount++] = npc.message;
+				int speechTop = addCharacterSpeech(npc.message, x + width1 / 2, y - (chatLayout == null ? 0 : hudPixels(7)));
+				if (chatLayout != null) hitSplatAnchor = speechTop;
 			}
 
 			int skullX = topPixelSkew + x + width1 / 2;
@@ -13024,7 +13065,7 @@ public final class mudclient implements Runnable {
 			if (!hideSummonDuringArrival) {
 				floatingHitSplatRenderer.collect(npc,
 					width1 / 2 + x + getCombatScreenOffset(npc.direction, overlayMovement, 20),
-					y, FloatingHitSplatState.now(), this.getSurface());
+					hitSplatAnchor, FloatingHitSplatState.now(), getSurface(), chatLayout == null ? 0 : hudLabelFont());
 			}
 
 			/*if (npc.bubbleItem == 221) {
@@ -13313,36 +13354,13 @@ public final class mudclient implements Runnable {
 					}
 				}
 
+				int overheadY = drawPlayerNametag(player, x + width / 2 + 1, y);
+				int hitSplatAnchor = overheadY;
 				if (player.messageTimeout > 0) {
-					ensureCharacterDialogCapacity(this.characterDialogCount + 1);
-					this.characterDialogHalfWidth[this.characterDialogCount] = this.getSurface().stringWidth(1,
-						player.message) / 2;
-					if (this.characterDialogHalfWidth[this.characterDialogCount] > 150) {
-						this.characterDialogHalfWidth[this.characterDialogCount] = 150;
-					}
-
-					this.characterDialogHeight[this.characterDialogCount] = this.getSurface().stringWidth(1,
-						player.message) / 300 * this.getSurface().fontHeight(1);
-					this.characterDialogX[this.characterDialogCount] = width / 2 + x;
-					this.characterDialogY[this.characterDialogCount] = y;
-					this.characterDialogString[this.characterDialogCount++] = player.message;
+					int speechTop = addCharacterSpeech(player.message, x + width / 2,
+						overheadY - (chatLayout == null ? 0 : hudPixels(7)));
+					if (chatLayout != null) hitSplatAnchor = speechTop;
 				}
-
-					if (S_SHOW_FLOATING_NAMETAGS) {
-						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
-						try {
-							if ((C_NAME_CLAN_TAG_OVERLAY && this.showUiTab == 0 && !C_CUSTOM_UI) || (C_CUSTOM_UI && C_NAME_CLAN_TAG_OVERLAY)) {
-								if (player.displayName != null)
-									this.getSurface().drawShadowText(player.getStaffName(), (width - this.getSurface().stringWidth(0, player.getStaffName())) / 2 + x + 1, y - 14, 0xffff00, 0, false);
-							}
-							if ((C_NAME_CLAN_TAG_OVERLAY && this.showUiTab == 0 && !C_CUSTOM_UI) || (C_CUSTOM_UI && C_NAME_CLAN_TAG_OVERLAY)) {
-								if (player.clanTag != null)
-									this.getSurface().drawColoredString((width - this.getSurface().stringWidth(0, "< " + player.clanTag + " >")) / 2 + x + 1, y - 5, "< " + player.clanTag + " >", 0, 0x7CADDA, 0);
-							}
-						} finally {
-							this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
-						}
-					}
 
 				if (player.bubbleTimeout > 0) {
 					ensureCharacterBubbleCapacity(this.characterBubbleCount + 1);
@@ -13352,13 +13370,15 @@ public final class mudclient implements Runnable {
 					this.characterBubbleID[this.characterBubbleCount++] = player.bubbleItem;
 				}
 				if (player == this.localPlayer) {
+					int progressTop = hitSplatAnchor;
 					if (doSkillInterface != null && doSkillInterface.hasCraftingProgress()) {
 						if (doSkillInterface.hasOverheadCraftingProgress(combatTimeout != 0)) {
-							drawOverheadCraftingProgress(x + width / 2, y, overlayMovement);
+							progressTop = drawOverheadCraftingProgress(x + width / 2, y, overlayMovement, hitSplatAnchor);
 						}
-					} else if (this.actionProgressActive) {
-						drawActionProgressBar(x + width / 2, y, overlayMovement);
+					} else if (actionProgressActive) {
+						progressTop = drawActionProgressBar(x + width / 2, y, overlayMovement, hitSplatAnchor);
 					}
+					if (chatLayout != null) hitSplatAnchor = progressTop;
 				}
 				drawCombatEffectOverlay(player, x, y, width, height);
 				drawClericBuffOverlay(player, x, y, width, height);
@@ -13367,7 +13387,7 @@ public final class mudclient implements Runnable {
 					if (player.combatTimeout > 0) {
 						int var14 = x + getCombatScreenOffset(player.direction, overlayMovement, 20);
 
-						int healthStep = player.healthCurrent * 30 / player.healthMax;
+						int healthStep = player.healthCurrent * 30 / Math.max(1, player.healthMax);
 						ensureCharacterHealthCapacity(this.characterHealthCount + 1);
 						this.characterHealthX[this.characterHealthCount] = width / 2 + var14;
 						this.characterHealthY[this.characterHealthCount] = y;
@@ -13376,7 +13396,7 @@ public final class mudclient implements Runnable {
 				}
 				floatingHitSplatRenderer.collect(player,
 					width / 2 + x + getCombatScreenOffset(player.direction, overlayMovement, 20),
-					y, FloatingHitSplatState.now(), this.getSurface());
+					hitSplatAnchor, FloatingHitSplatState.now(), getSurface(), chatLayout == null ? 0 : hudLabelFont());
 
 				if (player.skullVisible == 1 && player.bubbleTimeout == 0) {
 					int skullX = topPixelSkew + x + width / 2 + getCombatScreenOffset(player.direction, overlayMovement, 20);
@@ -18276,94 +18296,150 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private int hudPixels(int baseline) {
+		return chatLayout == null ? baseline : GameInterfaceSettings.size().pixels((baseline * 7 + 2) / 4);
+	}
+
+	private int hudLabelFont() {
+		return chatLayout == null ? 1 : GameInterfaceSettings.textSize().labelFont;
+	}
+
 	private void drawPlayerStatusHud() {
 		SideToolbarLayout toolbar = sideToolbarLayout();
 		int right = toolbar != null && !C_CUSTOM_UI ? toolbar.left : getSurface().width2 - TOP_MENU_BAR_WIDTH;
-		int x = right - HEALTH_HUD_WIDTH - HEALTH_HUD_RIGHT_OF_MENU_GAP;
-		int y = HEALTH_HUD_TOP_MARGIN;
-		x = Math.max(7 + AUTO_ATTACK_HUD_SIZE + AUTO_ATTACK_HUD_GAP, x);
-		this.drawAutoAttackHudButton(x - AUTO_ATTACK_HUD_SIZE - AUTO_ATTACK_HUD_GAP, y - 1);
-		this.drawPlayerHealthBar(x, y);
-		y += HEALTH_HUD_HEIGHT + HEALTH_HUD_COORDINATE_GAP;
-		if (this.showCoordinatesOverlay) {
-			int compatibilityX = this.playerLocalX + this.midRegionBaseX;
-			int compatibilityY = this.playerLocalZ + this.midRegionBaseZ;
-			int logicalX = this.packetHandler.getLogicalPlayerX(compatibilityX);
-			int logicalY = this.packetHandler.getLogicalPlayerY(
-				compatibilityX, compatibilityY);
-			int logicalLevel =
-				this.packetHandler.getLogicalWorldLevel(compatibilityY);
-			this.getSurface().drawString(
-				"Tile: @gre@(@whi@" + logicalX
-					+ "@gre@,@whi@" + logicalY
-					+ "@gre@,L@whi@" + logicalLevel + "@gre@)",
-				x, y, 0xFFFFFF, 1);
+		int font = hudLabelFont();
+		int lineHeight = getSurface().fontHeight(font);
+		int width = hudPixels(HEALTH_HUD_WIDTH);
+		int height = chatLayout == null ? HEALTH_HUD_HEIGHT : Math.max(hudPixels(HEALTH_HUD_HEIGHT), lineHeight + 3);
+		int toggleSize = chatLayout == null ? AUTO_ATTACK_HUD_SIZE : Math.max(hudPixels(AUTO_ATTACK_HUD_SIZE), height);
+		int gap = hudPixels(AUTO_ATTACK_HUD_GAP);
+		int x = Math.max(7 + toggleSize + gap, right - width - hudPixels(HEALTH_HUD_RIGHT_OF_MENU_GAP));
+		int y = hudPixels(HEALTH_HUD_TOP_MARGIN);
+		drawAutoAttackHudButton(x - toggleSize - gap, y + (height - toggleSize) / 2, toggleSize, font);
+		drawPlayerHealthBar(x, y, width, height, font);
+		if (showCoordinatesOverlay) {
+			int compatibilityX = playerLocalX + midRegionBaseX;
+			int compatibilityY = playerLocalZ + midRegionBaseZ;
+			int logicalX = packetHandler.getLogicalPlayerX(compatibilityX);
+			int logicalY = packetHandler.getLogicalPlayerY(compatibilityX, compatibilityY);
+			int logicalLevel = packetHandler.getLogicalWorldLevel(compatibilityY);
+			int baseline = y + height + (chatLayout == null ? HEALTH_HUD_COORDINATE_GAP : lineHeight + 3);
+			getSurface().drawString("Tile: @gre@(@whi@" + logicalX + "@gre@,@whi@" + logicalY
+				+ "@gre@,L@whi@" + logicalLevel + "@gre@)", x, baseline, 0xFFFFFF, font);
 		}
 	}
 
-	private void drawActivePotionEffectsHud() {
-		int potionTop = chatLayout == null ? POTION_HUD_Y
-			: COMBAT_XP_ALLOCATION_Y + 5 * GameplayHud.focusRowHeight(getSurface()) + 8;
-		ActiveStatusHudModel.Snapshot snapshot =
-			this.activeStatusHud.snapshot(System.currentTimeMillis());
+	private int drawActivePotionEffectsHud() {
+		ActiveStatusHudModel.Snapshot snapshot = activeStatusHud.snapshot(System.currentTimeMillis());
 		List<ActiveStatusHudModel.Row> rows = snapshot.getRows();
-		int columns = Math.max(1, (rows.size() + POTION_HUD_ROWS_PER_COLUMN - 1)
-			/ POTION_HUD_ROWS_PER_COLUMN);
+		if (rows.isEmpty() && snapshot.getOverflowCount() == 0) return 0;
+
+		MudClientGraphics surface = getSurface();
+		int font = hudLabelFont();
+		int line = surface.fontHeight(font);
+		int left = POTION_HUD_X;
+		int gap = hudPixels(POTION_HUD_COLUMN_GAP);
+		int iconWidth = hudPixels(POTION_HUD_ICON_WIDTH);
+		int iconHeight = hudPixels(POTION_HUD_ICON_HEIGHT);
+		int borderGap = hudPixels(2);
+		int rowHeight = hudPixels(POTION_HUD_ROW_HEIGHT);
+		int width = hudPixels(POTION_HUD_WIDTH);
+		int top = POTION_HUD_Y;
+		int rowsPerColumn = POTION_HUD_ROWS_PER_COLUMN;
+		if (chatLayout != null) {
+			rowHeight = Math.max(rowHeight, line + 2 * gap);
+			width = Math.max(width, iconWidth + surface.stringWidth(font, "000:00:00") + 3 * gap);
+			top = COMBAT_XP_ALLOCATION_Y + 5 * GameplayHud.focusRowHeight(surface) + gap;
+			rowsPerColumn = Math.max(1, Math.min(rowsPerColumn, (chatLayout.historyTop() - top - rowHeight) / rowHeight));
+		}
+
+		ActiveStatusHudModel.Row hoveredStatus = null;
+		int hoverY = 0;
+		int columns = Math.max(1, (rows.size() + rowsPerColumn - 1) / rowsPerColumn);
 		for (int i = 0; i < rows.size(); i++) {
 			ActiveStatusHudModel.Row status = rows.get(i);
-			int column = i / POTION_HUD_ROWS_PER_COLUMN;
-			int row = i % POTION_HUD_ROWS_PER_COLUMN;
-			int x = POTION_HUD_X + column * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP);
-			int y = potionTop + row * POTION_HUD_ROW_HEIGHT;
-			boolean hovered = mouseX >= x && mouseX < x + POTION_HUD_WIDTH
-				&& mouseY >= y && mouseY < y + POTION_HUD_ROW_HEIGHT - 2;
-			getSurface().drawBoxAlpha(x, y, POTION_HUD_WIDTH, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
-			getSurface().drawBoxBorder(x, POTION_HUD_WIDTH, y, POTION_HUD_ROW_HEIGHT - 2,
-				hovered ? 0xFFFF00 : 0xB7B7B7);
-
+			int x = left + i / rowsPerColumn * (width + gap);
+			int y = top + i % rowsPerColumn * rowHeight;
+			int height = rowHeight - borderGap;
+			boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+			surface.drawBoxAlpha(x, y, width, height, 0x111111, 190);
+			surface.drawBoxBorder(x, width, y, height, hovered ? 0xFFFF00 : 0xB7B7B7);
 			ItemDef itemDef = EntityHandler.getItemDef(status.getIconItemId());
-			Sprite clericIcon = status.isCleric()
-				? this.getClericIconSprite(status.getStableIdentity()) : null;
+			Sprite clericIcon = status.isCleric() ? getClericIconSprite(status.getStableIdentity()) : null;
+			int iconX = x + borderGap;
+			int iconY = y + (height - iconHeight) / 2;
 			if (clericIcon != null) {
-				getSurface().drawSprite(clericIcon, x + 2, y + 3,
-					POTION_HUD_ICON_WIDTH, POTION_HUD_ICON_HEIGHT, 5924);
+				surface.drawSprite(clericIcon, iconX, iconY, iconWidth, iconHeight, 5924);
 			} else if (itemDef != null) {
-				Sprite sprite = spriteSelect(itemDef);
-				getSurface().drawSpriteClipping(sprite, x + 2, y + 3, POTION_HUD_ICON_WIDTH, POTION_HUD_ICON_HEIGHT,
+				surface.drawSpriteClipping(spriteSelect(itemDef), iconX, iconY, iconWidth, iconHeight,
 					itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
 			}
-			getSurface().drawColoredStringCentered(x + POTION_HUD_ICON_WIDTH + 2
-				+ (POTION_HUD_WIDTH - POTION_HUD_ICON_WIDTH - 4) / 2,
-				formatPotionCountdown(status.getRemainingSeconds()), 0xFFFFFF, 0, 1, y + 15);
+			int timerX = x + (width + iconWidth) / 2;
+			int baseline = chatLayout == null ? y + 15 : y + (height + line) / 2 - 3;
+			surface.drawColoredStringCentered(timerX, formatPotionCountdown(status.getRemainingSeconds()),
+				0xFFFFFF, 0, font, baseline);
 			String badge = status.getCounterBadge();
 			if (!badge.isEmpty()) {
-				getSurface().drawBoxAlpha(x + 11, y + 11, 13, 10, 0x111111, 220);
-				getSurface().drawColoredStringCentered(x + 17, badge, 0xFFFF00, 0, 0, y + 20);
+				int badgeFont = chatLayout == null ? 0 : Math.max(3, font - 1);
+				int badgeWidth = Math.max(hudPixels(13), surface.stringWidth(badgeFont, badge) + 2 * borderGap);
+				int badgeHeight = chatLayout == null ? 10 : surface.fontHeight(badgeFont);
+				int badgeX = iconX + iconWidth - badgeWidth / 2;
+				int badgeY = y + height - badgeHeight - 1;
+				surface.drawBoxAlpha(badgeX, badgeY, badgeWidth, badgeHeight, 0x111111, 220);
+				surface.drawColoredStringCentered(badgeX + badgeWidth / 2, badge, 0xFFFF00, 0,
+					badgeFont, badgeY + badgeHeight - 2);
 			}
 			if (hovered && (status.isCleric() || itemDef != null)) {
-				int tooltipX = POTION_HUD_X + columns * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP) + 1;
-				String tooltip = status.isCleric()
-					? status.getClericHoverText() : itemDef.getName();
-				if (status.getSlayerHoverText() != null) tooltip = status.getSlayerHoverText();
-				java.util.List<String> lines=new java.util.ArrayList<String>();
-                java.util.List<String> details=status.getClericHoverLines();
-                if(details==null)details=java.util.Collections.singletonList(tooltip);
-                for(String detail:details)lines.addAll(ClericTextLayout.wrap(detail,Math.max(80,getGameWidth()-tooltipX-16),text->getSurface().stringWidth(1,text)));
-                int top=Math.max(16,Math.min(y+15,getGameHeight()-lines.size()*14-8));
-                int width=0;for(String line:lines)width=Math.max(width,getSurface().stringWidth(1,line));
-                getSurface().drawBoxAlpha(tooltipX-4,top-12,width+10,lines.size()*14+6,0x111111,225);
-                for(int line=0;line<lines.size();line++)getSurface().drawString(lines.get(line),tooltipX,top+line*14,line==0&&status.isCleric()?0xFFFF00:0xFFFFFF,1);
+				hoveredStatus = status;
+				hoverY = y;
 			}
 		}
+		int bottom = top + Math.min(rows.size(), rowsPerColumn) * rowHeight;
 		if (snapshot.getOverflowCount() > 0) {
-			int overflowY = potionTop + POTION_HUD_ROWS_PER_COLUMN * POTION_HUD_ROW_HEIGHT;
+			int y = top + rowsPerColumn * rowHeight;
 			String label = "+" + snapshot.getOverflowCount() + " more effects";
-			this.getSurface().drawBoxAlpha(POTION_HUD_X, overflowY,
-				POTION_HUD_WIDTH + 20, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
-			this.getSurface().drawBoxBorder(POTION_HUD_X, POTION_HUD_WIDTH + 20,
-				overflowY, POTION_HUD_ROW_HEIGHT - 2, 0xB7B7B7);
-			this.getSurface().drawColoredStringCentered(POTION_HUD_X + (POTION_HUD_WIDTH + 20) / 2,
-				label, 0xFFFFFF, 0, 1, overflowY + 15);
+			int overflowWidth = Math.max(width + hudPixels(20), surface.stringWidth(font, label) + 2 * gap);
+			surface.drawBoxAlpha(left, y, overflowWidth, rowHeight - borderGap, 0x111111, 190);
+			surface.drawBoxBorder(left, overflowWidth, y, rowHeight - borderGap, 0xB7B7B7);
+			surface.drawColoredStringCentered(left + overflowWidth / 2, label, 0xFFFFFF, 0, font,
+				chatLayout == null ? y + 15 : y + (rowHeight + line) / 2 - 4);
+			bottom = y + rowHeight;
+		}
+		if (hoveredStatus != null) {
+			drawActiveEffectTooltip(hoveredStatus, left + columns * (width + gap) + gap,
+				hoverY, font, gap, line);
+		}
+		return bottom;
+	}
+
+	private void drawActiveEffectTooltip(ActiveStatusHudModel.Row status, int x, int y, int font, int gap, int line) {
+		MudClientGraphics surface = getSurface();
+		List<String> details = status.getClericHoverLines();
+		if (details == null) {
+			String tooltip = status.getSlayerHoverText();
+			if (tooltip == null) {
+				ItemDef itemDef = EntityHandler.getItemDef(status.getIconItemId());
+				tooltip = status.isCleric() ? status.getClericHoverText() : itemDef.getName();
+			}
+			details = Collections.singletonList(tooltip);
+		}
+		int maxWidth = Math.min(hudPixels(290), Math.max(80, getGameWidth() - x - 2 * gap));
+		List<String> lines = new ArrayList<>();
+		int width = 0;
+		for (String detail : details) {
+			for (String row : ClericTextLayout.wrap(detail, maxWidth, text -> surface.stringWidth(font, text))) {
+				lines.add(row);
+				width = Math.max(width, surface.stringWidth(font, row));
+			}
+		}
+		int height = lines.size() * line + 2 * gap;
+		x = Math.min(x, getGameWidth() - width - 2 * gap);
+		int bottom = chatLayout == null ? getGameHeight() : chatLayout.historyTop();
+		y = Math.max(0, Math.min(y, bottom - height));
+		surface.drawBoxAlpha(x, y, width + 2 * gap, height, 0x111111, 225);
+		for (int i = 0; i < lines.size(); i++) {
+			surface.drawString(lines.get(i), x + gap, y + gap + (i + 1) * line - 3,
+				i == 0 && status.isCleric() ? 0xFFFF00 : 0xFFFFFF, font);
 		}
 	}
 
@@ -18375,7 +18451,12 @@ public final class mudclient implements Runnable {
 			return hours + ":" + (minutes < 10L ? "0" : "") + minutes
 				+ ":" + (remainder < 10L ? "0" : "") + remainder;
 		}
-		return minutes + ":" + (remainder < 10L ? "0" : "") + remainder;
+		return formatMinutesCountdown(seconds);
+	}
+
+	private String formatMinutesCountdown(long seconds) {
+		long remainder = seconds % 60L;
+		return seconds / 60L + ":" + (remainder < 10L ? "0" : "") + remainder;
 	}
 
 	public void setActivePotionEffects(int[] itemIds, int[] remainingSeconds) {
@@ -18396,26 +18477,26 @@ public final class mudclient implements Runnable {
 		this.activeStatusHud.clear();
 	}
 
-	private void drawAutoAttackHudButton(int x, int y) {
-		boolean hovered = this.mouseX >= x && this.mouseX < x + AUTO_ATTACK_HUD_SIZE
-			&& this.mouseY >= y && this.mouseY < y + AUTO_ATTACK_HUD_SIZE;
+	private void drawAutoAttackHudButton(int x, int y, int size, int font) {
+		boolean hovered = mouseX >= x && mouseX < x + size && mouseY >= y && mouseY < y + size;
 		int borderColor = hovered ? 0xFFFF00 : (C_AUTO_RETALIATE ? 0x55DD55 : 0xCC5555);
 		int backgroundColor = C_AUTO_RETALIATE ? 0x163A16 : 0x3A1616;
-		this.getSurface().drawBoxAlpha(x, y, AUTO_ATTACK_HUD_SIZE, AUTO_ATTACK_HUD_SIZE, backgroundColor, 210);
-		this.getSurface().drawBoxBorder(x, AUTO_ATTACK_HUD_SIZE, y, AUTO_ATTACK_HUD_SIZE, borderColor);
+		getSurface().drawBoxAlpha(x, y, size, size, backgroundColor, 210);
+		getSurface().drawBoxBorder(x, size, y, size, borderColor);
 
 		Sprite icon = getAutoAttackHudSprite();
+		int inset = hudPixels(2);
 		if (icon != null) {
-			this.getSurface().drawSprite(icon, x + 2, y + 2, AUTO_ATTACK_HUD_SIZE - 4, AUTO_ATTACK_HUD_SIZE - 4,
-				5924);
+			getSurface().drawSprite(icon, x + inset, y + inset, size - 2 * inset, size - 2 * inset, 5924);
 		}
-		if (hovered) {
+		if (hovered && !hasGameplayPromptInput() && !hasSessionNoticeInput() && !hasContextMenuInput()) {
 			String hoverText = "Auto attack: " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off");
-			this.getSurface().drawString(hoverText,
-				x - 4 - this.getSurface().stringWidth(1, hoverText), y + 12, 0xFFFFFF, 1);
-			if (this.mouseButtonClick == 1) {
+			int baseline = chatLayout == null ? y + 12 : y + (size + getSurface().fontHeight(font)) / 2 - 3;
+			getSurface().drawString(hoverText, x - hudPixels(4) - getSurface().stringWidth(font, hoverText),
+				baseline, 0xFFFFFF, font);
+			if (mouseButtonClick == 1) {
 				toggleAutoRetaliate();
-				this.mouseButtonClick = 0;
+				mouseButtonClick = 0;
 			}
 		}
 	}
@@ -18447,19 +18528,18 @@ public final class mudclient implements Runnable {
 		this.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void drawPlayerHealthBar(int x, int y) {
-		int maxHealth = Math.max(1, this.playerStatBase[3]);
-		int currentHealth = Math.max(0, Math.min(this.playerStatCurrent[3], maxHealth));
-		int fillWidth = currentHealth * (HEALTH_HUD_WIDTH - 2) / maxHealth;
-
-		this.getSurface().drawBoxAlpha(x, y, HEALTH_HUD_WIDTH, HEALTH_HUD_HEIGHT, 0x000000, 160);
-		this.getSurface().drawBoxAlpha(x + 1, y + 1, HEALTH_HUD_WIDTH - 2, HEALTH_HUD_HEIGHT - 2, 0x4A1010, 220);
+	private void drawPlayerHealthBar(int x, int y, int width, int height, int font) {
+		int maxHealth = Math.max(1, playerStatBase[3]);
+		int currentHealth = Math.max(0, Math.min(playerStatCurrent[3], maxHealth));
+		int fillWidth = currentHealth * (width - 2) / maxHealth;
+		getSurface().drawBoxAlpha(x, y, width, height, 0x000000, 160);
+		getSurface().drawBoxAlpha(x + 1, y + 1, width - 2, height - 2, 0x4A1010, 220);
 		if (fillWidth > 0) {
-			this.getSurface().drawBoxAlpha(x + 1, y + 1, fillWidth, HEALTH_HUD_HEIGHT - 2, 0xC62828, 230);
+			getSurface().drawBoxAlpha(x + 1, y + 1, fillWidth, height - 2, 0xC62828, 230);
 		}
-		this.getSurface().drawBoxBorder(x, HEALTH_HUD_WIDTH, y, HEALTH_HUD_HEIGHT, 0xFFFFFF);
-		this.getSurface().drawColoredStringCentered(x + HEALTH_HUD_WIDTH / 2,
-			currentHealth + "/" + maxHealth, 0xFFFFFF, 0, 1, y + 11);
+		getSurface().drawBoxBorder(x, width, y, height, 0xFFFFFF);
+		int baseline = chatLayout == null ? y + 11 : y + (height + getSurface().fontHeight(font)) / 2 - 3;
+		getSurface().drawColoredStringCentered(x + width / 2, currentHealth + "/" + maxHealth, 0xFFFFFF, 0, font, baseline);
 	}
 
 	private boolean shouldDrawMinimapPanel() {
@@ -29261,46 +29341,57 @@ public final class mudclient implements Runnable {
 		this.extendGatheringFocusMenuLinger();
 	}
 
-	private void drawOverheadCraftingProgress(int centerX, int actorTopY, int scale) {
+	private int drawOverheadCraftingProgress(int centerX, int actorTopY, int scale, int overheadTop) {
 		int font = GameInterfaceSettings.textSize().labelFont;
 		int width = Math.max(GameInterfaceSettings.size().pixels(78), getSurface().stringWidth(font, "30 / 30") + 10);
 		int height = getSurface().fontHeight(font) + 4;
 		int top = actorTopY - scale * 39 / 100 - height;
+		if (chatLayout != null) top = Math.min(top, overheadTop - height - hudPixels(2));
 		getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
 			doSkillInterface.drawCraftingProgress(centerX - width / 2, top, width, height, font);
 		} finally {
 			getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 		}
+		return top;
 	}
 
-	private void drawActionProgressBar(int centerX, int actorTopY, int scale) {
-		if (!this.actionProgressActive || this.actionProgressItemId < 0) {
-			return;
-		}
-		ItemDef itemDef = EntityHandler.getItemDef(this.actionProgressItemId);
-		if (itemDef == null) {
-			return;
-		}
+	private int drawActionProgressBar(int centerX, int actorTopY, int scale, int overheadTop) {
+		if (!actionProgressActive || actionProgressItemId < 0) return overheadTop;
+		ItemDef itemDef = EntityHandler.getItemDef(actionProgressItemId);
+		if (itemDef == null) return overheadTop;
 
-		long elapsed = System.currentTimeMillis() - this.actionProgressStartTime;
-		int fillWidth = (int) Math.min(40L, Math.max(0L, elapsed * 40L / this.actionProgressDurationMs));
-		int offsetY = scale * 31 / 100;
-		int x = centerX - 32;
-		int y = actorTopY - offsetY - 9;
+		int width = hudPixels(64);
+		int height = hudPixels(14);
+		int barWidth = hudPixels(40);
+		int inset = hudPixels(1);
+		int x = centerX - width / 2;
+		int y = actorTopY - scale * 31 / 100 - hudPixels(9);
+		if (chatLayout != null) y = Math.min(y, overheadTop - height - hudPixels(2));
+		long elapsed = System.currentTimeMillis() - actionProgressStartTime;
+		int fillWidth = (int) Math.min(barWidth, Math.max(0L, elapsed * barWidth / actionProgressDurationMs));
 
-		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		MudClientGraphics surface = getSurface();
+		Renderer2DFrame.Phase previousPhase = surface.getRenderer2DPhase();
+		surface.setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
-			this.getSurface().drawBoxAlpha(x, y, 64, 14, 0x000000, 170);
-			this.getSurface().drawBoxAlpha(x + 1, y + 1, 12, 12, 0xd8d8d8, 210);
-			this.getSurface().drawBoxAlpha(x + 2, y + 2, 10, 10, 0xffffff, 90);
-			this.getSurface().drawSpriteClipping(spriteSelect(itemDef), x + 2, y + 2, 10, 10,
+			int iconSize = hudPixels(10);
+			int iconX = x + hudPixels(2);
+			int iconY = y + (height - iconSize) / 2;
+			int trackX = x + hudPixels(15);
+			int trackHeight = hudPixels(8);
+			int trackY = y + (height - trackHeight) / 2;
+			surface.drawBoxAlpha(x, y, width, height, 0x000000, 170);
+			surface.drawBoxAlpha(iconX - inset, iconY - inset, iconSize + 2 * inset, iconSize + 2 * inset, 0xD8D8D8, 210);
+			surface.drawBoxAlpha(iconX, iconY, iconSize, iconSize, 0xFFFFFF, 90);
+			surface.drawSpriteClipping(spriteSelect(itemDef), iconX, iconY, iconSize, iconSize,
 				itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
-			this.getSurface().drawBoxAlpha(x + 15, y + 3, 42, 8, 0x202020, 220);
-			this.getSurface().drawBoxAlpha(x + 16, y + 4, fillWidth, 6, 0x4aa3ff, 230);
+			surface.drawBoxAlpha(trackX, trackY, barWidth + 2 * inset, trackHeight, 0x202020, 220);
+			surface.drawBoxAlpha(trackX + inset, trackY + inset, fillWidth, trackHeight - 2 * inset, 0x4AA3FF, 230);
 		} finally {
-			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
+			surface.setRenderer2DPhase(previousPhase);
 		}
+		return y;
 	}
 
 	public final void initializeBatchProgressVariables(int repeatFor, int delay) {
@@ -29903,6 +29994,7 @@ public final class mudclient implements Runnable {
 			int capacity = growEntityCapacity(this.characterDialogString.length, requiredCapacity);
 			this.characterDialogHalfWidth = Arrays.copyOf(this.characterDialogHalfWidth, capacity);
 			this.characterDialogHeight = Arrays.copyOf(this.characterDialogHeight, capacity);
+			this.characterDialogRows = Arrays.copyOf(this.characterDialogRows, capacity);
 			this.characterDialogString = Arrays.copyOf(this.characterDialogString, capacity);
 			this.characterDialogX = Arrays.copyOf(this.characterDialogX, capacity);
 			this.characterDialogY = Arrays.copyOf(this.characterDialogY, capacity);

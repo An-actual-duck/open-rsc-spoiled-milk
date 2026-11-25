@@ -18,15 +18,15 @@ def fail(message: str) -> None:
 def main() -> int:
     client = CLIENT.read_text(encoding="utf-8")
     required = (
-        "drawAutoAttackHudButton(x - AUTO_ATTACK_HUD_SIZE - AUTO_ATTACK_HUD_GAP, y - 1)",
-        "private void drawAutoAttackHudButton(int x, int y)",
+        "drawAutoAttackHudButton(x - toggleSize - gap, y + (height - toggleSize) / 2, toggleSize, font)",
+        "private void drawAutoAttackHudButton(int x, int y, int size, int font)",
         "Auto attack: ",
-        "x - 4 - this.getSurface().stringWidth(1, hoverText), y + 12",
+        "x - hudPixels(4) - getSurface().stringWidth(font, hoverText)",
         "private void toggleAutoRetaliate()",
         "bufferBits.putByte(47)",
         "C_AUTO_RETALIATE ? 1 : 0",
         'ui/auto-attack.png',
-        "AUTO_ATTACK_HUD_SIZE - 4,\n\t\t\t\t5924);",
+        "size - 2 * inset, size - 2 * inset, 5924);",
     )
     for snippet in required:
         if snippet not in client:

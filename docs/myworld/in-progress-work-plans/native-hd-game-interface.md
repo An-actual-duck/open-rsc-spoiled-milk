@@ -361,6 +361,12 @@ uses the existing report request and leaves acknowledgement to the server.
   the old packed Black Hole bounds. Entering on level -1 leaves the exit
   option hidden. The location check needs a separate fix before testing that route.
 
+The HUD scales the existing health and auto-retaliate controls, active effects,
+countdowns, and gathering progress. Above characters, player names and clan
+tags keep their colors, speech keeps its Classic style, and combat health bars
+and hit splats follow the interface at 1080p. Classic bitmap fonts provide the
+larger text. The health and progress bars retain their existing art and colors.
+
 ## Preview
 
 The private browser selectors are `interface=1080p` and `interface=540p` on loopback. Standalone development uses `-Dspoiledmilk.nativeHdInterface=true` with a render surface such as `-Dspoiledmilk.renderSurfaceMode=1920x1080`. Choose both UI and text sizes in each resolution and confirm the selections persist after restarting with the same client profile.
