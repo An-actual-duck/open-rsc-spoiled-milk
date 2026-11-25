@@ -18133,8 +18133,8 @@ public final class mudclient implements Runnable {
 
 		if (acceptInput && frame.contains(mouseX, mouseY) && mouseButtonClick != 0) {
 			if (mouseButtonClick == 1 && minimapView.hasTerrain() && !loadingArea && frame.containsMap(mouseX, mouseY)) {
-				int destinationX = tileX + minimapView.tileX(mouseX) - logicalX;
-				int destinationY = tileY + minimapView.tileY(mouseY) - logicalY;
+				int destinationX = tileX + minimapView.targetTileX(mouseX) - logicalX;
+				int destinationY = tileY + minimapView.targetTileY(mouseY) - logicalY;
 				if (destinationX >= 0 && destinationX < World.LOCAL_TILE_COUNT
 					&& destinationY >= 0 && destinationY < World.LOCAL_TILE_COUNT) {
 					walkToActionSource(playerLocalX, playerLocalZ, destinationX, destinationY, false);

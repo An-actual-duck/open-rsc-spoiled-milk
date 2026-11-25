@@ -1,11 +1,12 @@
 package orsc;
 
+import java.io.IOException;
 import java.util.Properties;
 import java.util.Collections;
 
 /** Run with and without -Dspoiledmilk.nativeHdInterface=true in separate JVMs. */
 public final class NativeHdInterfaceFixture {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		boolean preview = Boolean.getBoolean("spoiledmilk.nativeHdInterface");
 		RenderSurfaceSettings.Mode expected = preview ? RenderSurfaceSettings.Mode.FULL_HD : RenderSurfaceSettings.Mode.WIDE;
 		check(RenderSurfaceSettings.getMode() == expected, "Explicit 1080p selection");
@@ -22,6 +23,7 @@ public final class NativeHdInterfaceFixture {
 		verifySettingRows(preview);
 		verifyGraphicsTuningDrag();
 		verifySessionNoticeWrapping();
+		verifyMinimapLandmarks();
 		for (GameInterfaceSettings.Size size : GameInterfaceSettings.Size.values()) {
 			for (GameInterfaceSettings.TextSize text : GameInterfaceSettings.TextSize.values()) {
 				verifyChatBounds(chat(1920, 1080, size, text), 1920);
@@ -421,6 +423,32 @@ public final class NativeHdInterfaceFixture {
 			"A long actor label keeps the action and its colour");
 		check(measure.applyAsInt(narrow.label(0)) <= narrow.width - 2 * narrow.padding, "A long label fits the frame");
 		check(narrow.keepsOpenAt(0, 0), "Opening at the top-left remains possible");
+	}
+
+	private static void verifyMinimapLandmarks() throws IOException {
+		SurfaceMinimapAtlas atlas = SurfaceMinimapAtlas.open();
+		boolean lumbridgeBank = false;
+		boolean varrockQuest = false;
+		boolean alKharidTanner = false;
+		boolean shifted = false;
+		for (int index = 0; index < atlas.landmarks.length; index++) {
+			SurfaceMinimapAtlas.Landmark point = atlas.landmarks[index];
+			lumbridgeBank |= point.x == 111 && point.y == 650 && point.icon == MinimapMarkerIcon.BANK;
+			varrockQuest |= point.x == 136 && point.y == 511 && point.icon == MinimapMarkerIcon.QUEST;
+			alKharidTanner |= point.x == 84 && point.y == 676 && point.icon == MinimapMarkerIcon.LEATHER;
+			shifted |= point.offsetX != 0 || point.offsetY != 0;
+			check(!point.label.isEmpty(), "Landmark has a hover label");
+			for (int prior = 0; prior < index; prior++) {
+				SurfaceMinimapAtlas.Landmark other = atlas.landmarks[prior];
+				int dx = point.x + point.offsetX - other.x - other.offsetX;
+				int dy = point.y + point.offsetY - other.y - other.offsetY;
+				check(Math.max(Math.abs(dx), Math.abs(dy)) >= 4, "Landmark icon tiles are spaced apart");
+			}
+		}
+		check(lumbridgeBank && varrockQuest && alKharidTanner, "Atlas contains landmarks in all three preview towns");
+		check(shifted, "Atlas contains offsets to keep neighbouring icons visible");
+		int sectorSize = SurfaceMinimapAtlas.SECTOR_SIZE;
+		check(atlas.sector(111 / sectorSize, 650 / sectorSize) != null, "Landmarks preserve the terrain sector data");
 	}
 
 	private static void verifyMinimapFrame(int width, int height, GameInterfaceSettings.Size size,

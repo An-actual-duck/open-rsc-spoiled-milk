@@ -14,20 +14,6 @@ final class MinimapView {
 	private static final int ENEMY = 0xF16A61;
 	private static final int MARKER_BACKGROUND = 0xFFFBEF;
 	private static final int OUTLINE = 0x16262D;
-	private static final Sprite BANK_SYMBOL = markerSymbol(
-		"....#....",
-		"....#....",
-		"..#####..",
-		".##.#.##.",
-		".##.#....",
-		"..###....",
-		"...###...",
-		"....###..",
-		"....#.##.",
-		".##.#.##.",
-		"..#####..",
-		"....#....",
-		"....#....");
 
 	private SurfaceMinimapAtlas atlas;
 	private boolean triedToOpen;
@@ -37,6 +23,9 @@ final class MinimapView {
 	private int centerY;
 	private int pixelsPerTile;
 	private boolean terrainReady;
+	private SurfaceMinimapAtlas.Landmark hoveredLandmark;
+	private int hoveredX;
+	private int hoveredY;
 
 	void draw(MudClientGraphics surface, MinimapFrameLayout frame, NativeLayeredTerrainSnapshot terrain,
 			  double worldX, double worldY, ORSCharacter ownPlayer, ORSCharacter[] players, int playerCount,
@@ -57,10 +46,12 @@ final class MinimapView {
 		surface.drawBox(frame.mapLeft(), frame.mapTop(), frame.mapRight() - frame.mapLeft(),
 			frame.mapBottom() - frame.mapTop(), OUTLINE);
 		terrainReady = atlas != null && atlas.matches(terrain);
+		hoveredLandmark = null;
 		surface.setClip(frame.mapLeft(), frame.mapRight(), frame.mapBottom(), frame.mapTop());
 		try {
 			if (terrainReady) {
 				drawTerrain(surface, frame);
+				drawLandmarkConnectors(surface, frame);
 			} else {
 				surface.drawColoredStringCentered(centerX, "Map unavailable here", PLAYER, 0,
 					frame.labelFont, frame.mapTop() + frame.labelLine);
@@ -76,9 +67,10 @@ final class MinimapView {
 				ORSCharacter actor = players[i];
 				if (actor != null && actor != ownPlayer) drawActor(surface, frame, ownPlayer, actor, tileSize, PLAYER);
 			}
-			if (terrainReady) drawBankMarker(surface, frame, mouseX, mouseY);
+			if (terrainReady) drawLandmarks(surface, frame, mouseX, mouseY);
 			drawDot(surface, centerX, centerY, frame.dotRadius + 1, 0xA9EAF7);
 			drawNorth(surface, frame);
+			if (hoveredLandmark != null) drawLandmarkTooltip(surface, frame);
 		} finally {
 			surface.clearClip();
 		}
@@ -108,28 +100,56 @@ final class MinimapView {
 		if (frame.containsMap(x, y)) drawDot(surface, x, y, frame.dotRadius, color);
 	}
 
-	private void drawBankMarker(MudClientGraphics surface, MinimapFrameLayout frame, int mouseX, int mouseY) {
-		int x = pixelX(atlas.bankX + 0.5);
-		int y = pixelY(atlas.bankY + 0.5);
-		if (!frame.containsMap(x, y)) return;
+	private void drawLandmarkConnectors(MudClientGraphics surface, MinimapFrameLayout frame) {
+		for (SurfaceMinimapAtlas.Landmark point : atlas.landmarks) {
+			if (point.offsetX == 0 && point.offsetY == 0) continue;
+			int x = pixelX(point.x + point.offsetX + 0.5);
+			int y = pixelY(point.y + point.offsetY + 0.5);
+			if (!frame.containsMap(x, y)) continue;
+			if (point.offsetX != 0) {
+				int anchorX = pixelX(point.x + 0.5);
+				surface.drawLineHoriz(Math.min(anchorX, x), y, Math.abs(anchorX - x) + 1, OUTLINE);
+			}
+			if (point.offsetY != 0) {
+				int anchorY = pixelY(point.y + 0.5);
+				surface.drawLineVert(x, Math.min(anchorY, y), OUTLINE, Math.abs(anchorY - y) + 1);
+			}
+		}
+	}
+
+	private void drawLandmarks(MudClientGraphics surface, MinimapFrameLayout frame, int mouseX, int mouseY) {
 		int size = frame.markerSize;
 		int radius = size / 2;
-		int markerLeft = x - radius;
-		int markerTop = y - radius;
-		drawLocationMarker(surface, markerLeft, markerTop, size, BANK_SYMBOL);
-		if (frame.containsMap(mouseX, mouseY)
-			&& mouseX >= markerLeft && mouseX < markerLeft + size
-			&& mouseY >= markerTop && mouseY < markerTop + size) {
-			String label = "Lumbridge Bank";
-			int font = frame.labelFont;
-			int width = surface.stringWidth(font, label) + 10;
-			int height = frame.labelLine + 4;
-			int left = Math.max(frame.mapLeft(), Math.min(x - width / 2, frame.mapRight() - width));
-			int top = y - radius - height - 2;
-			if (top < frame.mapTop()) top = y + radius + 3;
-			surface.drawBoxAlpha(left, top, width, height, OUTLINE, 245);
-			surface.drawString(label, left + 5, top + frame.labelLine - 1, MARKER_BACKGROUND, font);
+		boolean pointerOnMap = frame.containsMap(mouseX, mouseY);
+		for (SurfaceMinimapAtlas.Landmark point : atlas.landmarks) {
+			int x = pixelX(point.x + point.offsetX + 0.5);
+			int y = pixelY(point.y + point.offsetY + 0.5);
+			if (!frame.containsMap(x, y)) continue;
+			int left = x - radius;
+			int top = y - radius;
+			drawLocationMarker(surface, left, top, size, point.icon.symbol);
+			if (pointerOnMap && mouseX >= left && mouseX < left + size && mouseY >= top && mouseY < top + size) {
+				hoveredLandmark = point;
+				hoveredX = x;
+				hoveredY = y;
+			}
 		}
+	}
+
+	private void drawLandmarkTooltip(MudClientGraphics surface, MinimapFrameLayout frame) {
+		int radius = frame.markerSize / 2;
+		String label = hoveredLandmark.label;
+		int font = frame.labelFont;
+		int width = surface.stringWidth(font, label) + 10;
+		while (font > 0 && width > frame.mapRight() - frame.mapLeft()) {
+			width = surface.stringWidth(--font, label) + 10;
+		}
+		int height = surface.fontHeight(font) + 4;
+		int left = Math.max(frame.mapLeft(), Math.min(hoveredX - width / 2, frame.mapRight() - width));
+		int top = hoveredY - radius - height - 2;
+		if (top < frame.mapTop()) top = hoveredY + radius + 3;
+		surface.drawBoxAlpha(left, top, width, height, OUTLINE, 245);
+		surface.drawString(label, left + 5, top + height - 5, MARKER_BACKGROUND, font);
 	}
 
 	private static void drawNorth(MudClientGraphics surface, MinimapFrameLayout frame) {
@@ -148,23 +168,16 @@ final class MinimapView {
 	private static void drawLocationMarker(MudClientGraphics surface, int left, int top, int size, Sprite symbol) {
 		surface.drawBox(left, top, size, size, MARKER_BACKGROUND);
 		surface.drawBoxBorder(left, size, top, size, OUTLINE);
-		int height = size * 3 / 4;
-		int width = (height * symbol.getWidth() + symbol.getHeight() / 2) / symbol.getHeight();
+		int available = size * 3 / 4;
+		int dimension = Math.max(symbol.getWidth(), symbol.getHeight());
+		int width = (available * symbol.getWidth() + dimension / 2) / dimension;
+		int height = (available * symbol.getHeight() + dimension / 2) / dimension;
 		surface.drawSprite(symbol, left + (size - width) / 2, top + (size - height) / 2, width, height, 5924);
 	}
 
-	private static Sprite markerSymbol(String... rows) {
-		int width = rows[0].length();
-		int[] pixels = new int[width * rows.length];
-		for (int y = 0; y < rows.length; y++) {
-			for (int x = 0; x < width; x++) {
-				if (rows[y].charAt(x) == '#') pixels[y * width + x] = OUTLINE;
-			}
-		}
-		return new Sprite(pixels, width, rows.length);
-	}
-
 	boolean hasTerrain() { return terrainReady; }
+	int targetTileX(int pixel) { return hoveredLandmark == null ? tileX(pixel) : hoveredLandmark.x; }
+	int targetTileY(int pixel) { return hoveredLandmark == null ? tileY(pixel) : hoveredLandmark.y; }
 
 	int tileX(int pixel) { return (int) Math.floor(worldX - (pixel - centerX) / (double) pixelsPerTile); }
 	int tileY(int pixel) { return (int) Math.floor(worldY + (pixel - centerY) / (double) pixelsPerTile); }

@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,8 +27,7 @@ final class SurfaceMinimapAtlas {
 	};
 	private final String manifestHash;
 	private final int[] palette;
-	final int bankX;
-	final int bankY;
+	final Landmark[] landmarks;
 
 	static SurfaceMinimapAtlas open() throws IOException {
 		try (InputStream resource = SurfaceMinimapAtlas.class.getResourceAsStream(RESOURCE)) {
@@ -37,7 +37,7 @@ final class SurfaceMinimapAtlas {
 	}
 
 	private SurfaceMinimapAtlas(DataInputStream input) throws IOException {
-		if (input.readInt() != 0x524D4150 || input.readUnsignedByte() != 1) {
+		if (input.readInt() != 0x524D4150 || input.readUnsignedByte() != 2) {
 			throw new IOException("Unknown surface minimap format");
 		}
 		StringBuilder hash = new StringBuilder(64);
@@ -47,12 +47,15 @@ final class SurfaceMinimapAtlas {
 			hash.append(Character.forDigit(value & 15, 16));
 		}
 		manifestHash = hash.toString();
-		bankX = input.readShort();
-		bankY = input.readShort();
 		palette = new int[input.readUnsignedByte()];
 		int count = input.readUnsignedShort();
-		if (palette.length == 0 || count > 2048) throw new IOException("Invalid surface minimap header");
+		int landmarkCount = input.readUnsignedShort();
+		if (palette.length == 0 || count > 2048 || landmarkCount > 4096) {
+			throw new IOException("Invalid surface minimap header");
+		}
 		for (int index = 0; index < palette.length; index++) palette[index] = input.readInt();
+		landmarks = new Landmark[landmarkCount];
+		for (int index = 0; index < landmarkCount; index++) landmarks[index] = new Landmark(input);
 		for (int index = 0; index < count; index++) {
 			long key = key(input.readShort(), input.readShort());
 			int length = input.readUnsignedShort();
@@ -92,6 +95,32 @@ final class SurfaceMinimapAtlas {
 		} catch (IOException corruptSector) {
 			sectors.remove(key);
 			return null;
+		}
+	}
+
+	static final class Landmark {
+		final int x;
+		final int y;
+		final int offsetX;
+		final int offsetY;
+		final MinimapMarkerIcon icon;
+		final String label;
+
+		private Landmark(DataInputStream input) throws IOException {
+			x = input.readShort();
+			y = input.readShort();
+			offsetX = input.readByte();
+			offsetY = input.readByte();
+			byte[] iconName = new byte[input.readUnsignedByte()];
+			byte[] labelBytes = new byte[input.readUnsignedByte()];
+			input.readFully(iconName);
+			input.readFully(labelBytes);
+			try {
+				icon = MinimapMarkerIcon.valueOf(new String(iconName, StandardCharsets.US_ASCII));
+			} catch (IllegalArgumentException invalid) {
+				throw new IOException("Unknown minimap icon", invalid);
+			}
+			label = new String(labelBytes, StandardCharsets.UTF_8);
 		}
 	}
 

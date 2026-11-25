@@ -14,7 +14,8 @@ OUTPUT = ROOT / "dev/myworld/assets/runtime/ui/minimap/surface.bin"
 SECTOR = 48
 PIXELS = SECTOR * 2
 TRANSPARENT = 12345678  # Scene.TRANSPARENT
-BANK_CHEST = (111, 650)
+LANDMARKS = ROOT / "dev/myworld/assets/authoring/ui/minimap/landmarks.json"
+MARKER_SPACING = 4  # tiles at the minimap's fixed zoom
 
 # Index zero is uncharted terrain. The last color is drawn over tile boundaries.
 PALETTE = (
@@ -96,6 +97,37 @@ def bake_sector(raw, encoding, overlay_types, visible_walls):
     return zlib.compress(pixels, 9) if any(pixels) else b""
 
 
+def bake_landmarks(placements):
+    anchors = set()
+    for source, collection, catalog, position in (
+        ("npc", "npcs", "npcId", "start"),
+        ("scenery", "scenery", "sceneryId", "position"),
+    ):
+        anchors.update((source, item[catalog], item[position]["x"], item[position]["y"])
+                       for item in placements[collection])
+
+    offsets = [(0, 0)]
+    for distance in range(1, MARKER_SPACING + 2):
+        offsets.extend(((0, -distance), (0, distance), (distance, 0), (-distance, 0)))
+    occupied = []
+    blocks = []
+    for town, landmarks in json.loads(LANDMARKS.read_text()).items():
+        for point in landmarks:
+            x, y = point["x"], point["y"]
+            if (point["source"], point["id"], x, y) not in anchors:
+                raise ValueError(f"Missing landmark anchor in {town}: {point['label']}")
+            for dx, dy in offsets:
+                if all(max(abs(x + dx - other_x), abs(y + dy - other_y)) >= MARKER_SPACING
+                       for other_x, other_y in occupied):
+                    break
+            else:
+                raise ValueError(f"Landmarks too close in {town}: {point['label']}")
+            occupied.append((x + dx, y + dy))
+            icon = point["icon"].encode("ascii")
+            label = point["label"].encode("utf-8")
+            blocks.append(struct.pack(">hhbbBB", x, y, dx, dy, len(icon), len(label)) + icon + label)
+    return blocks
+
 def bake(package):
     manifest = (package / "manifest.json").read_bytes()
     world = json.loads(manifest)
@@ -103,10 +135,7 @@ def bake(package):
         raise ValueError("Unexpected map sector size")
     surface = lambda item: item["worldSpace"] == "global" and item["level"] == 0
     placements = next(record for record in world["placementSets"] if surface(record))
-    scenery = json.loads(read_verified(package, placements))["scenery"]
-    if not any(item["sceneryId"] == 942
-               and (item["position"]["x"], item["position"]["y"]) == BANK_CHEST for item in scenery):
-        raise ValueError("Lumbridge Bank Chest is missing from the installed surface placements")
+    markers = bake_landmarks(json.loads(read_verified(package, placements)))
     defs = ET.parse(ROOT / "server/conf/server/defs/TileDef.xml").getroot()
     overlay_types = {i: int(tile.findtext("unknown")) for i, tile in enumerate(defs, 1)}
     boundaries = ET.parse(ROOT / "server/conf/server/defs/DoorDef.xml").getroot()
@@ -117,9 +146,10 @@ def bake(package):
         encoded = bake_sector(read_verified(package, record), record["encoding"], overlay_types, visible_walls)
         if encoded:
             blocks.append(struct.pack(">hhH", record["sectorX"], record["sectorY"], len(encoded)) + encoded)
-    header = b"RMAP\x01" + hashlib.sha256(manifest).digest()
-    header += struct.pack(">hhBH", *BANK_CHEST, len(PALETTE), len(blocks))
-    return header + b"".join(struct.pack(">I", color) for color in PALETTE) + b"".join(blocks)
+    header = b"RMAP\x02" + hashlib.sha256(manifest).digest()
+    header += struct.pack(">BHH", len(PALETTE), len(blocks), len(markers))
+    palette = b"".join(struct.pack(">I", color) for color in PALETTE)
+    return header + palette + b"".join(markers) + b"".join(blocks)
 
 
 if __name__ == "__main__":

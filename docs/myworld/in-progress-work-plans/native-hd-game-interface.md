@@ -202,9 +202,11 @@ of Settings and the ability panels. Map tiles, dots, and location icons
 follow the UI size. The map fills the frame below the heading.
 A north-up 2D atlas covers the published global surface. White dots show other
 players, yellow dots show NPCs, red dots show attackable NPCs, and the cyan dot
-shows the local player. A dark dollar sign on an off-white marker identifies
-the published Lumbridge Bank Chest at (111, 650). Hover the icon for its name.
-The Classic interface uses its existing minimap.
+shows the local player. The first placement pass covers Lumbridge, Varrock,
+and Al Kharid. A dark dollar sign marks banks, a blue asterisk marks quest
+starts, and distinct silhouettes identify shops and workstations. All use
+off-white backgrounds and show their names on hover. The Classic interface
+uses its existing minimap.
 
 The atlas is baked with `scripts/build-surface-minimap.py` and matched to the
 active package manifest. The bake uses boundary definitions to exclude hidden
@@ -232,11 +234,15 @@ scaled interface. Closed views do no background map rendering or fetching.
   browsing leaves the player and game camera in place.
 - **Points of interest**. Use graphical icons in both views and show their
   meanings in the world map key. Use off-white icon backgrounds. Anchor
-  each bank icon to the actual banking location, including bank chests.
-  Review the remaining marker categories and symbols before adding them.
+  each service to a verified surface placement, including bank chests and
+  shopkeepers' home tiles. Classify vendors by their actual stock. Thessalia
+  and Ranael use the tailoring supplies icon. Rometti still sells clothing
+  upstairs in the Grand Tree and is outside the surface pass. Use a loose
+  hide for leather vendors and a framed hide for tanning racks. A short
+  connector keeps crowded markers readable and indicates their original tile.
   Keep fixed markers separate from the moving player and NPC dots.
 
-Prototype one town and its surroundings. Check that markers line up in both
+When the fullscreen view is ready, check that markers line up in both
 views, panning beyond the loaded scene reveals more map without requesting
 distant gameplay scenes, and walking with the minimap open adds no noticeable
 hitch. Verify both world-loading modes at 1080p and confirm that the controls
