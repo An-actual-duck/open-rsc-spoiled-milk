@@ -39,6 +39,9 @@ def read_verified(package, record):
 def floor_color(elevation, texture, overlay, roof, overlay_types, surface):
     if overlay == 8:
         return 0
+    # The client resolves the archived unmade-water marker to water at load time.
+    if overlay == 250:
+        overlay = 2
     kind = overlay_types.get(overlay, 0)
     if kind in (3, 4):
         return 6 if kind == 4 else 5

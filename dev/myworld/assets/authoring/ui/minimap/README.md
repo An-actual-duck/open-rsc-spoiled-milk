@@ -2,7 +2,8 @@
 
 `scripts/build-surface-minimap.py` bakes the installed World Builder package
 into `assets/runtime/ui/minimap/`. The terrain colors use the tile and boundary
-definitions from this repository.
+definitions from this repository. The archived overlay 250 draws as water,
+matching how the game fills unmade areas.
 
 `landmarks.json` holds the named placements from the three-town preview.
 `landmark-catalog.json` extends coverage to the rest of the world. Its shop
