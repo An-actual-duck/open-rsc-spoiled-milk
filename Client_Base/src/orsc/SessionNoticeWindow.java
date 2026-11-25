@@ -10,7 +10,7 @@ import orsc.graphics.two.MudClientGraphics;
 
 /** Layout and input for welcome, server notices, and logout feedback. */
 final class SessionNoticeWindow {
-	enum Action { NONE, DISMISS, CANCEL_RECOVERY }
+	enum Action { NONE, DISMISS, SECONDARY }
 
 	private final String title;
 	private final String message;
@@ -105,7 +105,7 @@ final class SessionNoticeWindow {
 			if (button(client, dismiss, dismissLabel, true, text.labelFont, labelLine)) return Action.DISMISS;
 			if (cancelLabel != null) {
 				Rectangle cancel = new Rectangle(dismiss.x - padding - buttonWidth, footerY, buttonWidth, buttonHeight);
-				if (button(client, cancel, cancelLabel, true, text.labelFont, labelLine)) return Action.CANCEL_RECOVERY;
+				if (button(client, cancel, cancelLabel, true, text.labelFont, labelLine)) return Action.SECONDARY;
 			}
 			if (maxScroll > 0) {
 				int arrowWidth = Math.max(size.pixels(25), labelLine + 6);

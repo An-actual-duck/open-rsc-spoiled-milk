@@ -1325,6 +1325,15 @@ public final class mudclient implements Runnable {
 	private String dialogueLine;
 	private final java.util.concurrent.atomic.AtomicInteger dialogueScroll = new java.util.concurrent.atomic.AtomicInteger();
 	private int showUiWildWarn = 0;
+	private final SessionNoticeWindow wildernessWarning = new SessionNoticeWindow("Wilderness warning",
+		"Other players can attack you in the Wilderness.%The Wilderness level shows how far into the danger zone you are.",
+		"Dismiss", null, 560, false);
+	private final SessionNoticeWindow deathNotice = new SessionNoticeWindow("Oh dear! You are dead...",
+		"Respawning...", null, null, 430, true);
+	private volatile SessionNoticeWindow travelConfirmation;
+	private InputXAction confirmedTravelAction;
+	private volatile ExperienceTrackerWindow experienceTrackerWindow;
+	private final java.util.concurrent.atomic.AtomicBoolean dismissGameplayPrompt = new java.util.concurrent.atomic.AtomicBoolean();
 	private int recentSkill = -1;
 	private String sleepingStatusText = null;
 	private boolean sleepWordDelay = true;
@@ -7803,7 +7812,18 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void drawDialogCombatStyle() {
+	private void drawDialogCombatStyle(boolean acceptScaledInput) {
+		if (chatLayout != null) {
+			boolean hits = shouldDrawHitsXpFocusMenu();
+			int selected = GameplayHud.drawFocus(this, COMBAT_XP_ALLOCATION_X, COMBAT_XP_ALLOCATION_Y,
+				hits ? getHitsXpFocusLabels() : getGatheringFocusLabels(), hits ? hitsXpFocus : combatStyle,
+				acceptScaledInput && !hasContextMenuInput() && inputX_Action == InputXAction.ACT_0);
+			if (selected >= 0) {
+				mouseButtonClick = 0;
+				selectXpFocus(hits, selected);
+			}
+			return;
+		}
 		try {
 
 			int sx = COMBAT_XP_ALLOCATION_X;
@@ -7820,17 +7840,7 @@ public final class mudclient implements Runnable {
 						&& row * 20 + sy + 20 > this.mouseY) {
 						this.mouseButtonClick = 0;
 						boolean hitsXpFocusMenu = shouldDrawHitsXpFocusMenu();
-						int selectedStyle = row - 1;
-						if (hitsXpFocusMenu) {
-							this.hitsXpFocus = selectedStyle;
-						} else {
-							this.combatStyle = selectedStyle;
-							this.proposedStyle = this.combatStyle;
-						}
-						this.packetHandler.getClientStream().newPacket(29);
-						this.packetHandler.getClientStream().bufferBits.putByte(hitsXpFocusMenu ? selectedStyle + 4 : selectedStyle);
-						this.packetHandler.getClientStream().finishPacket();
-						this.extendGatheringFocusMenuLinger();
+						selectXpFocus(hitsXpFocusMenu, row - 1);
 						break;
 					}
 				}
@@ -7859,6 +7869,19 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "client.TB(" + "dummy" + ')');
 		}
+	}
+
+	private void selectXpFocus(boolean hitsXpFocusMenu, int selectedStyle) {
+		if (hitsXpFocusMenu) {
+			hitsXpFocus = selectedStyle;
+		} else {
+			combatStyle = selectedStyle;
+			proposedStyle = selectedStyle;
+		}
+		packetHandler.getClientStream().newPacket(29);
+		packetHandler.getClientStream().bufferBits.putByte(hitsXpFocusMenu ? selectedStyle + 4 : selectedStyle);
+		packetHandler.getClientStream().finishPacket();
+		extendGatheringFocusMenuLinger();
 	}
 
 	private void drawDialogDuel() {
@@ -9910,7 +9933,7 @@ public final class mudclient implements Runnable {
 				recovery ? "Cancel request" : null, 660, true);
 		}
 		SessionNoticeWindow.Action action = welcomeNotice.draw(this, chatLayout.entryTop());
-		if (action == SessionNoticeWindow.Action.CANCEL_RECOVERY) {
+		if (action == SessionNoticeWindow.Action.SECONDARY) {
 			packetHandler.getClientStream().newPacket(196);
 			packetHandler.getClientStream().finishPacket();
 		}
@@ -10070,6 +10093,84 @@ public final class mudclient implements Runnable {
 	private String getHostnameFromIP() {
 
 		return welcomeLastLoggedInIp;
+	}
+
+	void drawWildernessHudSkull(int x, int y, int size) {
+		getSurface().drawSpriteClipping(spriteSelect(GUIPARTS.SKULL.getDef()), x, y, size, size, 0, 0, 0, false, 0, 0);
+	}
+
+	public boolean hasGameplayPromptInput() {
+		if (chatLayout == null || currentViewMode != GameMode.GAME) return false;
+		if (deathScreenTimeout > 0) return true;
+		if (logoutTimeout != 0 || showDialogMessage || showDialogServerMessage || isSleeping
+			|| showAppearanceChange || showSetRecoveryQuestion || showSetContactDetails) return false;
+		if (showUiWildWarn == 1) return true;
+		return (travelConfirmation != null || experienceTrackerWindow != null)
+			&& !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput()
+			&& !hasReportPlayerInput() && !hasPasswordChangeInput()
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& !isShowDialogBank() && !showDialogShop;
+	}
+
+	public boolean handleGameplayPromptKey(int code) {
+		if (!hasGameplayPromptInput()) return false;
+		if (deathScreenTimeout == 0 && (code == java.awt.event.KeyEvent.VK_ESCAPE
+			|| showUiWildWarn == 1 && code == java.awt.event.KeyEvent.VK_ENTER)) dismissGameplayPrompt.set(true);
+		return true;
+	}
+
+	private void drawGameplayPrompt() {
+		boolean dismiss = dismissGameplayPrompt.getAndSet(false);
+		int bottom = chatLayout.entryTop();
+		if (showUiWildWarn == 1) {
+			if (dismiss || wildernessWarning.draw(this, bottom) == SessionNoticeWindow.Action.DISMISS) showUiWildWarn = 2;
+		} else if (travelConfirmation != null) {
+			SessionNoticeWindow.Action result = dismiss ? SessionNoticeWindow.Action.SECONDARY : travelConfirmation.draw(this, bottom);
+			if (result != SessionNoticeWindow.Action.NONE) {
+				InputXAction action = confirmedTravelAction;
+				travelConfirmation = null;
+				confirmedTravelAction = null;
+				if (result == SessionNoticeWindow.Action.DISMISS
+					&& (action == InputXAction.SKIP_TUTORIAL && insideTutorial
+						|| action == InputXAction.EXIT_BLACK_HOLE && insideBlackHole)) sendTravelConfirmation(action);
+			}
+		} else if (experienceTrackerWindow != null) {
+			if (dismiss ? experienceTrackerWindow.dismiss() : experienceTrackerWindow.draw(this, bottom)) {
+				experienceTrackerWindow = null;
+			}
+		}
+		mouseButtonClick = 0;
+	}
+
+	private void openTravelConfirmation(InputXAction action) {
+		boolean skip = action == InputXAction.SKIP_TUTORIAL;
+		String[] prompt = skip ? InputXPrompt.promptSkipTutorial : InputXPrompt.promptExitBlackHole;
+		if (chatLayout == null) {
+			showItemModX(prompt, action, false);
+			return;
+		}
+		closeTopMouseMenu();
+		confirmedTravelAction = action;
+		String title = skip ? "Skip the tutorial" : "Leave the Black Hole";
+		String message = skip ? "Skip the tutorial and travel to Lumbridge?"
+			: "Leave the Black Hole and return to the Dwarven Mines?";
+		travelConfirmation = new SessionNoticeWindow(title, message,
+			skip ? "Skip tutorial" : "Leave", "Cancel", 520, false);
+		mouseButtonClick = 0;
+	}
+
+	private void sendTravelConfirmation(InputXAction action) {
+		packetHandler.getClientStream().newPacket(action == InputXAction.SKIP_TUTORIAL ? 84 : 86);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	private void resetGameplayPrompts() {
+		travelConfirmation = null;
+		confirmedTravelAction = null;
+		experienceTrackerWindow = null;
+		dismissGameplayPrompt.set(false);
 	}
 
 	private void drawDialogWildWarn(int var1) {
@@ -10324,8 +10425,13 @@ public final class mudclient implements Runnable {
 			if (var1 == 13) {
 				if (this.deathScreenTimeout != 0) {
 					this.getSurface().fade2black(16316665);
-					this.getSurface().drawColoredStringCentered(this.halfGameWidth(), "Oh dear! You are dead...",
-						0xFF0000, 0, 7, this.halfGameHeight());
+					if (chatLayout != null) {
+						deathNotice.draw(this, chatLayout.entryTop());
+						mouseButtonClick = 0;
+					} else {
+						this.getSurface().drawColoredStringCentered(this.halfGameWidth(), "Oh dear! You are dead...",
+							0xFF0000, 0, 7, this.halfGameHeight());
+					}
 					this.drawChatMessageTabs(var1 - 8);
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
@@ -11050,11 +11156,17 @@ public final class mudclient implements Runnable {
 						if (centerX > 0) {
 							inWild = true;
 							centerZ = centerX / 6 + 1;
-							this.getSurface().drawSprite(spriteSelect(GUIPARTS.SKULL.getDef()), this.getGameWidth() - 59, this.getGameHeight() - 56);
-							this.getSurface().drawColoredStringCentered(this.getGameWidth() - 47, "Wilderness", 0xFFFF00, 0, 1,
-								this.getGameHeight() - 20);
-							this.getSurface().drawColoredStringCentered(this.getGameWidth() - 47, "Level: " + centerZ, 0xFFFF00, 0, 1,
-								this.getGameHeight() - 7);
+							if (chatLayout != null) {
+								SideToolbarLayout toolbar = sideToolbarLayout();
+								int bottom = C_CUSTOM_UI && toolbar != null ? toolbar.top : chatLayout.entryTop();
+								GameplayHud.drawWilderness(this, Math.min(bottom, chatLayout.entryTop()), centerZ);
+							} else {
+								this.getSurface().drawSprite(spriteSelect(GUIPARTS.SKULL.getDef()), this.getGameWidth() - 59, this.getGameHeight() - 56);
+								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 47, "Wilderness", 0xFFFF00, 0, 1,
+									this.getGameHeight() - 20);
+								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 47, "Level: " + centerZ, 0xFFFF00, 0, 1,
+									this.getGameHeight() - 7);
+							}
 							if (this.showUiWildWarn == 0) {
 								this.showUiWildWarn = 2;
 							}
@@ -11515,12 +11627,8 @@ public final class mudclient implements Runnable {
 					} catch (NumberFormatException var11) {
 						System.out.println("Stake remove X number format exception: " + var11);
 					}
-				} else if (this.inputX_Action == InputXAction.SKIP_TUTORIAL) {
-					this.packetHandler.getClientStream().newPacket(84);
-					this.packetHandler.getClientStream().finishPacket();
-				} else if (this.inputX_Action == InputXAction.EXIT_BLACK_HOLE) {
-					this.packetHandler.getClientStream().newPacket(86);
-					this.packetHandler.getClientStream().finishPacket();
+				} else if (this.inputX_Action == InputXAction.SKIP_TUTORIAL || this.inputX_Action == InputXAction.EXIT_BLACK_HOLE) {
+					sendTravelConfirmation(inputX_Action);
 				} else if (this.inputX_Action == InputXAction.POINTS_TO_GP) {
 					try {
 						if (str.length() > 10) {
@@ -13764,6 +13872,10 @@ public final class mudclient implements Runnable {
 		if (selectedSkill >= 0) {
 			skill = selectedSkill;
 		}
+		if (chatLayout != null) {
+			drawScaledExperienceCounter(skill);
+			return;
+		}
 		int textColor = getExperienceCounterColor();
 		long totalXp = 0;
 		long timePassed = 0;
@@ -13892,6 +14004,47 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void drawScaledExperienceCounter(int skill) {
+		boolean total = C_EXPERIENCE_COUNTER_MODE == 1 || skill < 0 || skill >= skillCount;
+		long xp = 0;
+		int level = 0;
+		if (total) {
+			for (int value : playerExperience) xp += Integer.toUnsignedLong(value);
+		} else {
+			xp = Integer.toUnsignedLong(playerExperience[skill]);
+			level = playerStatBase[skill];
+		}
+		String label = total ? "Total XP  " + xp : skillNames[skill] + "  Lv " + level + "  /  " + xp + " XP";
+		java.awt.Rectangle bounds = GameplayHud.experienceBounds(this, label);
+		boolean hover = !hasSessionNoticeInput() && !hasGameplayPromptInput() && !hasContextMenuInput()
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput()
+			&& !hasPasswordChangeInput() && !hasReportPlayerInput() && !optionsMenuShow
+			&& inputX_Action == InputXAction.ACT_0 && !isShowDialogBank() && !showDialogShop
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& bounds.contains(mouseX, mouseY);
+		if (hover && mouseButtonClick == 1) {
+			experienceTrackerWindow = new ExperienceTrackerWindow();
+			mouseButtonClick = 0;
+		}
+		boolean hasNext = !total && level > 0 && level < S_PLAYER_LEVEL_LIMIT && level <= experienceArray.length;
+		long next = hasNext ? Integer.toUnsignedLong(experienceArray[level - 1]) : xp;
+		long previous = hasNext && level > 1 ? Integer.toUnsignedLong(experienceArray[level - 2]) : 0;
+		double progress = hasNext && next > previous ? Math.max(0, Math.min(1, (double) (xp - previous) / (next - previous))) : -1;
+		String[] details = null;
+		if (hover && C_EXPERIENCE_CONFIG_SUBMENU) {
+			long gained = Math.max(0, total ? playerXpGainedTotal : playerStatXpGained[skill]);
+			long start = total ? totalXpGainedStartTime : xpGainedStartTime[skill];
+			long elapsed = System.currentTimeMillis() - start;
+			long perHour = start > 0 && elapsed > 0 ? Math.round(gained * (3600000.0 / elapsed)) : 0;
+			String gainedLabel = "Gained " + gained + " XP";
+			String rateLabel = perHour + " XP/hr";
+			details = hasNext ? new String[]{"Next level at " + next + " XP", Math.max(0, next - xp) + " XP to next level",
+				gainedLabel, rateLabel} : new String[]{gainedLabel, rateLabel};
+		}
+		GameplayHud.drawExperience(this, bounds, label, getExperienceCounterColor(), progress, hover, details);
+	}
+
 	private void drawExperienceConfig() {
 		if (!S_EXPERIENCE_COUNTER_TOGGLE) return;
 		experienceConfigInterface.onRender(this.getSurface());
@@ -13946,6 +14099,8 @@ public final class mudclient implements Runnable {
 				drawReportPlayerWindow();
 			} else if (hasPasswordChangeInput()) {
 				drawPasswordChangeWindow();
+			} else if (hasGameplayPromptInput()) {
+				drawGameplayPrompt();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -14016,7 +14171,7 @@ public final class mudclient implements Runnable {
 			if (hasContextMenuInput() && (!var2 || optionsMenuShow || inputX_Action != InputXAction.ACT_0)) {
 				closeTopMouseMenu();
 			}
-			if (this.inputX_Action != InputXAction.ACT_0) {
+			if (this.inputX_Action != InputXAction.ACT_0 && !hasGameplayPromptInput()) {
 				this.drawInputX();
 			}
 			if (var2) {
@@ -14038,7 +14193,7 @@ public final class mudclient implements Runnable {
 				}
 
 				if (shouldDrawHitsXpFocusMenu() || shouldDrawGatheringFocusMenu()) {
-					this.drawDialogCombatStyle();
+					this.drawDialogCombatStyle(!dialogueOwnsInput);
 				}
 
 				boolean clickedTab = this.handleTabUIClick();
@@ -18147,6 +18302,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawActivePotionEffectsHud() {
+		int potionTop = chatLayout == null ? POTION_HUD_Y
+			: COMBAT_XP_ALLOCATION_Y + 5 * GameplayHud.focusRowHeight(getSurface()) + 8;
 		ActiveStatusHudModel.Snapshot snapshot =
 			this.activeStatusHud.snapshot(System.currentTimeMillis());
 		List<ActiveStatusHudModel.Row> rows = snapshot.getRows();
@@ -18157,7 +18314,7 @@ public final class mudclient implements Runnable {
 			int column = i / POTION_HUD_ROWS_PER_COLUMN;
 			int row = i % POTION_HUD_ROWS_PER_COLUMN;
 			int x = POTION_HUD_X + column * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP);
-			int y = POTION_HUD_Y + row * POTION_HUD_ROW_HEIGHT;
+			int y = potionTop + row * POTION_HUD_ROW_HEIGHT;
 			boolean hovered = mouseX >= x && mouseX < x + POTION_HUD_WIDTH
 				&& mouseY >= y && mouseY < y + POTION_HUD_ROW_HEIGHT - 2;
 			getSurface().drawBoxAlpha(x, y, POTION_HUD_WIDTH, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
@@ -18199,7 +18356,7 @@ public final class mudclient implements Runnable {
 			}
 		}
 		if (snapshot.getOverflowCount() > 0) {
-			int overflowY = POTION_HUD_Y + POTION_HUD_ROWS_PER_COLUMN * POTION_HUD_ROW_HEIGHT;
+			int overflowY = potionTop + POTION_HUD_ROWS_PER_COLUMN * POTION_HUD_ROW_HEIGHT;
 			String label = "+" + snapshot.getOverflowCount() + " more effects";
 			this.getSurface().drawBoxAlpha(POTION_HUD_X, overflowY,
 				POTION_HUD_WIDTH + 20, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
@@ -19909,11 +20066,11 @@ public final class mudclient implements Runnable {
 				showIgnoredList();
 				break;
 			case SKIP_TUTORIAL:
-				showItemModX(InputXPrompt.promptSkipTutorial, InputXAction.SKIP_TUTORIAL, false);
+				openTravelConfirmation(InputXAction.SKIP_TUTORIAL);
 				if (!C_CUSTOM_UI) showUiTab = 0;
 				break;
 			case EXIT_BLACK_HOLE:
-				showItemModX(InputXPrompt.promptExitBlackHole, InputXAction.EXIT_BLACK_HOLE, false);
+				openTravelConfirmation(InputXAction.EXIT_BLACK_HOLE);
 				if (!C_CUSTOM_UI) showUiTab = 0;
 				break;
 		}
@@ -20260,7 +20417,7 @@ public final class mudclient implements Runnable {
 		if (this.insideTutorial) { // tutorial menu option
 			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
 				&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-				this.showItemModX(InputXPrompt.promptSkipTutorial, InputXAction.SKIP_TUTORIAL, false);
+				openTravelConfirmation(InputXAction.SKIP_TUTORIAL);
 				if (!C_CUSTOM_UI)
 					this.showUiTab = 0;
 			}
@@ -20268,7 +20425,7 @@ public final class mudclient implements Runnable {
 		} else if (this.insideBlackHole) { // blackhole menu option
 			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
 				&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-				this.showItemModX(InputXPrompt.promptExitBlackHole, InputXAction.EXIT_BLACK_HOLE, false);
+				openTravelConfirmation(InputXAction.EXIT_BLACK_HOLE);
 				if (!C_CUSTOM_UI)
 					this.showUiTab = 0;
 			}
@@ -21929,7 +22086,7 @@ public final class mudclient implements Runnable {
 				if (!this.isSleeping) {
 					if (chatLayout != null) {
 						if (!hasSessionNoticeInput() && !hasItemQuantityInput() && !hasReportPlayerInput()
-							&& !hasPasswordChangeInput()) {
+							&& !hasPasswordChangeInput() && !hasGameplayPromptInput()) {
 							handleScaledChatTabSelection();
 						}
 					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
@@ -21966,7 +22123,7 @@ public final class mudclient implements Runnable {
 					}
 
 					boolean modalOwnsInput = hasSessionNoticeInput() || hasItemQuantityInput() || hasReportPlayerInput()
-						|| hasPasswordChangeInput();
+						|| hasPasswordChangeInput() || hasGameplayPromptInput();
 					if (!modalOwnsInput) {
 						if (!hasContextMenuInput() && !hasQuestRewardInput()
 							&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
@@ -24766,6 +24923,7 @@ public final class mudclient implements Runnable {
 		try {
 			boolean endingGameSession = this.currentViewMode == GameMode.GAME;
 			resetPasswordChange();
+			resetGameplayPrompts();
 			if (endingGameSession) {
 				RenderTelemetry.recordDiagnosticBoundary("client-logout");
 				RendererDiagnosticSession.recordEvent("client.logout", null);
@@ -28240,6 +28398,7 @@ public final class mudclient implements Runnable {
 			itemQuantityPrompt = null;
 			reportPlayerWindow = null;
 			resetPasswordChange();
+			resetGameplayPrompts();
 			onlineSidebarPlayers = null;
 			lastOnlineSidebarRequest = 0;
 			socialScroll[SocialPanelLayout.ONLINE] = 0;
@@ -28361,6 +28520,7 @@ public final class mudclient implements Runnable {
 			itemQuantityPrompt = null;
 			reportPlayerWindow = null;
 			resetPasswordChange();
+			resetGameplayPrompts();
 			questRewardWindow = null;
 			pendingQuestRewards.clear();
 			questRewardWheel.set(0);
@@ -30589,6 +30749,7 @@ public final class mudclient implements Runnable {
 
 	public void setDeathScreenTimeout(int i) {
 		this.deathScreenTimeout = i;
+		if (i > 0) resetGameplayPrompts();
 	}
 
 	public int getGroundItemCount() {
@@ -32299,6 +32460,7 @@ public final class mudclient implements Runnable {
 						public void render() {
 							if (C_EXPERIENCE_DROPS) {
 								time = System.currentTimeMillis();
+								boolean drewScaledCounter = false;
 								for (Iterator<XPNotification> iterator = xpNotifications.iterator(); iterator.hasNext(); ) {
 									XPNotification xpdrop = iterator.next();
 									if (!xpdrop.isActive) {
@@ -32319,8 +32481,9 @@ public final class mudclient implements Runnable {
 										}
 									}
 
-									if (C_EXPERIENCE_COUNTER == 1) {
-										drawExperienceCounter(xpdrop.skill);
+									if (C_EXPERIENCE_COUNTER == 1 && (chatLayout == null || !drewScaledCounter)) {
+										drawExperienceCounter(chatLayout == null ? xpdrop.skill : recentSkill);
+										drewScaledCounter = true;
 									}
 
 									int textColor = getExperienceCounterColor();
@@ -33729,6 +33892,12 @@ public final class mudclient implements Runnable {
 		if (hasSessionNoticeInput()) {
 			SessionNoticeWindow notice = activeSessionNotice();
 			if (notice != null) notice.scroll(x);
+			return;
+		}
+		if (hasGameplayPromptInput()) {
+			ExperienceTrackerWindow tracker = experienceTrackerWindow;
+			if (showUiWildWarn == 1) wildernessWarning.scroll(x);
+			else if (tracker != null && travelConfirmation == null) tracker.scroll(x);
 			return;
 		}
 		if (hasSocialPromptInput() || hasItemQuantityInput() || hasPasswordChangeInput()) return;

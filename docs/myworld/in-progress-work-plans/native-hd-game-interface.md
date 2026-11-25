@@ -345,6 +345,19 @@ select a reason and review both before pressing Send Report. Escape or Cancel
 closes the window. Staff retain the mute options they already have. The client
 uses the existing report request and leaves acknowledgement to the server.
 
+## Gameplay HUD and confirmations
+
+- Combat and gathering XP use the same scaled choice panel. Keep the
+  existing focus options, visibility settings, and selection behavior.
+- The XP tracker shows the tracked total or skill, level progress, and
+  optional hover details. Its settings keep the existing modes, skill
+  picker, colors, drop speed, visibility, and session reset.
+- The Wilderness warning uses a scaled notice with an explicit Dismiss
+  button. The Wilderness level badge keeps the skull and current level.
+- The death overlay keeps the Classic message and existing respawn timing.
+- Skip Tutorial and Leave the Black Hole use a shared confirmation. The
+  named action confirms, while Cancel and Escape return to play.
+
 ## Preview
 
 The private browser selectors are `interface=1080p` and `interface=540p` on loopback. Standalone development uses `-Dspoiledmilk.nativeHdInterface=true` with a render surface such as `-Dspoiledmilk.renderSurfaceMode=1920x1080`. Choose both UI and text sizes in each resolution and confirm the selections persist after restarting with the same client profile.
