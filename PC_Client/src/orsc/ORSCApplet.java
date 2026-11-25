@@ -1273,6 +1273,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				updateControlShiftState(var1);
 				int clientMouseX = getClientMouseX(var1);
 				int clientMouseY = getClientMouseY(var1);
+				if (var1.getButton() == MouseEvent.BUTTON2 && mudclient.hasSocialPromptInput()) {
+					var1.consume();
+					return;
+				}
 				if (middleMouseOrbit.begin(var1.getButton(), clientMouseX, clientMouseY)) {
 					mudclient.mouseX = clientMouseX;
 					mudclient.mouseY = clientMouseY;
@@ -1435,7 +1439,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 
 			if (mudclient.hasDialogueChoiceInput() || mudclient.hasContextMenuInput() || mudclient.hasTradePreviewInput()
-				|| mudclient.hasQuestRewardInput()) {
+				|| mudclient.hasQuestRewardInput() || mudclient.hasSocialPromptInput()) {
 				e.consume();
 				mudclient.runScroll(e.getWheelRotation());
 				return;
@@ -1479,6 +1483,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				updateControlShiftState(var1);
 				char keyChar = var1.getKeyChar();
 				int keyCode = var1.getKeyCode();
+				if (mudclient.handleSocialPromptKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())) {
+					mudclient.lastMouseAction = 0;
+					var1.consume();
+					return;
+				}
 				if (ClientHotkeySettings.shouldSuppressFunctionKey(keyCode)) {
 					return;
 				}

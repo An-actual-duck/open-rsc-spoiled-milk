@@ -165,10 +165,13 @@ uses the same privacy and staff rules as the online list command and rate
 limits requests. Servers without sidebar support still offer the list in
 Settings.
 
+Add Friend and Private Message use the scaled text prompt. Enter submits
+and Escape cancels. Both also offer explicit buttons. The editor wraps longer
+text, and its keyboard and pointer input stay inside the prompt. It uses the
+existing friend-list and private-message actions.
+
 ### Social windows to update later
 
-- Update friend invite and add-friend prompts, along with the private message
-  prompt.
 - Update party creation, invitations and member management windows.
 - Update clan creation, search, joining, invitations and management windows.
 

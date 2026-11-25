@@ -3071,6 +3071,14 @@ public class GraphicsController {
 	}
 
 	public final void drawColoredString(int x, int y, String str, int font, int color, int spriteHeader) {
+		drawColoredString(x, y, str, font, color, spriteHeader, true);
+	}
+
+	public final void drawLiteralString(String text, int x, int y, int color, int font) {
+		drawColoredString(x, y, text, font, color, 0, false);
+	}
+
+	private void drawColoredString(int x, int y, String str, int font, int color, int spriteHeader, boolean markup) {
 		try {
 			try {
 				font = RendererFontSettings.displayFont(font);
@@ -3106,7 +3114,7 @@ public class GraphicsController {
 				byte[] fontData = Fonts.fontData[font];
 
 				for (int i = 0; str.length() > i; ++i) {
-					if (str.charAt(i) == '@' && i + 4 < str.length() && str.charAt(i + 4) == '@') {
+					if (markup && str.charAt(i) == '@' && i + 4 < str.length() && str.charAt(i + 4) == '@') {
 						final String key = str.substring(i + 1, i + 4);
 						if (key.equalsIgnoreCase("red")) {
 							color = 0xFF0000;
@@ -3173,7 +3181,7 @@ public class GraphicsController {
 						}
 						i += 4;
 					} else {
-						if (str.charAt(i) == '~' && 4 + i < str.length() && str.charAt(4 + i) == '~') {
+						if (markup && str.charAt(i) == '~' && 4 + i < str.length() && str.charAt(4 + i) == '~') {
 							char a = str.charAt(i + 1);
 							char b = str.charAt(i + 2);
 							char c = str.charAt(i + 3);
@@ -3182,7 +3190,7 @@ public class GraphicsController {
 							}
 
 							i += 4;
-						} else if (str.charAt(i) == '~' && i + 5 < str.length() && str.charAt(i + 5) == '~') {
+						} else if (markup && str.charAt(i) == '~' && i + 5 < str.length() && str.charAt(i + 5) == '~') {
 							char c = str.charAt(i + 1);
 							char c1 = str.charAt(i + 2);
 							char c2 = str.charAt(i + 3);
@@ -4460,6 +4468,14 @@ public class GraphicsController {
 	}
 
 	public final int stringWidth(int font, String str) {
+		return stringWidth(font, str, true);
+	}
+
+	public final int literalStringWidth(int font, String text) {
+		return stringWidth(font, text, false);
+	}
+
+	private int stringWidth(int font, String str, boolean markup) {
 		try {
 			font = RendererFontSettings.displayFont(font);
 
@@ -4468,9 +4484,9 @@ public class GraphicsController {
 			byte[] fontData = Fonts.fontData[font];
 
 			for (int i = 0; i < str.length(); ++i) {
-				if (str.charAt(i) == '@' && 4 + i < str.length() && str.charAt(i + 4) == '@') {
+				if (markup && str.charAt(i) == '@' && 4 + i < str.length() && str.charAt(i + 4) == '@') {
 					i += 4;
-				} else if (str.charAt(i) == '~' && i + 4 < str.length() && str.charAt(i + 4) == '~') {
+				} else if (markup && str.charAt(i) == '~' && i + 4 < str.length() && str.charAt(i + 4) == '~') {
 					i += 4;
 				} else {
 					char c = str.charAt(i);

@@ -1228,6 +1228,7 @@ public final class mudclient implements Runnable {
 	private Panel panelSocial;
 	private Panel panelClan;
 	private SocialPopupMode panelSocialPopup_Mode = SocialPopupMode.NONE;
+	private volatile SocialTextPrompt socialTextPrompt;
 	private int panelSocialTab = 0;
 	private SocialPanelLayout socialPanelLayout;
 	private static final long ONLINE_SIDEBAR_INTERVAL_NS = 15_000_000_000L;
@@ -13735,6 +13736,8 @@ public final class mudclient implements Runnable {
 				drawQuestGuidePreview();
 			} else if (hasSkillGuidePreviewInput()) {
 				drawSkillGuide();
+			} else if (hasSocialPromptInput()) {
+				drawSocialTextPrompt();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -15365,6 +15368,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void openAddFriendPrompt() {
+		if (openScaledSocialPrompt(null)) return;
 		inputTextFinal = "";
 		inputTextCurrent = "";
 		panelSocialPopup_Mode = SocialPopupMode.ADD_FRIEND;
@@ -15372,11 +15376,49 @@ public final class mudclient implements Runnable {
 	}
 
 	private void openFriendMessagePrompt(String name) {
+		if (openScaledSocialPrompt(name)) return;
 		panelSocialPopup_Mode = SocialPopupMode.MESSAGE_FRIEND;
 		chatMessageTarget = name;
 		chatMessageInputCommit = "";
 		chatMessageInput = "";
 		if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+	}
+
+	private boolean openScaledSocialPrompt(String recipient) {
+		if (chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		socialTextPrompt = new SocialTextPrompt(recipient);
+		return true;
+	}
+
+	public boolean hasSocialPromptInput() {
+		return socialTextPrompt != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank() && !showDialogShop
+			&& !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails;
+	}
+
+	public boolean handleSocialPromptKey(char key, int code, boolean shortcut) {
+		if (!hasSocialPromptInput()) return false;
+		SocialTextPrompt prompt = socialTextPrompt;
+		if (prompt == null) return false;
+		prompt.keyPressed(key, code, shortcut);
+		return true;
+	}
+
+	private void drawSocialTextPrompt() {
+		SocialTextPrompt prompt = socialTextPrompt;
+		if (prompt == null) return;
+		SocialTextPrompt.Result result = prompt.draw(this, chatLayout.entryTop());
+		mouseButtonClick = 0;
+		if (result == SocialTextPrompt.Result.OPEN) return;
+		socialTextPrompt = null;
+		if (result == SocialTextPrompt.Result.SUBMIT) {
+			if (prompt.recipient == null) addFriend(prompt.value().trim());
+			else putStringPair(prompt.recipient, prompt.value());
+		}
 	}
 
 	private void addPartyMemberActions(String name) {
@@ -21763,7 +21805,7 @@ public final class mudclient implements Runnable {
 					}
 
 					if (!hasContextMenuInput() && !hasQuestRewardInput()
-						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()) {
+						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()) {
 						this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 					}
@@ -21905,7 +21947,7 @@ public final class mudclient implements Runnable {
 						this.mouseButtonClick = 2;
 					}
 					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput()
-						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
 						&& mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
@@ -23271,10 +23313,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case CHAT_MESSAGE: {
-					this.chatMessageTarget = var9;
-					this.chatMessageInput = "";
-					this.panelSocialPopup_Mode = SocialPopupMode.MESSAGE_FRIEND;
-					this.chatMessageInputCommit = "";
+					openFriendMessagePrompt(var9);
 					break;
 				}
 				case LANDSCAPE_CAST_SPELL: {
@@ -28032,6 +28071,7 @@ public final class mudclient implements Runnable {
 				doSkillInterface.closeProductionInterface();
 			}
 			craftingTabsRegistered = false;
+			socialTextPrompt = null;
 			onlineSidebarPlayers = null;
 			lastOnlineSidebarRequest = 0;
 			socialScroll[SocialPanelLayout.ONLINE] = 0;
@@ -28144,6 +28184,7 @@ public final class mudclient implements Runnable {
 
 	private void resetLoginScreenVariables(byte var1) {
 		try {
+			socialTextPrompt = null;
 			questRewardWindow = null;
 			pendingQuestRewards.clear();
 			questRewardWheel.set(0);
@@ -33360,6 +33401,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void runScroll(int x) {
+		if (hasSocialPromptInput()) return;
 		if (hasQuestRewardInput()) {
 			questRewardWheel.addAndGet(x);
 			return;
