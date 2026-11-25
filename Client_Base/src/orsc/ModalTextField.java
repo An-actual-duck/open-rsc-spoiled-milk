@@ -3,6 +3,7 @@ package orsc;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntPredicate;
 import java.util.function.ToIntFunction;
@@ -71,17 +72,39 @@ final class ModalTextField {
 		return true;
 	}
 
+	void clear() {
+		for (int i = 0; i < text.length(); i++) text.setCharAt(i, '\0');
+		text.setLength(0);
+		caret = 0;
+		selectedAll = false;
+	}
+
 	void draw(mudclient client, Rectangle field, int rows, int font, int pad) {
+		draw(client, field, rows, font, pad, true, false);
+	}
+
+	void drawMasked(mudclient client, Rectangle field, int font, int pad, boolean focused) {
+		draw(client, field, 1, font, pad, focused, true);
+	}
+
+	private void draw(mudclient client, Rectangle field, int rows, int font, int pad, boolean focused, boolean masked) {
 		MudClientGraphics surface = client.getSurface();
 		int mouseX = client.getMouseX();
 		int mouseY = client.getMouseY();
 		boolean clicked = client.getMouseClick() == 1;
-		String value = value();
+		String value;
+		if (masked) {
+			char[] mask = new char[text.length()];
+			Arrays.fill(mask, '*');
+			value = new String(mask);
+		} else {
+			value = value();
+		}
 		ToIntFunction<String> measure = part -> surface.literalStringWidth(font, part);
 		int bodyLine = surface.fontHeight(font);
 		List<Integer> starts = lineStarts(value, Math.max(1, field.width - 2 * pad - 2), measure);
 		int first = Math.max(0, Math.min(lineAt(starts, caret) - rows + 1, starts.size() - rows));
-		if (clicked && field.contains(mouseX, mouseY)) {
+		if (focused && clicked && field.contains(mouseX, mouseY)) {
 			int line = Math.max(0, (mouseY - field.y - pad) / bodyLine);
 			int row = Math.min(starts.size() - 1, first + Math.min(rows - 1, line));
 			caret = caretAt(value, starts.get(row), endOfLine(starts, value, row), mouseX - field.x - pad, measure);
@@ -89,16 +112,16 @@ final class ModalTextField {
 		}
 
 		surface.drawBox(field.x, field.y, field.width, field.height, 0x121B28);
-		surface.drawBoxBorder(field.x, field.width, field.y, field.height, 0xD2B873);
+		surface.drawBoxBorder(field.x, field.width, field.y, field.height, focused ? 0xD2B873 : 0x667993);
 		for (int i = first; i < starts.size() && i < first + rows; i++) {
 			int start = starts.get(i);
 			String line = value.substring(start, endOfLine(starts, value, i));
 			int rowY = field.y + pad + (i - first) * bodyLine;
-			if (selectedAll && !line.isEmpty()) {
+			if (focused && selectedAll && !line.isEmpty()) {
 				surface.drawBox(field.x + pad, rowY, measure.applyAsInt(line), bodyLine, 0x405978);
 			}
 			surface.drawLiteralString(line, field.x + pad, rowY + bodyLine - 3, 0xFFFFFF, font);
-			if (!selectedAll && i == lineAt(starts, caret)) {
+			if (focused && !selectedAll && i == lineAt(starts, caret)) {
 				int caretX = field.x + pad + measure.applyAsInt(value.substring(start, caret));
 				surface.drawLineVert(caretX, rowY + 2, 0xFFDC82, bodyLine - 4);
 			}

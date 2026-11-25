@@ -250,6 +250,14 @@ The scaled reconnect notice appears when an established game connection
 drops and the client starts its normal retry. Sign-in and initial loading
 use their Classic presentations.
 
+## Change Password preview
+
+Settings → Social → Change password opens a signed-in form with three masked
+fields. Tab or click to move between fields. The form shows password
+requirements and mismatched confirmation before submitting. It waits for the
+server's result and shows the outcome in the form. Only an acknowledged change
+updates the password used for reconnect in that session.
+
 ## Report Player preview
 
 Open Report Player from General settings or a player's right-click menu. The

@@ -2862,6 +2862,7 @@ public class PacketHandler {
 		if (mc.worldEditorInterface != null) {
 			mc.worldEditorInterface.observeGameMessage(message);
 		}
+		if (type == MessageType.GAME && sender == null) mc.receivePasswordChangeMessage(message);
 		// Why is clan being sent into former name?
 		mc.showMessage(true, sender, message, type, crown, clan, colour);
 	}

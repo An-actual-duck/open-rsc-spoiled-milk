@@ -1248,6 +1248,8 @@ public final class mudclient implements Runnable {
 		new java.util.concurrent.atomic.AtomicIntegerArray(SocialPanelLayout.ONLINE + 1);
 	private int socialPartySelectedMember = -1;
 	private PasswordChangeMode panelPasswordChange_Mode = PasswordChangeMode.NONE;
+	private volatile PasswordChangeWindow passwordChangeWindow;
+	private String pendingPasswordChange;
 	private String oldPassword;
 	private String newPassword;
 	private String password = "";
@@ -10111,6 +10113,69 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void openPasswordChange() {
+		if (chatLayout == null || isAndroid()) {
+			panelPasswordChange_Mode = PasswordChangeMode.OLD_PASSWORD;
+			inputTextCurrent = "";
+			inputTextFinal = "";
+			if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+			return;
+		}
+		closeTopMouseMenu();
+		panelPasswordChange_Mode = PasswordChangeMode.NONE;
+		passwordChangeWindow = new PasswordChangeWindow(getUsername(), pendingPasswordChange != null);
+		mouseButtonClick = 0;
+	}
+
+	public boolean hasPasswordChangeInput() {
+		return passwordChangeWindow != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput() && !hasReportPlayerInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& !isShowDialogBank() && !showDialogShop
+			&& !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails;
+	}
+
+	public boolean handlePasswordChangeKey(char key, int code, boolean shortcut, boolean shift) {
+		PasswordChangeWindow window = passwordChangeWindow;
+		if (window == null || !hasPasswordChangeInput()) return false;
+		window.keyPressed(key, code, shortcut, shift);
+		return true;
+	}
+
+	private void drawPasswordChangeWindow() {
+		PasswordChangeWindow window = passwordChangeWindow;
+		if (window == null) return;
+		PasswordChangeWindow.Submission result = window.draw(this, chatLayout.entryTop());
+		mouseButtonClick = 0;
+		if (result == PasswordChangeWindow.CLOSE) {
+			passwordChangeWindow = null;
+		} else if (result != null) {
+			pendingPasswordChange = result.newPassword;
+			sendPassChange(result.currentPassword, result.newPassword);
+		}
+	}
+
+	void receivePasswordChangeMessage(String message) {
+		if (pendingPasswordChange == null) return;
+		// Existing servers acknowledge changes through their own game messages.
+		PasswordChangeWindow.Reply reply = PasswordChangeWindow.Reply.fromMessage(message);
+		if (reply == null) return;
+		if (reply == PasswordChangeWindow.Reply.CHANGED) password = pendingPasswordChange;
+		pendingPasswordChange = null;
+		PasswordChangeWindow window = passwordChangeWindow;
+		if (window != null) window.receive(reply);
+	}
+
+	private void resetPasswordChange() {
+		PasswordChangeWindow window = passwordChangeWindow;
+		passwordChangeWindow = null;
+		if (window != null) window.clearFields();
+		pendingPasswordChange = null;
+	}
+
 	private void drawDialogueChangePassword() {
 		if (this.mouseButtonClick != 0) {
 			this.mouseButtonClick = 0;
@@ -13879,6 +13944,8 @@ public final class mudclient implements Runnable {
 				drawItemQuantityPrompt();
 			} else if (hasReportPlayerInput()) {
 				drawReportPlayerWindow();
+			} else if (hasPasswordChangeInput()) {
+				drawPasswordChangeWindow();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -19826,10 +19893,7 @@ public final class mudclient implements Runnable {
 	private void applySocialSetting(SocialSetting setting) {
 		switch (setting) {
 			case PASSWORD:
-				panelPasswordChange_Mode = PasswordChangeMode.OLD_PASSWORD;
-				inputTextCurrent = "";
-				inputTextFinal = "";
-				if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+				openPasswordChange();
 				break;
 			case RECOVERY:
 				packetHandler.getClientStream().newPacket(197);
@@ -20215,9 +20279,7 @@ public final class mudclient implements Runnable {
 		yFromTopDistance += 2 * 15 + 5;
 		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
 			&& mouseButtonClick == 1) {
-			this.panelPasswordChange_Mode = PasswordChangeMode.OLD_PASSWORD;
-			this.inputTextCurrent = "";
-			this.inputTextFinal = "";
+			openPasswordChange();
 		}
 
 		// change recovery questions
@@ -21942,7 +22004,8 @@ public final class mudclient implements Runnable {
 
 				if (!this.isSleeping) {
 					if (chatLayout != null) {
-						if (!hasSessionNoticeInput() && !hasItemQuantityInput() && !hasReportPlayerInput()) {
+						if (!hasSessionNoticeInput() && !hasItemQuantityInput() && !hasReportPlayerInput()
+							&& !hasPasswordChangeInput()) {
 							handleScaledChatTabSelection();
 						}
 					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
@@ -21978,7 +22041,8 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					boolean modalOwnsInput = hasSessionNoticeInput() || hasItemQuantityInput() || hasReportPlayerInput();
+					boolean modalOwnsInput = hasSessionNoticeInput() || hasItemQuantityInput() || hasReportPlayerInput()
+						|| hasPasswordChangeInput();
 					if (!modalOwnsInput) {
 						if (!hasContextMenuInput() && !hasQuestRewardInput()
 							&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
@@ -24777,6 +24841,7 @@ public final class mudclient implements Runnable {
 	private void jumpToLogin() {
 		try {
 			boolean endingGameSession = this.currentViewMode == GameMode.GAME;
+			resetPasswordChange();
 			if (endingGameSession) {
 				RenderTelemetry.recordDiagnosticBoundary("client-logout");
 				RendererDiagnosticSession.recordEvent("client.logout", null);
@@ -28250,6 +28315,7 @@ public final class mudclient implements Runnable {
 			closeDeathItemsWindow();
 			itemQuantityPrompt = null;
 			reportPlayerWindow = null;
+			resetPasswordChange();
 			onlineSidebarPlayers = null;
 			lastOnlineSidebarRequest = 0;
 			socialScroll[SocialPanelLayout.ONLINE] = 0;
@@ -28370,6 +28436,7 @@ public final class mudclient implements Runnable {
 			closeDeathItemsWindow();
 			itemQuantityPrompt = null;
 			reportPlayerWindow = null;
+			resetPasswordChange();
 			questRewardWindow = null;
 			pendingQuestRewards.clear();
 			questRewardWheel.set(0);
@@ -33740,7 +33807,7 @@ public final class mudclient implements Runnable {
 			if (notice != null) notice.scroll(x);
 			return;
 		}
-		if (hasSocialPromptInput() || hasItemQuantityInput()) return;
+		if (hasSocialPromptInput() || hasItemQuantityInput() || hasPasswordChangeInput()) return;
 		ReportPlayerWindow report = reportPlayerWindow;
 		if (report != null && hasReportPlayerInput()) {
 			report.scroll(x);
