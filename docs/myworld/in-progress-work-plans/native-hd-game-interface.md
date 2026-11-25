@@ -357,6 +357,9 @@ uses the existing report request and leaves acknowledgement to the server.
 - The death overlay keeps the Classic message and existing respawn timing.
 - Skip Tutorial and Leave the Black Hole use a shared confirmation. The
   named action confirms, while Cancel and Escape return to play.
+  The layered-world preview compares the player's projected position with
+  the old packed Black Hole bounds. Entering on level -1 leaves the exit
+  option hidden. The location check needs a separate fix before testing that route.
 
 ## Preview
 
