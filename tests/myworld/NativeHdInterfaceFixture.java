@@ -426,20 +426,21 @@ public final class NativeHdInterfaceFixture {
 	}
 
 	private static void verifyMinimapLandmarks() throws IOException {
-		SurfaceMinimapAtlas atlas = SurfaceMinimapAtlas.open();
+		MinimapAtlas atlas = MinimapAtlas.open(0);
 		boolean lumbridgeBank = false;
 		boolean varrockQuest = false;
 		boolean alKharidTanner = false;
 		boolean shifted = false;
+		check(atlas != null, "Surface minimap atlas is packaged");
 		for (int index = 0; index < atlas.landmarks.length; index++) {
-			SurfaceMinimapAtlas.Landmark point = atlas.landmarks[index];
+			MinimapAtlas.Landmark point = atlas.landmarks[index];
 			lumbridgeBank |= point.x == 111 && point.y == 650 && point.icon == MinimapMarkerIcon.BANK;
 			varrockQuest |= point.x == 136 && point.y == 511 && point.icon == MinimapMarkerIcon.QUEST;
 			alKharidTanner |= point.x == 84 && point.y == 676 && point.icon == MinimapMarkerIcon.LEATHER;
 			shifted |= point.offsetX != 0 || point.offsetY != 0;
 			check(!point.label.isEmpty(), "Landmark has a hover label");
 			for (int prior = 0; prior < index; prior++) {
-				SurfaceMinimapAtlas.Landmark other = atlas.landmarks[prior];
+				MinimapAtlas.Landmark other = atlas.landmarks[prior];
 				int dx = point.x + point.offsetX - other.x - other.offsetX;
 				int dy = point.y + point.offsetY - other.y - other.offsetY;
 				check(Math.max(Math.abs(dx), Math.abs(dy)) >= 4, "Landmark icon tiles are spaced apart");
@@ -447,8 +448,23 @@ public final class NativeHdInterfaceFixture {
 		}
 		check(lumbridgeBank && varrockQuest && alKharidTanner, "Atlas contains landmarks in all three preview towns");
 		check(shifted, "Atlas contains offsets to keep neighbouring icons visible");
-		int sectorSize = SurfaceMinimapAtlas.SECTOR_SIZE;
+		int sectorSize = MinimapAtlas.SECTOR_SIZE;
 		check(atlas.sector(111 / sectorSize, 650 / sectorSize) != null, "Landmarks preserve the terrain sector data");
+		assertLandmark(atlas, 325, 490, MinimapMarkerIcon.QUEST);
+		assertLandmark(atlas, 439, 491, MinimapMarkerIcon.BANK);
+		assertLandmark(MinimapAtlas.open(1), 717, 465, MinimapMarkerIcon.CLOTHING);
+		assertLandmark(MinimapAtlas.open(-2), 320, 592, MinimapMarkerIcon.LAVA_FORGE);
+		assertLandmark(MinimapAtlas.open(10), 174, 691, MinimapMarkerIcon.BANK);
+	}
+
+	private static void assertLandmark(MinimapAtlas atlas, int x, int y, MinimapMarkerIcon icon) {
+		check(atlas != null, "Landmark's level atlas is packaged");
+		check(atlas.sector(Math.floorDiv(x, MinimapAtlas.SECTOR_SIZE), Math.floorDiv(y, MinimapAtlas.SECTOR_SIZE)) != null,
+			"Landmark has terrain on the same floor");
+		for (MinimapAtlas.Landmark point : atlas.landmarks) {
+			if (point.x == x && point.y == y && point.icon == icon) return;
+		}
+		throw new AssertionError("Could not find " + icon + " at " + x + ", " + y);
 	}
 
 	private static void verifyMinimapFrame(int width, int height, GameInterfaceSettings.Size size,

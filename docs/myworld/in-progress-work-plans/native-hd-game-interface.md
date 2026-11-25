@@ -200,20 +200,19 @@ The first 1080p preview uses the existing launcher and pinning controls.
 The minimap uses a 420×420 frame at Standard UI size, close to the dimensions
 of Settings and the ability panels. Map tiles, dots, and location icons
 follow the UI size. The map fills the frame below the heading.
-A north-up 2D atlas covers the published global surface. White dots show other
-players, yellow dots show NPCs, red dots show attackable NPCs, and the cyan dot
-shows the local player. The first placement pass covers Lumbridge, Varrock,
-and Al Kharid. A dark dollar sign marks banks, a blue asterisk marks quest
-starts, and distinct silhouettes identify shops and workstations. All use
-off-white backgrounds and show their names on hover. The Classic interface
-uses its existing minimap.
+North-up 2D atlases cover the installed global surface and authored world
+levels. White dots show other players, yellow dots show NPCs, red dots show
+attackable NPCs, and the cyan dot shows the local player. Off-white circles
+hold a dark dollar sign for banks, a blue asterisk for quest starts, and
+distinct silhouettes for shops and workstations. Hover a marker for its
+name. The Classic interface uses its existing minimap.
 
-The atlas is baked with `scripts/build-surface-minimap.py` and matched to the
-active package manifest. The bake uses boundary definitions to exclude hidden
-and fully transparent terrain walls. The minimap reads the atlas only when
-opened and decodes visible sectors into a bounded cache. Rendering uses the
-live player and NPC positions. The old scene raster remains disabled in the
-scaled interface.
+The atlases are baked with `scripts/build-surface-minimap.py` and matched to
+the active package manifest and floor. The bake uses boundary definitions to
+exclude hidden and fully transparent terrain walls. The minimap loads each
+floor when opened there and decodes visible sectors into a bounded cache.
+Rendering uses live player and NPC positions. The old scene raster remains
+disabled in the scaled interface.
 
 Build a shared 2D renderer for the minimap and world map. The old minimap
 raster covers the active scene and is built during terrain preparation.
@@ -236,8 +235,8 @@ scaled interface. Closed views do no background map rendering or fetching.
   meanings in the world map key. Use off-white icon backgrounds. Anchor
   each service to a verified surface placement, including bank chests and
   shopkeepers' home tiles. Classify vendors by their actual stock. Thessalia
-  and Ranael use the tailoring supplies icon. Rometti still sells clothing
-  upstairs in the Grand Tree and is outside the surface pass. Use a loose
+  and Ranael use the tailoring supplies icon. Rometti uses the clothing icon
+  upstairs in the Grand Tree. Use a loose
   hide for leather vendors and a framed hide for tanning racks. A short
   connector keeps crowded markers readable and indicates their original tile.
   Keep fixed markers separate from the moving player and NPC dots.

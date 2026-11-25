@@ -6,6 +6,8 @@ import com.openrsc.client.model.Sprite;
 import orsc.graphics.two.MudClientGraphics;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /** North-up map view using the same coordinates for art, markers and picking. */
 final class MinimapView {
@@ -14,16 +16,22 @@ final class MinimapView {
 	private static final int ENEMY = 0xF16A61;
 	private static final int MARKER_BACKGROUND = 0xFFFBEF;
 	private static final int OUTLINE = 0x16262D;
+	private static final Sprite MARKER_DISC = makeMarkerDisc();
 
-	private SurfaceMinimapAtlas atlas;
-	private boolean triedToOpen;
+	private final Map<Integer, MinimapAtlas> atlases = new LinkedHashMap<Integer, MinimapAtlas>(4, 0.75f, true) {
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<Integer, MinimapAtlas> eldest) {
+			return size() > 3;
+		}
+	};
+	private MinimapAtlas atlas;
 	private double worldX;
 	private double worldY;
 	private int centerX;
 	private int centerY;
 	private int pixelsPerTile;
 	private boolean terrainReady;
-	private SurfaceMinimapAtlas.Landmark hoveredLandmark;
+	private MinimapAtlas.Landmark hoveredLandmark;
 	private int hoveredX;
 	private int hoveredY;
 
@@ -35,14 +43,7 @@ final class MinimapView {
 		centerX = (frame.mapLeft() + frame.mapRight()) / 2;
 		centerY = (frame.mapTop() + frame.mapBottom()) / 2;
 		pixelsPerTile = frame.pixelsPerTile;
-		if (!triedToOpen) {
-			triedToOpen = true;
-			try {
-				atlas = SurfaceMinimapAtlas.open();
-			} catch (IOException failure) {
-				System.out.println("Minimap unavailable: " + failure.getMessage());
-			}
-		}
+		atlas = atlasFor(terrain);
 		surface.drawBox(frame.mapLeft(), frame.mapTop(), frame.mapRight() - frame.mapLeft(),
 			frame.mapBottom() - frame.mapTop(), OUTLINE);
 		terrainReady = atlas != null && atlas.matches(terrain);
@@ -76,8 +77,22 @@ final class MinimapView {
 		}
 	}
 
+	private MinimapAtlas atlasFor(NativeLayeredTerrainSnapshot terrain) {
+		if (terrain == null || !"global".equals(terrain.getWorldSpace())) return null;
+		int level = terrain.getLevel();
+		if (atlases.containsKey(level)) return atlases.get(level);
+		MinimapAtlas loaded = null;
+		try {
+			loaded = MinimapAtlas.open(level);
+		} catch (IOException failure) {
+			System.out.println("Minimap unavailable: " + failure.getMessage());
+		}
+		atlases.put(level, loaded);
+		return loaded;
+	}
+
 	private void drawTerrain(MudClientGraphics surface, MinimapFrameLayout frame) {
-		int sector = SurfaceMinimapAtlas.SECTOR_SIZE;
+		int sector = MinimapAtlas.SECTOR_SIZE;
 		int xMin = Math.floorDiv(tileX(frame.mapRight()), sector);
 		int xMax = Math.floorDiv(tileX(frame.mapLeft()), sector);
 		int yMin = Math.floorDiv(tileY(frame.mapTop()), sector);
@@ -101,17 +116,17 @@ final class MinimapView {
 	}
 
 	private void drawLandmarkConnectors(MudClientGraphics surface, MinimapFrameLayout frame) {
-		for (SurfaceMinimapAtlas.Landmark point : atlas.landmarks) {
+		for (MinimapAtlas.Landmark point : atlas.landmarks) {
 			if (point.offsetX == 0 && point.offsetY == 0) continue;
 			int x = pixelX(point.x + point.offsetX + 0.5);
 			int y = pixelY(point.y + point.offsetY + 0.5);
 			if (!frame.containsMap(x, y)) continue;
-			if (point.offsetX != 0) {
-				int anchorX = pixelX(point.x + 0.5);
-				surface.drawLineHoriz(Math.min(anchorX, x), y, Math.abs(anchorX - x) + 1, OUTLINE);
+			int anchorX = pixelX(point.x + 0.5);
+			int anchorY = pixelY(point.y + 0.5);
+			if (x != anchorX) {
+				surface.drawLineHoriz(Math.min(anchorX, x), anchorY, Math.abs(anchorX - x) + 1, OUTLINE);
 			}
-			if (point.offsetY != 0) {
-				int anchorY = pixelY(point.y + 0.5);
+			if (y != anchorY) {
 				surface.drawLineVert(x, Math.min(anchorY, y), OUTLINE, Math.abs(anchorY - y) + 1);
 			}
 		}
@@ -121,14 +136,16 @@ final class MinimapView {
 		int size = frame.markerSize;
 		int radius = size / 2;
 		boolean pointerOnMap = frame.containsMap(mouseX, mouseY);
-		for (SurfaceMinimapAtlas.Landmark point : atlas.landmarks) {
+		for (MinimapAtlas.Landmark point : atlas.landmarks) {
 			int x = pixelX(point.x + point.offsetX + 0.5);
 			int y = pixelY(point.y + point.offsetY + 0.5);
 			if (!frame.containsMap(x, y)) continue;
 			int left = x - radius;
 			int top = y - radius;
 			drawLocationMarker(surface, left, top, size, point.icon.symbol);
-			if (pointerOnMap && mouseX >= left && mouseX < left + size && mouseY >= top && mouseY < top + size) {
+			int dx = mouseX - x;
+			int dy = mouseY - y;
+			if (pointerOnMap && dx * dx + dy * dy <= radius * radius) {
 				hoveredLandmark = point;
 				hoveredX = x;
 				hoveredY = y;
@@ -166,13 +183,29 @@ final class MinimapView {
 	}
 
 	private static void drawLocationMarker(MudClientGraphics surface, int left, int top, int size, Sprite symbol) {
-		surface.drawBox(left, top, size, size, MARKER_BACKGROUND);
-		surface.drawBoxBorder(left, size, top, size, OUTLINE);
-		int available = size * 3 / 4;
+		surface.drawSprite(MARKER_DISC, left, top, size, size, 5924);
+		int available = size * 7 / 10;
 		int dimension = Math.max(symbol.getWidth(), symbol.getHeight());
 		int width = (available * symbol.getWidth() + dimension / 2) / dimension;
 		int height = (available * symbol.getHeight() + dimension / 2) / dimension;
 		surface.drawSprite(symbol, left + (size - width) / 2, top + (size - height) / 2, width, height, 5924);
+	}
+
+	private static Sprite makeMarkerDisc() {
+		int size = 64;
+		int fill = size - 6;
+		int[] pixels = new int[size * size];
+		for (int y = 0; y < size; y++) {
+			int dy = 2 * y + 1 - size;
+			for (int x = 0; x < size; x++) {
+				int dx = 2 * x + 1 - size;
+				int distanceSquared = dx * dx + dy * dy;
+				if (distanceSquared <= size * size) {
+					pixels[y * size + x] = distanceSquared <= fill * fill ? MARKER_BACKGROUND : OUTLINE;
+				}
+			}
+		}
+		return new Sprite(pixels, size, size);
 	}
 
 	boolean hasTerrain() { return terrainReady; }

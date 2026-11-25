@@ -51,7 +51,7 @@
                 <include name="remastered-sprites/manifest.json"/>
                 <include name="sprites/**/*.png"/>
                 <include name="ui/**/*.png"/>
-                <include name="ui/minimap/surface.bin"/>
+                <include name="ui/minimap/*.bin"/>
                 <include name="ui/world-editor/**"/>
             </fileset>
         </copy>

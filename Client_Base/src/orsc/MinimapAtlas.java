@@ -13,10 +13,10 @@ import java.util.Map;
 import java.util.zip.InflaterInputStream;
 
 /** Detached map art with small, independently compressed sectors. */
-final class SurfaceMinimapAtlas {
+final class MinimapAtlas {
 	static final int SECTOR_SIZE = NativeLayeredTerrainSnapshot.SECTOR_SIZE;
 	private static final int SECTOR_PIXELS = SECTOR_SIZE * 2;
-	private static final String RESOURCE = "/myworld-assets/ui/minimap/surface.bin";
+	private static final String RESOURCE_DIRECTORY = "/myworld-assets/ui/minimap/";
 
 	private final Map<Long, byte[]> sectors = new HashMap<>();
 	private final Map<Long, Sprite> visibleSectors = new LinkedHashMap<Long, Sprite>(16, 0.75f, true) {
@@ -26,19 +26,20 @@ final class SurfaceMinimapAtlas {
 		}
 	};
 	private final String manifestHash;
+	private final int level;
 	private final int[] palette;
 	final Landmark[] landmarks;
 
-	static SurfaceMinimapAtlas open() throws IOException {
-		try (InputStream resource = SurfaceMinimapAtlas.class.getResourceAsStream(RESOURCE)) {
-			if (resource == null) throw new IOException("Surface minimap resource missing");
-			return new SurfaceMinimapAtlas(new DataInputStream(resource));
+	static MinimapAtlas open(int level) throws IOException {
+		String name = level == 0 ? "surface.bin" : "level-" + level + ".bin";
+		try (InputStream resource = MinimapAtlas.class.getResourceAsStream(RESOURCE_DIRECTORY + name)) {
+			return resource == null ? null : new MinimapAtlas(new DataInputStream(resource), level);
 		}
 	}
 
-	private SurfaceMinimapAtlas(DataInputStream input) throws IOException {
-		if (input.readInt() != 0x524D4150 || input.readUnsignedByte() != 2) {
-			throw new IOException("Unknown surface minimap format");
+	private MinimapAtlas(DataInputStream input, int expectedLevel) throws IOException {
+		if (input.readInt() != 0x524D4150 || input.readUnsignedByte() != 3) {
+			throw new IOException("Unknown minimap format");
 		}
 		StringBuilder hash = new StringBuilder(64);
 		for (int index = 0; index < 32; index++) {
@@ -47,11 +48,12 @@ final class SurfaceMinimapAtlas {
 			hash.append(Character.forDigit(value & 15, 16));
 		}
 		manifestHash = hash.toString();
+		level = input.readShort();
 		palette = new int[input.readUnsignedByte()];
 		int count = input.readUnsignedShort();
 		int landmarkCount = input.readUnsignedShort();
-		if (palette.length == 0 || count > 2048 || landmarkCount > 4096) {
-			throw new IOException("Invalid surface minimap header");
+		if (level != expectedLevel || palette.length == 0 || count > 2048 || landmarkCount > 4096) {
+			throw new IOException("Invalid minimap header");
 		}
 		for (int index = 0; index < palette.length; index++) palette[index] = input.readInt();
 		landmarks = new Landmark[landmarkCount];
@@ -69,7 +71,7 @@ final class SurfaceMinimapAtlas {
 	}
 
 	boolean matches(NativeLayeredTerrainSnapshot snapshot) {
-		return snapshot != null && snapshot.getLevel() == 0 && "global".equals(snapshot.getWorldSpace())
+		return snapshot != null && snapshot.getLevel() == level && "global".equals(snapshot.getWorldSpace())
 			&& manifestHash.equals(snapshot.getManifestSha256());
 	}
 

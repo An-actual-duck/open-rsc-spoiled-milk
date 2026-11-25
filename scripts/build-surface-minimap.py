@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bake the installed surface map into individually compressed minimap sectors."""
+"""Bake the installed world into level-specific minimap atlases."""
 
 import hashlib
 import json
@@ -7,14 +7,17 @@ import struct
 import sys
 import xml.etree.ElementTree as ET
 import zlib
+from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "dev/myworld/assets/runtime/ui/minimap/surface.bin"
+OUTPUT = ROOT / "dev/myworld/assets/runtime/ui/minimap"
+AUTHORING = ROOT / "dev/myworld/assets/authoring/ui/minimap"
+LANDMARKS = AUTHORING / "landmarks.json"
+CATALOG = AUTHORING / "landmark-catalog.json"
 SECTOR = 48
 PIXELS = SECTOR * 2
 TRANSPARENT = 12345678  # Scene.TRANSPARENT
-LANDMARKS = ROOT / "dev/myworld/assets/authoring/ui/minimap/landmarks.json"
 MARKER_SPACING = 4  # tiles at the minimap's fixed zoom
 
 # Index zero is uncharted terrain. The last color is drawn over tile boundaries.
@@ -33,7 +36,7 @@ def read_verified(package, record):
     return data
 
 
-def floor_color(elevation, texture, overlay, roof, overlay_types):
+def floor_color(elevation, texture, overlay, roof, overlay_types, surface):
     if overlay == 8:
         return 0
     kind = overlay_types.get(overlay, 0)
@@ -48,7 +51,7 @@ def floor_color(elevation, texture, overlay, roof, overlay_types):
     if overlay:
         return 10
     if texture == 0 and elevation == 0:
-        return 5
+        return 5 if surface else 0
     return 1 + min(3, elevation // 45)
 
 
@@ -66,7 +69,7 @@ def visible_wall_ids(definitions):
     return visible
 
 
-def bake_sector(raw, encoding, overlay_types, visible_walls):
+def bake_sector(raw, encoding, overlay_types, visible_walls, surface):
     if encoding == "raw-layered-sector-v1":
         tile = struct.Struct(">6BI")
     elif encoding == "raw-layered-sector-v2-u16":
@@ -80,7 +83,7 @@ def bake_sector(raw, encoding, overlay_types, visible_walls):
         elevation, texture, overlay, roof, vertical, horizontal, diagonal = values
         x, y = divmod(offset, SECTOR)
         top = (y * 2) * PIXELS + (SECTOR - 1 - x) * 2
-        color = floor_color(elevation, texture, overlay, roof, overlay_types)
+        color = floor_color(elevation, texture, overlay, roof, overlay_types, surface)
         pixels[top] = color
         pixels[top + 1] = color
         pixels[top + PIXELS] = color
@@ -97,71 +100,112 @@ def bake_sector(raw, encoding, overlay_types, visible_walls):
     return zlib.compress(pixels, 9) if any(pixels) else b""
 
 
-def bake_landmarks(placements):
-    anchors = set()
-    for source, collection, catalog, position in (
+def collect_landmarks(placements, featured, catalog):
+    anchors = defaultdict(list)
+    for source, collection, catalog_id, position in (
         ("npc", "npcs", "npcId", "start"),
         ("scenery", "scenery", "sceneryId", "position"),
     ):
-        anchors.update((source, item[catalog], item[position]["x"], item[position]["y"])
-                       for item in placements[collection])
+        for item in placements[collection]:
+            point = item[position]
+            anchors[source, item[catalog_id]].append((point["x"], point["y"]))
 
-    offsets = [(0, 0)]
-    for distance in range(1, MARKER_SPACING + 2):
-        offsets.extend(((0, -distance), (0, distance), (distance, 0), (-distance, 0)))
+    for point in featured:
+        if (point["x"], point["y"]) not in anchors[point["source"], point["id"]]:
+            raise ValueError(f"Missing landmark anchor: {point['label']}")
+
+    landmarks = list(featured)
+    for source, definitions in (("npc", catalog["shops"]), ("scenery", catalog["workstations"])):
+        for raw_id, (icon, label) in definitions.items():
+            for x, y in sorted(anchors[source, int(raw_id)]):
+                # Keep distinct vendors and group repeat stations at the same facility.
+                distance = 0 if source == "npc" else (7 if icon == "WATER" else 5)
+                if any(point["icon"] == icon and max(abs(x - point["x"]), abs(y - point["y"])) <= distance
+                       for point in landmarks):
+                    continue
+                landmarks.append({"icon": icon, "label": label, "x": x, "y": y})
+    return landmarks
+
+
+def bake_landmarks(landmarks):
+    offsets = sorted(
+        ((dx, dy) for dx in range(-6, 7) for dy in range(-6, 7) if dx * dx + dy * dy <= 36),
+        key=lambda shift: (shift[0] ** 2 + shift[1] ** 2, shift[0] != 0 and shift[1] != 0, shift),
+    )
     occupied = []
     blocks = []
-    for town, landmarks in json.loads(LANDMARKS.read_text()).items():
-        for point in landmarks:
-            x, y = point["x"], point["y"]
-            if (point["source"], point["id"], x, y) not in anchors:
-                raise ValueError(f"Missing landmark anchor in {town}: {point['label']}")
-            for dx, dy in offsets:
-                if all(max(abs(x + dx - other_x), abs(y + dy - other_y)) >= MARKER_SPACING
-                       for other_x, other_y in occupied):
-                    break
-            else:
-                raise ValueError(f"Landmarks too close in {town}: {point['label']}")
-            occupied.append((x + dx, y + dy))
-            icon = point["icon"].encode("ascii")
-            label = point["label"].encode("utf-8")
-            blocks.append(struct.pack(">hhbbBB", x, y, dx, dy, len(icon), len(label)) + icon + label)
+    for point in landmarks:
+        x, y = point["x"], point["y"]
+        for dx, dy in offsets:
+            if all(max(abs(x + dx - other_x), abs(y + dy - other_y)) >= MARKER_SPACING
+                   for other_x, other_y in occupied):
+                break
+        else:
+            raise ValueError(f"Landmarks too close: {point['label']}")
+        occupied.append((x + dx, y + dy))
+        icon = point["icon"].encode("ascii")
+        label = point["label"].encode("utf-8")
+        blocks.append(struct.pack(">hhbbBB", x, y, dx, dy, len(icon), len(label)) + icon + label)
     return blocks
+
+
+def atlas_name(level):
+    return "surface.bin" if level == 0 else f"level-{level}.bin"
+
 
 def bake(package):
     manifest = (package / "manifest.json").read_bytes()
     world = json.loads(manifest)
     if world["storage"]["sectorSize"] != SECTOR:
         raise ValueError("Unexpected map sector size")
-    surface = lambda item: item["worldSpace"] == "global" and item["level"] == 0
-    placements = next(record for record in world["placementSets"] if surface(record))
-    markers = bake_landmarks(json.loads(read_verified(package, placements)))
-    defs = ET.parse(ROOT / "server/conf/server/defs/TileDef.xml").getroot()
-    overlay_types = {i: int(tile.findtext("unknown")) for i, tile in enumerate(defs, 1)}
+    definitions = ET.parse(ROOT / "server/conf/server/defs/TileDef.xml").getroot()
+    overlay_types = {i: int(tile.findtext("unknown")) for i, tile in enumerate(definitions, 1)}
     boundaries = ET.parse(ROOT / "server/conf/server/defs/DoorDef.xml").getroot()
     visible_walls = visible_wall_ids(boundaries)
-    blocks = []
-    for record in sorted(filter(surface, world["terrainSectors"]),
-                         key=lambda item: (item["sectorX"], item["sectorY"])):
-        encoded = bake_sector(read_verified(package, record), record["encoding"], overlay_types, visible_walls)
-        if encoded:
-            blocks.append(struct.pack(">hhH", record["sectorX"], record["sectorY"], len(encoded)) + encoded)
-    header = b"RMAP\x02" + hashlib.sha256(manifest).digest()
-    header += struct.pack(">BHH", len(PALETTE), len(blocks), len(markers))
+
+    sectors_by_level = defaultdict(list)
+    for record in world["terrainSectors"]:
+        if record["worldSpace"] == "global":
+            sectors_by_level[record["level"]].append(record)
+    placements_by_level = {
+        record["level"]: json.loads(read_verified(package, record))
+        for record in world["placementSets"] if record["worldSpace"] == "global"
+    }
+
+    catalog = json.loads(CATALOG.read_text())
+    featured = defaultdict(list)
+    for town in json.loads(LANDMARKS.read_text()).values():
+        featured[0].extend(town)
+    for point in catalog["placements"]:
+        featured[point["level"]].append(point)
+    if not featured.keys() <= sectors_by_level.keys():
+        raise ValueError("Landmark level does not exist in the installed terrain")
+
     palette = b"".join(struct.pack(">I", color) for color in PALETTE)
-    return header + palette + b"".join(markers) + b"".join(blocks)
+    manifest_header = b"RMAP\x03" + hashlib.sha256(manifest).digest()
+    for level, records in sorted(sectors_by_level.items()):
+        placements = placements_by_level.get(level, {"npcs": [], "scenery": []})
+        markers = bake_landmarks(collect_landmarks(placements, featured[level], catalog))
+        blocks = []
+        for record in sorted(records, key=lambda item: (item["sectorX"], item["sectorY"])):
+            encoded = bake_sector(read_verified(package, record), record["encoding"], overlay_types,
+                                  visible_walls, level == 0)
+            if encoded:
+                blocks.append(struct.pack(">hhH", record["sectorX"], record["sectorY"], len(encoded)) + encoded)
+        header = manifest_header + struct.pack(">hBHH", level, len(PALETTE), len(blocks), len(markers))
+        yield atlas_name(level), header + palette + b"".join(markers) + b"".join(blocks), len(markers)
 
 
 if __name__ == "__main__":
-    primary = json.loads((ROOT / "server/world-builder-configs/primary.json").read_text())
-    package = ROOT / primary["serverMapRelativePath"]
-    data = bake(package)
-    if sys.argv[1:] == ["--check"]:
-        if OUTPUT.read_bytes() != data:
-            raise SystemExit("Minimap atlas differs from the installed map")
-    elif not sys.argv[1:]:
-        OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-        OUTPUT.write_bytes(data)
-    else:
+    if sys.argv[1:] not in ([], ["--check"]):
         raise SystemExit("Usage: build-surface-minimap.py [--check]")
-    print(f"Surface minimap atlas: {len(data):,} bytes")
+    primary = json.loads((ROOT / "server/world-builder-configs/primary.json").read_text())
+    for name, data, count in bake(ROOT / primary["serverMapRelativePath"]):
+        target = OUTPUT / name
+        if sys.argv[1:]:
+            if not target.exists() or target.read_bytes() != data:
+                raise SystemExit(f"Minimap atlas differs from the installed map: {name}")
+        else:
+            OUTPUT.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        print(f"{name}: {len(data):,} bytes, {count} landmarks")
