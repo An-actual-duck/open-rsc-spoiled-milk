@@ -1276,7 +1276,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				int clientMouseY = getClientMouseY(var1);
 				if (var1.getButton() == MouseEvent.BUTTON2 && (mudclient.hasSessionNoticeInput()
 					|| mudclient.hasSocialPromptInput() || mudclient.hasDeathItemsInput()
-					|| mudclient.hasItemQuantityInput())) {
+					|| mudclient.hasItemQuantityInput() || mudclient.hasReportPlayerInput())) {
 					var1.consume();
 					return;
 				}
@@ -1443,7 +1443,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 			if (mudclient.hasDialogueChoiceInput() || mudclient.hasContextMenuInput() || mudclient.hasTradePreviewInput()
 				|| mudclient.hasQuestRewardInput() || mudclient.hasSocialPromptInput() || mudclient.hasDeathItemsInput()
-				|| mudclient.hasSessionNoticeInput() || mudclient.hasItemQuantityInput()) {
+				|| mudclient.hasSessionNoticeInput() || mudclient.hasItemQuantityInput() || mudclient.hasReportPlayerInput()) {
 				e.consume();
 				mudclient.runScroll(e.getWheelRotation());
 				return;
@@ -1490,7 +1490,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			if (mudclient.handleSessionNoticeKey(keyCode)
 				|| mudclient.handleSocialPromptKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())
 				|| mudclient.handleDeathItemsKey(keyCode)
-				|| mudclient.handleItemQuantityKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())) {
+				|| mudclient.handleItemQuantityKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())
+				|| mudclient.handleReportPlayerKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())) {
 					mudclient.lastMouseAction = 0;
 					var1.consume();
 					return;

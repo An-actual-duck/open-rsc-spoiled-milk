@@ -25,6 +25,13 @@ final class ModalTextField {
 		return text.toString();
 	}
 
+	void setValue(String value) {
+		text.setLength(0);
+		value.chars().filter(accepts).limit(limit).forEach(key -> text.append((char) key));
+		caret = text.length();
+		selectedAll = false;
+	}
+
 	void keyPressed(char key, int code, boolean shortcut) {
 		if (shortcut) {
 			if (code == KeyEvent.VK_A) {

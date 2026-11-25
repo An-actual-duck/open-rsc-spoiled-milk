@@ -1234,6 +1234,7 @@ public final class mudclient implements Runnable {
 	boolean deathItemsSupported;
 	private volatile DeathItemsWindow deathItemsWindow;
 	private volatile ItemQuantityPrompt itemQuantityPrompt;
+	private volatile ReportPlayerWindow reportPlayerWindow;
 	private int deathItemsRequestId;
 	private final java.util.concurrent.atomic.AtomicInteger deathItemsWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private int panelSocialTab = 0;
@@ -2545,32 +2546,32 @@ public final class mudclient implements Runnable {
 						String v3 = StringUtil.displayNameToKey(party.username[3]);
 						String v4 = StringUtil.displayNameToKey(party.username[4]);
 						if (dn.equals(StringUtil.displayNameToKey(v0)) && party.partyMembersTotal[0] > 1) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else if (dn.equals(StringUtil.displayNameToKey(v1)) && party.partyMembersTotal[0] > 1) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else if (dn.equals(StringUtil.displayNameToKey(v2)) && party.partyMembersTotal[0] > 2) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else if (dn.equals(StringUtil.displayNameToKey(v3)) && party.partyMembersTotal[0] > 3) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else if (dn.equals(StringUtil.displayNameToKey(v4)) && party.partyMembersTotal[0] > 4) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else {
 							this.menuCommon.addCharacterItem(player.serverIndex, MenuItemAction.PLAYER_PARTY_INVITE, "Invite to party",
 								"@whi@" + name + level);
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						}
 					} else {
-						this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+						this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 							MenuItemAction.REPORT_ABUSE, player.accountName);
 					}
 				} else {
-					this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+					this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 						MenuItemAction.REPORT_ABUSE, player.accountName);
 				}
 				if (modMenu) {
@@ -7662,7 +7663,7 @@ public final class mudclient implements Runnable {
 				if (chatLayoutTabActivity(tab) % 30 > 15) {
 					color = 0xFF8580;
 				}
-				String label = tab == 4 && !S_WANT_CLANS ? "Report Abuse" : CHAT_TAB_LABELS[tab];
+				String label = tab == 4 && !S_WANT_CLANS ? reportEntryLabel() : CHAT_TAB_LABELS[tab];
 				surface.drawColoredStringCentered(left + width / 2, label, color, 0,
 					chatLayout.labelFont, chatLayout.tabsTop() + chatLayout.labelBaseline);
 			}
@@ -7680,9 +7681,7 @@ public final class mudclient implements Runnable {
 		if (lastMouseButtonDown == 1) {
 			MessageTab tab = MessageTab.lookup(tabIndex);
 			if (tab == MessageTab.CLAN && !S_WANT_CLANS) {
-				inputTextFinal = "";
-				inputTextCurrent = "";
-				reportAbuse_State = 1;
+				openReportPlayer("");
 			} else {
 				messageTabSelected = tab;
 				int control = chatHistoryControl(tab);
@@ -12347,7 +12346,7 @@ public final class mudclient implements Runnable {
 					}
 				}
 
-				this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + otherDisplayName, otherDisplayName,
+				this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + otherDisplayName, otherDisplayName,
 					MenuItemAction.REPORT_ABUSE, otherAccountName);
 				return true;
 			}
@@ -13236,6 +13235,59 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private String reportEntryLabel() {
+		return chatLayout != null && !isAndroid() ? ReportPlayerWindow.TITLE : "Report Abuse";
+	}
+
+	private void openReportPlayer(String target) {
+		if (chatLayout == null || isAndroid()) {
+			inputTextFinal = "";
+			inputTextCurrent = target;
+			reportAbuse_State = 1;
+			return;
+		}
+		String muteLabel = m_Ce >= 2 || m_Oj >= 7 ? "Mute player" : m_Oj >= 5 ? "Suggest mute" : null;
+		closeTopMouseMenu();
+		reportPlayerWindow = new ReportPlayerWindow(target, muteLabel);
+		mouseButtonClick = 0;
+	}
+
+	public boolean hasReportPlayerInput() {
+		return reportPlayerWindow != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& !isShowDialogBank() && !showDialogShop
+			&& !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails;
+	}
+
+	public boolean handleReportPlayerKey(char key, int code, boolean shortcut) {
+		ReportPlayerWindow window = reportPlayerWindow;
+		if (window == null || !hasReportPlayerInput()) return false;
+		window.keyPressed(key, code, shortcut);
+		return true;
+	}
+
+	private void drawReportPlayerWindow() {
+		ReportPlayerWindow window = reportPlayerWindow;
+		if (window == null) return;
+		ReportPlayerWindow.Submission result = window.draw(this, chatLayout.entryTop());
+		mouseButtonClick = 0;
+		if (result == null) return;
+		reportPlayerWindow = null;
+		if (result != ReportPlayerWindow.CANCEL) sendPlayerReport(result.target, result.reason, result.mute);
+	}
+
+	private void sendPlayerReport(String target, int reason, boolean mute) {
+		packetHandler.getClientStream().newPacket(Opcodes.Out.REPORT_ABUSE.getOpcode());
+		packetHandler.getClientStream().bufferBits.putString(target);
+		packetHandler.getClientStream().bufferBits.putByte(reason);
+		packetHandler.getClientStream().bufferBits.putByte(mute ? 1 : 0);
+		packetHandler.getClientStream().finishPacket();
+	}
+
 	private void drawPopupReport(boolean var1) {
 		try {
 
@@ -13825,6 +13877,8 @@ public final class mudclient implements Runnable {
 				drawDeathItemsWindow();
 			} else if (hasItemQuantityInput()) {
 				drawItemQuantityPrompt();
+			} else if (hasReportPlayerInput()) {
+				drawReportPlayerWindow();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -19093,7 +19147,7 @@ public final class mudclient implements Runnable {
 			}
 
 			// report abuse - keep at bottom of list since it's not a toggle
-			add.accept("@whi@Report Abuse", 18);
+			add.accept("@whi@" + reportEntryLabel(), 18);
 		}
 
 		return rows;
@@ -19679,9 +19733,7 @@ public final class mudclient implements Runnable {
 
 			// report abuse
 			if (settingIndex == 18) {
-				this.inputTextFinal = "";
-				this.inputTextCurrent = "";
-				this.reportAbuse_State = 1;
+				openReportPlayer("");
 			}
 
 			// party invite blocking
@@ -21203,7 +21255,7 @@ public final class mudclient implements Runnable {
 			MudClientGraphics surface = getSurface();
 			chatLayout = new ChatPanelLayout(gameWidth, gameHeight + 12, GameInterfaceSettings.size(), text,
 				surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
-				surface.stringWidth(text.labelFont, "Report Abuse"));
+				surface.stringWidth(text.labelFont, ReportPlayerWindow.TITLE));
 		}
 		int listX = chatLayout == null ? 5 : chatLayout.left + chatLayout.textInset - 2;
 		int listY = chatLayout == null ? gameHeight - 65 : chatLayout.historyTop();
@@ -21890,7 +21942,9 @@ public final class mudclient implements Runnable {
 
 				if (!this.isSleeping) {
 					if (chatLayout != null) {
-						if (!hasSessionNoticeInput() && !hasItemQuantityInput()) handleScaledChatTabSelection();
+						if (!hasSessionNoticeInput() && !hasItemQuantityInput() && !hasReportPlayerInput()) {
+							handleScaledChatTabSelection();
+						}
 					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
 						if (mouseX > 15 + (halfGameWidth() - 256) && mouseX < 96 + (halfGameWidth() - 256)
 							&& lastMouseButtonDown == 1)
@@ -21916,9 +21970,7 @@ public final class mudclient implements Runnable {
 								this.messageTabSelected = MessageTab.CLAN;
 								this.panelMessageTabs.controlScrollAmount[this.panelMessageClan] = 999999;
 							} else {
-								this.inputTextFinal = "";
-								this.inputTextCurrent = "";
-								this.reportAbuse_State = 1;
+								openReportPlayer("");
 							}
 						}
 
@@ -21926,7 +21978,7 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					boolean modalOwnsInput = hasSessionNoticeInput() || hasItemQuantityInput();
+					boolean modalOwnsInput = hasSessionNoticeInput() || hasItemQuantityInput() || hasReportPlayerInput();
 					if (!modalOwnsInput) {
 						if (!hasContextMenuInput() && !hasQuestRewardInput()
 							&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
@@ -23419,9 +23471,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case REPORT_ABUSE: {
-					this.inputTextFinal = "";
-					this.reportAbuse_State = 1;
-					this.inputTextCurrent = var9;
+					openReportPlayer(var9 == null ? "" : var9);
 					break;
 				}
 
@@ -23822,11 +23872,7 @@ public final class mudclient implements Runnable {
 			}
 
 			if (this.mouseButtonClick != 0 && this.reportAbuse_AbuseType != 0) {
-				this.packetHandler.getClientStream().newPacket(206);
-				this.packetHandler.getClientStream().bufferBits.putString(this.reportAbuse_Name);
-				this.packetHandler.getClientStream().bufferBits.putByte(this.reportAbuse_AbuseType);
-				this.packetHandler.getClientStream().bufferBits.putByte(this.reportAbuse_isMute ? 1 : 0);
-				this.packetHandler.getClientStream().finishPacket();
+				sendPlayerReport(reportAbuse_Name, reportAbuse_AbuseType, reportAbuse_isMute);
 				this.reportAbuse_State = 0;
 				this.inputTextFinal = "";
 				this.inputTextCurrent = "";
@@ -28203,6 +28249,7 @@ public final class mudclient implements Runnable {
 			partyInvitation = null;
 			closeDeathItemsWindow();
 			itemQuantityPrompt = null;
+			reportPlayerWindow = null;
 			onlineSidebarPlayers = null;
 			lastOnlineSidebarRequest = 0;
 			socialScroll[SocialPanelLayout.ONLINE] = 0;
@@ -28322,6 +28369,7 @@ public final class mudclient implements Runnable {
 			partyInvitation = null;
 			closeDeathItemsWindow();
 			itemQuantityPrompt = null;
+			reportPlayerWindow = null;
 			questRewardWindow = null;
 			pendingQuestRewards.clear();
 			questRewardWheel.set(0);
@@ -33693,6 +33741,11 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		if (hasSocialPromptInput() || hasItemQuantityInput()) return;
+		ReportPlayerWindow report = reportPlayerWindow;
+		if (report != null && hasReportPlayerInput()) {
+			report.scroll(x);
+			return;
+		}
 		if (hasDeathItemsInput()) {
 			deathItemsWheel.addAndGet(x);
 			return;

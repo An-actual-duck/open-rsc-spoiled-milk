@@ -43,6 +43,11 @@ Revisit these after the more straightforward UI updates are complete.
 - **Auction House**. Walk through listing, buying, cancelling, expiry, and
   collection with two accounts. Use that walkthrough to decide what changes
   would help on a small server.
+- **Player report review**. Verify the deployed report path end to end with a
+  test report. Follow server validation, the `game_reports` record and
+  attached evidence, and any configured Discord delivery. Establish where the
+  owner can find, review, and follow up on a report. Confirm which evidence is
+  available and who can access it before choosing any backend or tooling changes.
 - **Activity windows**. Review territory and minigame screens, point
   configuration, and other activity-specific windows individually. Establish
   what players need to see or do in each before choosing a layout.
@@ -244,6 +249,14 @@ responds. These windows capture game input while open.
 The scaled reconnect notice appears when an established game connection
 drops and the client starts its normal retry. Sign-in and initial loading
 use their Classic presentations.
+
+## Report Player preview
+
+Open Report Player from General settings or a player's right-click menu. The
+right-click action fills in the account name. The player can edit the name,
+select a reason and review both before pressing Send Report. Escape or Cancel
+closes the window. Staff retain the mute options they already have. The client
+uses the existing report request and leaves acknowledgement to the server.
 
 ## Preview
 
