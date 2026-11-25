@@ -23,11 +23,6 @@ Chat and dialogue responses take their dimensions from the UI size setting and t
 Quest completion rewards use the preview below. Activity rewards stay tied to
 their respective windows.
 
-## Waiting for the owner's design notes
-
-- **Minimap**. Keep the scaled frame and placeholder until the owner describes
-  the map, compass, and navigation behavior.
-
 ## Pre-login screens
 
 Preserve the Classic first impression from the initial loading screen through
@@ -183,21 +178,44 @@ The toolbar shares its draw and input bounds. UI size controls the button
 dimensions and spacing. Each button centers the installed icon at its original
 size. The red Satchel caption is part of the installed menu artwork. The
 preview places that caption strip below the toolbar with its original lettering
-and colours. The minimap slot opens the frame described below.
+and colours. The minimap slot opens the top-right map pane.
 
-## Minimap frame preview
+## Minimap and fullscreen world map
 
-The preview has a scaled frame and keeps the existing launcher, pinning and
-top-right placement. The pane displays a placeholder while the minimap awaits
-the owner's design notes. The placeholder accepts no movement or camera
-commands. The map, compass and navigation controls will be decided in the
-minimap design pass. The standard client still uses the current minimap.
+Reuse the scaled frame, toolbar launcher, pinning, and top-right placement.
+Keep the live player and NPC dots sourced from nearby gameplay entities.
+The current preview shows a placeholder in that frame and skips generating,
+transferring, and publishing the old minimap raster. The Classic client uses
+its existing minimap.
 
-The preview's terrain loaders and browser terrain worker skip generating,
-transferring and publishing the old raster. Gameplay collision and draw
-models use the same terrain inputs in both clients. Existing experimental
-Whole-RAM catalogues retain their baked data format. The preview skips
-reconstructing the minimap sprite when a catalogue entry is activated.
+Build a shared 2D renderer for the minimap and world map. The old minimap
+raster covers the active scene and is built during terrain preparation.
+Generate reusable map tiles ahead of time from the published world package,
+with terrain, walls, and other recognizable landmarks. Match tiles and
+markers to the map revision, world space, and level. Give each view its own
+clipped viewport. Load visible map tiles on demand through the 2D map path,
+independently of gameplay scene loading. Keep the old raster disabled in the
+scaled interface. Closed views do no background map rendering or fetching.
+
+- **Minimap**. Follow the player and show nearby terrain, landmarks, and live
+  dots. Use the same map coordinates for drawing and hit testing. Retain
+  local click-to-walk through the existing movement path once its positions
+  are verified.
+- **World map**. Open a fullscreen view from the minimap. Start at the
+  player's position and allow click-and-drag panning across the world,
+  including areas outside the active scene. The map captures drag input so
+  browsing leaves the player and game camera in place.
+- **Points of interest**. Use graphical icons in both views and show their
+  meanings in the world map key. Start with banks and quest starts. Anchor
+  each bank icon to the actual banking location, including bank chests, and
+  anchor each quest icon to the verified starting location. Keep these fixed
+  markers separate from the moving player and NPC dots.
+
+Prototype one town and its surroundings. Check that the bank and quest
+markers line up in both views, panning beyond the loaded scene reveals more
+map without requesting distant gameplay scenes, and walking with the minimap
+open adds no noticeable hitch. Verify both world-loading modes at 1080p and
+confirm the controls and map key fit the compact layout.
 
 ## Accomplishments preview
 
