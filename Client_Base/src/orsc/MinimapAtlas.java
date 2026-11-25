@@ -19,16 +19,21 @@ final class MinimapAtlas {
 	private static final String RESOURCE_DIRECTORY = "/myworld-assets/ui/minimap/";
 
 	private final Map<Long, byte[]> sectors = new HashMap<>();
+	// Keep a full viewport at Compact UI size cached while panning.
 	private final Map<Long, Sprite> visibleSectors = new LinkedHashMap<Long, Sprite>(16, 0.75f, true) {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry<Long, Sprite> eldest) {
-			return size() > 16;
+			return size() > 64;
 		}
 	};
 	private final String manifestHash;
 	private final int level;
 	private final int[] palette;
 	final Landmark[] landmarks;
+	private int minX = Integer.MAX_VALUE;
+	private int maxX = Integer.MIN_VALUE;
+	private int minY = Integer.MAX_VALUE;
+	private int maxY = Integer.MIN_VALUE;
 
 	static MinimapAtlas open(int level) throws IOException {
 		String name = level == 0 ? "surface.bin" : "level-" + level + ".bin";
@@ -59,7 +64,13 @@ final class MinimapAtlas {
 		landmarks = new Landmark[landmarkCount];
 		for (int index = 0; index < landmarkCount; index++) landmarks[index] = new Landmark(input);
 		for (int index = 0; index < count; index++) {
-			long key = key(input.readShort(), input.readShort());
+			int x = input.readShort();
+			int y = input.readShort();
+			long key = key(x, y);
+			minX = Math.min(minX, x * SECTOR_SIZE);
+			maxX = Math.max(maxX, (x + 1) * SECTOR_SIZE - 1);
+			minY = Math.min(minY, y * SECTOR_SIZE);
+			maxY = Math.max(maxY, (y + 1) * SECTOR_SIZE - 1);
 			int length = input.readUnsignedShort();
 			if (length == 0 || length > SECTOR_PIXELS * SECTOR_PIXELS + 64) {
 				throw new IOException("Invalid minimap sector length");
@@ -73,6 +84,14 @@ final class MinimapAtlas {
 	boolean matches(NativeLayeredTerrainSnapshot snapshot) {
 		return snapshot != null && snapshot.getLevel() == level && "global".equals(snapshot.getWorldSpace())
 			&& manifestHash.equals(snapshot.getManifestSha256());
+	}
+
+	double clampX(double x) {
+		return sectors.isEmpty() ? x : Math.max(minX, Math.min(maxX, x));
+	}
+
+	double clampY(double y) {
+		return sectors.isEmpty() ? y : Math.max(minY, Math.min(maxY, y));
 	}
 
 	Sprite sector(int x, int y) {

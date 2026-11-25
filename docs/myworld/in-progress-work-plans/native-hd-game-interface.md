@@ -227,10 +227,12 @@ scaled interface. Closed views do no background map rendering or fetching.
   dots. Use the same map coordinates for drawing and hit testing. Local
   click-to-walk uses the existing movement path. Reserve the key for the
   fullscreen world map.
-- **World map**. Open a fullscreen view from the minimap. Start at the
-  player's position and allow click-and-drag panning across the world,
-  including areas outside the active scene. The map captures drag input so
-  browsing leaves the player and game camera in place.
+- **World map**. Use the expand icon in the minimap header to open the
+  fullscreen map at the player's position on the current floor. Drag to pan
+  across the atlas, including outside the active scene. The right-hand key
+  shows the map symbols and scrolls when the rows exceed the available
+  height. Close with the top-right X or Escape. The fullscreen map captures
+  pointer and keyboard input while the world continues to update.
 - **Points of interest**. Use graphical icons in both views and show their
   meanings in the world map key. Use off-white icon backgrounds. Anchor
   each service to a verified surface placement, including bank chests and
@@ -241,11 +243,10 @@ scaled interface. Closed views do no background map rendering or fetching.
   connector keeps crowded markers readable and indicates their original tile.
   Keep fixed markers separate from the moving player and NPC dots.
 
-When the fullscreen view is ready, check that markers line up in both
-views, panning beyond the loaded scene reveals more map without requesting
-distant gameplay scenes, and walking with the minimap open adds no noticeable
-hitch. Verify both world-loading modes at 1080p and confirm that the controls
-fit at compact UI size.
+For the fullscreen preview, verify both world-loading modes at 1080p.
+Check that opening centers the map on the player, dragging beyond the active
+scene changes the map view, the key can show every icon, and panning and
+clicks leave the player and underlying controls untouched.
 
 ## Accomplishments preview
 

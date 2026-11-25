@@ -1,5 +1,7 @@
 package orsc;
 
+import java.awt.Rectangle;
+
 /** Shared minimap frame and map viewport bounds. */
 final class MinimapFrameLayout {
 	final int left;
@@ -8,17 +10,12 @@ final class MinimapFrameLayout {
 	final int bottom;
 	final int padding;
 	final int headerHeight;
-	final int labelFont;
-	final int labelLine;
-	final int pixelsPerTile;
-	final int dotRadius;
-	final int markerSize;
+	final MapViewport viewport;
+	final Rectangle expand;
 
 	MinimapFrameLayout(int surfaceWidth, int gameHeight, int anchor, boolean floating, int chatRight,
 					   int chatEntryTop, GameInterfaceSettings.Size size, GameInterfaceSettings.TextSize text,
 					   int labelLine) {
-		this.labelLine = labelLine;
-		labelFont = text.labelFont;
 		padding = size.pixels(12);
 		width = Math.min(size.pixels(420), surfaceWidth - 2 * padding);
 		left = surfaceWidth - size.pixels(6) - width;
@@ -27,18 +24,11 @@ final class MinimapFrameLayout {
 		if (left < chatRight) limit = Math.min(limit, chatEntryTop);
 		bottom = Math.min(top + size.pixels(420), limit - padding);
 		headerHeight = Math.max(size.pixels(38), labelLine + padding);
-		pixelsPerTile = size.pixels(6);
-		dotRadius = Math.max(2, size.pixels(4));
-		markerSize = size.pixels(23);
-	}
-
-	int mapLeft() { return left + padding; }
-	int mapRight() { return left + width - padding; }
-	int mapTop() { return top + headerHeight + padding / 2; }
-	int mapBottom() { return bottom - padding; }
-
-	boolean containsMap(int x, int y) {
-		return x >= mapLeft() && x < mapRight() && y >= mapTop() && y < mapBottom();
+		viewport = new MapViewport(left + padding, top + headerHeight + padding / 2,
+			left + width - padding, bottom - padding, size, text, labelLine);
+		int buttonSize = size.pixels(29);
+		expand = new Rectangle(left + width - padding - buttonSize, top + (headerHeight - buttonSize) / 2,
+			buttonSize, buttonSize);
 	}
 
 	boolean contains(int x, int y) {

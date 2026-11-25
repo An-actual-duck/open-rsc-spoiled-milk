@@ -848,6 +848,7 @@ public final class mudclient implements Runnable {
 	private boolean minimapPinned = false;
 	private MinimapFrameLayout minimapFrame;
 	private MinimapView minimapView;
+	private volatile WorldMapWindow worldMapWindow;
 	private SideToolbarLayout minimapFrameToolbar;
 	private GameInterfaceSettings.TextSize minimapFrameText;
 	/** A detached non-map side panel, independent of the transient tab state. */
@@ -10227,6 +10228,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void resetGameplayPrompts() {
+		closeWorldMap();
 		travelConfirmation = null;
 		confirmedTravelAction = null;
 		experienceTrackerWindow = null;
@@ -10463,6 +10465,10 @@ public final class mudclient implements Runnable {
 
 	private void drawGame(int var1) {
 		try {
+			if (worldMapWindow != null && (logoutTimeout != 0 || deathScreenTimeout != 0 || showAppearanceChange
+				|| showSetRecoveryQuestion || showSetContactDetails || isSleeping || chatLayout == null)) {
+				closeWorldMap();
+			}
 			if (settingsTuningDrag.isActive()) {
 				if (getVisibleSideMenuTab() == Config.OPTIONS_TAB && settingTab == SettingsPanelLayout.GRAPHICS) {
 					settingsTuningDrag.move(mouseX);
@@ -10547,6 +10553,10 @@ public final class mudclient implements Runnable {
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
 					clientPort.draw();
+					} else if (worldMapWindow != null && (layeredSceneActivationPending || !world.playerAlive)) {
+						getSurface().captureRenderer2DUiBaseFrame();
+						drawWorldMap(worldMapWindow);
+						clientPort.draw();
 					} else if (this.layeredSceneActivationPending
 							&& this.shouldRetainLastPresentedFrame()) {
 						clientPort.draw();
@@ -11363,45 +11373,51 @@ public final class mudclient implements Runnable {
 						}
                         this.getSurface().captureRenderer2DUiBaseFrame();
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
-					if (chatLayout != null) {
-						drawScaledChatBackdrop();
-					}
-					if (this.messageTabSelected == MessageTab.ALL) {
-						drawRecentChat();
-					}
-
-
-					boolean LAST_FRAME_SHOWING_KEYBOARD = osConfig.F_SHOWING_KEYBOARD;
-					this.panelMessageTabs.hide(this.panelMessageChat);
-					this.panelMessageTabs.hide(this.panelMessageQuest);
-					this.panelMessageTabs.hide(this.panelMessagePrivate);
-					this.panelMessageTabs.hide(this.panelMessageClan);
-					if (this.messageTabSelected == MessageTab.CHAT) {
-						this.panelMessageTabs.show(this.panelMessageChat);
-					} else if (this.messageTabSelected == MessageTab.QUEST) {
-						this.panelMessageTabs.show(this.panelMessageQuest);
-					} else if (this.messageTabSelected == MessageTab.PRIVATE) {
-						this.panelMessageTabs.show(this.panelMessagePrivate);
-					} else if (this.messageTabSelected == MessageTab.CLAN) {
-						this.panelMessageTabs.show(this.panelMessageClan);
-					}
-
-					drawChatControls();
-
-					SideToolbarLayout toolbar = sideToolbarLayout();
-					if (toolbar != null) {
-						drawSideToolbar(toolbar);
-					} else {
-						if (C_CUSTOM_UI) {
-							drawLegacySideToolbarSelection();
+					if (worldMapWindow == null) {
+						if (chatLayout != null) {
+							drawScaledChatBackdrop();
 						}
-						getSurface().a(spriteSelect(GUIPARTS.MENUBAR.getDef()), 0, getSurface().width2 - 200, 128, getUITabsY());
+						if (this.messageTabSelected == MessageTab.ALL) {
+							drawRecentChat();
+						}
+
+
+						boolean LAST_FRAME_SHOWING_KEYBOARD = osConfig.F_SHOWING_KEYBOARD;
+						this.panelMessageTabs.hide(this.panelMessageChat);
+						this.panelMessageTabs.hide(this.panelMessageQuest);
+						this.panelMessageTabs.hide(this.panelMessagePrivate);
+						this.panelMessageTabs.hide(this.panelMessageClan);
+						if (this.messageTabSelected == MessageTab.CHAT) {
+							this.panelMessageTabs.show(this.panelMessageChat);
+						} else if (this.messageTabSelected == MessageTab.QUEST) {
+							this.panelMessageTabs.show(this.panelMessageQuest);
+						} else if (this.messageTabSelected == MessageTab.PRIVATE) {
+							this.panelMessageTabs.show(this.panelMessagePrivate);
+						} else if (this.messageTabSelected == MessageTab.CLAN) {
+							this.panelMessageTabs.show(this.panelMessageClan);
+						}
+
+						drawChatControls();
+
+						SideToolbarLayout toolbar = sideToolbarLayout();
+						if (toolbar != null) {
+							drawSideToolbar(toolbar);
+						} else {
+							if (C_CUSTOM_UI) {
+								drawLegacySideToolbarSelection();
+							}
+							getSurface().a(spriteSelect(GUIPARTS.MENUBAR.getDef()), 0, getSurface().width2 - 200, 128, getUITabsY());
+						}
+						this.drawUi(0);
+						this.getSurface().loggedIn = false;
+						this.drawChatMessageTabs(var1 - 8);
+						ContextMenuLayout menu = contextMenuLayout;
+						if (menu != null && topMouseMenuVisible) renderScaledContextMenu(menu);
 					}
-					this.drawUi(0);
-					this.getSurface().loggedIn = false;
-					this.drawChatMessageTabs(var1 - 8);
-					ContextMenuLayout menu = contextMenuLayout;
-					if (menu != null && topMouseMenuVisible) renderScaledContextMenu(menu);
+					WorldMapWindow map = worldMapWindow;
+					if (map != null) {
+						drawWorldMap(map);
+					}
 					if (TRACE_BROWSER_FRAME_STAGES) browserUiDrawMs = (System.nanoTime() - browserUiStart) / 1_000_000f;
 					RenderTelemetry.recordClientDrawPreparation(beforeSceneNanos, residentObjectsNanos,
 						worldOverlayNanos, RenderTelemetry.elapsedSince(uiOverlayStart));
@@ -18109,15 +18125,23 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawMinimapFrame(MinimapFrameLayout frame, boolean acceptInput) {
-		if (frame.bottom <= frame.top || frame.mapBottom() <= frame.mapTop()) return;
+		MapViewport viewport = frame.viewport;
+		if (frame.bottom <= frame.top || viewport.bottom <= viewport.top) return;
 		MudClientGraphics surface = getSurface();
 		surface.drawBoxAlpha(frame.left, frame.top, frame.width, frame.bottom - frame.top, 0x182333, 244);
 		surface.drawVerticalGradient(frame.left, frame.top, frame.width, frame.headerHeight, 0x3B4C67, 0x28354A);
 		surface.drawBoxBorder(frame.left, frame.width, frame.top, frame.bottom - frame.top, 0x667993);
 		int bodyTop = frame.top + frame.headerHeight;
 		surface.drawLineHoriz(frame.left + 1, bodyTop - 1, frame.width - 2, 0x667993);
-		surface.drawString("Minimap", frame.left + frame.padding,
-			frame.top + (frame.headerHeight + frame.labelLine) / 2 - 3, 0xFFDC82, frame.labelFont);
+		int baseline = frame.top + (frame.headerHeight + viewport.labelLine) / 2 - 3;
+		surface.drawString("Minimap", frame.left + frame.padding, baseline, 0xFFDC82, viewport.labelFont);
+		boolean expandHovered = frame.expand.contains(mouseX, mouseY);
+		WorldMapWindow.drawControl(surface, frame.expand, acceptInput && expandHovered, false);
+		if (acceptInput && expandHovered) {
+			String label = "Open world map";
+			int labelX = frame.expand.x - frame.padding - surface.stringWidth(viewport.labelFont, label);
+			surface.drawString(label, labelX, baseline, 0xF2F5FA, viewport.labelFont);
+		}
 		if (localPlayer == null) return;
 		int tileX = Math.floorDiv(localPlayer.currentX, tileSize);
 		int tileY = Math.floorDiv(localPlayer.currentZ, tileSize);
@@ -18128,11 +18152,16 @@ public final class mudclient implements Runnable {
 		double worldX = logicalX + Math.floorMod(localPlayer.currentX, tileSize) / (double) tileSize;
 		double worldY = logicalY + Math.floorMod(localPlayer.currentZ, tileSize) / (double) tileSize;
 		if (minimapView == null) minimapView = new MinimapView();
-		minimapView.draw(surface, frame, world.getWholeOverworldSourceSnapshot(), worldX, worldY,
+		minimapView.draw(surface, viewport, world.getWholeOverworldSourceSnapshot(), worldX, worldY,
 			localPlayer, players, playerCount, npcs, npcCount, tileSize, mouseX, mouseY);
 
 		if (acceptInput && frame.contains(mouseX, mouseY) && mouseButtonClick != 0) {
-			if (mouseButtonClick == 1 && minimapView.hasTerrain() && !loadingArea && frame.containsMap(mouseX, mouseY)) {
+			if (mouseButtonClick == 1 && expandHovered && !loadingArea) {
+				closeTopMouseMenu();
+				clearWorldMapGameInput();
+				worldMapWindow = new WorldMapWindow(worldX, worldY);
+			} else if (mouseButtonClick == 1 && minimapView.hasTerrain() && !loadingArea
+				&& viewport.contains(mouseX, mouseY)) {
 				int destinationX = tileX + minimapView.targetTileX(mouseX) - logicalX;
 				int destinationY = tileY + minimapView.targetTileY(mouseY) - logicalY;
 				if (destinationX >= 0 && destinationX < World.LOCAL_TILE_COUNT
@@ -18142,6 +18171,70 @@ public final class mudclient implements Runnable {
 			}
 			mouseButtonClick = 0;
 		}
+	}
+
+	private void drawWorldMap(WorldMapWindow map) {
+		int tileX = Math.floorDiv(localPlayer.currentX, tileSize);
+		int tileY = Math.floorDiv(localPlayer.currentZ, tileSize);
+		int compatibilityX = midRegionBaseX + tileX;
+		int compatibilityY = midRegionBaseZ + tileY;
+		double worldX = packetHandler.getLogicalWorldX(compatibilityX)
+			+ Math.floorMod(localPlayer.currentX, tileSize) / (double) tileSize;
+		double worldY = packetHandler.getLogicalWorldY(compatibilityX, compatibilityY)
+			+ Math.floorMod(localPlayer.currentZ, tileSize) / (double) tileSize;
+		getSurface().loggedIn = false;
+		map.draw(getSurface(), minimapView, world.getWholeOverworldSourceSnapshot(), worldX, worldY);
+		if (map.shouldClose()) closeWorldMap();
+	}
+
+	private void clearWorldMapGameInput() {
+		currentMouseButtonDown = lastMouseButtonDown = mouseButtonClick = 0;
+		mouseButtonDownTime = mouseButtonItemCountIncrement = 0;
+		keyLeft = keyRight = keyUp = keyDown = pageUp = pageDown = false;
+	}
+
+	private void closeWorldMap() {
+		if (worldMapWindow != null) {
+			clearWorldMapGameInput();
+			worldMapWindow = null;
+		}
+	}
+
+	public boolean handleWorldMapPress(int x, int y, boolean primary) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		map.press(x, y, primary);
+		lastMouseAction = 0;
+		return true;
+	}
+
+	public boolean handleWorldMapMove(int x, int y) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		map.move(x, y);
+		lastMouseAction = 0;
+		return true;
+	}
+
+	public boolean handleWorldMapRelease(int x, int y, boolean primary) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		if (primary) map.release(x, y);
+		return true;
+	}
+
+	public boolean handleWorldMapWheel(int x, int y, int amount) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		map.scroll(x, y, amount);
+		return true;
+	}
+
+	public boolean handleWorldMapKey(int code) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		if (code == java.awt.event.KeyEvent.VK_ESCAPE) map.requestClose();
+		return true;
 	}
 
 	// mini map menu
@@ -22157,8 +22250,8 @@ public final class mudclient implements Runnable {
 
 				if (!this.isSleeping) {
 					if (chatLayout != null) {
-						if (!hasSessionNoticeInput() && !hasItemQuantityInput() && !hasReportPlayerInput()
-							&& !hasPasswordChangeInput() && !hasGameplayPromptInput()) {
+						if (worldMapWindow == null && !hasSessionNoticeInput() && !hasItemQuantityInput()
+							&& !hasReportPlayerInput() && !hasPasswordChangeInput() && !hasGameplayPromptInput()) {
 							handleScaledChatTabSelection();
 						}
 					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
@@ -22194,8 +22287,8 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					boolean modalOwnsInput = hasSessionNoticeInput() || hasItemQuantityInput() || hasReportPlayerInput()
-						|| hasPasswordChangeInput() || hasGameplayPromptInput();
+					boolean modalOwnsInput = worldMapWindow != null || hasSessionNoticeInput() || hasItemQuantityInput()
+						|| hasReportPlayerInput() || hasPasswordChangeInput() || hasGameplayPromptInput();
 					if (!modalOwnsInput) {
 						if (!hasContextMenuInput() && !hasQuestRewardInput()
 							&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
@@ -22351,7 +22444,10 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 					this.scene.setMouseLoc(0, this.mouseX, this.mouseY);
-					if(updateWorldEditorTerrainDrag()){this.mouseButtonClick=0;this.lastMouseButtonDown=0;}
+					if (worldMapWindow == null && updateWorldEditorTerrainDrag()) {
+						this.mouseButtonClick = 0;
+						this.lastMouseButtonDown = 0;
+					}
 					this.lastMouseButtonDown = 0;
 					if (this.optionCameraModeAuto && !this.isInFirstPersonView()) {
 						if (this.m_Wc == 0 || this.cameraAutoAngleDebug) {

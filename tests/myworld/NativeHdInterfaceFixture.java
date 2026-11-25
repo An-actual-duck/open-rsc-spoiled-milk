@@ -52,6 +52,8 @@ public final class NativeHdInterfaceFixture {
 				verifyMinimapFrame(1920, 1080, size, text, false);
 				verifyMinimapFrame(960, 540, size, text, false);
 				verifyMinimapFrame(960, 540, size, text, true);
+				verifyWorldMapFrame(1920, 1080, size, text);
+				verifyWorldMapFrame(960, 540, size, text);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -478,19 +480,38 @@ public final class NativeHdInterfaceFixture {
 			chat.entryTop(), size, text, fontHeight[text.labelFont]);
 		check(frame.left >= 0 && frame.left + frame.width < width, "Map frame fits the right edge");
 		check(frame.width >= size.pixels(400), "Map frame is comparable in width to the other sidebar panels");
-		check(frame.pixelsPerTile == size.pixels(6), "Map zoom follows the UI size");
+		check(frame.viewport.pixelsPerTile == size.pixels(6), "Map zoom follows the UI size");
 		check(frame.top == (floating ? frame.padding : toolbar.panelTop()), "Map frame follows its existing anchor");
-		check(frame.mapTop() > frame.top + frame.headerHeight, "Map viewport sits below the header");
-		check(frame.mapBottom() > frame.mapTop() && frame.mapBottom() == frame.bottom - frame.padding,
+		check(frame.viewport.top > frame.top + frame.headerHeight, "Map viewport sits below the header");
+		check(frame.contains(frame.expand.x, frame.expand.y), "Fullscreen button fits in the minimap");
+		check(frame.expand.y + frame.expand.height <= frame.viewport.top, "Expand button stays out of click-to-walk");
+		check(frame.viewport.bottom > frame.viewport.top && frame.viewport.bottom == frame.bottom - frame.padding,
 			"Map fills the frame down to its bottom padding");
-		check(frame.containsMap(frame.mapLeft(), frame.mapTop()), "Visible map corner accepts navigation");
-		check(frame.containsMap(frame.mapLeft(), frame.mapBottom() - 1), "The bottom of the visible map accepts navigation");
-		check(!frame.containsMap(frame.mapLeft(), frame.mapBottom()), "Bottom padding stays out of map navigation");
+		check(frame.viewport.contains(frame.viewport.left, frame.viewport.top), "Visible map corner accepts navigation");
+		check(frame.viewport.contains(frame.viewport.left, frame.viewport.bottom - 1), "The bottom of the visible map accepts navigation");
+		check(!frame.viewport.contains(frame.viewport.left, frame.viewport.bottom), "Bottom padding stays out of map navigation");
 		if (floating) check(frame.bottom < toolbar.top, "Floating frame leaves the lower toolbar reachable");
 		if (frame.left < chatRight) check(frame.bottom <= chat.entryTop(), "Frame leaves the chat controls reachable");
 		check(frame.contains(frame.left + frame.width - 1, frame.bottom - 1), "The visible frame owns input");
 		check(!frame.contains(frame.left + frame.width, frame.bottom - 1), "Input remains available beside the frame");
 		check(!frame.contains(frame.left, frame.bottom), "Input remains available below the frame");
+	}
+
+	private static void verifyWorldMapFrame(int width, int height, GameInterfaceSettings.Size size,
+											GameInterfaceSettings.TextSize text) {
+		int[] fontHeight = {12, 14, 14, 15, 15, 19, 24, 29};
+		WorldMapWindow.Layout frame = new WorldMapWindow.Layout(width, height, size, text, fontHeight[text.labelFont]);
+		check(frame.close.x + frame.close.width < width && frame.close.y + frame.close.height <= frame.headerHeight,
+			"Fullscreen map can close from the top-right");
+		check(frame.viewport.right < frame.key.x && frame.viewport.bottom <= height, "Map and key fit side by side");
+		check(frame.viewport.contains(frame.viewport.left, frame.viewport.top), "Map canvas admits drag");
+		check(!frame.viewport.contains(frame.key.x, frame.key.y), "Key stays out of drag bounds");
+		check(!frame.viewport.contains(frame.close.x, frame.close.y), "Close stays out of drag bounds");
+		check(frame.visibleKeyRows > 0 && frame.scrollbar.y + frame.scrollbar.height <= frame.key.y + frame.key.height,
+			"Scrollable map key stays inside the panel");
+		int entries = MinimapMarkerIcon.values().length + 1;
+		check(frame.clampKeyOffset(-1) == 0 && frame.clampKeyOffset(entries) + frame.visibleKeyRows >= entries,
+			"Key can show its first and last markers");
 	}
 
 	private static void verifyChatBounds(ChatPanelLayout chat, int width) {

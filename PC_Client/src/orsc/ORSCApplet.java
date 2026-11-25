@@ -1274,6 +1274,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				updateControlShiftState(var1);
 				int clientMouseX = getClientMouseX(var1);
 				int clientMouseY = getClientMouseY(var1);
+				if (mudclient.handleWorldMapPress(clientMouseX, clientMouseY, SwingUtilities.isLeftMouseButton(var1))) {
+					middleMouseOrbit.cancel();
+					var1.consume();
+					return;
+				}
 				if (var1.getButton() == MouseEvent.BUTTON2 && (mudclient.hasSessionNoticeInput()
 					|| mudclient.hasSocialPromptInput() || mudclient.hasDeathItemsInput()
 					|| mudclient.hasItemQuantityInput() || mudclient.hasReportPlayerInput()
@@ -1307,6 +1312,16 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		@Override
 		public final synchronized void mouseReleased(MouseEvent var1) {
 			try {
+				int x = var1 == null ? -1 : getClientMouseX(var1);
+				int y = var1 == null ? -1 : getClientMouseY(var1);
+				if (mudclient.handleWorldMapRelease(x, y, var1 == null || SwingUtilities.isLeftMouseButton(var1))) {
+					middleMouseOrbit.cancel();
+					if (var1 != null) {
+						updateControlShiftState(var1);
+						var1.consume();
+					}
+					return;
+				}
 				if (var1 == null) {
 					middleMouseOrbit.cancel();
 					mudclient.mouseLastProcessedX = 0;
@@ -1315,8 +1330,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					return;
 				}
 				updateControlShiftState(var1);
-				mudclient.mouseX = getClientMouseX(var1);
-				mudclient.mouseY = getClientMouseY(var1);
+				mudclient.mouseX = x;
+				mudclient.mouseY = y;
 				if (middleMouseOrbit.end(var1.getButton())) {
 					mudclient.mouseLastProcessedX = 0;
 					mudclient.mouseLastProcessedY = 0;
@@ -1343,6 +1358,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		public final void mouseExited(MouseEvent var1) {
 			try {
 				updateControlShiftState(var1);
+				if (mudclient.handleWorldMapRelease(-1, -1, true)) return;
 				if (middleMouseOrbit.isActive()) {
 					mudclient.currentMouseButtonDown = 0;
 				}
@@ -1355,6 +1371,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		public final synchronized void mouseDragged(MouseEvent var1) {
 			try {
 				updateControlShiftState(var1);
+				if (mudclient.handleWorldMapMove(getClientMouseX(var1), getClientMouseY(var1))) {
+					var1.consume();
+					return;
+				}
 				mudclient.mouseX = getClientMouseX(var1);
 				mudclient.mouseY = getClientMouseY(var1);
 
@@ -1420,6 +1440,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		public final synchronized void mouseMoved(MouseEvent var1) {
 			try {
 				updateControlShiftState(var1);
+				if (mudclient.handleWorldMapMove(getClientMouseX(var1), getClientMouseY(var1))) {
+					var1.consume();
+					return;
+				}
 				mudclient.mouseX = var1.getX() - mudclient.screenOffsetX;
 				mudclient.mouseY = var1.getY() - mudclient.screenOffsetY;
 				mudclient.lastMouseAction = 0;
@@ -1435,6 +1459,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 			int mouseX = getClientMouseX(e);
 			int mouseY = getClientMouseY(e);
+			if (mudclient.handleWorldMapWheel(mouseX, mouseY, e.getWheelRotation())) {
+				e.consume();
+				return;
+			}
 			boolean touchedMessagePanelArea = mudclient.getGameHeight() - mouseY <= MESSAGE_WHEEL_SCROLL_AREA_HEIGHT;
 
 			boolean scrollableMessagePanel = mudclient.hasScroll(mudclient.messageTabSelected) && touchedMessagePanelArea;
@@ -1489,7 +1517,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				updateControlShiftState(var1);
 				char keyChar = var1.getKeyChar();
 				int keyCode = var1.getKeyCode();
-			if (mudclient.handleSessionNoticeKey(keyCode)
+			if (mudclient.handleWorldMapKey(keyCode) || mudclient.handleSessionNoticeKey(keyCode)
 				|| mudclient.handleSocialPromptKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())
 				|| mudclient.handleDeathItemsKey(keyCode)
 				|| mudclient.handleItemQuantityKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())
