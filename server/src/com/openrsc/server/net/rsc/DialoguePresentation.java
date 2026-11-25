@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Optional dialogue presentation scoped to the script running a conversation. */
-public final class DialoguePresentation implements AutoCloseable {
+public final class DialoguePresentation {
 	static final String CONFIG_TAG = "dialogue-presentation/1";
 	private static final int OPCODE = 166;
 	private static final int VERSION = 1;
@@ -20,15 +20,12 @@ public final class DialoguePresentation implements AutoCloseable {
 	private static final boolean ENABLED = Boolean.getBoolean("spoiledmilk.dialoguePreview");
 	private static final AtomicInteger NEXT_ID = new AtomicInteger();
 
-	private final PluginTask task;
 	private final Player player;
-	private final Npc npc;
+	private Npc npc;
 	private final int id;
 
-	private DialoguePresentation(PluginTask task, Player player, Npc npc) {
-		this.task = task;
+	private DialoguePresentation(Player player) {
 		this.player = player;
-		this.npc = npc;
 		id = NEXT_ID.updateAndGet(value -> value == Integer.MAX_VALUE ? 1 : value + 1);
 	}
 
@@ -36,39 +33,42 @@ public final class DialoguePresentation implements AutoCloseable {
 		return ENABLED;
 	}
 
-	public static DialoguePresentation open(Player player, Npc npc) {
+	private static PluginTask eligibleTask(Player player) {
 		if (!ENABLED || !player.isDialoguePresentationReady()) return null;
 		PluginTask task = PluginTask.getContextPluginTask();
-		if (task == null || task.getDialoguePresentation() != null) return null;
-		DialoguePresentation presentation = new DialoguePresentation(task, player, npc);
-		task.setDialoguePresentation(presentation);
-		player.write(presentation.packet(OPEN).writeShort(npc.getID()).toPacket());
-		return presentation;
-	}
-
-	private static DialoguePresentation current(Player player) {
-		if (!ENABLED || !player.isDialoguePresentationReady()) return null;
-		PluginTask task = PluginTask.getContextPluginTask();
-		DialoguePresentation presentation = task == null ? null : task.getDialoguePresentation();
-		return presentation != null && presentation.player == player ? presentation : null;
+		return task != null && task.getOwner() == player ? task : null;
 	}
 
 	public static int currentId(Player player) {
-		DialoguePresentation presentation = current(player);
+		PluginTask task = eligibleTask(player);
+		DialoguePresentation presentation = task == null ? null : task.getDialoguePresentation();
 		return presentation == null ? 0 : presentation.id;
 	}
 
 	public static void line(Player player, Npc npc, boolean playerSpeaking, String message) {
-		DialoguePresentation presentation = current(player);
-		if (presentation == null || presentation.npc != npc) return;
+		if (npc == null || message.isEmpty()) return;
+		PluginTask task = eligibleTask(player);
+		if (task == null) return;
 		byte[] text = message.getBytes(StandardCharsets.UTF_8);
 		if (text.length > 2048) return;
-		player.write(presentation.packet(playerSpeaking ? PLAYER_LINE : NPC_LINE).write(text).toPacket());
+
+		DialoguePresentation presentation = task.getDialoguePresentation();
+		if (presentation == null) {
+			presentation = new DialoguePresentation(player);
+			task.setDialoguePresentation(presentation);
+		}
+		presentation.sendLine(npc, playerSpeaking, text);
 	}
 
-	@Override
+	private void sendLine(Npc participant, boolean playerSpeaking, byte[] text) {
+		if (npc != participant) {
+			npc = participant;
+			player.write(packet(OPEN).writeShort(npc.getID()).toPacket());
+		}
+		player.write(packet(playerSpeaking ? PLAYER_LINE : NPC_LINE).write(text).toPacket());
+	}
+
 	public void close() {
-		task.setDialoguePresentation(null);
 		player.write(packet(CLOSE).toPacket());
 	}
 

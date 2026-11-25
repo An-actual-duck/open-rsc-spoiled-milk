@@ -8666,7 +8666,7 @@ public final class mudclient implements Runnable {
 		packetHandler.getClientStream().bufferBits.putByte(choice);
 		packetHandler.getClientStream().finishPacket();
 		if (choice == DialogueChoicesPanel.CANCEL && dialogueId != 0 && dialogueMenuId == dialogueId) {
-			clearDialoguePresentation();
+			clearDialogueLine();
 		}
 		setOptionsMenuShow(false);
 		mouseButtonClick = 0;
@@ -12807,7 +12807,7 @@ public final class mudclient implements Runnable {
         boolean mirror, int x, int y, int width, int height, int topPixelSkew,
         int colourTransform, int repetitions) {
         AnimationDef animation = EntityHandler.getAnimationDef(animID);
-        if (animID < 0) return;
+        if (animation == null) return;
         int variant = frame;
         if (mirror && sourceDirection >= 1 && sourceDirection <= 3 && animation.hasF()) variant += 15;
         if (sourceDirection == 5 && !animation.hasA()) return;
@@ -29865,22 +29865,44 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	void drawDialogueNpcAvatar(NPCDef npc, int x, int y, int size, int colourTransform) {
+		int direction = 6;
+		int source = NpcDirectionalAnimationMapping.sourceDirection(direction);
+		int frame = NpcDirectionalAnimationMapping.frameOffset(direction, 0);
+		int spriteWidth = Math.max(1, npc.getCamera1());
+		int spriteHeight = Math.max(1, npc.getCamera2());
+		int longest = Math.max(spriteWidth, spriteHeight);
+		int width = Math.max(1, spriteWidth * size / longest);
+		int height = Math.max(1, spriteHeight * size / longest);
+		int left = x + (size - width) / 2;
+		int top = y + (size - height) / 2;
+		getSurface().setClip(x, x + size, y + size, y);
+		try {
+			for (int layer : getAnimDirLayer_To_CharLayer()[direction]) {
+				drawNpcAnimationLayer(npc, npc.getSprite(layer), frame, source, true,
+					left, top, width, height, 0, colourTransform, 1);
+			}
+		} finally {
+			getSurface().clearClip();
+		}
+	}
+
 	private void drawDialoguePortrait(int x, int y, int size, boolean player) {
 		if (player) {
 			if (localPlayer == null) return;
-			DialoguePortrait.draw(this, localPlayer.layerAnimation[0] - 1,
+			DialoguePortrait.drawPlayer(this, localPlayer.layerAnimation,
 				getPlayerHairColors()[localPlayer.colourHair], getPlayerSkinColors()[localPlayer.colourSkin],
-				x, y, size, false, dialoguePlayerSpeaking);
+				x, y, size, dialoguePlayerSpeaking);
 		} else if (dialogueNpc != null) {
-			DialoguePortrait.draw(this, dialogueNpc.getSprite(0), dialogueNpc.getHairColour(),
-				dialogueNpc.getSkinColour(), x, y, size, true, !dialoguePlayerSpeaking);
+			DialoguePortrait.drawNpc(this, dialogueNpc, x, y, size, !dialoguePlayerSpeaking);
 		}
 	}
 
 	void openDialoguePresentation(int id, int npcId) {
-		clearDialoguePresentation();
+		if (id != dialogueId) clearDialoguePresentation();
 		dialogueId = id;
 		dialogueNpc = npcId < EntityHandler.npcCount() ? EntityHandler.getNpcDef(npcId) : null;
+		clearDialogueLine();
 	}
 
 	void updateDialogueLine(int id, boolean playerSpeaking, String line) {
@@ -29901,12 +29923,16 @@ public final class mudclient implements Runnable {
 		dialogueId = 0;
 		dialogueMenuId = 0;
 		dialogueNpc = null;
+		clearDialogueLine();
+	}
+
+	private void clearDialogueLine() {
 		dialogueLine = null;
 		dialogueChoicesPanel = null;
 	}
 
 	void showOptionsMenu(int id) {
-		if (id == 0 || id != dialogueId) clearDialoguePresentation();
+		if (id == 0 || id != dialogueId) clearDialogueLine();
 		dialogueMenuId = id;
 		setOptionsMenuShow(true);
 	}
@@ -29938,7 +29964,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void beginAreaLoad() {
-		clearDialoguePresentation();
+		clearDialogueLine();
 		clearClericCursePlaybacks();
 		this.loadingArea = true;
 		this.groundItemCount = this.groundItemAreaEpoch.begin();

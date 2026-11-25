@@ -135,7 +135,9 @@ final class DialogueChoicesPanel {
 			int centerX = left + width / 2;
 			int textHeight = labelHeight + padding / 2 + speech.size() * lineHeight;
 			int baseline = top + (speechHeight - textHeight) / 2 + labelHeight;
-			surface.drawColoredStringCentered(centerX, speaker, 0xFFDC82, 0, labelFont, baseline);
+			String name = ContextMenuLayout.fitLabel(speaker, width - 2 * portraitSize - 6 * padding,
+				value -> surface.stringWidth(labelFont, value));
+			surface.drawColoredStringCentered(centerX, name, 0xFFDC82, 0, labelFont, baseline);
 			baseline += padding / 2 + lineHeight;
 			for (String line : speech) {
 				surface.drawColoredStringCentered(centerX, line, 0xFFFFFF, 0, bodyFont, baseline);

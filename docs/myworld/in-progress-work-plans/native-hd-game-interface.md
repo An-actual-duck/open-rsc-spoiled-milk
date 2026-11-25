@@ -44,20 +44,21 @@ above chat. It uses the same geometry for wrapping, drawing and selecting
 responses. Keyboard selection and the existing server response indices carry
 over.
 
-The banker preview puts the player's head on the left, the banker's head on the
-right, and the current line between them. It uses the existing side-facing
-head sprites and dims the listener. Speech and response choices share the panel.
-The server sends the speaker, line and conversation ID while the banker script
-runs. Response menus carry that same ID, and the existing response indices and
-script pacing still govern the conversation. Ambient speech uses its usual
-channel. The prototype currently sources portraits from humanoid head sprites
-with a hair-colour mask. Other head layers can still use the dialogue text.
+Scripted NPC dialogue puts the player's head on the left, the current NPC on
+the right, and the line between them. The listener dims during each line.
+Two NPCs in one conversation can take turns on the right. Portraits use the
+installed side-facing head sprites when a separate head is available and the
+existing character sprite for other NPCs.
 
-A private server can enable the presentation with
-`-Dspoiledmilk.dialoguePreview=true`. Clients opt in after login if they have
-the interface preview enabled and the server advertises support. Prototype
-coverage is limited to talking to bankers. The bank opens through its existing
-interface and the usual bank rules still apply.
+Dialogue and choices share the panel and use the existing response indices and
+script pacing. The server opens the presentation when a player-owned script
+sends its first NPC conversation line and closes it when the script ends or is
+interrupted. Ambient speech and message-only interactions use their usual
+channels. Menus without a scripted line still use the scaled response list.
+
+A private server enables this presentation with
+`-Dspoiledmilk.dialoguePreview=true`. Clients opt in after login if the
+interface preview is enabled and the server advertises support.
 
 ## Inventory and Equipment preview
 

@@ -7,7 +7,6 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
-import com.openrsc.server.net.rsc.DialoguePresentation;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 import com.openrsc.server.plugins.triggers.UseNpcTrigger;
@@ -35,12 +34,6 @@ public class Bankers implements TalkNpcTrigger, OpNpcTrigger, UseNpcTrigger {
 
 	@Override
 	public void onTalkNpc(Player player, final Npc npc) {
-		try (DialoguePresentation presentation = DialoguePresentation.open(player, npc)) {
-			talkToBanker(player, npc);
-		}
-	}
-
-	private void talkToBanker(Player player, Npc npc) {
 		if (npc.getID() == NpcId.GNOME_BANKER.id()) {
 			say(player, npc, "hello");
 			npcsay(player, npc, player.getText("BankersGnomeBankerGoodDay"));

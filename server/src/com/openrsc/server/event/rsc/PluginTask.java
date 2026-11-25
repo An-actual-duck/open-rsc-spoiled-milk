@@ -95,6 +95,10 @@ public abstract class PluginTask extends GameTickEvent implements Callable<Integ
 
 	@Override
 	public synchronized void stop() {
+		if (dialoguePresentation != null) {
+			dialoguePresentation.close();
+			dialoguePresentation = null;
+		}
 		super.stop();
 		cancel(false);
 		unregisterPluginThread();
