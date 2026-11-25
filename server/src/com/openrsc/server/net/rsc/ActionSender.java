@@ -2927,7 +2927,7 @@ public class ActionSender {
 		PartyStruct struct = new PartyStruct();
 		struct.actionId = 2;
 		struct.nameInviter = username;
-		struct.partyName = name;
+		struct.partyName = name == null ? "" : name;
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_PARTY, struct, invited);
 	}
 

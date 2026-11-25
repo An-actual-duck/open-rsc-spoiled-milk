@@ -12,16 +12,32 @@ import orsc.graphics.two.MudClientGraphics;
 final class SocialTextPrompt {
 	enum Result { OPEN, SUBMIT, CANCEL }
 
+	enum Action {
+		ADD_FRIEND("Add Friend", "Add", 20),
+		PRIVATE_MESSAGE("Private Message", "Send", 80),
+		PARTY_INVITE("Invite to Party", "Invite", 20);
+
+		final String title;
+		final String submitLabel;
+		final int limit;
+
+		Action(String title, String submitLabel, int limit) {
+			this.title = title;
+			this.submitLabel = submitLabel;
+			this.limit = limit;
+		}
+	}
+
+	final Action action;
 	final String recipient;
-	final int limit;
 	private final StringBuilder text = new StringBuilder();
 	private int caret;
 	private boolean selectedAll;
 	private Result result = Result.OPEN;
 
-	SocialTextPrompt(String recipient) {
+	SocialTextPrompt(Action action, String recipient) {
+		this.action = action;
 		this.recipient = recipient;
-		limit = recipient == null ? 20 : 80;
 	}
 
 	synchronized String value() {
@@ -66,7 +82,7 @@ final class SocialTextPrompt {
 			default:
 				if (Fonts.inputFilterChars.indexOf(key) < 0) return;
 				clearSelection();
-				if (text.length() < limit) text.insert(caret++, key);
+				if (text.length() < action.limit) text.insert(caret++, key);
 				return;
 		}
 		selectedAll = false;
@@ -98,8 +114,9 @@ final class SocialTextPrompt {
 		int x = (client.getGameWidth() - width) / 2;
 		int y = Math.max(pad, (bottom - height) / 2);
 		Rectangle field = new Rectangle(x + pad, y + header + labelLine + pad, width - 2 * pad, fieldHeight);
-		int buttonWidth = Math.min((field.width - pad) / 2, Math.max(size.pixels(88),
-			surface.stringWidth(style.labelFont, "Cancel") + 2 * pad));
+		int buttonLabelWidth = Math.max(surface.stringWidth(style.labelFont, "Cancel"),
+			surface.stringWidth(style.labelFont, action.submitLabel));
+		int buttonWidth = Math.min((field.width - pad) / 2, Math.max(size.pixels(88), buttonLabelWidth + 2 * pad));
 		int actionsY = field.y + field.height + pad;
 		Rectangle submit = new Rectangle(x + width - pad - buttonWidth, actionsY, buttonWidth, buttonHeight);
 		Rectangle cancel = new Rectangle(submit.x - pad - buttonWidth, actionsY, buttonWidth, buttonHeight);
@@ -121,11 +138,7 @@ final class SocialTextPrompt {
 			selectedAll = false;
 		}
 
-		surface.drawBoxAlpha(x, y, width, height, 0x182333, 246);
-		surface.drawVerticalGradient(x, y, width, header, 0x3B4C67, 0x28354A);
-		surface.drawBoxBorder(x, width, y, height, 0x667993);
-		surface.drawString(recipient == null ? "Add Friend" : "Private Message", x + pad,
-			y + (header + bodyLine) / 2 - 3, 0xFFFFFF, style.bodyFont);
+		drawFrame(surface, new Rectangle(x, y, width, height), header, pad, action.title, style.bodyFont, bodyLine);
 		String label = recipient == null ? "Player name" : "To " + recipient;
 		label = ContextMenuLayout.fitLabel(label, field.width - pad, part -> surface.stringWidth(style.labelFont, part));
 		surface.drawString(label, field.x, field.y - Math.max(5, pad / 2), 0xC4D0E0, style.labelFont);
@@ -145,12 +158,20 @@ final class SocialTextPrompt {
 			}
 		}
 		drawButton(surface, cancel, "Cancel", true, cancel.contains(mouseX, mouseY), style.labelFont, labelLine);
-		drawButton(surface, submit, recipient == null ? "Add" : "Send", enabled, submit.contains(mouseX, mouseY),
+		drawButton(surface, submit, action.submitLabel, enabled, submit.contains(mouseX, mouseY),
 			style.labelFont, labelLine);
 		return Result.OPEN;
 	}
 
-	private static void drawButton(MudClientGraphics surface, Rectangle bounds, String label, boolean enabled,
+	static void drawFrame(MudClientGraphics surface, Rectangle bounds, int header, int pad, String title,
+						  int font, int line) {
+		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, 0x182333, 246);
+		surface.drawVerticalGradient(bounds.x, bounds.y, bounds.width, header, 0x3B4C67, 0x28354A);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, 0x667993);
+		surface.drawString(title, bounds.x + pad, bounds.y + (header + line) / 2 - 3, 0xFFFFFF, font);
+	}
+
+	static void drawButton(MudClientGraphics surface, Rectangle bounds, String label, boolean enabled,
 								   boolean hover, int font, int line) {
 		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height,
 			!enabled ? 0x253042 : hover ? 0x465873 : 0x34425A);

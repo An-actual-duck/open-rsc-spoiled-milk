@@ -1229,6 +1229,8 @@ public final class mudclient implements Runnable {
 	private Panel panelClan;
 	private SocialPopupMode panelSocialPopup_Mode = SocialPopupMode.NONE;
 	private volatile SocialTextPrompt socialTextPrompt;
+	private volatile PartyWindow partyWindow;
+	private volatile PartyWindow partyInvitation;
 	private int panelSocialTab = 0;
 	private SocialPanelLayout socialPanelLayout;
 	private static final long ONLINE_SIDEBAR_INTERVAL_NS = 15_000_000_000L;
@@ -11609,11 +11611,7 @@ public final class mudclient implements Runnable {
 					this.packetHandler.getClientStream().bufferBits.putString(str);
 					this.packetHandler.getClientStream().finishPacket();
 				} else if (this.inputX_Action == InputXAction.KICK_PARTY_PLAYER) {
-					this.packetHandler.getClientStream().newPacket(199);
-					this.packetHandler.getClientStream().bufferBits.putByte(12);
-					this.packetHandler.getClientStream().bufferBits.putByte(5);
-					this.packetHandler.getClientStream().bufferBits.putString(partyKickPlayer);
-					this.packetHandler.getClientStream().finishPacket();
+					party.getPartyInterface().sendPartyKick(partyKickPlayer);
 				} else if (this.inputX_Action == InputXAction.PARTY_DELEGATE_LEADERSHIP) {
 					this.packetHandler.getClientStream().newPacket(199);
 					this.packetHandler.getClientStream().bufferBits.putByte(12);
@@ -13737,7 +13735,7 @@ public final class mudclient implements Runnable {
 			} else if (hasSkillGuidePreviewInput()) {
 				drawSkillGuide();
 			} else if (hasSocialPromptInput()) {
-				drawSocialTextPrompt();
+				drawSocialPrompt();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -15246,8 +15244,7 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		drawSocialMembers(layout, SocialPanelLayout.PARTY, Math.min(5, SocialLists.partyListCount), acceptInput);
-		drawSocialAction(layout, 0, 3, "Invite", acceptInput,
-			() -> showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true));
+		drawSocialAction(layout, 0, 3, "Invite", acceptInput, this::openPartyInvitePrompt);
 		drawSocialAction(layout, 1, 3, "Manage", acceptInput, () -> party.showPartySetupInterface(true));
 		drawSocialAction(layout, 2, 3, "Leave", acceptInput, () -> party.getPartyInterface().sendPartyLeave());
 	}
@@ -15368,7 +15365,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void openAddFriendPrompt() {
-		if (openScaledSocialPrompt(null)) return;
+		if (openScaledSocialPrompt(SocialTextPrompt.Action.ADD_FRIEND, null)) return;
 		inputTextFinal = "";
 		inputTextCurrent = "";
 		panelSocialPopup_Mode = SocialPopupMode.ADD_FRIEND;
@@ -15376,7 +15373,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void openFriendMessagePrompt(String name) {
-		if (openScaledSocialPrompt(name)) return;
+		if (openScaledSocialPrompt(SocialTextPrompt.Action.PRIVATE_MESSAGE, name)) return;
 		panelSocialPopup_Mode = SocialPopupMode.MESSAGE_FRIEND;
 		chatMessageTarget = name;
 		chatMessageInputCommit = "";
@@ -15384,15 +15381,35 @@ public final class mudclient implements Runnable {
 		if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
 	}
 
-	private boolean openScaledSocialPrompt(String recipient) {
+	public void openPartyInvitePrompt() {
+		if (openScaledSocialPrompt(SocialTextPrompt.Action.PARTY_INVITE, null)) return;
+		showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
+	}
+
+	public boolean openScaledPartyWindow() {
 		if (chatLayout == null || isAndroid()) return false;
 		closeTopMouseMenu();
-		socialTextPrompt = new SocialTextPrompt(recipient);
+		partyWindow = new PartyWindow(party.inParty() ? PartyWindow.View.MANAGE : PartyWindow.View.CREATE);
+		return true;
+	}
+
+	public boolean openScaledPartyInvitation(String inviter, String partyName) {
+		if (chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		partyInvitation = new PartyWindow(inviter, partyName);
+		return true;
+	}
+
+	private boolean openScaledSocialPrompt(SocialTextPrompt.Action action, String recipient) {
+		if (chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		socialTextPrompt = new SocialTextPrompt(action, recipient);
 		return true;
 	}
 
 	public boolean hasSocialPromptInput() {
-		return socialTextPrompt != null && chatLayout != null && currentViewMode == GameMode.GAME
+		return (partyInvitation != null || socialTextPrompt != null || partyWindow != null)
+			&& chatLayout != null && currentViewMode == GameMode.GAME
 			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
 			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
 			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
@@ -15402,22 +15419,38 @@ public final class mudclient implements Runnable {
 
 	public boolean handleSocialPromptKey(char key, int code, boolean shortcut) {
 		if (!hasSocialPromptInput()) return false;
+		PartyWindow invitation = partyInvitation;
 		SocialTextPrompt prompt = socialTextPrompt;
-		if (prompt == null) return false;
-		prompt.keyPressed(key, code, shortcut);
+		PartyWindow window = partyWindow;
+		if (invitation != null) invitation.keyPressed(code);
+		else if (prompt != null) prompt.keyPressed(key, code, shortcut);
+		else if (window != null) window.keyPressed(code);
 		return true;
 	}
 
-	private void drawSocialTextPrompt() {
-		SocialTextPrompt prompt = socialTextPrompt;
-		if (prompt == null) return;
-		SocialTextPrompt.Result result = prompt.draw(this, chatLayout.entryTop());
+	private void drawSocialPrompt() {
+		int bottom = chatLayout.entryTop();
+		if (partyInvitation != null) {
+			if (partyInvitation.draw(this, bottom)) partyInvitation = null;
+		} else if (socialTextPrompt != null) {
+			drawSocialTextPrompt(bottom);
+		} else if (partyWindow != null && partyWindow.draw(this, bottom)) {
+			partyWindow = null;
+		}
 		mouseButtonClick = 0;
+	}
+
+	private void drawSocialTextPrompt(int bottom) {
+		SocialTextPrompt prompt = socialTextPrompt;
+		SocialTextPrompt.Result result = prompt.draw(this, bottom);
 		if (result == SocialTextPrompt.Result.OPEN) return;
 		socialTextPrompt = null;
 		if (result == SocialTextPrompt.Result.SUBMIT) {
-			if (prompt.recipient == null) addFriend(prompt.value().trim());
-			else putStringPair(prompt.recipient, prompt.value());
+			switch (prompt.action) {
+				case ADD_FRIEND: addFriend(prompt.value().trim()); break;
+				case PRIVATE_MESSAGE: putStringPair(prompt.recipient, prompt.value()); break;
+				case PARTY_INVITE: addPartyInv(prompt.value().trim()); break;
+			}
 		}
 	}
 
@@ -15835,7 +15868,7 @@ public final class mudclient implements Runnable {
 
 		final int buttonY = panelY + panelHeight - 40;
 		this.drawPartySocialButton(panelX + 4, buttonY, 58, "Invite", acceptInput, () -> {
-			this.showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
+			this.openPartyInvitePrompt();
 			if (!C_CUSTOM_UI) {
 				this.showUiTab = 0;
 			}
@@ -28072,6 +28105,8 @@ public final class mudclient implements Runnable {
 			}
 			craftingTabsRegistered = false;
 			socialTextPrompt = null;
+			partyWindow = null;
+			partyInvitation = null;
 			onlineSidebarPlayers = null;
 			lastOnlineSidebarRequest = 0;
 			socialScroll[SocialPanelLayout.ONLINE] = 0;
@@ -28185,6 +28220,8 @@ public final class mudclient implements Runnable {
 	private void resetLoginScreenVariables(byte var1) {
 		try {
 			socialTextPrompt = null;
+			partyWindow = null;
+			partyInvitation = null;
 			questRewardWindow = null;
 			pendingQuestRewards.clear();
 			questRewardWheel.set(0);

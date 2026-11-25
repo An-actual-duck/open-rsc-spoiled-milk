@@ -767,7 +767,7 @@ public final class PartyInterface {
 		partySetupPanel.setFocus(-1);
 	}
 
-	private void sendCreateParty(String name, String tag) {
+	public void sendCreateParty(String name, String tag) {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(12);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(0);
@@ -787,7 +787,7 @@ public final class PartyInterface {
 		resetAll();
 	}
 
-	private void sendPartyAccept() {
+	public void sendPartyAccept() {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(12);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(3);
@@ -796,7 +796,7 @@ public final class PartyInterface {
 		resetAll();
 	}
 
-	private void sendPartyDecline() {
+	public void sendPartyDecline() {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(12);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(4);
@@ -805,7 +805,15 @@ public final class PartyInterface {
 		resetAll();
 	}
 
-	private void sendPartyRank(String playerName, int rank) {
+	public void sendPartyKick(String playerName) {
+		getClient().packetHandler.getClientStream().newPacket(199);
+		getClient().packetHandler.getClientStream().bufferBits.putByte(12);
+		getClient().packetHandler.getClientStream().bufferBits.putByte(5);
+		getClient().packetHandler.getClientStream().bufferBits.putString(playerName);
+		getClient().packetHandler.getClientStream().finishPacket();
+	}
+
+	public void sendPartyRank(String playerName, int rank) {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(12);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(6);
@@ -814,7 +822,7 @@ public final class PartyInterface {
 		getClient().packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendPartySettings(int settingMode, int state) {
+	public void sendPartySettings(int settingMode, int state) {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(12);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(7);
@@ -831,7 +839,7 @@ public final class PartyInterface {
 	}
 
 	public void initializeInvite(String byPlayer, String byParty) {
-		invitationBy = "@yel@" + byPlayer + " @whi@has sent you a party invitation:";
+		if (mc.openScaledPartyInvitation(byPlayer, byParty)) return;
 		invitationBy = byPlayer;
 		if (byParty != null) {
 			this.setVisible(true);

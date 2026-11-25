@@ -170,9 +170,19 @@ and Escape cancels. Both also offer explicit buttons. The editor wraps longer
 text, and its keyboard and pointer input stay inside the prompt. It uses the
 existing friend-list and private-message actions.
 
+Create Party confirms creation with the existing five-player limit. The
+active server creates unnamed parties, and the preview only asks for input
+the server uses. Invite to Party shares the name editor with Add Friend.
+Incoming invitations show the sender and offer Accept, Decline and Ignore
+for 2.5 minutes.
+
+Manage Party shows the roster with rank, health and combat level. Owners
+can change who can kick or invite from the Permissions tab. Select a
+member to change their rank, transfer leadership or kick them when your
+rank permits it. The window confirms transfers, kicks and leaving a party.
+
 ### Social windows to update later
 
-- Update party creation, invitations and member management windows.
 - Update clan creation, search, joining, invitations and management windows.
 
 ## Settings preview
