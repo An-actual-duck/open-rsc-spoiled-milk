@@ -197,6 +197,9 @@ and colours. The minimap slot opens the top-right map pane.
 ## Minimap and fullscreen world map
 
 The first 1080p preview uses the existing launcher and pinning controls.
+The minimap uses a 420×420 frame at Standard UI size, close to the dimensions
+of Settings and the ability panels. Map tiles, dots and the bank icon
+follow the UI size, and the legend follows the text size.
 A north-up 2D atlas covers the published global surface. White dots show other
 players, yellow dots show NPCs, red dots show attackable NPCs, and the cyan dot
 shows the local player. The first bank icon marks the published Lumbridge

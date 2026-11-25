@@ -13,7 +13,6 @@ final class MinimapFrameLayout {
 	final int pixelsPerTile;
 	final int dotRadius;
 	final int bankSize;
-	final int legendFont;
 	private final int legendHeight;
 
 	MinimapFrameLayout(int surfaceWidth, int gameHeight, int anchor, boolean floating, int chatRight,
@@ -21,19 +20,18 @@ final class MinimapFrameLayout {
 					   int labelLine) {
 		this.labelLine = labelLine;
 		labelFont = text.labelFont;
-		padding = size.pixels(10);
-		width = Math.min(size.pixels(264), surfaceWidth - 2 * padding);
+		padding = size.pixels(12);
+		width = Math.min(size.pixels(420), surfaceWidth - 2 * padding);
 		left = surfaceWidth - size.pixels(6) - width;
 		top = floating ? padding : anchor;
 		int limit = floating ? Math.min(gameHeight, anchor) : gameHeight;
 		if (left < chatRight) limit = Math.min(limit, chatEntryTop);
-		bottom = Math.min(top + size.pixels(258), limit - padding);
-		headerHeight = Math.max(size.pixels(36), labelLine + padding);
-		pixelsPerTile = size.pixels(4);
-		dotRadius = Math.max(2, size.pixels(3));
-		bankSize = size.pixels(17);
-		legendFont = width < 230 ? 1 : Math.max(1, labelFont - 1);
-		legendHeight = Math.max(size.pixels(30), labelLine + padding);
+		bottom = Math.min(top + size.pixels(420), limit - padding);
+		headerHeight = Math.max(size.pixels(38), labelLine + padding);
+		pixelsPerTile = size.pixels(6);
+		dotRadius = Math.max(2, size.pixels(4));
+		bankSize = size.pixels(23);
+		legendHeight = Math.max(size.pixels(38), labelLine + padding);
 	}
 
 	int mapLeft() { return left + padding; }

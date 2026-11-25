@@ -14,6 +14,8 @@ final class MinimapView {
 	private static final int ENEMY = 0xF16A61;
 	private static final int BANK = 0xF4CB72;
 	private static final int OUTLINE = 0x16262D;
+	private static final String[] ACTOR_LABELS = {"Player", "NPC", "Enemy"};
+	private static final int[] ACTOR_COLORS = {PLAYER, NPC, ENEMY};
 
 	private SurfaceMinimapAtlas atlas;
 	private boolean triedToOpen;
@@ -49,7 +51,7 @@ final class MinimapView {
 				drawTerrain(surface, frame);
 			} else {
 				surface.drawColoredStringCentered(centerX, "Map unavailable here", PLAYER, 0,
-					frame.legendFont, frame.mapTop() + frame.labelLine);
+					frame.labelFont, frame.mapTop() + frame.labelLine);
 			}
 			for (int i = 0; i < npcCount; i++) {
 				ORSCharacter actor = npcs[i];
@@ -123,22 +125,35 @@ final class MinimapView {
 	}
 
 	private static void drawLegend(MudClientGraphics surface, MinimapFrameLayout frame) {
-		int font = frame.legendFont;
-		int line = surface.fontHeight(font);
+		int font = frame.labelFont;
+		int radius = frame.dotRadius;
+		int dotInset = 2 * radius + 6;
+		int bankInset = frame.bankSize + 4;
+		int available = frame.mapRight() - frame.mapLeft() - ACTOR_LABELS.length * dotInset - bankInset;
+		int labelsWidth = legendLabelsWidth(surface, font);
+		while (font > 1 && labelsWidth > available) {
+			labelsWidth = legendLabelsWidth(surface, --font);
+		}
+		int gap = Math.max(0, (available - labelsWidth) / ACTOR_LABELS.length);
 		int y = frame.mapBottom() + (frame.bottom - frame.mapBottom()) / 2;
+		int baseline = y + surface.fontHeight(font) / 2 - 2;
 		int x = frame.mapLeft();
-		x = legendItem(surface, x, y, "Player", font, line, frame.dotRadius, PLAYER);
-		x = legendItem(surface, x, y, "NPC", font, line, frame.dotRadius, NPC);
-		x = legendItem(surface, x, y, "Enemy", font, line, frame.dotRadius, ENEMY);
-		surface.drawString("Bank", x + frame.bankSize + 4, y + line / 2 - 2, BANK, font);
+		for (int index = 0; index < ACTOR_LABELS.length; index++) {
+			String label = ACTOR_LABELS[index];
+			int color = ACTOR_COLORS[index];
+			drawDot(surface, x + radius + 1, y, radius, color);
+			x += dotInset;
+			surface.drawString(label, x, baseline, color, font);
+			x += surface.stringWidth(font, label) + gap;
+		}
 		drawBank(surface, x + frame.bankSize / 2, y, frame.bankSize);
+		surface.drawString("Bank", x + bankInset, baseline, BANK, font);
 	}
 
-	private static int legendItem(MudClientGraphics surface, int x, int y, String text, int font, int line, int radius, int color) {
-		drawDot(surface, x + radius + 1, y, radius, color);
-		int textX = x + radius * 2 + 6;
-		surface.drawString(text, textX, y + line / 2 - 2, color, font);
-		return textX + surface.stringWidth(font, text) + 8;
+	private static int legendLabelsWidth(MudClientGraphics surface, int font) {
+		int width = surface.stringWidth(font, "Bank");
+		for (String label : ACTOR_LABELS) width += surface.stringWidth(font, label);
+		return width;
 	}
 
 	private static void drawDot(MudClientGraphics surface, int x, int y, int radius, int color) {

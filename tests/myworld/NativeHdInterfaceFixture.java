@@ -433,6 +433,8 @@ public final class NativeHdInterfaceFixture {
 		MinimapFrameLayout frame = new MinimapFrameLayout(width, height - 12, anchor, floating, chatRight,
 			chat.entryTop(), size, text, fontHeight[text.labelFont]);
 		check(frame.left >= 0 && frame.left + frame.width < width, "Map frame fits the right edge");
+		check(frame.width >= size.pixels(400), "Map frame is comparable in width to the other sidebar panels");
+		check(frame.pixelsPerTile == size.pixels(6), "Map zoom follows the UI size");
 		check(frame.top == (floating ? frame.padding : toolbar.panelTop()), "Map frame follows its existing anchor");
 		check(frame.mapTop() > frame.top + frame.headerHeight, "Map viewport sits below the header");
 		check(frame.mapBottom() > frame.mapTop() && frame.mapBottom() < frame.bottom, "Map leaves room for the legend");
