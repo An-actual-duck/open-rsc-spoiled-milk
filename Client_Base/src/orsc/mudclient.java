@@ -12807,7 +12807,7 @@ public final class mudclient implements Runnable {
         boolean mirror, int x, int y, int width, int height, int topPixelSkew,
         int colourTransform, int repetitions) {
         AnimationDef animation = EntityHandler.getAnimationDef(animID);
-        if (animation == null) return;
+        if (animID < 0) return;
         int variant = frame;
         if (mirror && sourceDirection >= 1 && sourceDirection <= 3 && animation.hasF()) variant += 15;
         if (sourceDirection == 5 && !animation.hasA()) return;
@@ -29862,28 +29862,6 @@ public final class mudclient implements Runnable {
 			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA.npcId
 			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BLOODVELD.npcId)) {
 			shooter.npcProjectileAttackStartedMillis = System.currentTimeMillis();
-		}
-	}
-
-	void drawDialogueNpcAvatar(NPCDef npc, int x, int y, int size, int colourTransform) {
-		int direction = 6;
-		int source = NpcDirectionalAnimationMapping.sourceDirection(direction);
-		int frame = NpcDirectionalAnimationMapping.frameOffset(direction, 0);
-		int spriteWidth = Math.max(1, npc.getCamera1());
-		int spriteHeight = Math.max(1, npc.getCamera2());
-		int longest = Math.max(spriteWidth, spriteHeight);
-		int width = Math.max(1, spriteWidth * size / longest);
-		int height = Math.max(1, spriteHeight * size / longest);
-		int left = x + (size - width) / 2;
-		int top = y + (size - height) / 2;
-		getSurface().setClip(x, x + size, y + size, y);
-		try {
-			for (int layer : getAnimDirLayer_To_CharLayer()[direction]) {
-				drawNpcAnimationLayer(npc, npc.getSprite(layer), frame, source, true,
-					left, top, width, height, 0, colourTransform, 1);
-			}
-		} finally {
-			getSurface().clearClip();
 		}
 	}
 

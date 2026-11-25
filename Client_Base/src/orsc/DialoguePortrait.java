@@ -17,27 +17,59 @@ final class DialoguePortrait {
 
 	static void drawPlayer(mudclient client, int[] layers, int hair, int skin,
 						   int x, int y, int size, boolean speaking) {
-		drawHead(client, EntityHandler.getAnimationDef(layers[HEAD_LAYER] - 1),
-			EntityHandler.getAnimationDef(layers[HEADWEAR_LAYER] - 1), hair, skin, x, y, size, false, speaking);
+		PortraitLayer face = loadHead(client, layers[HEAD_LAYER] - 1, hair, skin, false);
+		PortraitLayer hat = loadHead(client, layers[HEADWEAR_LAYER] - 1, hair, skin, false);
+		draw(client.getSurface(), face, hat, x, y, size, speaking);
 	}
 
 	static void drawNpc(mudclient client, NPCDef npc, int x, int y, int size, boolean speaking) {
-		AnimationDef head = EntityHandler.getAnimationDef(npc.getSprite(HEAD_LAYER));
-		if (isHead(head) && drawHead(client, head, EntityHandler.getAnimationDef(npc.getSprite(HEADWEAR_LAYER)),
-			npc.getHairColour(), npc.getSkinColour(), x, y, size, true, speaking)) return;
-		client.drawDialogueNpcAvatar(npc, x, y, size, tint(speaking));
+		int bodyId = profileAnimationId(npc);
+		if (bodyId >= 0) {
+			AnimationDef body = animation(bodyId);
+			int colour = body.getCharColour();
+			int skin = 0;
+			if (colour == 1) {
+				colour = npc.getHairColour();
+				skin = npc.getSkinColour();
+			} else if (bodyId >= 230 && Config.S_WANT_CUSTOM_SPRITES) {
+				skin = npc.getSkinColour();
+			} else if (colour == 2 || colour == 3) {
+				colour = colour == 2 ? npc.getTopColour() : npc.getBottomColour();
+				skin = npc.getSkinColour();
+			}
+			PortraitLayer profile = PortraitLayer.load(client, body, colour, skin, 0, true);
+			draw(client.getSurface(), profile, null, x, y, size, speaking);
+			return;
+		}
+		PortraitLayer face = loadHead(client, npc.getSprite(HEAD_LAYER), npc.getHairColour(), npc.getSkinColour(), true);
+		PortraitLayer hat = loadHead(client, npc.getSprite(HEADWEAR_LAYER), npc.getHairColour(), npc.getSkinColour(), true);
+		draw(client.getSurface(), face, hat, x, y, size, speaking);
 	}
 
-	private static boolean isHead(AnimationDef animation) {
-		return animation != null && ("equipment".equals(animation.category)
-			|| "player".equals(animation.category) && animation.getCharColour() == 1);
+	private static int profileAnimationId(NPCDef npc) {
+		for (int id : npc.sprites) {
+			AnimationDef definition = animation(id);
+			// Classic creature artwork can have a separate weapon layer with alternate facing frames.
+			if (definition != null && "npc".equals(definition.category) && !definition.hasF()) return id;
+		}
+		return -1;
 	}
 
-	private static boolean drawHead(mudclient client, AnimationDef base, AnimationDef headwear, int hair, int skin,
-									int x, int y, int size, boolean mirror, boolean speaking) {
-		HeadLayer face = HeadLayer.load(client, base, mirror);
-		HeadLayer hat = HeadLayer.load(client, headwear, mirror);
-		if (face == null && hat == null) return false;
+	private static AnimationDef animation(int id) {
+		// The registry's fallback is a human head. An absent layer contributes no art.
+		return id >= 0 && id < EntityHandler.animationCount() ? EntityHandler.getAnimationDef(id) : null;
+	}
+
+	private static PortraitLayer loadHead(mudclient client, int id, int hair, int skin, boolean mirror) {
+		AnimationDef definition = animation(id);
+		if (definition == null || "npc".equals(definition.category)) return null;
+		int colour = definition.getCharColour() == 1 ? hair : definition.getCharColour();
+		return PortraitLayer.load(client, definition, colour, skin, definition.getBlueMask(), mirror);
+	}
+
+	private static void draw(GraphicsController surface, PortraitLayer face, PortraitLayer hat,
+							int x, int y, int size, boolean speaking) {
+		if (face == null && hat == null) return;
 
 		// Head and hat frames use the same actor origin, even when their cropped
 		// rectangles or full sprite widths differ. Fit the union around that origin.
@@ -51,33 +83,30 @@ final class DialoguePortrait {
 			top = Math.min(top, hat.top);
 			bottom = Math.max(bottom, hat.bottom);
 		}
-		HeadLayer anchor = face == null ? hat : face;
+		PortraitLayer anchor = face == null ? hat : face;
 		double aspect = anchor.frontWidth / (double) anchor.sprite.getSomething2();
 		double height = size / Math.max((right - left) * aspect, bottom - top);
 		double width = height * aspect;
 		double originX = x + (size - (right - left) * width) / 2 - left * width;
 		double originY = y + (size - (bottom - top) * height) / 2 - top * height;
-		GraphicsController surface = client.getSurface();
-		int colourTransform = tint(speaking);
-		if (face != null) face.draw(surface, originX, originY, width, height, hair, skin, mirror, colourTransform);
-		if (hat != null) hat.draw(surface, originX, originY, width, height, hair, skin, mirror, colourTransform);
-		return true;
+		int tint = speaking ? 0xFFFFFFFF : 0xFF858585;
+		if (face != null) face.draw(surface, originX, originY, width, height, tint);
+		if (hat != null) hat.draw(surface, originX, originY, width, height, tint);
 	}
 
-	private static int tint(boolean speaking) {
-		return speaking ? 0xFFFFFFFF : 0xFF858585;
-	}
-
-	private static final class HeadLayer {
+	private static final class PortraitLayer {
 		final Sprite sprite;
-		final AnimationDef animation;
-		final int frontWidth;
+		final boolean mirror;
+		final int frontWidth, colour, skin, blueMask;
 		final double canvasWidth, origin, left, right, top, bottom;
 
-		private HeadLayer(Sprite sprite, AnimationDef animation, int frontWidth, boolean mirror) {
+		private PortraitLayer(Sprite sprite, int frontWidth, int colour, int skin, int blueMask, boolean mirror) {
 			this.sprite = sprite;
-			this.animation = animation;
 			this.frontWidth = frontWidth;
+			this.colour = colour;
+			this.skin = skin;
+			this.blueMask = blueMask;
+			this.mirror = mirror;
 			canvasWidth = sprite.getSomething1() / (double) frontWidth;
 			origin = (1 - canvasWidth) / 2;
 			int shiftX = sprite.requiresShift() ? sprite.getXShift() : 0;
@@ -89,21 +118,19 @@ final class DialoguePortrait {
 			bottom = top + sprite.getHeight() / (double) sprite.getSomething2();
 		}
 
-		static HeadLayer load(mudclient client, AnimationDef animation, boolean mirror) {
-			if (animation == null) return null;
+		static PortraitLayer load(mudclient client, AnimationDef animation, int colour, int skin, int blueMask,
+								  boolean mirror) {
 			Sprite sprite = client.spriteSelect(animation, SIDE_FRAME + (mirror && animation.hasF() ? 15 : 0));
 			int frontWidth = client.spriteSelect(animation, 0).getSomething1();
 			if (sprite.getWidth() <= 0 || sprite.getHeight() <= 0 || frontWidth <= 0
 				|| sprite.getSomething1() <= 0 || sprite.getSomething2() <= 0) return null;
-			return new HeadLayer(sprite, animation, frontWidth, mirror);
+			return new PortraitLayer(sprite, frontWidth, colour, skin, blueMask, mirror);
 		}
 
-		void draw(GraphicsController surface, double x, double y, double width, double height,
-				  int hair, int skin, boolean mirror, int tint) {
+		void draw(GraphicsController surface, double x, double y, double width, double height, int tint) {
 			surface.drawSpriteClipping(sprite, (int) Math.round(x + origin * width), (int) Math.round(y),
 				(int) Math.round(width * canvasWidth), (int) Math.round(height),
-				animation.getCharColour() == 1 ? hair : animation.getCharColour(), skin, animation.getBlueMask(),
-				mirror, 0, 1, tint);
+				colour, skin, blueMask, mirror, 0, 1, tint);
 		}
 	}
 }

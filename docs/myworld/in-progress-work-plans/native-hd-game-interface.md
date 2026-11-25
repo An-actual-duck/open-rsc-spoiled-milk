@@ -47,8 +47,9 @@ over.
 Scripted NPC dialogue puts the player's head on the left, the current NPC on
 the right, and the line between them. The listener dims during each line.
 Two NPCs in one conversation can take turns on the right. Portraits use the
-installed side-facing head sprites when a separate head is available and the
-existing character sprite for other NPCs.
+installed side-facing head and headwear layers for assembled characters.
+NPCs with full-body artwork, including the goblin generals, use the intact
+side-facing idle frame from their body animation.
 
 Dialogue and choices share the panel and use the existing response indices and
 script pacing. The server opens the presentation when a player-owned script
