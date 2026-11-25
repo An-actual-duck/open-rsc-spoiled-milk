@@ -60,7 +60,9 @@ the recovery request is submitted, show the same status for every username.
 > If this account is linked to Discord, check your DMs for a recovery request.
 
 The private UI preview keeps the original loading sequence and sign-in control
-positions. The legacy terrain path still renders the three rotating views.
+arrangement. At 1080p the controls use twice the 540p dimensions and spacing,
+with larger Classic bitmap fonts. The legacy terrain path still renders the
+three rotating views.
 The native terrain path has used a black backdrop since the World Builder map
 migration. Restoring the rotating views for native clients needs a separate
 pass with approved views from the current map.

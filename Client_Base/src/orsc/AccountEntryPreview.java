@@ -30,46 +30,37 @@ final class AccountEntryPreview {
 	private final AtomicBoolean escape = new AtomicBoolean();
 	private boolean confirming;
 
-	AccountEntryPreview(MudClientGraphics surface, int x, int y) {
-		registration = new Panel(surface, 32);
-		registration.addCenteredText(x, y - 139, "Create Account", 5, true);
-		registration.addCenteredText(x, y - 117, "Choose a username of 2 to 12 letters, numbers or spaces.", 1, true);
-		username = field(registration, x, y - 89, 420, 12, "Username", false);
-		registration.addCenteredText(x, y - 58, "Use 4 to 20 letters or numbers for your password.", 1, true);
-		password = field(registration, x - 107, y - 29, 206, 20, "Password", true);
-		repeatPassword = field(registration, x + 107, y - 29, 206, 20, "Confirm password", true);
-		discord = field(registration, x, y + 19, 420, 32, "Discord Username (optional)", false);
-		registration.addCenteredText(x, y + 50, "This is not required but is necessary if you want to have", 1, true);
-		registration.addCenteredText(x, y + 65, "access to account/password recovery.", 1, true);
-		registrationStatus = registration.addCenteredText(x, y + 89, "", 4, true);
-		registrationDetail = registration.addCenteredText(x, y + 106, "", 1, true);
-		create = button(registration, x - 72, y + 135, 134, "Create Account");
-		cancelRegistration = button(registration, x + 72, y + 135, 134, "Cancel");
+	AccountEntryPreview(MudClientGraphics surface, int x, int y, int scale) {
+		AccountEntryLayout form = new AccountEntryLayout(surface, 32, x, y, scale);
+		registration = form.panel;
+		form.label(0, -139, "Create Account", 5, true);
+		form.label(0, -117, "Choose a username of 2 to 12 letters, numbers or spaces.", 1, true);
+		username = form.field(0, -89, 420, 12, "Username", false);
+		form.label(0, -58, "Use 4 to 20 letters or numbers for your password.", 1, true);
+		password = form.field(-107, -29, 206, 20, "Password", true);
+		repeatPassword = form.field(107, -29, 206, 20, "Confirm password", true);
+		discord = form.field(0, 19, 420, 32, "Discord Username (optional)", false);
+		form.label(0, 50, "This is not required but is necessary if you want to have", 1, true);
+		form.label(0, 65, "access to account/password recovery.", 1, true);
+		registrationStatus = form.label(0, 89, "", 4, true);
+		registrationDetail = form.label(0, 106, "", 1, true);
+		create = form.button(-72, 135, 134, 32, "Create Account", 4);
+		cancelRegistration = form.button(72, 135, 134, 32, "Cancel", 4);
 
-		confirmation = new Panel(surface, 12);
-		confirmation.addCenteredText(x, y - 28, "Are you sure you don't want to link a Discord account?", 4, true);
-		continueWithoutDiscord = button(confirmation, x - 61, y + 15, 110, "Yes");
-		returnToRegistration = button(confirmation, x + 61, y + 15, 110, "No");
+		AccountEntryLayout confirm = new AccountEntryLayout(surface, 12, x, y, scale);
+		confirmation = confirm.panel;
+		confirm.label(0, -28, "Are you sure you don't want to link a Discord account?", 4, true);
+		continueWithoutDiscord = confirm.button(-61, 15, 110, 32, "Yes", 4);
+		returnToRegistration = confirm.button(61, 15, 110, 32, "No", 4);
 
-		recovery = new Panel(surface, 16);
-		recovery.addCenteredText(x, y - 81, "I forgot my password", 5, true);
-		recoveryUsername = field(recovery, x, y - 36, 310, 12, "Username", false);
-		sendRecovery = button(recovery, x - 61, y + 7, 110, "Send");
-		backToLogin = button(recovery, x + 61, y + 7, 110, "Back");
-		recoveryStatus = recovery.addCenteredText(x, y + 47, "", 1, true);
-		recovery.addCenteredText(x, y + 66, "@yel@Preview only. Discord delivery is pending.", 1, true);
-	}
-
-	private static int field(Panel panel, int x, int y, int width, int maxLength, String label, boolean masked) {
-		panel.addButtonBackground(x, y, width, 40);
-		panel.addCenteredText(x, y - 9, label, 4, false);
-		return panel.addCenteredTextEntry(x, y + 9, width - 16, maxLength, 20, 4, masked, false);
-	}
-
-	private static int button(Panel panel, int x, int y, int width, String label) {
-		panel.addButtonBackground(x, y, width, 32);
-		panel.addCenteredText(x, y, label, 4, false);
-		return panel.addButton(x, y, width, 32);
+		AccountEntryLayout reset = new AccountEntryLayout(surface, 16, x, y, scale);
+		recovery = reset.panel;
+		reset.label(0, -81, "I forgot my password", 5, true);
+		recoveryUsername = reset.field(0, -36, 310, 12, "Username", false);
+		sendRecovery = reset.button(-61, 7, 110, 32, "Send", 4);
+		backToLogin = reset.button(61, 7, 110, 32, "Back", 4);
+		recoveryStatus = reset.label(0, 47, "", 1, true);
+		reset.label(0, 66, "@yel@Preview only. Discord delivery is pending.", 1, true);
 	}
 
 	void startRegistration() {

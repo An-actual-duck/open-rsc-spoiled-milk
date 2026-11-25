@@ -3352,120 +3352,74 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private int accountEntryScale() {
+		return usesNativeHdInterface() ? 2 : 1;
+	}
+
 	private void createLoginPanels(int var1) {
 		try {
 
 			boolean preview = !isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled();
-			this.panelLoginWelcome = new Panel(this.getSurface(), 50);
-			byte yOffsetWelcome = 40;
-			int yOffsetLogin = 0;
-			if (isAndroid()) {
-				yOffsetWelcome = -125;
-				yOffsetLogin = -200;
-			}
+			int scale = accountEntryScale();
+			int centerX = halfGameWidth();
+			int centerY = halfGameHeight();
+			int welcomeHeading = (wantMembers() ? 33 : 23) + (isAndroid() ? -125 : 40);
+			int yOffsetLogin = isAndroid() ? -200 : 0;
 
-			if (!wantMembers()) { // Free version
-				this.panelLoginWelcome.addCenteredText(halfGameWidth(), halfGameHeight() + 23 + yOffsetWelcome, "Welcome to " + getServerNameWelcome(), 4, true);
-				this.panelLoginWelcome.addCenteredText(halfGameWidth(), halfGameHeight() + 38 + yOffsetWelcome, getWelcomeText(), 4, true);
+			AccountEntryLayout welcome = new AccountEntryLayout(getSurface(), 50, centerX, centerY, scale);
+			panelLoginWelcome = welcome.panel;
+			welcome.label(0, welcomeHeading, "Welcome to " + getServerNameWelcome(), 4, true);
+			welcome.label(0, welcomeHeading + 15, getWelcomeText(), 4, true);
+			loginButtonNewUser = welcome.button(-100, welcomeHeading + 50, 120, 35,
+				preview ? "Create Account" : "New User", preview ? 4 : 5);
+			loginButtonExistingUser = welcome.button(100, welcomeHeading + 50, 120, 35,
+				preview ? "Log In" : "Existing User", 5);
+			if (preview) accountEntryWelcomeStatus = welcome.label(0, welcomeHeading + 82, "", 4, true);
 
-				panelLoginWelcome.addButtonBackground(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
-				panelLoginWelcome.addButtonBackground(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
-
-				panelLoginWelcome.addCenteredText(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, preview ? "Create Account" : "New User", preview ? 4 : 5, false);
-				panelLoginWelcome.addCenteredText(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, preview ? "Log In" : "Existing User", 5, false);
-
-				loginButtonNewUser = panelLoginWelcome.addButton(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
-				loginButtonExistingUser = panelLoginWelcome.addButton(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
-			} else { // Members version
-				this.panelLoginWelcome.addCenteredText(halfGameWidth(), halfGameHeight() + 33 + yOffsetWelcome, "Welcome to " + getServerNameWelcome(), 4, true);
-				this.panelLoginWelcome.addCenteredText(halfGameWidth(), halfGameHeight() + 48 + yOffsetWelcome, getWelcomeText(), 4, true);
-
-				panelLoginWelcome.addButtonBackground(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
-				panelLoginWelcome.addButtonBackground(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
-
-				panelLoginWelcome.addCenteredText(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, preview ? "Create Account" : "New User", preview ? 4 : 5, false);
-				panelLoginWelcome.addCenteredText(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, preview ? "Log In" : "Existing User", 5, false);
-
-				loginButtonNewUser = panelLoginWelcome.addButton(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
-				loginButtonExistingUser = panelLoginWelcome.addButton(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
-			}
-
-			if (preview) {
-				accountEntryWelcomeStatus = panelLoginWelcome.addCenteredText(halfGameWidth(),
-					halfGameHeight() + (wantMembers() ? 155 : 145), "", 4, true);
-			}
-			this.panelLogin = new Panel(this.getSurface(), 50);
-			short androidHeightOffset = isAndroid() ? (short) 30 : 230;
-			this.controlLoginStatus1 = this.panelLogin.addCenteredText(halfGameWidth(), halfGameHeight() + 35 + yOffsetLogin, "", 4, true);
-			this.controlLoginStatus2 = this.panelLogin.addCenteredText(halfGameWidth(), halfGameHeight() + 55 + yOffsetLogin,
-				"Please enter your username and password", 4, true);
-			int var6 = androidHeightOffset + 28;
-			this.panelLogin.addButtonBackground(halfGameWidth() - 116, halfGameHeight() + 91 + yOffsetLogin, 200, 40);
-			this.panelLogin.addCenteredText(halfGameWidth() - 116, halfGameHeight() + 81 + yOffsetLogin, "Username:", 4, false);
-			this.controlLoginUser = this.panelLogin.addCenteredTextEntry(halfGameWidth() - 116, halfGameHeight() + 98 + yOffsetLogin, 200, 320, 40, 4, false, false);
+			AccountEntryLayout login = new AccountEntryLayout(getSurface(), 50, centerX, centerY, scale);
+			panelLogin = login.panel;
+			controlLoginStatus1 = login.label(0, 35 + yOffsetLogin, "", 4, true);
+			controlLoginStatus2 = login.label(0, 55 + yOffsetLogin, "Please enter your username and password", 4, true);
+			login.background(-116, 91 + yOffsetLogin, 200, 40);
+			login.label(-116, 81 + yOffsetLogin, "Username:", 4, false);
+			controlLoginUser = login.entry(-116, 98 + yOffsetLogin, 200, 40, 320, 4, false);
 
 			if (var1 != 3845) {
 				this.drawNPC(51, 106, -15, -96, 26, 108, 22, -63);
 			}
 
-			this.panelLogin.addButtonBackground(halfGameWidth() - 46, halfGameHeight() + 138 + yOffsetLogin, 200, 40);
-			this.panelLogin.addCenteredText(halfGameWidth() - 46, halfGameHeight() + 128 + yOffsetLogin, "Password:", 4, false);
-			this.controlLoginPass = this.panelLogin.addCenteredTextEntry(halfGameWidth() - 46, halfGameHeight() + 146 + yOffsetLogin, 200, 20, 40, 4, true, false);
+			login.background(-46, 138 + yOffsetLogin, 200, 40);
+			login.label(-46, 128 + yOffsetLogin, "Password:", 4, false);
+			controlLoginPass = login.entry(-46, 146 + yOffsetLogin, 200, 40, 20, 4, true);
 
 			if (Remember()) {
 				String cred = ClientPort.loadCredentials();
 				if (cred.length() > 0) {
 					String[] split = cred.split(",");
 					if (split.length == 2) {
-						String user = split[0];
-						String pass = split[1];
-						this.panelLogin.setText(this.controlLoginUser, user);
-						this.panelLogin.setText(this.controlLoginPass, pass);
+						panelLogin.setText(controlLoginUser, split[0]);
+						panelLogin.setText(controlLoginPass, split[1]);
 					}
 				}
 			}
 
-			this.panelLogin.addButtonBackground(halfGameWidth() + 154, halfGameHeight() + 83 + yOffsetLogin, 120, 25);
-			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 83 + yOffsetLogin, "Ok", 4, false);
-			this.m_be = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 83 + yOffsetLogin, 120, 25);
-			this.panelLogin.addButtonBackground(halfGameWidth() + 154, halfGameHeight() + 113 + yOffsetLogin, 120, 25);
-			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 113 + yOffsetLogin, "Cancel", 4, false);
-			this.m_Xi = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 113 + yOffsetLogin, 120, 25);
-			this.panelLogin.setFocus(this.controlLoginUser);
-			int recoveryWidth = preview ? 150 : 120;
-			this.panelLogin.addButtonBackground(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, recoveryWidth, 25);
-			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin,
-				preview ? "I forgot my password" : "Forgot password", 4, false);
-			this.lostPasswordButtonIdx = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, recoveryWidth, 25);
-
-			//int offRememb = -1;
-			//int offHide = -1;
-			/*int width = 120;
-			if (S_WANT_HIDE_IP && (Remember())) {
-				offRememb = 124;
-				offHide = 186;
-				width = 60;
-			} else if (S_WANT_HIDE_IP) {
-				offHide = 154;
-			} else if (Remember()) {
-				offRememb = 154;
-			}*/
+			m_be = login.button(154, 83 + yOffsetLogin, 120, 25, "Ok", 4);
+			m_Xi = login.button(154, 113 + yOffsetLogin, 120, 25, "Cancel", 4);
+			panelLogin.setFocus(controlLoginUser);
+			lostPasswordButtonIdx = login.button(154, 143 + yOffsetLogin, preview ? 150 : 120, 25,
+				preview ? "I forgot my password" : "Forgot password", 4);
 
 			if (S_WANT_HIDE_IP) {
-				this.settingsHideIP = ClientPort.loadHideIp();
-				String text = (this.settingsHideIP != 1) ? "Hide IP" : "Show IP";
-				this.panelLogin.addButtonBackground(halfGameWidth() + 24, halfGameHeight() + 91 + yOffsetLogin, 60, 40);
-				this.panelLogin.addCenteredText(halfGameWidth() + 24, halfGameHeight() + 91 + yOffsetLogin, text, 3, false);
-				this.hideIpButtonIdx = this.panelLogin.addButton(halfGameWidth() + 24, halfGameHeight() + 91 + yOffsetLogin, 60, 40);
+				settingsHideIP = ClientPort.loadHideIp();
+				String text = settingsHideIP != 1 ? "Hide IP" : "Show IP";
+				hideIpButtonIdx = login.button(24, 91 + yOffsetLogin, 60, 40, text, 3);
 			}
 			if (Remember()) {
-				this.panelLogin.addButtonBackground(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, 60, 40);
-				this.panelLogin.addCenteredText(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, "Save", 3, false);
-				this.rememberButtonIdx = this.panelLogin.addButton(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, 60, 40);
+				rememberButtonIdx = login.button(-186, 138 + yOffsetLogin, 60, 40, "Save", 3);
 			}
 
 			if (preview) {
-				accountEntryPreview = new AccountEntryPreview(getSurface(), halfGameWidth(), halfGameHeight());
+				accountEntryPreview = new AccountEntryPreview(getSurface(), centerX, centerY, scale);
 				return;
 			}
 
@@ -12421,7 +12375,8 @@ public final class mudclient implements Runnable {
 			if (this.loginScreenNumber == 2) {
 				String var4 = this.panelLogin.getControlText(this.controlLoginStatus1);
 				if (null != var4 && var4.length() > 0) {
-					this.getSurface().drawBoxAlpha(0, halfGameHeight() + 18, this.getGameWidth(), 30, 0, 100);
+					int scale = accountEntryScale();
+					this.getSurface().drawBoxAlpha(0, halfGameHeight() + 18 * scale, this.getGameWidth(), 30 * scale, 0, 100);
 				}
 
 				this.panelLogin.drawPanel();
