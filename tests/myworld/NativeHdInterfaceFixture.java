@@ -437,9 +437,11 @@ public final class NativeHdInterfaceFixture {
 		check(frame.pixelsPerTile == size.pixels(6), "Map zoom follows the UI size");
 		check(frame.top == (floating ? frame.padding : toolbar.panelTop()), "Map frame follows its existing anchor");
 		check(frame.mapTop() > frame.top + frame.headerHeight, "Map viewport sits below the header");
-		check(frame.mapBottom() > frame.mapTop() && frame.mapBottom() < frame.bottom, "Map leaves room for the legend");
+		check(frame.mapBottom() > frame.mapTop() && frame.mapBottom() == frame.bottom - frame.padding,
+			"Map fills the frame down to its bottom padding");
 		check(frame.containsMap(frame.mapLeft(), frame.mapTop()), "Visible map corner accepts navigation");
-		check(!frame.containsMap(frame.mapLeft(), frame.mapBottom()), "Legend clicks stay out of map navigation");
+		check(frame.containsMap(frame.mapLeft(), frame.mapBottom() - 1), "The bottom of the visible map accepts navigation");
+		check(!frame.containsMap(frame.mapLeft(), frame.mapBottom()), "Bottom padding stays out of map navigation");
 		if (floating) check(frame.bottom < toolbar.top, "Floating frame leaves the lower toolbar reachable");
 		if (frame.left < chatRight) check(frame.bottom <= chat.entryTop(), "Frame leaves the chat controls reachable");
 		check(frame.contains(frame.left + frame.width - 1, frame.bottom - 1), "The visible frame owns input");

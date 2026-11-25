@@ -12,10 +12,22 @@ final class MinimapView {
 	private static final int PLAYER = 0xF5FAFF;
 	private static final int NPC = 0xFFD768;
 	private static final int ENEMY = 0xF16A61;
-	private static final int BANK = 0xF4CB72;
+	private static final int MARKER_BACKGROUND = 0xFFFBEF;
 	private static final int OUTLINE = 0x16262D;
-	private static final String[] ACTOR_LABELS = {"Player", "NPC", "Enemy"};
-	private static final int[] ACTOR_COLORS = {PLAYER, NPC, ENEMY};
+	private static final Sprite BANK_SYMBOL = markerSymbol(
+		"....#....",
+		"....#....",
+		"..#####..",
+		".##.#.##.",
+		".##.#....",
+		"..###....",
+		"...###...",
+		"....###..",
+		"....#.##.",
+		".##.#.##.",
+		"..#####..",
+		"....#....",
+		"....#....");
 
 	private SurfaceMinimapAtlas atlas;
 	private boolean triedToOpen;
@@ -70,7 +82,6 @@ final class MinimapView {
 		} finally {
 			surface.clearClip();
 		}
-		drawLegend(surface, frame);
 	}
 
 	private void drawTerrain(MudClientGraphics surface, MinimapFrameLayout frame) {
@@ -101,9 +112,14 @@ final class MinimapView {
 		int x = pixelX(atlas.bankX + 0.5);
 		int y = pixelY(atlas.bankY + 0.5);
 		if (!frame.containsMap(x, y)) return;
-		drawBank(surface, x, y, frame.bankSize);
-		int radius = frame.bankSize / 2;
-		if (Math.abs(x - mouseX) <= radius && Math.abs(y - mouseY) <= radius) {
+		int size = frame.markerSize;
+		int radius = size / 2;
+		int markerLeft = x - radius;
+		int markerTop = y - radius;
+		drawLocationMarker(surface, markerLeft, markerTop, size, BANK_SYMBOL);
+		if (frame.containsMap(mouseX, mouseY)
+			&& mouseX >= markerLeft && mouseX < markerLeft + size
+			&& mouseY >= markerTop && mouseY < markerTop + size) {
 			String label = "Lumbridge Bank";
 			int font = frame.labelFont;
 			int width = surface.stringWidth(font, label) + 10;
@@ -112,7 +128,7 @@ final class MinimapView {
 			int top = y - radius - height - 2;
 			if (top < frame.mapTop()) top = y + radius + 3;
 			surface.drawBoxAlpha(left, top, width, height, OUTLINE, 245);
-			surface.drawString(label, left + 5, top + frame.labelLine - 1, BANK, font);
+			surface.drawString(label, left + 5, top + frame.labelLine - 1, MARKER_BACKGROUND, font);
 		}
 	}
 
@@ -124,56 +140,28 @@ final class MinimapView {
 		surface.drawColoredStringCentered(x + width / 2, "N", PLAYER, 0, frame.labelFont, y + frame.labelLine - 1);
 	}
 
-	private static void drawLegend(MudClientGraphics surface, MinimapFrameLayout frame) {
-		int font = frame.labelFont;
-		int radius = frame.dotRadius;
-		int dotInset = 2 * radius + 6;
-		int bankInset = frame.bankSize + 4;
-		int available = frame.mapRight() - frame.mapLeft() - ACTOR_LABELS.length * dotInset - bankInset;
-		int labelsWidth = legendLabelsWidth(surface, font);
-		while (font > 1 && labelsWidth > available) {
-			labelsWidth = legendLabelsWidth(surface, --font);
-		}
-		int gap = Math.max(0, (available - labelsWidth) / ACTOR_LABELS.length);
-		int y = frame.mapBottom() + (frame.bottom - frame.mapBottom()) / 2;
-		int baseline = y + surface.fontHeight(font) / 2 - 2;
-		int x = frame.mapLeft();
-		for (int index = 0; index < ACTOR_LABELS.length; index++) {
-			String label = ACTOR_LABELS[index];
-			int color = ACTOR_COLORS[index];
-			drawDot(surface, x + radius + 1, y, radius, color);
-			x += dotInset;
-			surface.drawString(label, x, baseline, color, font);
-			x += surface.stringWidth(font, label) + gap;
-		}
-		drawBank(surface, x + frame.bankSize / 2, y, frame.bankSize);
-		surface.drawString("Bank", x + bankInset, baseline, BANK, font);
-	}
-
-	private static int legendLabelsWidth(MudClientGraphics surface, int font) {
-		int width = surface.stringWidth(font, "Bank");
-		for (String label : ACTOR_LABELS) width += surface.stringWidth(font, label);
-		return width;
-	}
-
 	private static void drawDot(MudClientGraphics surface, int x, int y, int radius, int color) {
 		surface.drawCircle(x, y, radius + 1, OUTLINE, 255, 0);
 		surface.drawCircle(x, y, radius, color, 255, 0);
 	}
 
-	private static void drawBank(MudClientGraphics surface, int x, int y, int size) {
-		int left = x - size / 2;
-		int top = y - size / 2;
-		surface.drawBox(left, top, size, size, OUTLINE);
-		surface.drawBoxBorder(left, size, top, size, BANK);
-		int inset = Math.max(2, size / 5);
-		int interior = size - 2 * inset;
-		surface.drawLineHoriz(left + inset, top + inset, interior, BANK);
-		surface.drawLineHoriz(left + inset, top + size - inset - 1, interior, BANK);
-		for (int column = 0; column < 3; column++) {
-			int columnX = left + inset + column * (interior - 1) / 2;
-			surface.drawLineVert(columnX, top + inset + 1, BANK, interior - 2);
+	private static void drawLocationMarker(MudClientGraphics surface, int left, int top, int size, Sprite symbol) {
+		surface.drawBox(left, top, size, size, MARKER_BACKGROUND);
+		surface.drawBoxBorder(left, size, top, size, OUTLINE);
+		int height = size * 3 / 4;
+		int width = (height * symbol.getWidth() + symbol.getHeight() / 2) / symbol.getHeight();
+		surface.drawSprite(symbol, left + (size - width) / 2, top + (size - height) / 2, width, height, 5924);
+	}
+
+	private static Sprite markerSymbol(String... rows) {
+		int width = rows[0].length();
+		int[] pixels = new int[width * rows.length];
+		for (int y = 0; y < rows.length; y++) {
+			for (int x = 0; x < width; x++) {
+				if (rows[y].charAt(x) == '#') pixels[y * width + x] = OUTLINE;
+			}
 		}
+		return new Sprite(pixels, width, rows.length);
 	}
 
 	boolean hasTerrain() { return terrainReady; }

@@ -1,6 +1,6 @@
 package orsc;
 
-/** Shared minimap frame, map viewport and legend bounds. */
+/** Shared minimap frame and map viewport bounds. */
 final class MinimapFrameLayout {
 	final int left;
 	final int top;
@@ -12,8 +12,7 @@ final class MinimapFrameLayout {
 	final int labelLine;
 	final int pixelsPerTile;
 	final int dotRadius;
-	final int bankSize;
-	private final int legendHeight;
+	final int markerSize;
 
 	MinimapFrameLayout(int surfaceWidth, int gameHeight, int anchor, boolean floating, int chatRight,
 					   int chatEntryTop, GameInterfaceSettings.Size size, GameInterfaceSettings.TextSize text,
@@ -30,14 +29,13 @@ final class MinimapFrameLayout {
 		headerHeight = Math.max(size.pixels(38), labelLine + padding);
 		pixelsPerTile = size.pixels(6);
 		dotRadius = Math.max(2, size.pixels(4));
-		bankSize = size.pixels(23);
-		legendHeight = Math.max(size.pixels(38), labelLine + padding);
+		markerSize = size.pixels(23);
 	}
 
 	int mapLeft() { return left + padding; }
 	int mapRight() { return left + width - padding; }
 	int mapTop() { return top + headerHeight + padding / 2; }
-	int mapBottom() { return bottom - legendHeight; }
+	int mapBottom() { return bottom - padding; }
 
 	boolean containsMap(int x, int y) {
 		return x >= mapLeft() && x < mapRight() && y >= mapTop() && y < mapBottom();

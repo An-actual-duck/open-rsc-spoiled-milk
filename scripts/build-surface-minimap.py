@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "dev/myworld/assets/runtime/ui/minimap/surface.bin"
 SECTOR = 48
 PIXELS = SECTOR * 2
+TRANSPARENT = 12345678  # Scene.TRANSPARENT
 BANK_CHEST = (111, 650)
 
 # Index zero is uncharted terrain. The last color is drawn over tile boundaries.
@@ -50,7 +51,21 @@ def floor_color(elevation, texture, overlay, roof, overlay_types):
     return 1 + min(3, elevation // 45)
 
 
-def bake_sector(raw, encoding, overlay_types):
+def visible_wall_ids(definitions):
+    visible = set()
+    for raw_id, wall in enumerate(definitions, 1):
+        # Match visibility for static walls in the terrain renderer.
+        if int(wall.findtext("unknown")) != 0:
+            continue
+        materials = [int(wall.findtext("modelVar2")), int(wall.findtext("modelVar3"))]
+        if int(wall.findtext("wallLowerHeight", "0")) > 0:
+            materials.extend((int(wall.findtext("wallUpperFront")), int(wall.findtext("wallUpperBack"))))
+        if any(material != TRANSPARENT for material in materials):
+            visible.add(raw_id)
+    return visible
+
+
+def bake_sector(raw, encoding, overlay_types, visible_walls):
     if encoding == "raw-layered-sector-v1":
         tile = struct.Struct(">6BI")
     elif encoding == "raw-layered-sector-v2-u16":
@@ -70,13 +85,13 @@ def bake_sector(raw, encoding, overlay_types):
         pixels[top + PIXELS] = color
         pixels[top + PIXELS + 1] = color
         # Match the terrain model's north edge (x + 1) and east edge (y + 1).
-        if vertical:
+        if vertical in visible_walls:
             pixels[top] = pixels[top + 1] = WALL
-        if horizontal:
+        if horizontal in visible_walls:
             pixels[top + 1] = pixels[top + PIXELS + 1] = WALL
-        if 0 < diagonal < 12000:
+        if 0 < diagonal < 12000 and diagonal in visible_walls:
             pixels[top] = pixels[top + PIXELS + 1] = WALL
-        elif 12000 < diagonal < 24000:
+        elif 12000 < diagonal < 24000 and diagonal - 12000 in visible_walls:
             pixels[top + 1] = pixels[top + PIXELS] = WALL
     return zlib.compress(pixels, 9) if any(pixels) else b""
 
@@ -94,10 +109,12 @@ def bake(package):
         raise ValueError("Lumbridge Bank Chest is missing from the installed surface placements")
     defs = ET.parse(ROOT / "server/conf/server/defs/TileDef.xml").getroot()
     overlay_types = {i: int(tile.findtext("unknown")) for i, tile in enumerate(defs, 1)}
+    boundaries = ET.parse(ROOT / "server/conf/server/defs/DoorDef.xml").getroot()
+    visible_walls = visible_wall_ids(boundaries)
     blocks = []
     for record in sorted(filter(surface, world["terrainSectors"]),
                          key=lambda item: (item["sectorX"], item["sectorY"])):
-        encoded = bake_sector(read_verified(package, record), record["encoding"], overlay_types)
+        encoded = bake_sector(read_verified(package, record), record["encoding"], overlay_types, visible_walls)
         if encoded:
             blocks.append(struct.pack(">hhH", record["sectorX"], record["sectorY"], len(encoded)) + encoded)
     header = b"RMAP\x01" + hashlib.sha256(manifest).digest()

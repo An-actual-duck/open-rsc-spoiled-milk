@@ -198,19 +198,20 @@ and colours. The minimap slot opens the top-right map pane.
 
 The first 1080p preview uses the existing launcher and pinning controls.
 The minimap uses a 420×420 frame at Standard UI size, close to the dimensions
-of Settings and the ability panels. Map tiles, dots and the bank icon
-follow the UI size, and the legend follows the text size.
+of Settings and the ability panels. Map tiles, dots, and location icons
+follow the UI size. The map fills the frame below the heading.
 A north-up 2D atlas covers the published global surface. White dots show other
 players, yellow dots show NPCs, red dots show attackable NPCs, and the cyan dot
-shows the local player. The first bank icon marks the published Lumbridge
-Bank Chest at (111, 650). Hover the icon for its name. The Classic interface
-uses its existing minimap.
+shows the local player. A dark dollar sign on an off-white marker identifies
+the published Lumbridge Bank Chest at (111, 650). Hover the icon for its name.
+The Classic interface uses its existing minimap.
 
 The atlas is baked with `scripts/build-surface-minimap.py` and matched to the
-active package manifest. The minimap reads the atlas only when opened and
-decodes visible sectors into a bounded cache. Rendering uses the live player
-and NPC positions. The old scene raster remains disabled in the scaled
-interface.
+active package manifest. The bake uses boundary definitions to exclude hidden
+and fully transparent terrain walls. The minimap reads the atlas only when
+opened and decodes visible sectors into a bounded cache. Rendering uses the
+live player and NPC positions. The old scene raster remains disabled in the
+scaled interface.
 
 Build a shared 2D renderer for the minimap and world map. The old minimap
 raster covers the active scene and is built during terrain preparation.
@@ -222,24 +223,24 @@ independently of gameplay scene loading. Keep the old raster disabled in the
 scaled interface. Closed views do no background map rendering or fetching.
 
 - **Minimap**. Follow the player and show nearby terrain, landmarks, and live
-  dots. Use the same map coordinates for drawing and hit testing. Retain
-  local click-to-walk through the existing movement path once its positions
-  are verified.
+  dots. Use the same map coordinates for drawing and hit testing. Local
+  click-to-walk uses the existing movement path. Reserve the key for the
+  fullscreen world map.
 - **World map**. Open a fullscreen view from the minimap. Start at the
   player's position and allow click-and-drag panning across the world,
   including areas outside the active scene. The map captures drag input so
   browsing leaves the player and game camera in place.
 - **Points of interest**. Use graphical icons in both views and show their
-  meanings in the world map key. Start with banks and quest starts. Anchor
-  each bank icon to the actual banking location, including bank chests, and
-  anchor each quest icon to the verified starting location. Keep these fixed
-  markers separate from the moving player and NPC dots.
+  meanings in the world map key. Use off-white icon backgrounds. Anchor
+  each bank icon to the actual banking location, including bank chests.
+  Review the remaining marker categories and symbols before adding them.
+  Keep fixed markers separate from the moving player and NPC dots.
 
-Prototype one town and its surroundings. Check that the bank and quest
-markers line up in both views, panning beyond the loaded scene reveals more
-map without requesting distant gameplay scenes, and walking with the minimap
-open adds no noticeable hitch. Verify both world-loading modes at 1080p and
-confirm the controls and map key fit the compact layout.
+Prototype one town and its surroundings. Check that markers line up in both
+views, panning beyond the loaded scene reveals more map without requesting
+distant gameplay scenes, and walking with the minimap open adds no noticeable
+hitch. Verify both world-loading modes at 1080p and confirm that the controls
+fit at compact UI size.
 
 ## Accomplishments preview
 
