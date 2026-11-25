@@ -28,14 +28,33 @@ their respective windows.
 - **Minimap**. Keep the scaled frame and placeholder until the owner describes
   the map, compass, and navigation behavior.
 - **Pre-login screens**. Preserve the Classic appearance of sign-in and
-  initial world loading. Account creation, password recovery, and other
-  pre-login updates wait for the owner's instructions.
+  initial world loading. The account creation and password recovery screens
+  wait for the owner's design notes. The target recovery flow is below.
 
 ## Retired from the player interface
 
 - **Change Contact Details**. Hide the settings entry in the scaled and
   Classic layouts. The legacy form and server support remain for compatibility.
   Use Discord polls for player input on server locations.
+
+- **Change Recovery Questions**. Hide the signed-in settings entry in the
+  scaled and Classic layouts. Retire the question-based reset flow as part of
+  the Discord account recovery rework.
+
+## Discord account identity and recovery rework
+
+Use a linked Discord account as the primary identity for account recovery.
+The server already pairs a signed-in game account with a Discord user ID and
+supports a password reset initiated in a DM with the bot. The planned sign-in
+flow starts with the player entering their game username and choosing
+**I forgot my password**. The bot sends a private confirmation to the linked
+Discord account. Only after the player confirms does the server reset their
+password and DM a temporary password. The player can then sign in and change
+it in Settings.
+
+The account rework will retire recovery questions and email-based recovery.
+Remove email and personal contact information from the account forms that
+collect them as part of that rework.
 
 ## Needs further exploration
 
