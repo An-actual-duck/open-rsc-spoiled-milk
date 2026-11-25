@@ -18877,14 +18877,6 @@ public final class mudclient implements Runnable {
 		}
 		this.getSurface().drawString("Change recovery questions", 3 + baseX, y, securityColor, 1);
 
-		// change contact details
-		y += 15;
-		securityColor = 0xFFFFFF;
-		if (this.mouseX > x && this.mouseX < x + boxWidth && this.mouseY > y - 12 && this.mouseY < y + 4) {
-			securityColor = 0xFFFF00;
-		}
-		this.getSurface().drawString("Change contact details", 3 + baseX, y, securityColor, 1);
-
 		// privacy settings text
 		y += 20;
 		this.getSurface().drawString("Privacy settings", 3 + baseX, y, 0, 1);
@@ -19844,7 +19836,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private enum SocialSetting {
-		PASSWORD, RECOVERY, CONTACT, CHAT, PRIVATE_CHAT, GLOBAL_FRIEND, GLOBAL_CHAT, TRADE,
+		PASSWORD, RECOVERY, CHAT, PRIVATE_CHAT, GLOBAL_FRIEND, GLOBAL_CHAT, TRADE,
 		ONLINE_LIST, IGNORED_LIST, SKIP_TUTORIAL, EXIT_BLACK_HOLE
 	}
 
@@ -19853,7 +19845,6 @@ public final class mudclient implements Runnable {
 		rows.add(new RendererSettingsPanel.Row("@yel@Security", RendererSettingsPanel.SECTION_ROW));
 		addSocialSetting(rows, SocialSetting.PASSWORD, "Change password");
 		addSocialSetting(rows, SocialSetting.RECOVERY, "Change recovery questions");
-		addSocialSetting(rows, SocialSetting.CONTACT, "Change contact details");
 		rows.add(new RendererSettingsPanel.Row("@yel@Privacy", RendererSettingsPanel.SECTION_ROW));
 		addSocialSetting(rows, SocialSetting.CHAT, "Allow chat messages - " + privacySettingLabel(settingsBlockChat));
 		addSocialSetting(rows, SocialSetting.PRIVATE_CHAT,
@@ -19897,10 +19888,6 @@ public final class mudclient implements Runnable {
 				break;
 			case RECOVERY:
 				packetHandler.getClientStream().newPacket(197);
-				packetHandler.getClientStream().finishPacket();
-				break;
-			case CONTACT:
-				packetHandler.getClientStream().newPacket(247);
 				packetHandler.getClientStream().finishPacket();
 				break;
 			case CHAT:
@@ -19952,8 +19939,6 @@ public final class mudclient implements Runnable {
 		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.PASSWORD);
 		y += 15;
 		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.RECOVERY);
-		y += 15;
-		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.CONTACT);
 		y += 32;
 		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.CHAT);
 		y += 15;
@@ -20145,26 +20130,6 @@ public final class mudclient implements Runnable {
 		}
 		this.getSurface().drawString("Change recovery questions", 3 + baseX, y, securityColor, 1);
 
-		// change contact details
-		y += 15;
-		securityColor = 0xFFFFFF;
-		if (this.mouseX > x && this.mouseX < x + boxWidth && this.mouseY > y - 12 && this.mouseY < y + 4) {
-			securityColor = 0xFFFF00;
-		}
-		this.getSurface().drawString("Change contact details", 3 + baseX, y, securityColor, 1);
-
-		/*
-		// this section is left for reference only
-		y += 20;
-		this.getSurface().drawString("To change you contact details,", 3 + baseX, y, 0xFFFFFF, 0);
-		y += 15;
-		this.getSurface().drawString("password, recovery questions, etc..", 3 + baseX, y, 0xFFFFFF, 0);
-		y += 15;
-		this.getSurface().drawString("please contact the administrators of", 3 + baseX, y, 0xFFFFFF, 0);
-		y += 15;
-		this.getSurface().drawString("the server you are playing.", 3 + baseX, y, 0xFFFFFF, 0);
-		*/
-
 		// privacy setting text
 		y += 20;
 		this.getSurface().drawString("Privacy settings. May be applied to all", 3 + baseX, y, 0, 1);
@@ -20287,14 +20252,6 @@ public final class mudclient implements Runnable {
 		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
 			&& mouseButtonClick == 1) {
 			this.packetHandler.getClientStream().newPacket(197);
-			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		// change contact details
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.packetHandler.getClientStream().newPacket(247);
 			this.packetHandler.getClientStream().finishPacket();
 		}
 

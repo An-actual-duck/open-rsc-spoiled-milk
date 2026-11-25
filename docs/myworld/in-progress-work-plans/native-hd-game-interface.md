@@ -31,6 +31,12 @@ their respective windows.
   initial world loading. Account creation, password recovery, and other
   pre-login updates wait for the owner's instructions.
 
+## Retired from the player interface
+
+- **Change Contact Details**. Hide the settings entry in the scaled and
+  Classic layouts. The legacy form and server support remain for compatibility.
+  Use Discord polls for player input on server locations.
+
 ## Needs further exploration
 
 Revisit these after the more straightforward UI updates are complete.
