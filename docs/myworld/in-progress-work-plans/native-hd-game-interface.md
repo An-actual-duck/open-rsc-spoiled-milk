@@ -107,9 +107,6 @@ Revisit these after the more straightforward UI updates are complete.
 
 - **Clans**. Defer the UI redesign until the owner has reviewed the existing
   creation, search, joining, invitations, and member management flows in game.
-- **Bank PINs**. Trace how players reach PIN setup, including any chat commands
-  or banker options. Exercise setup, change, removal, and first bank access
-  after relogging before deciding where the PIN controls belong.
 - **Auction House**. Walk through listing, buying, cancelling, expiry, and
   collection with two accounts. Use that walkthrough to decide what changes
   would help on a small server.
@@ -458,6 +455,11 @@ The right panel contains the deposit-all action, inventory and equipment views,
 preset entry and quick loads, withdrawal form, and rearrangement controls.
 The preset screen offers the existing save and load actions. Fixed empty slots
 are a separate layout change.
+
+The Bank PIN keypad uses the scaled prompt frame and follows the independent UI
+and text size settings. Talk to a banker and ask about bank PINs to set, change,
+or remove one. The keypad masks the entered digits and submits the fourth click
+automatically. Cancel or Escape dismisses the prompt.
 
 
 ## Trade preview

@@ -1279,7 +1279,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					var1.consume();
 					return;
 				}
-				if (var1.getButton() == MouseEvent.BUTTON2 && (mudclient.hasSessionNoticeInput()
+				if (var1.getButton() == MouseEvent.BUTTON2 && (mudclient.hasBankPinInput() || mudclient.hasSessionNoticeInput()
 					|| mudclient.hasSocialPromptInput() || mudclient.hasDeathItemsInput()
 					|| mudclient.hasItemQuantityInput() || mudclient.hasReportPlayerInput()
 					|| mudclient.hasPasswordChangeInput() || mudclient.hasGameplayPromptInput())) {
@@ -1463,6 +1463,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				e.consume();
 				return;
 			}
+			if (mudclient.hasBankPinInput()) {
+				e.consume();
+				return;
+			}
 			boolean touchedMessagePanelArea = mudclient.getGameHeight() - mouseY <= MESSAGE_WHEEL_SCROLL_AREA_HEIGHT;
 
 			boolean scrollableMessagePanel = mudclient.hasScroll(mudclient.messageTabSelected) && touchedMessagePanelArea;
@@ -1517,7 +1521,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				updateControlShiftState(var1);
 				char keyChar = var1.getKeyChar();
 				int keyCode = var1.getKeyCode();
-			if (mudclient.handleWorldMapKey(keyCode) || mudclient.handleSessionNoticeKey(keyCode)
+			if (mudclient.handleBankPinKey(keyCode) || mudclient.handleWorldMapKey(keyCode) || mudclient.handleSessionNoticeKey(keyCode)
 				|| mudclient.handleSocialPromptKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())
 				|| mudclient.handleDeathItemsKey(keyCode)
 				|| mudclient.handleItemQuantityKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())

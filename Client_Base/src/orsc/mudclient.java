@@ -1536,6 +1536,7 @@ public final class mudclient implements Runnable {
 	private NCustomComponent experienceOverlay;
 	private ProgressBarInterface batchProgressBar;
 	private BankPinInterface bankPinInterface;
+	private volatile BankPinWindow bankPinWindow;
 	private FishingTrawlerInterface fishingTrawlerInterface;
 	private String skillGuideChosen;
 	private static final int COOKS_ASSISTANT_QUEST = 1;
@@ -10229,6 +10230,7 @@ public final class mudclient implements Runnable {
 
 	private void resetGameplayPrompts() {
 		closeWorldMap();
+		bankPinWindow = null;
 		travelConfirmation = null;
 		confirmedTravelAction = null;
 		experienceTrackerWindow = null;
@@ -14022,7 +14024,7 @@ public final class mudclient implements Runnable {
 		}
 		String label = total ? "Total XP  " + xp : skillNames[skill] + "  Lv " + level + "  /  " + xp + " XP";
 		java.awt.Rectangle bounds = GameplayHud.experienceBounds(this, label);
-		boolean hover = !hasSessionNoticeInput() && !hasGameplayPromptInput() && !hasContextMenuInput()
+		boolean hover = !hasBankPinInput() && !hasSessionNoticeInput() && !hasGameplayPromptInput() && !hasContextMenuInput()
 			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
 			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput()
 			&& !hasPasswordChangeInput() && !hasReportPlayerInput() && !optionsMenuShow
@@ -14058,6 +14060,10 @@ public final class mudclient implements Runnable {
 
 	private void drawUi(int var1) {
 		try {
+			if (hasBankPinInput()) {
+				drawBankPinWindow();
+				return;
+			}
 			if (!craftingTabsRegistered && usesCraftingInterfacePreview()) {
 				packetHandler.getClientStream().newPacket(199);
 				packetHandler.getClientStream().bufferBits.putByte(28);
@@ -22250,7 +22256,7 @@ public final class mudclient implements Runnable {
 
 				if (!this.isSleeping) {
 					if (chatLayout != null) {
-						if (worldMapWindow == null && !hasSessionNoticeInput() && !hasItemQuantityInput()
+						if (worldMapWindow == null && !hasBankPinInput() && !hasSessionNoticeInput() && !hasItemQuantityInput()
 							&& !hasReportPlayerInput() && !hasPasswordChangeInput() && !hasGameplayPromptInput()) {
 							handleScaledChatTabSelection();
 						}
@@ -22287,7 +22293,7 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					boolean modalOwnsInput = worldMapWindow != null || hasSessionNoticeInput() || hasItemQuantityInput()
+					boolean modalOwnsInput = worldMapWindow != null || hasBankPinInput() || hasSessionNoticeInput() || hasItemQuantityInput()
 						|| hasReportPlayerInput() || hasPasswordChangeInput() || hasGameplayPromptInput();
 					if (!modalOwnsInput) {
 						if (!hasContextMenuInput() && !hasQuestRewardInput()
@@ -22444,7 +22450,7 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 					this.scene.setMouseLoc(0, this.mouseX, this.mouseY);
-					if (worldMapWindow == null && updateWorldEditorTerrainDrag()) {
+					if (worldMapWindow == null && !hasBankPinInput() && updateWorldEditorTerrainDrag()) {
 						this.mouseButtonClick = 0;
 						this.lastMouseButtonDown = 0;
 					}
@@ -29546,11 +29552,49 @@ public final class mudclient implements Runnable {
 	}
 
 	public void showBankPinInterface() {
-		bankPinInterface.show();
+		if (chatLayout == null || isAndroid()) {
+			bankPinInterface.show();
+			return;
+		}
+		closeWorldMap();
+		closeTopMouseMenu();
+		mouseButtonClick = lastMouseButtonDown = 0;
+		bankPinWindow = new BankPinWindow();
 	}
 
 	public void hideBankPinInterface() {
+		bankPinWindow = null;
 		bankPinInterface.hide();
+	}
+
+	public boolean hasBankPinInput() {
+		return bankPinWindow != null && chatLayout != null && currentViewMode == GameMode.GAME;
+	}
+
+	public boolean handleBankPinKey(int code) {
+		BankPinWindow pin = bankPinWindow;
+		if (pin == null || !hasBankPinInput()) return false;
+		if (code == java.awt.event.KeyEvent.VK_ESCAPE) pin.cancel();
+		return true;
+	}
+
+	private void drawBankPinWindow() {
+		BankPinWindow pin = bankPinWindow;
+		if (pin == null) return;
+		String response = pin.draw(this, chatLayout.entryTop());
+		mouseButtonClick = 0;
+		if (response != null) {
+			bankPinWindow = null;
+			sendBankPinResponse(response);
+		}
+	}
+
+	public void sendBankPinResponse(String response) {
+		packetHandler.getClientStream().newPacket(199);
+		packetHandler.getClientStream().bufferBits.putByte(8);
+		packetHandler.getClientStream().bufferBits.putByte(BankPinWindow.CANCEL.equals(response) ? 1 : 0);
+		packetHandler.getClientStream().bufferBits.putString(response);
+		packetHandler.getClientStream().finishPacket();
 	}
 
 	public IronManInterface getIronmanInterface() {

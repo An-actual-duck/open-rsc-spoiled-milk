@@ -54,9 +54,32 @@ public final class NativeHdInterfaceFixture {
 				verifyMinimapFrame(960, 540, size, text, true);
 				verifyWorldMapFrame(1920, 1080, size, text);
 				verifyWorldMapFrame(960, 540, size, text);
+				verifyBankPinLayout(1920, 1080, size, text);
+				verifyBankPinLayout(960, 540, size, text);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
+	}
+
+	private static void verifyBankPinLayout(int width, int height,
+			GameInterfaceSettings.Size size, GameInterfaceSettings.TextSize text) {
+		int[] fontHeights = {12, 14, 14, 15, 15, 19, 24, 29};
+		int bottom = chat(width, height, size, text).entryTop();
+		BankPinWindow.Layout layout = new BankPinWindow.Layout(width, bottom, size, text,
+			fontHeights[text.bodyFont], fontHeights[text.labelFont]);
+		check(layout.frame.x >= 0 && layout.frame.x + layout.frame.width <= width
+			&& layout.frame.y >= 0 && layout.frame.y + layout.frame.height <= bottom,
+			"Bank PIN frame fits above chat");
+		check(layout.keys.length == 10 && layout.slots.length == 4, "Bank PIN keypad and display count");
+		for (int digit = 0; digit < layout.keys.length; digit++) {
+			java.awt.Rectangle key = layout.keys[digit];
+			check(layout.frame.contains(key) && !layout.cancel.intersects(key), "Bank PIN key fits inside frame");
+			check(layout.digitAt(key.x + key.width / 2, key.y + key.height / 2) == digit,
+				"Bank PIN key selects its displayed digit");
+			check(layout.digitAt(key.x + key.width, key.y) < 0, "Bank PIN keypad gutters are inactive");
+		}
+		check(layout.frame.contains(layout.cancel) && layout.digitAt(layout.cancel.x, layout.cancel.y) < 0,
+			"Bank PIN Cancel stays separate from the keypad");
 	}
 
 	private static void verifySessionNoticeWrapping() {
