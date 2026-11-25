@@ -196,11 +196,18 @@ and colours. The minimap slot opens the top-right map pane.
 
 ## Minimap and fullscreen world map
 
-Reuse the scaled frame, toolbar launcher, pinning, and top-right placement.
-Keep the live player and NPC dots sourced from nearby gameplay entities.
-The current preview shows a placeholder in that frame and skips generating,
-transferring, and publishing the old minimap raster. The Classic client uses
-its existing minimap.
+The first 1080p preview uses the existing launcher and pinning controls.
+A north-up 2D atlas covers the published global surface. White dots show other
+players, yellow dots show NPCs, red dots show attackable NPCs, and the cyan dot
+shows the local player. The first bank icon marks the published Lumbridge
+Bank Chest at (111, 650). Hover the icon for its name. The Classic interface
+uses its existing minimap.
+
+The atlas is baked with `scripts/build-surface-minimap.py` and matched to the
+active package manifest. The minimap reads the atlas only when opened and
+decodes visible sectors into a bounded cache. Rendering uses the live player
+and NPC positions. The old scene raster remains disabled in the scaled
+interface.
 
 Build a shared 2D renderer for the minimap and world map. The old minimap
 raster covers the active scene and is built during terrain preparation.

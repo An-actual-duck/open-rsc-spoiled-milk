@@ -847,6 +847,7 @@ public final class mudclient implements Runnable {
 	boolean drawMinimap = false;
 	private boolean minimapPinned = false;
 	private MinimapFrameLayout minimapFrame;
+	private MinimapView minimapView;
 	private SideToolbarLayout minimapFrameToolbar;
 	private GameInterfaceSettings.TextSize minimapFrameText;
 	/** A detached non-map side panel, independent of the transient tab state. */
@@ -14259,8 +14260,7 @@ public final class mudclient implements Runnable {
 					if (frame == null) {
 						this.drawUiTabMinimap(mustDrawMenu, (byte) 125);
 					} else if (!interfaceOpen && !onlineList.isVisible() && inputX_Action == InputXAction.ACT_0) {
-						drawMinimapFrame(frame);
-						if (mustDrawMenu && frame.contains(mouseX, mouseY)) mouseButtonClick = 0;
+						drawMinimapFrame(frame, mustDrawMenu);
 					}
 					if (TRACE_BROWSER_FRAME_STAGES) browserMinimapDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
@@ -18101,14 +18101,15 @@ public final class mudclient implements Runnable {
 			int anchor = C_CUSTOM_UI ? toolbar.top : toolbar.panelTop();
 			minimapFrame = new MinimapFrameLayout(surface.width2, getGameHeight(), anchor, C_CUSTOM_UI,
 				chat.left + chat.width, chat.entryTop(), GameInterfaceSettings.size(), text,
-				surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont));
+				surface.fontHeight(text.labelFont));
 			minimapFrameToolbar = toolbar;
 			minimapFrameText = text;
 		}
 		return minimapFrame;
 	}
 
-	private void drawMinimapFrame(MinimapFrameLayout frame) {
+	private void drawMinimapFrame(MinimapFrameLayout frame, boolean acceptInput) {
+		if (frame.bottom <= frame.top || frame.mapBottom() <= frame.mapTop()) return;
 		MudClientGraphics surface = getSurface();
 		surface.drawBoxAlpha(frame.left, frame.top, frame.width, frame.bottom - frame.top, 0x182333, 244);
 		surface.drawVerticalGradient(frame.left, frame.top, frame.width, frame.headerHeight, 0x3B4C67, 0x28354A);
@@ -18117,8 +18118,30 @@ public final class mudclient implements Runnable {
 		surface.drawLineHoriz(frame.left + 1, bodyTop - 1, frame.width - 2, 0x667993);
 		surface.drawString("Minimap", frame.left + frame.padding,
 			frame.top + (frame.headerHeight + frame.labelLine) / 2 - 3, 0xFFDC82, frame.labelFont);
-		surface.drawColoredStringCentered(frame.left + frame.width / 2, "Map pending", 0xC4D0E0, 0,
-			frame.bodyFont, (bodyTop + frame.bottom + frame.bodyLine) / 2 - 3);
+		if (localPlayer == null) return;
+		int tileX = Math.floorDiv(localPlayer.currentX, tileSize);
+		int tileY = Math.floorDiv(localPlayer.currentZ, tileSize);
+		int compatibilityX = midRegionBaseX + tileX;
+		int compatibilityY = midRegionBaseZ + tileY;
+		int logicalX = packetHandler.getLogicalWorldX(compatibilityX);
+		int logicalY = packetHandler.getLogicalWorldY(compatibilityX, compatibilityY);
+		double worldX = logicalX + Math.floorMod(localPlayer.currentX, tileSize) / (double) tileSize;
+		double worldY = logicalY + Math.floorMod(localPlayer.currentZ, tileSize) / (double) tileSize;
+		if (minimapView == null) minimapView = new MinimapView();
+		minimapView.draw(surface, frame, world.getWholeOverworldSourceSnapshot(), worldX, worldY,
+			localPlayer, players, playerCount, npcs, npcCount, tileSize, mouseX, mouseY);
+
+		if (acceptInput && frame.contains(mouseX, mouseY) && mouseButtonClick != 0) {
+			if (mouseButtonClick == 1 && minimapView.hasTerrain() && !loadingArea && frame.containsMap(mouseX, mouseY)) {
+				int destinationX = tileX + minimapView.tileX(mouseX) - logicalX;
+				int destinationY = tileY + minimapView.tileY(mouseY) - logicalY;
+				if (destinationX >= 0 && destinationX < World.LOCAL_TILE_COUNT
+					&& destinationY >= 0 && destinationY < World.LOCAL_TILE_COUNT) {
+					walkToActionSource(playerLocalX, playerLocalZ, destinationX, destinationY, false);
+				}
+			}
+			mouseButtonClick = 0;
+		}
 	}
 
 	// mini map menu

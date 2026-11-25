@@ -431,10 +431,13 @@ public final class NativeHdInterfaceFixture {
 		int anchor = floating ? toolbar.top : toolbar.panelTop();
 		int[] fontHeight = {12, 14, 14, 15, 15, 19, 24, 29};
 		MinimapFrameLayout frame = new MinimapFrameLayout(width, height - 12, anchor, floating, chatRight,
-			chat.entryTop(), size, text, fontHeight[text.bodyFont], fontHeight[text.labelFont]);
+			chat.entryTop(), size, text, fontHeight[text.labelFont]);
 		check(frame.left >= 0 && frame.left + frame.width < width, "Map frame fits the right edge");
 		check(frame.top == (floating ? frame.padding : toolbar.panelTop()), "Map frame follows its existing anchor");
-		check(frame.bottom > frame.top + frame.headerHeight + frame.bodyLine, "Map frame has room under the header");
+		check(frame.mapTop() > frame.top + frame.headerHeight, "Map viewport sits below the header");
+		check(frame.mapBottom() > frame.mapTop() && frame.mapBottom() < frame.bottom, "Map leaves room for the legend");
+		check(frame.containsMap(frame.mapLeft(), frame.mapTop()), "Visible map corner accepts navigation");
+		check(!frame.containsMap(frame.mapLeft(), frame.mapBottom()), "Legend clicks stay out of map navigation");
 		if (floating) check(frame.bottom < toolbar.top, "Floating frame leaves the lower toolbar reachable");
 		if (frame.left < chatRight) check(frame.bottom <= chat.entryTop(), "Frame leaves the chat controls reachable");
 		check(frame.contains(frame.left + frame.width - 1, frame.bottom - 1), "The visible frame owns input");

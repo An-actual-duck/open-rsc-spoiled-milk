@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Bake the installed surface map into individually compressed minimap sectors."""
+
+import hashlib
+import json
+import struct
+import sys
+import xml.etree.ElementTree as ET
+import zlib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = ROOT / "dev/myworld/assets/runtime/ui/minimap/surface.bin"
+SECTOR = 48
+PIXELS = SECTOR * 2
+BANK_CHEST = (111, 650)
+
+# Index zero is uncharted terrain. The last color is drawn over tile boundaries.
+PALETTE = (
+    0x17252C, 0x536F45, 0x61794A, 0x6F8052, 0x7A8559,
+    0x387289, 0x488799, 0xAE9780, 0x958269, 0x826F60,
+    0x978D72, 0x384144,
+)
+WALL = len(PALETTE) - 1
+
+
+def read_verified(package, record):
+    data = (package / record["path"]).read_bytes()
+    if hashlib.sha256(data).hexdigest() != record["sha256"]:
+        raise ValueError("Package checksum mismatch for " + record["path"])
+    return data
+
+
+def floor_color(elevation, texture, overlay, roof, overlay_types):
+    if overlay == 8:
+        return 0
+    kind = overlay_types.get(overlay, 0)
+    if kind in (3, 4):
+        return 6 if kind == 4 else 5
+    if roof:
+        return 9
+    if kind == 2:
+        return 7
+    if kind == 1:
+        return 8
+    if overlay:
+        return 10
+    if texture == 0 and elevation == 0:
+        return 5
+    return 1 + min(3, elevation // 45)
+
+
+def bake_sector(raw, encoding, overlay_types):
+    if encoding == "raw-layered-sector-v1":
+        tile = struct.Struct(">6BI")
+    elif encoding == "raw-layered-sector-v2-u16":
+        tile = struct.Struct(">H5BI")
+    else:
+        raise ValueError("Unsupported terrain encoding " + encoding)
+    if len(raw) != SECTOR * SECTOR * tile.size:
+        raise ValueError("Invalid terrain sector size")
+    pixels = bytearray(PIXELS * PIXELS)
+    for offset, values in enumerate(tile.iter_unpack(raw)):
+        elevation, texture, overlay, roof, vertical, horizontal, diagonal = values
+        x, y = divmod(offset, SECTOR)
+        top = (y * 2) * PIXELS + (SECTOR - 1 - x) * 2
+        color = floor_color(elevation, texture, overlay, roof, overlay_types)
+        pixels[top] = color
+        pixels[top + 1] = color
+        pixels[top + PIXELS] = color
+        pixels[top + PIXELS + 1] = color
+        # Match the terrain model's north edge (x + 1) and east edge (y + 1).
+        if vertical:
+            pixels[top] = pixels[top + 1] = WALL
+        if horizontal:
+            pixels[top + 1] = pixels[top + PIXELS + 1] = WALL
+        if 0 < diagonal < 12000:
+            pixels[top] = pixels[top + PIXELS + 1] = WALL
+        elif 12000 < diagonal < 24000:
+            pixels[top + 1] = pixels[top + PIXELS] = WALL
+    return zlib.compress(pixels, 9) if any(pixels) else b""
+
+
+def bake(package):
+    manifest = (package / "manifest.json").read_bytes()
+    world = json.loads(manifest)
+    if world["storage"]["sectorSize"] != SECTOR:
+        raise ValueError("Unexpected map sector size")
+    surface = lambda item: item["worldSpace"] == "global" and item["level"] == 0
+    placements = next(record for record in world["placementSets"] if surface(record))
+    scenery = json.loads(read_verified(package, placements))["scenery"]
+    if not any(item["sceneryId"] == 942
+               and (item["position"]["x"], item["position"]["y"]) == BANK_CHEST for item in scenery):
+        raise ValueError("Lumbridge Bank Chest is missing from the installed surface placements")
+    defs = ET.parse(ROOT / "server/conf/server/defs/TileDef.xml").getroot()
+    overlay_types = {i: int(tile.findtext("unknown")) for i, tile in enumerate(defs, 1)}
+    blocks = []
+    for record in sorted(filter(surface, world["terrainSectors"]),
+                         key=lambda item: (item["sectorX"], item["sectorY"])):
+        encoded = bake_sector(read_verified(package, record), record["encoding"], overlay_types)
+        if encoded:
+            blocks.append(struct.pack(">hhH", record["sectorX"], record["sectorY"], len(encoded)) + encoded)
+    header = b"RMAP\x01" + hashlib.sha256(manifest).digest()
+    header += struct.pack(">hhBH", *BANK_CHEST, len(PALETTE), len(blocks))
+    return header + b"".join(struct.pack(">I", color) for color in PALETTE) + b"".join(blocks)
+
+
+if __name__ == "__main__":
+    primary = json.loads((ROOT / "server/world-builder-configs/primary.json").read_text())
+    package = ROOT / primary["serverMapRelativePath"]
+    data = bake(package)
+    if sys.argv[1:] == ["--check"]:
+        if OUTPUT.read_bytes() != data:
+            raise SystemExit("Minimap atlas differs from the installed map")
+    elif not sys.argv[1:]:
+        OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+        OUTPUT.write_bytes(data)
+    else:
+        raise SystemExit("Usage: build-surface-minimap.py [--check]")
+    print(f"Surface minimap atlas: {len(data):,} bytes")
