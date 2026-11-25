@@ -210,6 +210,7 @@ public class PayloadProcessorManager {
 			LayeredTerrainStageReadyHandler.class);
 		bind(OpcodeIn.HISCORE_REQUEST, HiscoreRequestHandler.class);
 		bind(OpcodeIn.ONLINE_SIDEBAR_REQUEST, OnlineSidebarRequestHandler.class);
+		bind(OpcodeIn.DEATH_ITEMS_REQUEST, DeathItemsRequestHandler.class);
 	}
 
 	private static void bind(OpcodeIn opcode, Class<?> clazz) {
@@ -293,7 +294,8 @@ public class PayloadProcessorManager {
 			&& !OpcodeIn.GAME_SETTINGS_CHANGED.equals(opcode)
 			&& !OpcodeIn.PRIVACY_SETTINGS_CHANGED.equals(opcode)
 			&& !OpcodeIn.HISCORE_REQUEST.equals(opcode)
-			&& !OpcodeIn.ONLINE_SIDEBAR_REQUEST.equals(opcode)) {
+			&& !OpcodeIn.ONLINE_SIDEBAR_REQUEST.equals(opcode)
+			&& !OpcodeIn.DEATH_ITEMS_REQUEST.equals(opcode)) {
 
 			player.cancelMenuHandler();
 		}

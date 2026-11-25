@@ -103,6 +103,7 @@ public enum OpcodeIn {
 	LAYERED_TERRAIN_STAGE_READY, // custom, exact predicted terrain receipt
 	HISCORE_REQUEST, // custom
 	ONLINE_SIDEBAR_REQUEST,
+	DEATH_ITEMS_REQUEST,
 
 	LOGIN,
 	RELOGIN, // retro rsc

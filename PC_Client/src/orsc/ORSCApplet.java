@@ -1273,7 +1273,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				updateControlShiftState(var1);
 				int clientMouseX = getClientMouseX(var1);
 				int clientMouseY = getClientMouseY(var1);
-				if (var1.getButton() == MouseEvent.BUTTON2 && mudclient.hasSocialPromptInput()) {
+				if (var1.getButton() == MouseEvent.BUTTON2 && (mudclient.hasSocialPromptInput() || mudclient.hasDeathItemsInput())) {
 					var1.consume();
 					return;
 				}
@@ -1439,7 +1439,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 
 			if (mudclient.hasDialogueChoiceInput() || mudclient.hasContextMenuInput() || mudclient.hasTradePreviewInput()
-				|| mudclient.hasQuestRewardInput() || mudclient.hasSocialPromptInput()) {
+				|| mudclient.hasQuestRewardInput() || mudclient.hasSocialPromptInput() || mudclient.hasDeathItemsInput()) {
 				e.consume();
 				mudclient.runScroll(e.getWheelRotation());
 				return;
@@ -1483,7 +1483,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				updateControlShiftState(var1);
 				char keyChar = var1.getKeyChar();
 				int keyCode = var1.getKeyCode();
-				if (mudclient.handleSocialPromptKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())) {
+			if (mudclient.handleSocialPromptKey(keyChar, keyCode, var1.isControlDown() || var1.isMetaDown())
+				|| mudclient.handleDeathItemsKey(keyCode)) {
 					mudclient.lastMouseAction = 0;
 					var1.consume();
 					return;

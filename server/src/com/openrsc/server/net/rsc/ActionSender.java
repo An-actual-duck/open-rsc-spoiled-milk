@@ -1070,6 +1070,8 @@ public class ActionSender {
 		}
 		if (questPreview) configs.add(QuestCompletionPresentation.CONFIG_TAG);
 		if (server.getConfig().PLAYER_COMMANDS) configs.add(OnlinePlayerList.SIDEBAR_CAPABILITY);
+		if (server.getConfig().ITEMS_ON_DEATH_MENU) configs.add(
+			com.openrsc.server.net.rsc.handlers.DeathItemsRequestHandler.CAPABILITY);
 		struct.configs = configs;
 		struct.setOpcode(OpcodeOut.SEND_SERVER_CONFIGS);
 		return generator.generate(struct, null);

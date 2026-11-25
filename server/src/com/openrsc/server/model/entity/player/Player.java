@@ -3539,6 +3539,10 @@ public final class Player extends Mob {
 		return false;
 	}
 
+	public boolean keepsInventoryOnDeath() {
+		return keepsInventoryOnDeathFromStaffRole() && !getCache().hasKey("myworld_test_death_drops");
+	}
+
 	private boolean keepsInventoryOnDeathFromStaffRole() {
 		switch (groupID) {
 			case Group.OWNER:
@@ -4492,7 +4496,7 @@ public final class Player extends Mob {
 			getDuel().dropOnDeath();
 			 // disables duel spam in activity feed
 			 // if (player != null) getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(player, String.format("has just won a stake against <strong>%s</strong>", username)));
-		} else if (!keepsInventoryOnDeathFromStaffRole() || getCache().hasKey("myworld_test_death_drops")) {
+		} else if (!keepsInventoryOnDeath()) {
 			getCarriedItems().getInventory().dropOnDeath(mob);
 		}
 

@@ -74,6 +74,19 @@ where they span the same part of the screen.
 
 The bank preview organizes filters, stock and bank actions into three panels.
 
+### Items on Death
+
+Open Items on Death from Equipment. Kept and lost items appear side by side
+with their icons, names, and quantities. Identical entries share a row within
+each list, and notes retain their own rows. Long lists scroll independently.
+The estimated loss value uses base item prices.
+
+The preview requests the server's current inventory and equipment breakdown
+using the same selection as normal death drops. This accounts for skulls,
+Ultimate Ironman, Soul necklaces, and staff retention. Active duels display
+their separate-rules notice. Servers without the preview use the original
+window.
+
 ## Crafting preview
 
 Crafting, smithing and smelting recipe windows group the recipes for the active

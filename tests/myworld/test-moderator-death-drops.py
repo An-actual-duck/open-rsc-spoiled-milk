@@ -23,8 +23,10 @@ def main() -> None:
     require(player, "case Group.OWNER:", "owners retain elevated death behavior")
     if "case Group.MOD:\n\t\t\t\treturn true;" in player.split("private boolean keepsInventoryOnDeathFromStaffRole()", 1)[1]:
         fail("regular moderators should not keep inventory on death")
-    require(player, "} else if (!keepsInventoryOnDeathFromStaffRole() || getCache().hasKey(\"myworld_test_death_drops\"))",
-            "death drops should use the narrower staff retention helper")
+    require(player, 'return keepsInventoryOnDeathFromStaffRole() && !getCache().hasKey("myworld_test_death_drops");',
+            "staff death retention still respects the test override")
+    require(player, "} else if (!keepsInventoryOnDeath())",
+            "death drops should use the same retention decision as the preview")
     require(player, "getCarriedItems().getInventory().dropOnDeath(mob);", "normal death drop path")
 
     print("PASS: moderators use normal death drop behavior")

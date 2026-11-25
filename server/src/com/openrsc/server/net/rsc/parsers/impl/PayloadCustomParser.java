@@ -281,6 +281,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case 159:
 				opcode = OpcodeIn.ONLINE_SIDEBAR_REQUEST;
 				break;
+			case 160:
+				opcode = OpcodeIn.DEATH_ITEMS_REQUEST;
+				break;
 			case 0:
 				opcode = OpcodeIn.LOGIN;
 				break;
@@ -469,6 +472,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case GAME_SETTINGS_CHANGED:
 				return packet.getLength() == 2;
 			case PRIVACY_SETTINGS_CHANGED:
+			case DEATH_ITEMS_REQUEST:
 				return packet.getLength() == 4;
 			case PLAYER_ACCEPTED_INIT_TRADE_REQUEST:
 			case PLAYER_ACCEPTED_TRADE:
@@ -1189,6 +1193,12 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				sl.sleepDelay = 100; // need to determine default
 				sl.sleepWord = packet.readString();
 				result = sl;
+				break;
+
+			case DEATH_ITEMS_REQUEST:
+				DeathItemsRequestStruct preview = new DeathItemsRequestStruct();
+				preview.requestId = packet.readInt();
+				result = preview;
 				break;
 
 			case DIALOGUE_PRESENTATION_READY:

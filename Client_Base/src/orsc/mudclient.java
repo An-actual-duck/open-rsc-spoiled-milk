@@ -1231,6 +1231,10 @@ public final class mudclient implements Runnable {
 	private volatile SocialTextPrompt socialTextPrompt;
 	private volatile PartyWindow partyWindow;
 	private volatile PartyWindow partyInvitation;
+	boolean deathItemsSupported;
+	private volatile DeathItemsWindow deathItemsWindow;
+	private int deathItemsRequestId;
+	private final java.util.concurrent.atomic.AtomicInteger deathItemsWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private int panelSocialTab = 0;
 	private SocialPanelLayout socialPanelLayout;
 	private static final long ONLINE_SIDEBAR_INTERVAL_NS = 15_000_000_000L;
@@ -13736,6 +13740,8 @@ public final class mudclient implements Runnable {
 				drawSkillGuide();
 			} else if (hasSocialPromptInput()) {
 				drawSocialPrompt();
+			} else if (hasDeathItemsInput()) {
+				drawDeathItemsWindow();
 			} else if (this.showUiWildWarn != 1) {
 				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
@@ -14664,7 +14670,7 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void drawInventoryPreviewIcon(ItemDef def, boolean noted, int x, int y, int width, int height) {
+	void drawInventoryPreviewIcon(ItemDef def, boolean noted, int x, int y, int width, int height) {
 		if (noted) {
 			ItemDef paper = S_WANT_CERT_AS_NOTES ? EntityHandler.noteDef : EntityHandler.certificateDef;
 			getSurface().drawSpriteClipping(spriteSelect(paper), x, y, width, height,
@@ -14738,7 +14744,7 @@ public final class mudclient implements Runnable {
 				if (acceptInput && mouseButtonClick == 1 && mouseX >= x && mouseX < x + width
 					&& mouseY >= y && mouseY < y + height) {
 					if (!C_CUSTOM_UI) showUiTab = 0;
-					lostOnDeathInterface.setVisible(true);
+					openItemsOnDeath();
 					mouseButtonClick = 0;
 				}
 			}
@@ -15059,7 +15065,7 @@ public final class mudclient implements Runnable {
 							&& yOffset + 10 < this.mouseY && this.mouseY < yOffset + 35) {
 							if (!C_CUSTOM_UI)
 								this.showUiTab = 0;
-							lostOnDeathInterface.setVisible(true);
+							openItemsOnDeath();
 						}
 					}
 				}
@@ -21838,7 +21844,8 @@ public final class mudclient implements Runnable {
 					}
 
 					if (!hasContextMenuInput() && !hasQuestRewardInput()
-						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()) {
+						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
+						&& !hasDeathItemsInput()) {
 						this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 					}
@@ -21981,6 +21988,7 @@ public final class mudclient implements Runnable {
 					}
 					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput()
 						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
+						&& !hasDeathItemsInput()
 						&& mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
@@ -28107,6 +28115,7 @@ public final class mudclient implements Runnable {
 			socialTextPrompt = null;
 			partyWindow = null;
 			partyInvitation = null;
+			closeDeathItemsWindow();
 			onlineSidebarPlayers = null;
 			lastOnlineSidebarRequest = 0;
 			socialScroll[SocialPanelLayout.ONLINE] = 0;
@@ -28222,6 +28231,7 @@ public final class mudclient implements Runnable {
 			socialTextPrompt = null;
 			partyWindow = null;
 			partyInvitation = null;
+			closeDeathItemsWindow();
 			questRewardWindow = null;
 			pendingQuestRewards.clear();
 			questRewardWheel.set(0);
@@ -33421,6 +33431,51 @@ public final class mudclient implements Runnable {
 		lostOnDeathInterface.onRender();
 	}
 
+	private void openItemsOnDeath() {
+		if (!deathItemsSupported || chatLayout == null || isAndroid()) {
+			lostOnDeathInterface.setVisible(true);
+			return;
+		}
+		closeTopMouseMenu();
+		deathItemsWheel.set(0);
+		deathItemsRequestId = deathItemsRequestId == Integer.MAX_VALUE ? 1 : deathItemsRequestId + 1;
+		deathItemsWindow = new DeathItemsWindow(deathItemsRequestId);
+		packetHandler.getClientStream().newPacket(Opcodes.Out.DEATH_ITEMS_REQUEST.getOpcode());
+		packetHandler.getClientStream().bufferBits.putInt(deathItemsRequestId);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	void receiveDeathItems(int requestId, List<DeathItemsWindow.Entry> items, int kept, boolean inDuel) {
+		DeathItemsWindow window = deathItemsWindow;
+		if (window != null && window.requestId == requestId) window.receive(items, kept, inDuel);
+	}
+
+	public boolean hasDeathItemsInput() {
+		return deathItemsWindow != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank() && !showDialogShop
+			&& !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails;
+	}
+
+	public boolean handleDeathItemsKey(int code) {
+		if (!hasDeathItemsInput()) return false;
+		if (code == java.awt.event.KeyEvent.VK_ESCAPE) closeDeathItemsWindow();
+		return true;
+	}
+
+	private void drawDeathItemsWindow() {
+		DeathItemsWindow window = deathItemsWindow;
+		if (window != null && window.draw(this, chatLayout.entryTop(), deathItemsWheel.getAndSet(0))) closeDeathItemsWindow();
+		mouseButtonClick = 0;
+	}
+
+	private void closeDeathItemsWindow() {
+		deathItemsWindow = null;
+		deathItemsWheel.set(0);
+	}
+
 	private void drawTerritorySignup() {
 		territorySignupInterface.onRender();
 	}
@@ -33439,6 +33494,10 @@ public final class mudclient implements Runnable {
 
 	public void runScroll(int x) {
 		if (hasSocialPromptInput()) return;
+		if (hasDeathItemsInput()) {
+			deathItemsWheel.addAndGet(x);
+			return;
+		}
 		if (hasQuestRewardInput()) {
 			questRewardWheel.addAndGet(x);
 			return;

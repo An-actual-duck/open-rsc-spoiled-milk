@@ -114,6 +114,7 @@ public class Opcodes {
 		LAYERED_TERRAIN_STAGE_READY(155),
 		HISCORE_REQUEST(156),
 		ONLINE_SIDEBAR_REQUEST(159),
+		DEATH_ITEMS_REQUEST(160),
 		;
 
 		private int opcode;

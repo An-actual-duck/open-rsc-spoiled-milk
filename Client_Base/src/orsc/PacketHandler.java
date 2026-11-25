@@ -559,6 +559,7 @@ public class PacketHandler {
 		put(155, "SEND_HISCORES");
 		put(157, "LAYERED_SCENE_CONTEXT");
 		put(167, "QUEST_COMPLETION_PRESENTATION");
+		put(168, "DEATH_ITEMS_PREVIEW");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
 		put(254, "UPDATE_EQUIPMENT");
 		put(255, "UPDATE_EQUIPMENT_SLOT");
@@ -915,6 +916,7 @@ public class PacketHandler {
 
 			else if (opcode == 166) updateDialoguePresentation(length);
 			else if (opcode == 167) showQuestReward(length);
+			else if (opcode == 168) showDeathItems(length);
 
 			else this.handlePacket2(opcode, length);
 
@@ -3006,6 +3008,7 @@ public class PacketHandler {
 
 	private void setServerConfiguration(int length) {
 		mc.onlineSidebarSupported = false;
+		mc.deathItemsSupported = false;
 		Properties props = new Properties();
 		String serverName, serverNameWelcome, welcomeText;
 		int playerLevelLimit, spawnAuctionNpcs, spawnIronManNpcs;
@@ -5006,12 +5009,35 @@ public class PacketHandler {
 				clientStream.finishPacket();
 			} else if ("online-sidebar/1".equals(tag)) {
 				mc.onlineSidebarSupported = true;
+			} else if ("death-items/1".equals(tag)) {
+				mc.deathItemsSupported = true;
 			} else if ("quest-completion/1".equals(tag)) {
 				clientStream.newPacket(199);
 				clientStream.bufferBits.putByte(33);
 				clientStream.finishPacket();
 			}
 		}
+	}
+
+	private void showDeathItems(int length) {
+		if (!mc.deathItemsSupported || length > packetsIncoming.dataBuffer.length
+			|| length - packetsIncoming.packetEnd < 7) return;
+		int requestId = packetsIncoming.get32();
+		int status = packetsIncoming.getUnsignedByte();
+		int kept = packetsIncoming.getUnsignedByte();
+		int count = packetsIncoming.getUnsignedByte();
+		if (requestId <= 0 || status > 1 || status == 1 && count != 0 || kept > count
+			|| length - packetsIncoming.packetEnd != count * 11) return;
+		java.util.List<DeathItemsWindow.Entry> entries = new java.util.ArrayList<>(count);
+		for (int i = 0; i < count; i++) {
+			int id = packetsIncoming.getShort();
+			int amount = packetsIncoming.get32();
+			int noted = packetsIncoming.getUnsignedByte();
+			int basePrice = packetsIncoming.get32();
+			if (amount <= 0 || noted > 1 || basePrice < 0) return;
+			entries.add(new DeathItemsWindow.Entry(id, noted != 0, basePrice, amount));
+		}
+		mc.receiveDeathItems(requestId, entries, kept, status == 1);
 	}
 
 	private void showQuestReward(int length) {
