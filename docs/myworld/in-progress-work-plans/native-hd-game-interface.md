@@ -107,11 +107,6 @@ Revisit these after the more straightforward UI updates are complete.
 
 - **Clans**. Defer the UI redesign until the owner has reviewed the existing
   creation, search, joining, invitations, and member management flows in game.
-- **Player report review**. Verify the deployed report path end to end with a
-  test report. Follow server validation, the `game_reports` record and
-  attached evidence, and any configured Discord delivery. Establish where the
-  owner can find, review, and follow up on a report. Confirm which evidence is
-  available and who can access it before choosing any backend or tooling changes.
 - **Activity windows**. Review territory and minigame screens, point
   configuration, and other activity-specific windows individually. Establish
   what players need to see or do in each before choosing a layout.
@@ -376,6 +371,27 @@ right-click action fills in the account name. The player can edit the name,
 select a reason and review both before pressing Send Report. Escape or Cancel
 closes the window. Staff retain the mute options they already have. The client
 uses the existing report request and leaves acknowledgement to the server.
+The private browser test exercised both entry points and verified that Send
+Report saved one record with the selected reason and matching chat evidence.
+
+### Deferred Discord handoff
+
+Assign delivery and review to the Discord worker when the owner resumes the
+backend work. Send an alert for each saved in-game report to a private Discord
+channel visible only to the owner. Use the existing `game_reports` record as
+the source for review. Include a report ID, the accounts involved, the reason,
+and the submission time so an alert can be matched to the record.
+
+On November 25, 2026, the live Oracle database had zero report rows. Report
+webhook delivery was disabled and its URL was unset. The server currently
+acknowledges submissions before the database write completes. Chat evidence can
+include private messages, and the existing Discord formatter can label a mute
+suggestion as an applied mute. Review evidence visibility with the owner and
+make the message distinguish suggestions from confirmed actions.
+
+Use a controlled test to verify that a report is saved, the owner receives the
+alert, and the channel permissions give the intended access. Confirm how the
+owner can open the evidence and follow up from the alert.
 
 ## Gameplay HUD and confirmations
 
