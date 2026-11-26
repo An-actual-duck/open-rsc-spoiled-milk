@@ -53,6 +53,8 @@ final class AuctionWorkspace {
 	private boolean choosingItem;
 	private ItemDef draft;
 	private boolean held;
+	private volatile Review review;
+	private String status = "";
 	private ItemWorkspaceStyle style;
 
 	AuctionWorkspace(AuctionHouse market, mudclient client) {
@@ -67,6 +69,8 @@ final class AuctionWorkspace {
 		sort = Sort.PRICE_LOW;
 		choosingItem = false;
 		draft = null;
+		review = null;
+		status = "";
 		sidebar.reset();
 		resetScroll();
 		clearSelection();
@@ -74,6 +78,7 @@ final class AuctionWorkspace {
 	}
 
 	void scroll(int delta) {
+		if (review != null) return;
 		int x = client.getMouseX();
 		int y = client.getMouseY();
 		if (browsing && sidebar.scroll(x, y, delta)) return;
@@ -82,10 +87,10 @@ final class AuctionWorkspace {
 	}
 
 	void draw() {
-		style = new ItemWorkspaceStyle(client, () -> true);
+		style = new ItemWorkspaceStyle(client, () -> review == null);
 		Layout layout = new Layout(client, style);
 		consumePress();
-		if (client.getMouseClick() == 1 && !layout.frame.contains(client.getMouseX(), client.getMouseY())) {
+		if (review == null && client.getMouseClick() == 1 && !layout.frame.contains(client.getMouseX(), client.getMouseY())) {
 			market.auctionClose();
 			return;
 		}
@@ -103,6 +108,9 @@ final class AuctionWorkspace {
 		if (style.button(tabX + tabWidth + style.gap, layout.tabY, tabWidth, style.button, "My Auctions", !browsing, true) && browsing) {
 			switchTab(false);
 		}
+		int statusX = tabX + 2 * tabWidth + 2 * style.gap;
+		style.draw(style.fit(status, layout.right() - style.gap - statusX), statusX,
+			layout.tabY + (style.button + style.line) / 2 - 2, GOLD);
 
 		market.auctionMenu.hide(market.auctionScrollHandle);
 		market.myAuctions.hide(market.myAuctionScrollHandle);
@@ -124,7 +132,57 @@ final class AuctionWorkspace {
 			drawSeller(layout.actions, findSelected(ownResults));
 			market.myAuctions.drawPanel();
 		}
+		Review currentReview = review;
+		if (currentReview != null) drawReview(layout.frame, currentReview);
 		client.setMouseClick(0);
+	}
+
+	boolean hasReview() {
+		return review != null;
+	}
+
+	void setStatus(String message) {
+		status = message;
+	}
+
+	private void review(String title, String action, String detail, Runnable submit) {
+		market.auctionMenu.setFocus(-1);
+		market.myAuctions.setFocus(-1);
+		review = new Review(title, action, detail, submit);
+	}
+
+	private void drawReview(Rectangle frame, Review current) {
+		client.getSurface().drawBoxAlpha(frame.x, frame.y, frame.width, frame.height, 0, 145);
+		ItemWorkspaceStyle modal = new ItemWorkspaceStyle(client, () -> review == current);
+		int width = Math.min(frame.width - 2 * modal.gap,
+			Math.max(size(430), modal.measure(current.detail) + 2 * modal.gap));
+		int height = modal.header + 4 * modal.gap + modal.line + modal.button;
+		Rectangle box = new Rectangle(frame.x + (frame.width - width) / 2,
+			frame.y + (frame.height - height) / 2, width, height);
+		modal.panel(box, current.title);
+		modal.draw(modal.fit(current.detail, box.width - 2 * modal.gap), box.x + modal.gap,
+			box.y + modal.header + modal.gap + modal.line, TEXT);
+		int y = box.y + box.height - modal.gap - modal.button;
+		int buttonWidth = Math.max(size(95), Math.max(modal.measure("Back"), modal.measure(current.action)) + 2 * modal.gap);
+		int right = box.x + box.width - modal.gap;
+		if (modal.button(right - 2 * buttonWidth - modal.gap, y, buttonWidth, modal.button, "Back", false, true)) {
+			review = null;
+		} else if (modal.button(right - buttonWidth, y, buttonWidth, modal.button, current.action, true, true)) {
+			review = null;
+			current.submit.run();
+		}
+	}
+
+	private static final class Review {
+		final String title, action, detail;
+		final Runnable submit;
+
+		Review(String title, String action, String detail, Runnable submit) {
+			this.title = title;
+			this.action = action;
+			this.detail = detail;
+			this.submit = submit;
+		}
 	}
 
 	private void consumePress() {
@@ -290,15 +348,26 @@ final class AuctionWorkspace {
 		y = field(market.auctionMenu, market.textField_buyAmount, "Quantity", x, y, w);
 		int quantity = value(market.auctionMenu, market.textField_buyAmount);
 		boolean valid = quantity > 0 && quantity <= auction.getAmount();
-		y = line(valid ? "Total  " + gp((long) quantity * unitPrice(auction)) : "Enter an available quantity.",
-			x, y, w, valid ? GOLD : MUTED);
-		if (style.button(x, y, w, style.button, "Purchase now", false, valid)) market.sendAuctionBuy(auction, quantity);
+		long total = (long) quantity * unitPrice(auction);
+		boolean canBuy = valid && total > 0 && total <= client.getInventoryCount(10);
+		String cost = valid ? "Total  " + gp(total) : "Enter an available quantity.";
+		if (valid && !canBuy) cost = total <= 0 ? "This listing has an invalid price." : "Need " + gp(total) + " carried.";
+		y = line(cost, x, y, w, canBuy ? GOLD : MUTED);
+		if (style.button(x, y, w, style.button, "Review purchase", false, canBuy)) {
+			review("Confirm purchase", "Buy", itemQuantity(definition, quantity) + " for " + gp(total), () -> {
+				AuctionItem latest = market.findListing(auction.getAuctionID());
+				if (latest == null || latest.getAmount() < quantity || unitPrice(latest) != unitPrice(auction)) {
+					setStatus("This listing changed. Select it again to review the new price and quantity.");
+				} else if (total > client.getInventoryCount(10)) {
+					setStatus("You need " + gp(total) + " in your inventory.");
+				} else market.sendAuctionBuy(latest, quantity);
+			});
+		}
 		y += style.button + 4;
 		boolean moderator = client.getLocalPlayer() != null && client.getLocalPlayer().isMod();
 		if (style.button(x, y, w, style.button, moderator ? "Remove listing (staff)" : "Add seller as friend", false, true)) {
 			if (moderator) {
-				market.sendModCancelAuction(auction.getAuctionID());
-				clearSelection();
+				reviewRemoval(auction, true);
 			} else client.addFriend(auction.getSeller());
 		}
 		y += style.button + 4;
@@ -327,10 +396,12 @@ final class AuctionWorkspace {
 			if (auction != null) {
 				y = line(definition(auction).getName(), x, y, w, TEXT) + style.gap;
 				if (style.button(x, y, w, style.button, "Cancel auction", false, true)) {
-					market.sendCancelAuction(auction.getAuctionID());
-					clearSelection();
+					reviewRemoval(auction, false);
 				}
 			}
+			y += style.button + style.gap;
+			y = line("Collect from a banker.", x, y, w, MUTED);
+			line("Sale proceeds and returned items", x, y, w, MUTED);
 			return;
 		}
 		if (draft == null) {
@@ -354,13 +425,38 @@ final class AuctionWorkspace {
 		boolean valid = quantity > 0 && quantity <= allowed && total >= quantity
 			&& value(input, market.textField_priceEach) > 0;
 		if (style.button(x, y, w, style.button, "Create auction", false, valid)) {
-			market.sendCreateAuction(draft.id, quantity, total);
-			choosingItem = false;
-			draft = null;
-			hideSellerFields();
-			clearSelection();
-			resetScroll();
+			ItemDef item = draft;
+			review("Confirm listing", "List item", itemQuantity(item, quantity) + " for " + gp(total), () -> {
+				if (available(item.id) < quantity) {
+					setStatus("Your available quantity changed. Review the listing again.");
+					return;
+				}
+				market.sendCreateAuction(item.id, quantity, total);
+				choosingItem = false;
+				draft = null;
+				hideSellerFields();
+				clearSelection();
+				resetScroll();
+			});
 		}
+	}
+
+	private void reviewRemoval(AuctionItem auction, boolean moderator) {
+		String action = moderator ? "Remove listing" : "Cancel auction";
+		review(action, moderator ? "Remove" : "Cancel listing", itemQuantity(definition(auction), auction.getAmount()), () -> {
+			AuctionItem latest = market.findListing(auction.getAuctionID());
+			if (latest == null || latest.getAmount() != auction.getAmount()) {
+				setStatus("This listing changed. Select it again to review the remaining items.");
+				return;
+			}
+			if (moderator) market.sendModCancelAuction(auction.getAuctionID());
+			else market.sendCancelAuction(auction.getAuctionID());
+			clearSelection();
+		});
+	}
+
+	private String itemQuantity(ItemDef item, int quantity) {
+		return item.getName() + " x " + number.format(quantity);
 	}
 
 	private void hideBuyField() {
@@ -456,6 +552,10 @@ final class AuctionWorkspace {
 	}
 
 	boolean keyDown(int key) {
+		if (review != null) {
+			if (key == 27) review = null;
+			return true;
+		}
 		if (key == 27) {
 			market.auctionClose();
 			return true;

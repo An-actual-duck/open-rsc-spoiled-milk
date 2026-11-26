@@ -1148,6 +1148,16 @@ public final class AuctionHouse {
 		return mc.usesCraftingInterfacePreview();
 	}
 
+	public boolean hasReviewInput() {
+		return visible && usesWorkspace() && workspace.hasReview();
+	}
+
+	public void showStatus(String message) {
+		if (!visible || !usesWorkspace()) return;
+		String prefix = "@gre@[Auction House]@whi@ ";
+		if (message.startsWith(prefix)) workspace.setStatus(message.substring(prefix.length()));
+	}
+
 	public void scroll(int delta) {
 		if (usesWorkspace()) workspace.scroll(delta);
 		else if (activeInterface == 0) auctionMenu.scrollMethodList(auctionScrollHandle, delta);
@@ -1156,6 +1166,11 @@ public final class AuctionHouse {
 
 	List<AuctionItem> listings() {
 		return auctionItems;
+	}
+
+	AuctionItem findListing(int id) {
+		for (AuctionItem item : auctionItems) if (item.getAuctionID() == id) return item;
+		return null;
 	}
 
 	int revision() {

@@ -7,6 +7,7 @@ import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.clan.ClanInvite;
 import com.openrsc.server.content.clan.ClanPlayer;
 import com.openrsc.server.content.clan.ClanRank;
+import com.openrsc.server.content.market.AuctionFeedback;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyInvite;
 import com.openrsc.server.content.party.PartyPlayer;
@@ -591,11 +592,11 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 	private void handleAuction(Player player, OptionsStruct payload) {
 		if (player.isIronMan(IronmanMode.Ironman.id()) || player.isIronMan(IronmanMode.Ultimate.id())
 			|| player.isIronMan(IronmanMode.Hardcore.id()) || player.isIronMan(IronmanMode.Transfer.id())) {
-			player.message("As an Ironman, you cannot use the Auction.");
+			AuctionFeedback.warning(player, "As an Ironman, you cannot use the Auction House.");
 			return;
 		}
 		if (player.getWorld().getServer().getTimeUntilShutdown() > 0) {
-			player.message("Auction house is disabled until server restart!");
+			AuctionFeedback.warning(player, "The Auction House is closed until the server restarts.");
 			return;
 		}
 		/* Set true when auctioneer opens AH window for the player */
@@ -604,7 +605,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		}
 
 		if (player.getTotalLevel() < 100) {
-			ActionSender.sendBox(player,"You must have 100 total skill before using the auction house.", false);
+			AuctionFeedback.warning(player, "You need a total skill level of 100 to use the Auction House.");
 			return;
 		}
 
@@ -640,7 +641,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		int auctionBuyID = payload.id;
 		int amountBuy = payload.amount;
 		if (System.currentTimeMillis() - player.getLastExchangeTime() < 3000) {
-			ActionSender.sendBox(player, "@ora@[Auction House - Warning] % @whi@ You are acting too quickly, please wait 3 seconds.", false);
+			AuctionFeedback.warning(player, "Wait 3 seconds between auction actions.");
 			return;
 		}
 
@@ -652,7 +653,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		int amount = payload.amount;
 		int price = payload.price;
 		if (System.currentTimeMillis() - player.getLastExchangeTime() < 3000) {
-			ActionSender.sendBox(player,"@ora@[Auction House - Warning]@whi@ You are acting too quickly, please wait 3 seconds.", false);
+			AuctionFeedback.warning(player, "Wait 3 seconds between auction actions.");
 			return;
 		}
 		player.getWorld().getMarket().addNewAuctionItemTask(player, catalogID, amount, price);
@@ -661,7 +662,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 	private void auctionCancel(Player player, OptionsStruct payload) {
 		int auctionID = payload.id;
 		if (System.currentTimeMillis() - player.getLastExchangeTime() < 3000) {
-			ActionSender.sendBox(player,"@ora@[Auction House - Warning]@whi@ You are acting too quickly, please wait 3 seconds.", false);
+			AuctionFeedback.warning(player, "Wait 3 seconds between auction actions.");
 			return;
 		}
 		player.getWorld().getMarket().addCancelAuctionItemTask(player, auctionID);
@@ -669,13 +670,13 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 
 	private void auctionRefresh(Player player) {
 		if (System.currentTimeMillis() - player.getAttribute("ah_refresh", (System.currentTimeMillis() - 5000)) < 5000) {
-			ActionSender.sendBox(player,"@ora@[Auction House - Warning]@whi@ You are acting too quickly, please wait 5 seconds.", false);
+			AuctionFeedback.warning(player, "Wait 5 seconds between listing refreshes.");
 			return;
 		}
 
 		player.setAttribute("ah_refresh", System.currentTimeMillis());
 
-		player.message("@gre@[Auction House]@whi@ List has been refreshed!");
+		AuctionFeedback.status(player, "Listings refreshed.");
 		ActionSender.sendOpenAuctionHouse(player);
 	}
 

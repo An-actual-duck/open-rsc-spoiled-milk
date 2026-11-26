@@ -8787,7 +8787,17 @@ public final class mudclient implements Runnable {
 	private void drawDialogServerMessage(byte var1) {
 		if (usesSessionNotices()) {
 			if (serverNotice == null) {
-				serverNotice = new SessionNoticeWindow("Server notice", serverMessage, "Close", null,
+				String title = "Server notice";
+				String body = serverMessage;
+				int headerEnd = serverMessage.indexOf('%');
+				if (headerEnd > 0) {
+					String header = serverMessage.substring(0, headerEnd);
+					if (header.equals("Auction House") || header.equals("Auction collections")) {
+						title = header;
+						body = serverMessage.substring(headerEnd + 1);
+					}
+				}
+				serverNotice = new SessionNoticeWindow(title, body, "Close", null,
 					serverMessageBoxTop ? 680 : 500, !serverMessageBoxTop);
 			}
 			if (serverNotice.draw(this, chatLayout.entryTop()) == SessionNoticeWindow.Action.DISMISS) {
@@ -22267,7 +22277,7 @@ public final class mudclient implements Runnable {
 					}
 
 					boolean modalOwnsInput = worldMapWindow != null || hasBankPinInput() || hasSessionNoticeInput() || hasItemQuantityInput()
-						|| hasReportPlayerInput() || hasPasswordChangeInput() || hasGameplayPromptInput();
+						|| hasReportPlayerInput() || hasPasswordChangeInput() || hasGameplayPromptInput() || auctionHouse.hasReviewInput();
 					if (!modalOwnsInput) {
 						if (!hasContextMenuInput() && !hasQuestRewardInput()
 							&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
@@ -22782,7 +22792,7 @@ public final class mudclient implements Runnable {
 							clientPort.closeKeyboard();
 						}
 					}
-					if (auctionHouse.isVisible() && (auctionHouse.usesWorkspace() && key == 27
+					if (auctionHouse.isVisible() && (auctionHouse.hasReviewInput() || auctionHouse.usesWorkspace() && key == 27
 						|| auctionHouse.auctionMenu.focusOn(auctionHouse.auctionSearchHandle)
 						|| auctionHouse.myAuctions.focusOn(auctionHouse.textField_priceEach)
 						|| auctionHouse.auctionMenu.focusOn(auctionHouse.textField_buyAmount)

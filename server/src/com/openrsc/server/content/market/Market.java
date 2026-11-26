@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.openrsc.server.Server;
 import com.openrsc.server.content.market.task.*;
 import com.openrsc.server.database.GameDatabaseException;
-import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.ServerAwareThreadFactory;
@@ -115,10 +114,8 @@ public class Market implements Runnable {
 					if (!getTransactions().expire(expiredItem)) continue;
 
 					if (sellerPlayer != null) {
-						ItemDefinition def = sellerPlayer.getWorld().getServer().getEntityHandler().getItemDef(itemIndex);
-						sellerPlayer.message("@gre@[Auction House] @whi@Your auction - @lre@" + def.getName() + " x" + amount
-							+ "@whi@ has expired!");
-						sellerPlayer.message("You can collect it back from a banker.");
+						AuctionFeedback.status(sellerPlayer, "Expired: " + AuctionFeedback.describe(sellerPlayer, itemIndex, amount)
+							+ ". Collect from a banker.");
 					}
 				}
 			}

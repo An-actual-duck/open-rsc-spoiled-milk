@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.authentic.npcs.varrock;
 import com.openrsc.server.constants.IronmanMode;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.content.market.AuctionFeedback;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
@@ -43,7 +44,7 @@ public class Auctioneers implements TalkNpcTrigger, OpNpcTrigger {
 		if (menu == 0) {
 			if (player.isIronMan(IronmanMode.Ironman.id()) || player.isIronMan(IronmanMode.Ultimate.id())
 				|| player.isIronMan(IronmanMode.Hardcore.id()) || player.isIronMan(IronmanMode.Transfer.id())) {
-				player.message("As an Ironman, you cannot use the Auction.");
+				AuctionFeedback.warning(player, "As an Ironman, you cannot use the Auction House.");
 				return;
 			}
 			if (player.getTotalLevel() < 100) {
@@ -86,7 +87,7 @@ public class Auctioneers implements TalkNpcTrigger, OpNpcTrigger {
 	@Override
 	public void onOpNpc(Player player, Npc n, String command) {
 		if (player.getTotalLevel() < 100) {
-			player.message("You must have over 100 total skill to use the auction house.");
+			AuctionFeedback.warning(player, "You need a total skill level of 100 to use the Auction House.");
 			return;
 		}
 		if (n.getID() == AUCTIONEER) {
@@ -97,7 +98,7 @@ public class Auctioneers implements TalkNpcTrigger, OpNpcTrigger {
 			if (command.equalsIgnoreCase("Auction")) {
 				if (player.isIronMan(IronmanMode.Ironman.id()) || player.isIronMan(IronmanMode.Ultimate.id())
 					|| player.isIronMan(IronmanMode.Hardcore.id()) || player.isIronMan(IronmanMode.Transfer.id())) {
-					player.message("As an Ironman, you cannot use the Auction.");
+					AuctionFeedback.warning(player, "As an Ironman, you cannot use the Auction House.");
 					return;
 				}
 				if(validatebankpin(player, n)) {
@@ -114,7 +115,7 @@ public class Auctioneers implements TalkNpcTrigger, OpNpcTrigger {
 			if (command.equalsIgnoreCase("Auction")) {
 				if (player.isIronMan(IronmanMode.Ironman.id()) || player.isIronMan(IronmanMode.Ultimate.id())
 					|| player.isIronMan(IronmanMode.Hardcore.id()) || player.isIronMan(IronmanMode.Transfer.id())) {
-					player.message("As an Ironman, you cannot use the Auction.");
+					AuctionFeedback.warning(player, "As an Ironman, you cannot use the Auction House.");
 					return;
 				}
 				if(validatebankpin(player, n)) {
@@ -125,9 +126,8 @@ public class Auctioneers implements TalkNpcTrigger, OpNpcTrigger {
 			} else if (command.equalsIgnoreCase("Teleport")) {
 				NpcInteraction interaction = NpcInteraction.NPC_TALK_TO;
 				NpcInteraction.setInteractions(n, player, interaction);
-				mes(n, "Would you like to be teleport to Varrock centre for 1000 gold?");
-				delay(2);
-				int yesOrNo = multi(player, "Yes please!", "No thanks.");
+				npcsay(player, n, "Would you like to teleport to Varrock Centre for 1,000 coins?");
+				int yesOrNo = multi(player, n, "Teleport me", "I'll stay here");
 				if (yesOrNo == 0) {
 					if (ifheld(player, ItemId.COINS.id(), 1000)) {
 						player.getCarriedItems().remove(new Item(ItemId.COINS.id(), 1000));

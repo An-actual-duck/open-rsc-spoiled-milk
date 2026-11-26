@@ -1,10 +1,9 @@
 package com.openrsc.server.content.market.task;
 
 import com.openrsc.server.content.market.CollectibleItem;
+import com.openrsc.server.content.market.AuctionFeedback;
 import com.openrsc.server.database.GameDatabaseException;
-import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.net.rsc.ActionSender;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,17 +23,7 @@ public class CollectibleItemsNotificationTask extends MarketTask {
 	public void doTask() {
 		try {
 			ArrayList<CollectibleItem> list = player.getWorld().getServer().getDatabase().getCollectibleItems(player.getDatabaseID());
-			StringBuilder items = new StringBuilder("Following items have been removed from market: % ");
-			for (CollectibleItem item : list) {
-				ItemDefinition def = player.getWorld().getServer().getEntityHandler().getItemDef(item.item_id);
-				items.append(" @lre@").append(def.getName()).append(" @whi@x @cya@").append(item.item_amount).append(" ").append(item.explanation).append("@whi@ %");
-			}
-			items.append("@gre@You can claim them back from Auctioneer");
-
-			if (list.size() == 0) {
-				return;
-			}
-			ActionSender.sendBox(player, items.toString(), true);
+			if (!list.isEmpty()) AuctionFeedback.collection(player, list, false, 0);
 		} catch (final GameDatabaseException e) {
 			LOGGER.catching(e);
 		}

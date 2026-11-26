@@ -107,8 +107,6 @@ Revisit these after the more straightforward UI updates are complete.
 
 - **Clans**. Defer the UI redesign until the owner has reviewed the existing
   creation, search, joining, invitations, and member management flows in game.
-- **Auction collection and expiry**. Review the clerk and banker collection
-  flow and expiry before changing how players retrieve proceeds and returned items.
 - **Player report review**. Verify the deployed report path end to end with a
   test report. Follow server validation, the `game_reports` record and
   attached evidence, and any configured Discord delivery. Establish where the
@@ -476,8 +474,17 @@ The listings panel contains sorting, refresh, and paging. Selecting a listing
 shows the seller, available quantity, and purchase total in the right panel.
 
 My Auctions shows the player’s active listings and keeps item selection, listing
-price, quantity, and cancellation in the same window. Listing actions use the
-existing auction clerk and market server flow.
+price, quantity, and cancellation in the same window. Purchases, new listings,
+cancellations, and staff removals show a review dialog before submission. The
+window shows the server's result, including where purchases and cancelled items
+were delivered. Auction warnings use the same notice frame as other game prompts.
+
+Collect is available through a banker's dialogue or right-click menu. It keeps
+the existing PIN check and deposits proceeds and returns directly into the bank.
+The collection receipt shows what was deposited and whether anything remains.
+Login notices list pending collections and their reasons. Sale, expiry, and
+staff removal messages point players to the banker. The listing lifetime and
+transaction rules remain as configured on the server.
 
 ## Trade preview
 
