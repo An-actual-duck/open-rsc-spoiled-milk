@@ -83,8 +83,8 @@ final class GameplayHud {
 		int font = GameInterfaceSettings.textSize().labelFont;
 		int line = surface.fontHeight(font);
 		int pad = size.pixels(8);
-		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, hover ? 0x384B61 : 0x182333, 238);
-		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, hover ? 0xD2B873 : 0x667993);
+		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, hover ? InterfacePalette.CONTROL_HOVER : InterfacePalette.PANEL, 238);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, hover ? 0xD2B873 : InterfacePalette.BORDER);
 		surface.drawColoredStringCentered(bounds.x + bounds.width / 2, label, color, 0, font,
 			bounds.y + (bounds.height + line) / 2 - 3);
 		if (progress >= 0) {
@@ -92,7 +92,7 @@ final class GameplayHud {
 			int width = bounds.width - 2;
 			int filled = (int) Math.round(width * progress);
 			int y = bounds.y + bounds.height - barHeight - 1;
-			surface.drawBox(bounds.x + 1, y, width, barHeight, 0x394659);
+			surface.drawBox(bounds.x + 1, y, width, barHeight, InterfacePalette.CONTROL);
 			if (filled > 0) surface.drawBox(bounds.x + 1, y, filled, barHeight, 0xA3D3A8);
 		}
 		if (details == null) return;
@@ -101,10 +101,10 @@ final class GameplayHud {
 		int x = (client.getGameWidth() - width) / 2;
 		int y = bounds.y + bounds.height + 2;
 		int height = details.length * line + 2 * pad;
-		surface.drawBoxAlpha(x, y, width, height, 0x182333, 238);
-		surface.drawBoxBorder(x, width, y, height, 0x667993);
+		surface.drawBoxAlpha(x, y, width, height, InterfacePalette.PANEL, 238);
+		surface.drawBoxBorder(x, width, y, height, InterfacePalette.BORDER);
 		for (int i = 0; i < details.length; i++) {
-			surface.drawString(details[i], x + pad, y + pad + (i + 1) * line - 3, 0xE6EDF2, font);
+			surface.drawString(details[i], x + pad, y + pad + (i + 1) * line - 3, InterfacePalette.TEXT, font);
 		}
 	}
 }

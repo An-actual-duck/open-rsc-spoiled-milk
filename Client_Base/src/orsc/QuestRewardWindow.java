@@ -55,33 +55,33 @@ final class QuestRewardWindow {
 		if (clicked && previous.contains(mouseX, mouseY)) firstRow = Math.max(0, firstRow - 1);
 		if (clicked && next.contains(mouseX, mouseY)) firstRow = Math.min(maxScroll, firstRow + 1);
 
-		surface.drawBoxAlpha(x, y, width, height, 0x182333, 248);
-		surface.drawVerticalGradient(x, y, width, heading, 0x3B4C67, 0x28354A);
-		surface.drawBoxBorder(x, width, y, height, 0x667993);
+		surface.drawBoxAlpha(x, y, width, height, InterfacePalette.PANEL, 248);
+		surface.drawVerticalGradient(x, y, width, heading, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(x, width, y, height, InterfacePalette.BORDER);
 		center(surface, "Quest complete", x + width / 2, y, heading, text.bodyFont, 0xFFDC82);
 		String title = ContextMenuLayout.fitLabel(name, textWidth, value -> surface.stringWidth(text.bodyFont, value));
 		center(surface, title, x + width / 2, rowTop - lineHeight, lineHeight, text.bodyFont, 0xFFFFFF);
 		for (int index = 0; index < visibleRows; index++) {
 			int top = rowTop + index * lineHeight;
-			surface.drawBox(x + padding, top, width - 2 * padding, lineHeight - 1, 0x233144);
+			surface.drawBox(x + padding, top, width - 2 * padding, lineHeight - 1, InterfacePalette.ROW);
 			surface.drawString(rows.get(firstRow + index), x + 2 * padding, baseline(surface, top, lineHeight, text.bodyFont),
-				0xD8E1EE, text.bodyFont);
+				InterfacePalette.TEXT, text.bodyFont);
 		}
 		button(surface, continueButton, "Continue", text.labelFont, mouseX, mouseY, true);
 		if (maxScroll > 0) {
 			button(surface, previous, "^", text.labelFont, mouseX, mouseY, firstRow > 0);
 			button(surface, next, "v", text.labelFont, mouseX, mouseY, firstRow < maxScroll);
 			surface.drawString((firstRow + 1) + "-" + (firstRow + visibleRows) + " / " + rows.size(), x + padding,
-				baseline(surface, buttonY, buttonHeight, text.labelFont), 0xB6C6DE, text.labelFont);
+				baseline(surface, buttonY, buttonHeight, text.labelFont), InterfacePalette.MUTED_TEXT, text.labelFont);
 		}
 		return false;
 	}
 
 	private static void button(MudClientGraphics surface, Rectangle bounds, String label, int font, int x, int y, boolean enabled) {
 		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height,
-			enabled && bounds.contains(x, y) ? 0x3A4C67 : 0x28354A);
-		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, enabled ? 0x667993 : 0x465872);
-		center(surface, label, bounds.x + bounds.width / 2, bounds.y, bounds.height, font, enabled ? 0xFFFFFF : 0xB6C6DE);
+			enabled && bounds.contains(x, y) ? InterfacePalette.CONTROL_HOVER : InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, enabled ? InterfacePalette.BORDER : InterfacePalette.CONTROL_DISABLED);
+		center(surface, label, bounds.x + bounds.width / 2, bounds.y, bounds.height, font, enabled ? 0xFFFFFF : InterfacePalette.MUTED_TEXT);
 	}
 
 	private static void center(MudClientGraphics surface, String label, int x, int top, int height, int font, int color) {

@@ -178,6 +178,6 @@ final class ExperienceTrackerWindow {
 	}
 
 	private static void label(MudClientGraphics surface, int x, int y, int height, String label, int font, int line) {
-		surface.drawString(label, x, y + (height + line) / 2 - 3, 0xC4D0E0, font);
+		surface.drawString(label, x, y + (height + line) / 2 - 3, InterfacePalette.MUTED_TEXT, font);
 	}
 }

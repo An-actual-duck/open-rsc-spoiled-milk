@@ -200,7 +200,11 @@ public final class NativeHdInterfaceFixture {
 			chat.left + chat.width, chat.entryTop());
 		check(toolbar.left >= 0 && toolbar.right < width && toolbar.top >= 0 && toolbar.bottom() < height,
 			"Toolbar fits the viewport");
-		check(toolbar.buttonSize >= SideToolbarLayout.ICON_SIZE + 4, "Original icons fit with padding");
+		int originalButtonSize = Math.max(SideToolbarLayout.ICON_SIZE + 4, size.pixels(42));
+		check(toolbar.buttonSize == (bottomLauncher ? originalButtonSize : (originalButtonSize * 5 + 2) / 4),
+			"Upper toolbar increases by one quarter at each UI scale");
+		check(toolbar.iconSize == (bottomLauncher ? 32 : 40) && toolbar.buttonSize >= toolbar.iconSize + 4,
+			"Classic artwork fits with padding");
 		for (int index = 0; index < SideToolbarLayout.BUTTON_COUNT; index++) {
 			int x = toolbar.leftOf(index);
 			check(toolbar.buttonAt(x, toolbar.top) == index, "Button's visible leading edge " + index);

@@ -204,7 +204,7 @@ final class ClanWindow {
 		y += l.line + l.gap;
 		scrollArea = new Rectangle(l.left, y, l.width, rows * l.row);
 		page(results.size(), rows);
-		if (results.isEmpty()) l.text("No clans found.", l.left, y + l.line, l.width, 0xC4D0E0, l.font);
+		if (results.isEmpty()) l.text("No clans found.", l.left, y + l.line, l.width, InterfacePalette.MUTED_TEXT, l.font);
 		for (int index = firstRow; index < Math.min(firstRow + rows, results.size()); index++) {
 			ClanResult clan = results.get(index);
 			if (l.row(y, false, true)) {
@@ -301,7 +301,7 @@ final class ClanWindow {
 		if (membershipTabs(l)) return false;
 		int y = l.top + l.section;
 		for (int setting = 0; setting < PERMISSIONS.length; setting++) {
-			l.text(PERMISSIONS[setting], l.left, y + l.line - 3, l.width, 0xC4D0E0, l.font);
+			l.text(PERMISSIONS[setting], l.left, y + l.line - 3, l.width, InterfacePalette.MUTED_TEXT, l.font);
 			y += l.line;
 			String[] choices = setting == 2 ? JOIN : RANKS;
 			int current = clan.getClanSetting(setting);
@@ -409,7 +409,7 @@ final class ClanWindow {
 		}
 
 		void field(String label, ModalTextField field, int y) {
-			text(label, left, y + line - 3, width, 0xC4D0E0, font);
+			text(label, left, y + line - 3, width, InterfacePalette.MUTED_TEXT, font);
 			Rectangle box = new Rectangle(left, y + line, width, bodyLine + 2 * gap);
 			if (hover(box) && client.getMouseClick() == 1) focus = field;
 			field.draw(client, box, bodyFont, gap, focus == field);
@@ -418,7 +418,7 @@ final class ClanWindow {
 		boolean row(int y, boolean selected, boolean selectable) {
 			Rectangle box = new Rectangle(left, y, width, row - 1);
 			boolean hovered = selectable && hover(box);
-			surface.drawBox(box.x, box.y, box.width, box.height, selected || hovered ? 0x405978 : 0x263449);
+			surface.drawBox(box.x, box.y, box.width, box.height, selected || hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW);
 			if (selected) surface.drawBoxBorder(box.x, box.width, box.y, box.height, 0xD2B873);
 			return hovered && click();
 		}
@@ -427,8 +427,8 @@ final class ClanWindow {
 			int one = width / 2;
 			int two = width / 4;
 			text(first, left + gap, y, one - 2 * gap, 0xFFFFFF, font);
-			text(second, left + one + gap, y, two - 2 * gap, 0xC4D0E0, font);
-			text(third, left + one + two + gap, y, width - one - two - 2 * gap, 0xC4D0E0, font);
+			text(second, left + one + gap, y, two - 2 * gap, InterfacePalette.MUTED_TEXT, font);
+			text(third, left + one + two + gap, y, width - one - two - 2 * gap, InterfacePalette.MUTED_TEXT, font);
 		}
 
 		void text(String value, int x, int y, int limit, int color, int font) {

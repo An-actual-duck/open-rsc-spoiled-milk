@@ -7,10 +7,10 @@ import java.awt.Rectangle;
 final class WorldMapWindow {
 	private static final MinimapMarkerIcon[] ICONS = MinimapMarkerIcon.values();
 	private static final int KEY_ROWS = ICONS.length + 1;
-	private static final int BACKGROUND = 0x182333;
-	private static final int BORDER = 0x667993;
+	private static final int BACKGROUND = InterfacePalette.PANEL;
+	private static final int BORDER = InterfacePalette.BORDER;
 	private static final int GOLD = 0xFFDC82;
-	private static final int TEXT = 0xF2F5FA;
+	private static final int TEXT = InterfacePalette.TEXT;
 
 	private Layout layout;
 	private MinimapAtlas atlas;
@@ -111,7 +111,7 @@ final class WorldMapWindow {
 		}
 
 		surface.drawBox(0, 0, frame.width, frame.height, BACKGROUND);
-		surface.drawVerticalGradient(0, 0, frame.width, frame.headerHeight, 0x3B4C67, 0x28354A);
+		surface.drawVerticalGradient(0, 0, frame.width, frame.headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
 		surface.drawLineHoriz(0, frame.headerHeight - 1, frame.width, BORDER);
 		int baseline = (frame.headerHeight + frame.labelLine) / 2 - 2;
 		String title = "World map";
@@ -126,7 +126,7 @@ final class WorldMapWindow {
 
 	private static void drawKey(MudClientGraphics surface, Layout frame, int offset) {
 		Rectangle key = frame.key;
-		surface.drawBox(key.x, key.y, key.width, key.height, 0x202D41);
+		surface.drawBox(key.x, key.y, key.width, key.height, InterfacePalette.ROW_ALTERNATE);
 		surface.drawBoxBorder(key.x, key.width, key.y, key.height, BORDER);
 		surface.drawString("Map key", key.x + frame.padding, frame.keyRowsTop - frame.padding, GOLD, frame.text.labelFont);
 		surface.drawLineHoriz(key.x + frame.padding, frame.keyRowsTop - 4, key.width - frame.padding * 2, BORDER);
@@ -149,13 +149,13 @@ final class WorldMapWindow {
 			Rectangle bar = frame.scrollbar;
 			int thumb = frame.thumbHeight();
 			int top = bar.y + offset * (bar.height - thumb) / frame.maxKeyOffset;
-			surface.drawBox(bar.x, bar.y, bar.width, bar.height, 0x101923);
+			surface.drawBox(bar.x, bar.y, bar.width, bar.height, InterfacePalette.INSET);
 			surface.drawBox(bar.x, top, bar.width, thumb, BORDER);
 		}
 	}
 
 	static void drawControl(MudClientGraphics surface, Rectangle bounds, boolean hover, boolean close) {
-		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, hover ? 0x536884 : 0x27354A);
+		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, hover ? InterfacePalette.BORDER : InterfacePalette.ROW);
 		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, BORDER);
 		int edge = bounds.width / 4;
 		int left = bounds.x + edge;

@@ -92,7 +92,7 @@ final class SocialTextPrompt {
 		drawFrame(surface, new Rectangle(x, y, width, height), header, pad, action.title, style.bodyFont, bodyLine);
 		String label = recipient == null ? "Player name" : "To " + recipient;
 		label = ContextMenuLayout.fitLabel(label, field.width - pad, part -> surface.stringWidth(style.labelFont, part));
-		surface.drawString(label, field.x, field.y - Math.max(5, pad / 2), 0xC4D0E0, style.labelFont);
+		surface.drawString(label, field.x, field.y - Math.max(5, pad / 2), InterfacePalette.MUTED_TEXT, style.labelFont);
 		editor.draw(client, field, rows, style.bodyFont, pad);
 		drawButton(surface, cancel, "Cancel", true, cancel.contains(mouseX, mouseY), style.labelFont, labelLine);
 		drawButton(surface, submit, action.submitLabel, enabled, submit.contains(mouseX, mouseY),
@@ -102,18 +102,18 @@ final class SocialTextPrompt {
 
 	static void drawFrame(MudClientGraphics surface, Rectangle bounds, int header, int pad, String title,
 						  int font, int line) {
-		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, 0x182333, 246);
-		surface.drawVerticalGradient(bounds.x, bounds.y, bounds.width, header, 0x3B4C67, 0x28354A);
-		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, 0x667993);
+		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, InterfacePalette.PANEL, 246);
+		surface.drawVerticalGradient(bounds.x, bounds.y, bounds.width, header, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, InterfacePalette.BORDER);
 		surface.drawString(title, bounds.x + pad, bounds.y + (header + line) / 2 - 3, 0xFFFFFF, font);
 	}
 
 	static void drawButton(MudClientGraphics surface, Rectangle bounds, String label, boolean enabled,
 								   boolean hover, int font, int line) {
 		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height,
-			!enabled ? 0x253042 : hover ? 0x465873 : 0x34425A);
-		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, 0x667993);
+			!enabled ? InterfacePalette.CONTROL_DISABLED : hover ? InterfacePalette.CONTROL_HOVER : InterfacePalette.CONTROL);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, InterfacePalette.BORDER);
 		surface.drawColoredStringCentered(bounds.x + bounds.width / 2, label,
-			enabled ? 0xFFFFFF : 0x929FB1, 0, font, bounds.y + (bounds.height + line) / 2 - 3);
+			enabled ? 0xFFFFFF : InterfacePalette.DISABLED_TEXT, 0, font, bounds.y + (bounds.height + line) / 2 - 3);
 	}
 }

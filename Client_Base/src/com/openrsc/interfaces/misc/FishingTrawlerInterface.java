@@ -3,6 +3,7 @@ package com.openrsc.interfaces.misc;
 import com.openrsc.interfaces.NComponent;
 import com.openrsc.interfaces.NCustomComponent;
 import java.awt.Rectangle;
+import orsc.InterfacePalette;
 import orsc.mudclient;
 
 public class FishingTrawlerInterface extends NComponent {
@@ -140,7 +141,7 @@ public class FishingTrawlerInterface extends NComponent {
 		int trackWidth = right - trackLeft;
 		int trackHeight = Math.max(6, style.line / 2);
 		int trackY = lineY - (style.line + trackHeight) / 2 + 2;
-		client.getSurface().drawBox(trackLeft, trackY, trackWidth, trackHeight, 0x131E2A);
+		client.getSurface().drawBox(trackLeft, trackY, trackWidth, trackHeight, InterfacePalette.SCROLL_TRACK);
 		int fillWidth = trackWidth * level / 1000;
 		if (fillWidth > 0) client.getSurface().drawBox(trackLeft, trackY, fillWidth, trackHeight,
 			level >= 800 ? 0xDD8762 : 0x5295CF);

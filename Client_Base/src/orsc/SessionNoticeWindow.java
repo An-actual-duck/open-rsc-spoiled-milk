@@ -119,7 +119,7 @@ final class SessionNoticeWindow {
 				}
 				if (cancelLabel == null) {
 					surface.drawString((firstRow + 1) + "-" + (firstRow + visibleRows) + " / " + rows.size(),
-						next.x + next.width + padding, footerY + (buttonHeight + labelLine) / 2 - 3, 0xC4D0E0, text.labelFont);
+						next.x + next.width + padding, footerY + (buttonHeight + labelLine) / 2 - 3, InterfacePalette.MUTED_TEXT, text.labelFont);
 				}
 			}
 		}
@@ -127,7 +127,7 @@ final class SessionNoticeWindow {
 		for (int row = 0; row < visibleRows; row++) {
 			String line = rows.get(firstRow + row);
 			int textX = centered ? left + (contentWidth - surface.stringWidth(text.bodyFont, line)) / 2 : left;
-			surface.drawString(line, textX, baseline + row * rowHeight, 0xEFF4FA, text.bodyFont);
+			surface.drawString(line, textX, baseline + row * rowHeight, InterfacePalette.TEXT, text.bodyFont);
 		}
 		return Action.NONE;
 	}

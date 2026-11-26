@@ -4,6 +4,7 @@ import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import orsc.ClericTextLayout;
 import orsc.GameInterfaceSettings;
+import orsc.InterfacePalette;
 import orsc.graphics.two.MudClientGraphics;
 import orsc.mudclient;
 
@@ -14,10 +15,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class CraftingWindow {
-	private static final int TEXT = 0xE6EDF2;
-	private static final int MUTED = 0xA9B9C6;
+	private static final int TEXT = InterfacePalette.TEXT;
+	private static final int MUTED = InterfacePalette.MUTED_TEXT;
 	private static final int GOLD = 0xF2D393;
-	private static final int BORDER = 0x516679;
+	private static final int BORDER = InterfacePalette.BORDER;
 	private static final int GOOD = 0xA3D3A8;
 	private static final int WARN = 0xFFBC8D;
 	private static final int[] QUANTITY_STEPS = {-5, -1, 1, 5};
@@ -109,7 +110,7 @@ final class CraftingWindow {
 	}
 
 	private void drawHeader(int x, int y, int width, int height, int gap, int titleFont, int font) {
-		client.getSurface().drawVerticalGradient(x + 1, y + 1, width - 2, height - 1, 0x395065, 0x263B4A);
+		client.getSurface().drawVerticalGradient(x + 1, y + 1, width - 2, height - 1, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
 		int buttonHeight = height - gap;
 		int closeWidth = Math.max(size(30), measure(font, "X") + gap);
 		int start = x + gap;
@@ -231,7 +232,7 @@ final class CraftingWindow {
 	}
 
 	private String drawCosts(int x, int y, int width, int height, int gap, int font) {
-		client.getSurface().drawBoxAlpha(x, y, width, height, 0x131F2A, 245);
+		client.getSurface().drawBoxAlpha(x, y, width, height, InterfacePalette.INSET, 245);
 		client.getSurface().drawBoxBorder(x, width, y, height, BORDER);
 		draw("Materials per craft", x + gap, y + gap + client.getSurface().fontHeight(font) - 2, font, MUTED);
 		ProductionRecipeView recipe = session.getSelectedRecipe();
@@ -269,7 +270,7 @@ final class CraftingWindow {
 	}
 
 	private void drawTooltip(String text, int x, int y, int width, int height, int gap, int font) {
-		client.getSurface().drawBoxAlpha(x, y, width, height, 0x131F2A, 230);
+		client.getSurface().drawBoxAlpha(x, y, width, height, InterfacePalette.INSET, 230);
 		List<String> lines = ClericTextLayout.wrap(text, width - 2 * gap, value -> measure(font, value));
 		int line = client.getSurface().fontHeight(font);
 		for (int i = 0; i < Math.min(2, lines.size()); i++) {
@@ -281,7 +282,7 @@ final class CraftingWindow {
 
 	private void drawControls(int x, int y, int width, int height, int header, int gap, int titleFont, int font) {
 		frame(x, y, width, height);
-		client.getSurface().drawVerticalGradient(x + 1, y + 1, width - 2, header - 1, 0x395065, 0x263B4A);
+		client.getSurface().drawVerticalGradient(x + 1, y + 1, width - 2, header - 1, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
 		draw("Crafting controls", x + gap, baseline(y, header, titleFont), titleFont, TEXT);
 		int left = x + gap;
 		int inner = width - 2 * gap;
@@ -366,13 +367,13 @@ final class CraftingWindow {
 	}
 
 	private void frame(int x, int y, int width, int height) {
-		client.getSurface().drawBoxAlpha(x, y, width, height, 0x1B2935, 242);
+		client.getSurface().drawBoxAlpha(x, y, width, height, InterfacePalette.PANEL, 242);
 		client.getSurface().drawBoxBorder(x, width, y, height, BORDER);
 	}
 
 	private boolean button(int x, int y, int width, int height, String text, int font, boolean selected, boolean enabled) {
 		boolean hover = enabled && over(x, y, width, height);
-		int background = selected ? 0x405C65 : hover ? 0x415468 : enabled ? 0x2C3C50 : 0x202C38;
+		int background = selected ? InterfacePalette.CONTROL_SELECTED : hover ? InterfacePalette.CONTROL_HOVER : enabled ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_DISABLED;
 		client.getSurface().drawBoxAlpha(x, y, width, height, background, 245);
 		client.getSurface().drawBoxBorder(x, width, y, height, selected ? 0xA8BB9F : BORDER);
 		if (!text.isEmpty()) center(fit(text, font, width - 4), x, baseline(y, height, font), width, font, enabled ? TEXT : MUTED);

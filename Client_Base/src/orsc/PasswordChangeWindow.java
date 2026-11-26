@@ -157,13 +157,13 @@ final class PasswordChangeWindow {
 			int labelY = top + i * rowHeight + labelLine;
 			Rectangle field = new Rectangle(left, labelY + gap, width - 2 * pad, fieldHeight);
 			if (clicked && field.contains(mouseX, mouseY)) focus = i;
-			surface.drawString(LABELS[i], left, labelY, 0xC4D0E0, text.labelFont);
+			surface.drawString(LABELS[i], left, labelY, InterfacePalette.MUTED_TEXT, text.labelFont);
 			fields[i].drawMasked(client, field, text.bodyFont, gap, i == focus);
 		}
 		String hint = error == null ? REQUIREMENTS : error;
 		hint = ContextMenuLayout.fitLabel(hint, width - 2 * pad, part -> surface.stringWidth(text.labelFont, part));
 		surface.drawString(hint, left, top + fields.length * rowHeight + labelLine,
-			error == null ? 0xC4D0E0 : 0xFFBC8D, text.labelFont);
+			error == null ? InterfacePalette.MUTED_TEXT : 0xFFBC8D, text.labelFont);
 		SocialTextPrompt.drawButton(surface, cancel, "Cancel", true, overCancel, text.labelFont, labelLine);
 		SocialTextPrompt.drawButton(surface, action, "Change Password", true, overAction, text.labelFont, labelLine);
 		return null;

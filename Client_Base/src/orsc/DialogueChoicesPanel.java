@@ -126,8 +126,8 @@ final class DialogueChoicesPanel {
 
 	void draw(GraphicsController surface, int mouseX, int mouseY, PortraitPainter portraits) {
 		int height = bottom - top;
-		surface.drawBoxAlpha(left, top, width, height, 0x182333, 224);
-		surface.drawBoxBorder(left, width, top, height, 0x667993);
+		surface.drawBoxAlpha(left, top, width, height, InterfacePalette.PANEL, 224);
+		surface.drawBoxBorder(left, width, top, height, InterfacePalette.BORDER);
 		if (speechHeight > 0) {
 			int y = top + (speechHeight - portraitSize) / 2;
 			portraits.draw(left + 2 * padding, y, portraitSize, true);
@@ -158,7 +158,7 @@ final class DialogueChoicesPanel {
 				int color = option == highlighted ? 0xFFDC82 : 0xFFFFFF;
 				if (option == highlighted) {
 					surface.drawBoxAlpha(left + padding, y, responseRight() - left - padding,
-						response.height, 0x54647C, 176);
+						response.height, InterfacePalette.CONTROL_SELECTED, 176);
 				}
 				int baseline = y + lineHeight + padding / 2 - 3;
 				for (String line : response.lines) {
@@ -176,9 +176,9 @@ final class DialogueChoicesPanel {
 	}
 
 	private void drawScrollControl(GraphicsController surface, int y, int end, String arrow, boolean enabled) {
-		surface.drawBoxAlpha(scrollX(), y, scrollWidth, end - y, 0x354258, 224);
+		surface.drawBoxAlpha(scrollX(), y, scrollWidth, end - y, InterfacePalette.ROW, 224);
 		surface.drawColoredStringCentered(scrollX() + scrollWidth / 2, arrow,
-			enabled ? 0xFFFFFF : 0x929CAA, 0, labelFont, (y + end + lineHeight / 2) / 2);
+			enabled ? 0xFFFFFF : InterfacePalette.SCROLL_THUMB, 0, labelFont, (y + end + lineHeight / 2) / 2);
 	}
 
 	private int scrollX() {

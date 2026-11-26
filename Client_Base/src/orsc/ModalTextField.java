@@ -115,14 +115,14 @@ final class ModalTextField {
 			selectedAll = false;
 		}
 
-		surface.drawBox(field.x, field.y, field.width, field.height, 0x121B28);
-		surface.drawBoxBorder(field.x, field.width, field.y, field.height, focused ? 0xD2B873 : 0x667993);
+		surface.drawBox(field.x, field.y, field.width, field.height, InterfacePalette.INSET);
+		surface.drawBoxBorder(field.x, field.width, field.y, field.height, focused ? 0xD2B873 : InterfacePalette.BORDER);
 		for (int i = first; i < starts.size() && i < first + rows; i++) {
 			int start = starts.get(i);
 			String line = value.substring(start, endOfLine(starts, value, i));
 			int rowY = field.y + pad + (i - first) * bodyLine;
 			if (focused && selectedAll && !line.isEmpty()) {
-				surface.drawBox(field.x + pad, rowY, measure.applyAsInt(line), bodyLine, 0x405978);
+				surface.drawBox(field.x + pad, rowY, measure.applyAsInt(line), bodyLine, InterfacePalette.CONTROL_HOVER);
 			}
 			surface.drawLiteralString(line, field.x + pad, rowY + bodyLine - 3, 0xFFFFFF, font);
 			if (focused && !selectedAll && i == lineAt(starts, caret)) {

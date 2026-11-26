@@ -57,9 +57,9 @@ public final class SkillGuideWindow {
 			if (click && i != section && tabs.get(i).contains(mouseX, mouseY)) selectSection(i);
 		}
 
-		surface.drawBoxAlpha(x, y, width, height, 0x182333, 248);
-		surface.drawVerticalGradient(x, y, width, headerHeight, 0x3B4C67, 0x28354A);
-		surface.drawBoxBorder(x, width, y, height, 0x667993);
+		surface.drawBoxAlpha(x, y, width, height, InterfacePalette.PANEL, 248);
+		surface.drawVerticalGradient(x, y, width, headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(x, width, y, height, InterfacePalette.BORDER);
 		int titleRight = showHiscores ? hiscores.x : close.x;
 		String fittedTitle = fit(surface, title + " Guide", titleRight - x - 2 * pad, text.bodyFont);
 		surface.drawString(fittedTitle, x + pad, y + (headerHeight + bodyLine) / 2 - 3, 0xFFFFFF, text.bodyFont);
@@ -127,7 +127,7 @@ public final class SkillGuideWindow {
 
 	private void drawTopics(MudClientGraphics surface, Rectangle bounds, int railWidth, int rowHeight,
 							int font, int wheel, int mouseX, int mouseY, boolean click) {
-		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, 0x202E41);
+		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, InterfacePalette.ROW_ALTERNATE);
 		int visible = Math.max(1, bounds.height / rowHeight);
 		int max = Math.max(0, topics.size() - visible);
 		int buttonWidth = bounds.width - (max > 0 ? railWidth : 0);
@@ -144,9 +144,9 @@ public final class SkillGuideWindow {
 
 	private void drawPage(MudClientGraphics surface, Rectangle page, int railWidth, int pad,
 						  int font, int lineHeight, int iconSize, int wheel, int mouseX, int mouseY, boolean click) {
-		surface.drawBox(page.x, page.y, page.width, page.height, 0x202E41);
+		surface.drawBox(page.x, page.y, page.width, page.height, InterfacePalette.ROW_ALTERNATE);
 		int heading = Math.max(lineHeight + 8, pad * 3);
-		surface.drawBox(page.x, page.y, page.width, heading, 0x28384D);
+		surface.drawBox(page.x, page.y, page.width, heading, InterfacePalette.ROW);
 		Topic current = topics.get(topic);
 		surface.drawString(fit(surface, current.label, page.width - 2 * pad, font), page.x + pad,
 			page.y + (heading + lineHeight) / 2 - 3, 0xFFDC82, font);
@@ -165,7 +165,7 @@ public final class SkillGuideWindow {
 				int top = body.y + row.top - articleScroll;
 				if (top + row.height <= body.y) continue;
 				if (top >= body.y + body.height) break;
-				surface.drawLineHoriz(body.x + pad, top + row.height - 1, available, 0x344761);
+				surface.drawLineHoriz(body.x + pad, top + row.height - 1, available, InterfacePalette.CONTROL_HOVER);
 				int textX = body.x + pad;
 				if (hasRoomForIcon && row.article.icon != null) {
 					row.article.icon.draw(textX, top + (row.height - iconSize) / 2, iconSize);
@@ -181,7 +181,7 @@ public final class SkillGuideWindow {
 					baseline += lineHeight;
 				}
 				for (String line : row.details) {
-					surface.drawString(line, textX + row.indent, baseline, 0xE1E9F4, font);
+					surface.drawString(line, textX + row.indent, baseline, InterfacePalette.TEXT, font);
 					baseline += lineHeight;
 				}
 			}
@@ -230,20 +230,20 @@ public final class SkillGuideWindow {
 		offset = Math.max(0, Math.min(offset, max));
 		int thumb = Math.min(bounds.height, Math.max(width, bounds.height * visible / (visible + max)));
 		int top = bounds.y + (bounds.height - thumb) * offset / max;
-		surface.drawBox(x, bounds.y, width, bounds.height, 0x283548);
-		surface.drawBox(x + 2, top, width - 4, thumb, 0x8799B2);
+		surface.drawBox(x, bounds.y, width, bounds.height, InterfacePalette.ROW);
+		surface.drawBox(x + 2, top, width - 4, thumb, InterfacePalette.SCROLL_THUMB);
 		return offset;
 	}
 
 	private static void drawButton(MudClientGraphics surface, Rectangle button, String label, int font,
 								   boolean selected, int mouseX, int mouseY) {
 		surface.drawBox(button.x, button.y, button.width - 1, button.height,
-			selected ? 0x445774 : button.contains(mouseX, mouseY) ? 0x334760 : 0x243246);
+			selected ? InterfacePalette.CONTROL_HOVER : button.contains(mouseX, mouseY) ? InterfacePalette.CONTROL : InterfacePalette.ROW_ALTERNATE);
 		if (selected) {
 			surface.drawLineHoriz(button.x, button.y + button.height - 2, button.width - 1, 0xEACB78);
 		}
 		surface.drawColoredStringCentered(button.x + button.width / 2, fit(surface, label, button.width - 6, font),
-			selected ? 0xFFDC82 : 0xD8E1EE, 0, font,
+			selected ? 0xFFDC82 : InterfacePalette.TEXT, 0, font,
 			button.y + (button.height + surface.fontHeight(font)) / 2 - 3);
 	}
 

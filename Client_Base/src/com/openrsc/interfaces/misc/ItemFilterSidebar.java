@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import orsc.InterfacePalette;
 import orsc.graphics.gui.Panel;
 import orsc.mudclient;
 
@@ -43,7 +44,7 @@ final class ItemFilterSidebar {
 		int y = frame.y + style.header + style.gap;
 		style.draw("Search", x, y + style.line - 2, MUTED);
 		y += style.line;
-		client.getSurface().drawBox(x, y, width, style.button, 0x16212D);
+		client.getSurface().drawBox(x, y, width, style.button, InterfacePalette.INSET);
 		client.getSurface().drawBoxBorder(x, width, y, style.button, BORDER);
 		input.reposition(search, x + 5, y + style.button / 2, width - 10, style.button - 4);
 		input.setTextFont(search, style.font);

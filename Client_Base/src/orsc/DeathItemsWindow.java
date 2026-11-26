@@ -114,7 +114,7 @@ final class DeathItemsWindow {
 		} else {
 			String message = inDuel ? "Duel stakes use separate rules."
 				: System.nanoTime() - openedAt >= RESPONSE_TIMEOUT_NS ? "The preview could not be loaded." : "Checking your items...";
-			drawLabel(surface, message, left, contentY + bodyLine - 3, width - 2 * padding, text.bodyFont, 0xC4D0E0);
+			drawLabel(surface, message, left, contentY + bodyLine - 3, width - 2 * padding, text.bodyFont, InterfacePalette.MUTED_TEXT);
 		}
 		return button(client, close, "Close", true, text.labelFont, labelLine);
 	}
@@ -134,11 +134,11 @@ final class DeathItemsWindow {
 			if (button(client, up, "^", first > 0, font, line)) first = Math.max(0, first - rows);
 			if (button(client, down, "v", first < maxFirst, font, line)) first = Math.min(maxFirst, first + rows);
 			drawLabel(surface, (first + 1) + "-" + (first + rows) + " / " + entries.size(), list.x,
-				controlY + (controlHeight + line) / 2 - 3, up.x - list.x - 4, font, 0xC4D0E0);
+				controlY + (controlHeight + line) / 2 - 3, up.x - list.x - 4, font, InterfacePalette.MUTED_TEXT);
 		}
 
 		if (entries.isEmpty()) {
-			drawLabel(surface, "None", list.x, list.y + (rowHeight + line) / 2 - 3, list.width, font, 0xC4D0E0);
+			drawLabel(surface, "None", list.x, list.y + (rowHeight + line) / 2 - 3, list.width, font, InterfacePalette.MUTED_TEXT);
 		}
 		int iconHeight = rowHeight - 4;
 		int iconWidth = iconHeight * 3 / 2;
@@ -146,7 +146,7 @@ final class DeathItemsWindow {
 			Entry item = entries.get(first + index);
 			int top = list.y + index * rowHeight;
 			int baseline = top + (rowHeight + line) / 2 - 3;
-			surface.drawBox(list.x, top, list.width, rowHeight - 1, 0x233144);
+			surface.drawBox(list.x, top, list.width, rowHeight - 1, InterfacePalette.ROW);
 			ItemDef def = EntityHandler.findItem(item.id, false);
 			String name = def == null ? "Item " + item.id : def.getName();
 			if (def != null) client.drawInventoryPreviewIcon(def, item.noted, list.x + 3, top + 2, iconWidth, iconHeight);

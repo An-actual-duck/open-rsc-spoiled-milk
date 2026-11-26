@@ -3,14 +3,15 @@ package com.openrsc.interfaces.misc;
 import java.awt.Rectangle;
 import java.util.function.BooleanSupplier;
 import orsc.GameInterfaceSettings;
+import orsc.InterfacePalette;
 import orsc.mudclient;
 
 /** Shared styling and pointer handling for the bank and auction windows. */
 final class ItemWorkspaceStyle {
-	static final int TEXT = 0xE6EDF2;
+	static final int TEXT = InterfacePalette.TEXT;
 	static final int GOLD = 0xF2D393;
-	static final int MUTED = 0xA9B9C6;
-	static final int BORDER = 0x516679;
+	static final int MUTED = InterfacePalette.MUTED_TEXT;
+	static final int BORDER = InterfacePalette.BORDER;
 
 	final int font, titleFont, line, gap, header, button;
 	private final mudclient client;
@@ -32,16 +33,16 @@ final class ItemWorkspaceStyle {
 	}
 
 	void panel(Rectangle area, String title) {
-		client.getSurface().drawBoxAlpha(area.x, area.y, area.width, area.height, 0x1B2935, 242);
+		client.getSurface().drawBoxAlpha(area.x, area.y, area.width, area.height, InterfacePalette.PANEL, 242);
 		client.getSurface().drawBoxBorder(area.x, area.width, area.y, area.height, BORDER);
-		client.getSurface().drawVerticalGradient(area.x + 1, area.y + 1, area.width - 2, header - 1, 0x395065, 0x263B4A);
+		client.getSurface().drawVerticalGradient(area.x + 1, area.y + 1, area.width - 2, header - 1, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
 		client.getSurface().drawString(title, area.x + gap,
 			area.y + (header + client.getSurface().fontHeight(titleFont)) / 2 - 2, TEXT, titleFont);
 	}
 
 	boolean button(int x, int y, int w, int h, String text, boolean selected, boolean enabled) {
 		boolean hover = over(x, y, w, h);
-		int background = selected ? 0x405C65 : enabled && hover ? 0x415468 : enabled ? 0x2C3C50 : 0x202C38;
+		int background = selected ? InterfacePalette.CONTROL_SELECTED : enabled && hover ? InterfacePalette.CONTROL_HOVER : enabled ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_DISABLED;
 		client.getSurface().drawBoxAlpha(x, y, w, h, background, 245);
 		client.getSurface().drawBoxBorder(x, w, y, h, selected ? 0xA8BB9F : BORDER);
 		if (!text.isEmpty()) {

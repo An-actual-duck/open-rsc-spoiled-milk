@@ -151,7 +151,7 @@ final class PartyWindow {
 
 	private void drawPermissions(Party party, PartyInterface actions, Layout layout, int y) {
 		for (int setting = 0; setting < PERMISSIONS.length; setting++) {
-			layout.text(PERMISSIONS[setting], layout.left, y + layout.labelLine - 3, layout.width, 0xC4D0E0);
+			layout.text(PERMISSIONS[setting], layout.left, y + layout.labelLine - 3, layout.width, InterfacePalette.MUTED_TEXT);
 			y += layout.labelLine;
 			for (int rank = 0; rank < PERMISSION_RANKS.length; rank++) {
 				int current = party.getPartySetting(setting);
@@ -173,10 +173,10 @@ final class PartyWindow {
 		int hitsX = rankX + rankWidth;
 		int levelX = hitsX + hitsWidth;
 		int baseline = y + layout.labelLine - 3;
-		layout.text("Player", nameX, baseline, nameWidth, 0xC4D0E0);
-		layout.text("Rank", rankX, baseline, rankWidth, 0xC4D0E0);
-		layout.text("HP", hitsX, baseline, hitsWidth, 0xC4D0E0);
-		layout.text("Combat", levelX, baseline, layout.width - (levelX - layout.left), 0xC4D0E0);
+		layout.text("Player", nameX, baseline, nameWidth, InterfacePalette.MUTED_TEXT);
+		layout.text("Rank", rankX, baseline, rankWidth, InterfacePalette.MUTED_TEXT);
+		layout.text("HP", hitsX, baseline, hitsWidth, InterfacePalette.MUTED_TEXT);
+		layout.text("Combat", levelX, baseline, layout.width - (levelX - layout.left), InterfacePalette.MUTED_TEXT);
 		y += layout.labelLine + layout.pad / 2;
 
 		String local = StringUtil.displayNameToKey(client.getLocalPlayer().accountName);
@@ -188,16 +188,16 @@ final class PartyWindow {
 			boolean hover = selectable && layout.hover(row);
 			if (hover && client.getMouseClick() == 1) selectedMember = member;
 			boolean selected = member != null && member.equals(selectedMember);
-			layout.surface.drawBox(row.x, row.y, row.width, row.height, selected || hover ? 0x405978 : 0x263449);
+			layout.surface.drawBox(row.x, row.y, row.width, row.height, selected || hover ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW);
 			if (selected) {
 				layout.surface.drawBoxBorder(row.x, row.width, row.y, row.height, 0xD2B873);
 			} else {
-				layout.surface.drawLineHoriz(row.x, row.y + row.height - 1, row.width, 0x182333);
+				layout.surface.drawLineHoriz(row.x, row.y + row.height - 1, row.width, InterfacePalette.PANEL);
 			}
 			baseline = y + (rowHeight + layout.labelLine) / 2 - 3;
 			boolean online = party.onlinePartyMember[index] != 0;
 			layout.text(member == null ? "Unknown" : member, nameX, baseline, nameWidth,
-				online ? 0x91E2A0 : 0xB1BDCC);
+				online ? 0x91E2A0 : InterfacePalette.MUTED_TEXT);
 			layout.text(party.getPartyRankNames(party.partyRank[index]), rankX, baseline, rankWidth, 0xFFFFFF);
 			layout.text(party.curHp[index] + "/" + party.maxHp[index], hitsX, baseline, hitsWidth, 0xFFFFFF);
 			layout.text(Integer.toString(party.cbLvl[index]), levelX, baseline, layout.width - (levelX - layout.left),

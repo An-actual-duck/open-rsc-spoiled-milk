@@ -3,6 +3,7 @@ package com.openrsc.interfaces.misc;
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import orsc.GameInterfaceSettings;
+import orsc.InterfacePalette;
 import orsc.mudclient;
 
 import java.awt.Rectangle;
@@ -10,12 +11,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** Shared scaled catalog, tabs and quantity dock for shops. */
 abstract class ShopWindow {
-	static final int TEXT = 0xE6EDF2;
-	static final int MUTED = 0xA9B9C6;
+	static final int TEXT = InterfacePalette.TEXT;
+	static final int MUTED = InterfacePalette.MUTED_TEXT;
 	static final int GOLD = 0xF2D393;
 	static final int GOOD = 0xA3D3A8;
 	static final int WARN = 0xFFBC8D;
-	private static final int BORDER = 0x516679;
+	private static final int BORDER = InterfacePalette.BORDER;
 
 	final mudclient client;
 	private final AtomicInteger wheel = new AtomicInteger();
@@ -153,12 +154,12 @@ abstract class ShopWindow {
 	}
 
 	final void frame(int x, int y, int width, int height) {
-		client.getSurface().drawBoxAlpha(x, y, width, height, 0x1B2935, 242);
+		client.getSurface().drawBoxAlpha(x, y, width, height, InterfacePalette.PANEL, 242);
 		client.getSurface().drawBoxBorder(x, width, y, height, BORDER);
 	}
 
 	private void header(int x, int y, int width, int height, String heading, int font, int gap) {
-		client.getSurface().drawVerticalGradient(x + 1, y + 1, width - 2, height - 1, 0x395065, 0x263B4A);
+		client.getSurface().drawVerticalGradient(x + 1, y + 1, width - 2, height - 1, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
 		draw(fit(heading, font, width - 5 * gap), x + gap,
 			y + (height + client.getSurface().fontHeight(font)) / 2 - 2, font, TEXT);
 	}
@@ -169,7 +170,7 @@ abstract class ShopWindow {
 
 	final boolean button(int x, int y, int width, int height, String label, int font, boolean selected, boolean enabled) {
 		boolean hovered = contains(x, y, width, height);
-		int background = selected ? 0x405C65 : enabled && hovered ? 0x415468 : enabled ? 0x2C3C50 : 0x202C38;
+		int background = selected ? InterfacePalette.CONTROL_SELECTED : enabled && hovered ? InterfacePalette.CONTROL_HOVER : enabled ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_DISABLED;
 		client.getSurface().drawBoxAlpha(x, y, width, height, background, 245);
 		client.getSurface().drawBoxBorder(x, width, y, height, selected ? 0xA8BB9F : BORDER);
 		if (!label.isEmpty()) {

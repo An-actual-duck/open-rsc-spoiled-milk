@@ -78,42 +78,42 @@ final class QuestGuideWindow {
 			firstRow = (int) Math.round((mouseY - contentY) * (double) maxScroll / Math.max(1, scrollHeight - 1));
 		}
 
-		surface.drawBoxAlpha(x, y, width, height, 0x182333, 248);
-		surface.drawVerticalGradient(x, y, width, headerHeight, 0x3B4C67, 0x28354A);
-		surface.drawBoxBorder(x, width, y, height, 0x667993);
+		surface.drawBoxAlpha(x, y, width, height, InterfacePalette.PANEL, 248);
+		surface.drawVerticalGradient(x, y, width, headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(x, width, y, height, InterfacePalette.BORDER);
 		String name = ContextMenuLayout.fitLabel(title, width - 3 * padding - closeWidth,
 			value -> surface.stringWidth(text.bodyFont, value));
 		int titleBaseline = y + (headerHeight - bodyLine - labelLine) / 2 + bodyLine - 3;
 		surface.drawString(name, x + padding, titleBaseline, 0xFFFFFF, text.bodyFont);
 		String progress = stage < 0 ? "Completed" : stage == 0 ? "Not started" : "In progress";
-		int progressColor = stage < 0 ? 0x9FE0AC : stage == 0 ? 0xC4D0E0 : 0xFFDC82;
+		int progressColor = stage < 0 ? 0x9FE0AC : stage == 0 ? InterfacePalette.MUTED_TEXT : 0xFFDC82;
 		surface.drawString(progress, x + padding, titleBaseline + labelLine, progressColor, text.labelFont);
 		surface.drawBox(close.x, close.y, close.width, close.height,
-			close.contains(mouseX, mouseY) ? 0x495E7A : 0x28354A);
-		surface.drawBoxBorder(close.x, close.width, close.y, close.height, 0x667993);
+			close.contains(mouseX, mouseY) ? InterfacePalette.CONTROL_SELECTED : InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(close.x, close.width, close.y, close.height, InterfacePalette.BORDER);
 		surface.drawColoredStringCentered(close.x + close.width / 2, "X", 0xFFFFFF, 0, text.labelFont,
 			close.y + (close.height + labelLine) / 2 - 3);
 		for (int index = 0; index < TABS.length; index++) {
 			int left = x + width * index / TABS.length;
 			int right = x + width * (index + 1) / TABS.length;
 			surface.drawBox(left + 1, tabsY, right - left - 1, tabHeight,
-				index == page ? 0x445774 : index == tab ? 0x334760 : 0x243246);
+				index == page ? InterfacePalette.CONTROL_HOVER : index == tab ? InterfacePalette.CONTROL : InterfacePalette.ROW_ALTERNATE);
 			if (index == page) surface.drawLineHoriz(left + 1, tabsY + tabHeight - 2, right - left - 1, 0xEACB78);
-			surface.drawColoredStringCentered((left + right) / 2, TABS[index], index == page ? 0xFFDC82 : 0xD8E1EE,
+			surface.drawColoredStringCentered((left + right) / 2, TABS[index], index == page ? 0xFFDC82 : InterfacePalette.TEXT,
 				0, text.bodyFont, tabsY + (tabHeight + bodyLine) / 2 - 3);
 		}
 		for (int index = 0; index < visible && firstRow + index < rows.size(); index++) {
 			Row row = rows.get(firstRow + index);
 			int top = contentY + index * rowHeight;
-			if (row.heading) surface.drawBox(x + padding, top, railX - x - padding - 3, rowHeight - 1, 0x28384D);
+			if (row.heading) surface.drawBox(x + padding, top, railX - x - padding - 3, rowHeight - 1, InterfacePalette.ROW);
 			surface.drawString(row.label, x + 2 * padding, top + (rowHeight + bodyLine) / 2 - 3,
-				row.heading ? 0xFFDC82 : 0xE1E9F4, text.bodyFont);
+				row.heading ? 0xFFDC82 : InterfacePalette.TEXT, text.bodyFont);
 		}
 		if (maxScroll > 0) {
 			int thumbHeight = Math.max(scrollbarWidth, scrollHeight * visible / rows.size());
 			int thumbY = contentY + (scrollHeight - thumbHeight) * firstRow / maxScroll;
-			surface.drawBox(railX, contentY, scrollbarWidth, scrollHeight, 0x283548);
-			surface.drawBox(railX + 2, thumbY, scrollbarWidth - 4, thumbHeight, 0x8799B2);
+			surface.drawBox(railX, contentY, scrollbarWidth, scrollHeight, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(railX + 2, thumbY, scrollbarWidth - 4, thumbHeight, InterfacePalette.SCROLL_THUMB);
 		}
 		return false;
 	}

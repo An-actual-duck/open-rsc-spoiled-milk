@@ -13,6 +13,7 @@ final class SideToolbarLayout {
 	final int left;
 	final int top;
 	final int buttonSize;
+	final int iconSize;
 	final int gap;
 	final int width;
 	final int right;
@@ -34,7 +35,9 @@ final class SideToolbarLayout {
 		this.chatEntryTop = chatEntryTop;
 		gap = size.pixels(3);
 		int maxSize = (surfaceWidth - size.pixels(6) - gap * (BUTTON_COUNT - 1)) / BUTTON_COUNT;
-		buttonSize = Math.min(maxSize, Math.max(ICON_SIZE + 4, size.pixels(42)));
+		int baseSize = Math.max(ICON_SIZE + 4, size.pixels(42));
+		buttonSize = Math.min(maxSize, bottomLauncher ? baseSize : (baseSize * 5 + 2) / 4);
+		iconSize = Math.max(1, Math.min(buttonSize - 4, bottomLauncher ? ICON_SIZE : ICON_SIZE * 5 / 4));
 		pitch = buttonSize + gap;
 		width = pitch * BUTTON_COUNT - gap;
 		right = surfaceWidth - size.pixels(3);

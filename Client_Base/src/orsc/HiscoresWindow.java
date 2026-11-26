@@ -10,8 +10,8 @@ import orsc.graphics.two.MudClientGraphics;
 final class HiscoresWindow {
 	enum Action { NONE, CLOSE, GUIDE }
 
-	private static final int TEXT = 0xE1E9F4;
-	private static final int MUTED = 0xC4D0E0;
+	private static final int TEXT = InterfacePalette.TEXT;
+	private static final int MUTED = InterfacePalette.MUTED_TEXT;
 	private static final int GOLD = 0xFFDC82;
 	private final NumberFormat numbers = NumberFormat.getIntegerInstance(Locale.US);
 	private final String title;
@@ -69,7 +69,7 @@ final class HiscoresWindow {
 		int levelRight = xpRight - xpWidth - pad;
 		int nameWidth = levelRight - Math.max(size.pixels(88), surface.stringWidth(font, levelTitle)) - pad - nameX;
 		int baseline = top + (rowHeight + labelLine) / 2 - 3;
-		surface.drawBox(left, top, contentWidth, rowHeight, 0x28384D);
+		surface.drawBox(left, top, contentWidth, rowHeight, InterfacePalette.ROW);
 		surface.drawString("Rank", rankX, baseline, MUTED, font);
 		surface.drawString("Player", nameX, baseline, MUTED, font);
 		drawRight(surface, levelTitle, levelRight, baseline, MUTED, font);
@@ -77,7 +77,7 @@ final class HiscoresWindow {
 
 		top += rowHeight;
 		baseline += rowHeight;
-		surface.drawBox(left, top, contentWidth, rowHeight, 0x394D60);
+		surface.drawBox(left, top, contentWidth, rowHeight, InterfacePalette.CONTROL_HOVER);
 		if (!data.isLoaded()) {
 			surface.drawString("Loading hiscores...", rankX, baseline, GOLD, font);
 			return Action.NONE;
@@ -101,7 +101,7 @@ final class HiscoresWindow {
 		for (int i = firstRow; i < Math.min(count, firstRow + visible); i++) {
 			int rowY = top + (i - firstRow) * rowHeight;
 			boolean own = i == data.getOwnListIndex();
-			surface.drawBox(left, rowY, rowWidth, rowHeight, own ? 0x354D53 : (i % 2 == 0 ? 0x202E41 : 0x25344A));
+			surface.drawBox(left, rowY, rowWidth, rowHeight, own ? InterfacePalette.CONTROL_SELECTED : (i % 2 == 0 ? InterfacePalette.ROW_ALTERNATE : InterfacePalette.ROW));
 			drawRow(surface, rank(i + 1), data.getName(i), data.getLevel(i), data.getExp(i),
 				rankX, nameX, nameWidth, levelRight, xpRight, rowY + (rowHeight + labelLine) / 2 - 3,
 				own ? GOLD : TEXT, font);

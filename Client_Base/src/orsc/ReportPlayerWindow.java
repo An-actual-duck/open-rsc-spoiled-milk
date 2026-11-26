@@ -113,9 +113,9 @@ final class ReportPlayerWindow {
 
 		SocialTextPrompt.drawFrame(surface, new Rectangle(x, y, width, height), header, pad,
 			TITLE, text.bodyFont, bodyLine);
-		surface.drawString("Player name", left, labelY, 0xC4D0E0, text.labelFont);
+		surface.drawString("Player name", left, labelY, InterfacePalette.MUTED_TEXT, text.labelFont);
 		name.draw(client, field, 1, text.bodyFont, gap);
-		surface.drawString("Reason", left, reasonHeaderY + (reasonHeader + labelLine) / 2 - 3, 0xC4D0E0, text.labelFont);
+		surface.drawString("Reason", left, reasonHeaderY + (reasonHeader + labelLine) / 2 - 3, InterfacePalette.MUTED_TEXT, text.labelFont);
 
 		int lastRow = ROWS - visibleRows;
 		firstRow = Math.max(0, Math.min(lastRow, firstRow + scroll));
@@ -184,8 +184,8 @@ final class ReportPlayerWindow {
 	private static void drawReason(MudClientGraphics surface, Rectangle bounds, List<String> lines,
 								   boolean selected, boolean hovered, int font, int line, int padding) {
 		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height,
-			selected ? 0x4C526D : hovered ? 0x465873 : 0x2B394E);
-		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, selected ? 0xD2B873 : 0x516679);
+			selected ? InterfacePalette.CONTROL_SELECTED : hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, selected ? 0xD2B873 : InterfacePalette.BORDER);
 		int baseline = bounds.y + (bounds.height - lines.size() * line) / 2 + line - 3;
 		for (String part : lines) {
 			surface.drawString(part, bounds.x + padding, baseline, selected ? 0xFFDC82 : 0xFFFFFF, font);

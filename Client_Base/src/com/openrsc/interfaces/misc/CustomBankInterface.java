@@ -7,6 +7,7 @@ import com.openrsc.client.model.Sprite;
 import orsc.Config;
 import orsc.enumerations.InputXAction;
 import orsc.enumerations.MessageType;
+import orsc.InterfacePalette;
 import orsc.graphics.gui.InputXPrompt;
 import orsc.mudclient;
 import orsc.util.BankUtil;
@@ -1365,7 +1366,7 @@ public final class CustomBankInterface extends BankInterface {
 		int h = view.stockCellHeight - 2;
 		boolean hovered = inside(left, top, view.stockCellWidth, view.stockCellHeight);
 		boolean available = item != null && (!equipmentMode || item.getItem().getItemDef().isWieldable());
-		mc.getSurface().drawBoxAlpha(left, top, w, h, hovered && available ? 0x405469 : 0x263747, 242);
+		mc.getSurface().drawBoxAlpha(left, top, w, h, hovered && available ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW, 242);
 		mc.getSurface().drawBoxBorder(left, w, top, h, item != null && item.isPinned() ? BankWorkspace.GOLD : BankWorkspace.BORDER);
 		if (item == null || draggingBankSlot == item.bankID) return;
 
@@ -1385,7 +1386,7 @@ public final class CustomBankInterface extends BankInterface {
 
 	private void drawWorkspaceStockHint(BankWorkspaceLayout view, String name) {
 		int top = view.stock.y - view.line - 3;
-		mc.getSurface().drawBoxAlpha(view.stock.x, top, view.stock.width, view.line + 2, 0x1B2935, 245);
+		mc.getSurface().drawBoxAlpha(view.stock.x, top, view.stock.width, view.line + 2, InterfacePalette.PANEL, 245);
 		workspace.draw(workspace.fit(name, view.stock.width), view.stock.x, view.stock.y - 5, view.font, BankWorkspace.GOLD);
 	}
 
@@ -1469,7 +1470,7 @@ public final class CustomBankInterface extends BankInterface {
 			int x = area.x + i % columns * tileWidth;
 			int y = area.y + i / columns * tileHeight;
 			boolean hovered = inside(x, y, tileWidth, tileHeight);
-			mc.getSurface().drawBoxAlpha(x, y, tileWidth - 2, tileHeight - 2, hovered ? 0x405469 : 0x263747, 245);
+			mc.getSurface().drawBoxAlpha(x, y, tileWidth - 2, tileHeight - 2, hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW, 245);
 			mc.getSurface().drawBoxBorder(x, tileWidth - 2, y, tileHeight - 2, BankWorkspace.BORDER);
 			if (equipmentMode) {
 				drawWorkspaceEquipmentSlot(view, equipmentViewOrder[slot], x, y, tileWidth, tileHeight, hovered);
@@ -1585,7 +1586,7 @@ public final class CustomBankInterface extends BankInterface {
 		for (int i = 0; i < items.length; i++) {
 			int left = x + i % columns * cell;
 			int top = gridY + i / columns * cell;
-			mc.getSurface().drawBoxAlpha(left, top, cell - 2, cell - 2, 0x263747, 242);
+			mc.getSurface().drawBoxAlpha(left, top, cell - 2, cell - 2, InterfacePalette.ROW, 242);
 			mc.getSurface().drawBoxBorder(left, cell - 2, top, cell - 2, BankWorkspace.BORDER);
 			if (items[i] != null && items[i].getItemDef() != null) {
 				workspace.drawItem(items[i], left + 2, top + 2, cell - 5, cell - 5, 0xFFFFFFFF);

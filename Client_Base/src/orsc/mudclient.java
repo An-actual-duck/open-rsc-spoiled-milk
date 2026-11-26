@@ -7701,9 +7701,10 @@ public final class mudclient implements Runnable {
 			int width = chatLayout.tabBoundary(tab + 1) - left;
 			boolean selected = messageTabSelected == MessageTab.lookup(tab) && (tab != 4 || S_WANT_CLANS);
 			surface.drawVerticalGradient(left, chatLayout.tabsTop(), width, chatLayout.tabsHeight,
-				selected ? 0x596A83 : 0x3B4C67, selected ? 0x344258 : 0x252F41);
-			surface.drawBoxBorder(left, width, chatLayout.tabsTop(), chatLayout.tabsHeight, 0x141E2E);
-			surface.drawLineHoriz(left + 1, chatLayout.tabsTop() + 1, width - 2, selected ? 0xD2B873 : 0x677B96);
+				selected ? InterfacePalette.CONTROL_SELECTED : InterfacePalette.HEADER_LIGHT,
+				selected ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_LOW);
+			surface.drawBoxBorder(left, width, chatLayout.tabsTop(), chatLayout.tabsHeight, InterfacePalette.SEAM);
+			surface.drawLineHoriz(left + 1, chatLayout.tabsTop() + 1, width - 2, selected ? 0xD2B873 : InterfacePalette.BORDER);
 			if (drawLabels) {
 				int color = selected ? 0xFFDC82 : 0xFFFFFF;
 				if (chatLayoutTabActivity(tab) % 30 > 15) {
@@ -7765,10 +7766,10 @@ public final class mudclient implements Runnable {
 		boolean historyOpen = isScaledChatHistoryVisible();
 		int top = historyOpen ? chatLayout.historyTop() : chatLayout.entryTop();
 		int height = chatLayout.tabsTop() - top;
-		getSurface().drawBoxAlpha(chatLayout.left, top, chatLayout.width, height, 0x182333, 205);
-		getSurface().drawBoxBorder(chatLayout.left, chatLayout.width, top, height, 0x667993);
+		getSurface().drawBoxAlpha(chatLayout.left, top, chatLayout.width, height, InterfacePalette.PANEL, 205);
+		getSurface().drawBoxBorder(chatLayout.left, chatLayout.width, top, height, InterfacePalette.BORDER);
 		if (historyOpen) {
-			getSurface().drawLineHoriz(chatLayout.left + 1, chatLayout.entryTop(), chatLayout.width - 2, 0x667993);
+			getSurface().drawLineHoriz(chatLayout.left + 1, chatLayout.entryTop(), chatLayout.width - 2, InterfacePalette.BORDER);
 		}
 	}
 
@@ -9213,7 +9214,7 @@ public final class mudclient implements Runnable {
 			: received >= 0 && received < tradeRecipientItemsCount ? tradeRecipient[received] : null;
 		if (hovered != null && hovered.getItemDef() != null) {
 			drawTradeText(tradeItemName(hovered) + "  " + hovered.getItemDef().getDescription(), layout.firstColumn,
-				layout.detailY, layout.window.width - 2 * layout.padding, layout.labelFont, 0xD8E1EE);
+				layout.detailY, layout.window.width - 2 * layout.padding, layout.labelFont, InterfacePalette.TEXT);
 		}
 		drawTradeButton(layout.accept, tradeAccepted ? "Accepted" : "Accept", layout.bodyFont, !tradeAccepted);
 		drawTradeButton(layout.decline, "Decline", layout.bodyFont, true);
@@ -9340,13 +9341,13 @@ public final class mudclient implements Runnable {
 			inputTextCurrent = inputTextFinal = "";
 			return;
 		}
-		surface.drawBox(box.x, box.y, width, height, 0x182333);
-		surface.drawBoxBorder(box.x, width, box.y, height, 0x8799B2);
+		surface.drawBox(box.x, box.y, width, height, InterfacePalette.PANEL);
+		surface.drawBoxBorder(box.x, width, box.y, height, InterfacePalette.SCROLL_THUMB);
 		drawTradeText(tradePreviewTarget.offer ? "Amount to offer" : "Amount to remove", box.x + padding,
 			tradeTextBaseline(box.y + padding, row, text.labelFont), width - 2 * padding, text.labelFont, 0xFFDC82);
 		int inputY = box.y + row + 2 * padding;
-		surface.drawBox(box.x + padding, inputY, width - 2 * padding, row, 0x233144);
-		surface.drawBoxBorder(box.x + padding, width - 2 * padding, inputY, row, 0x667993);
+		surface.drawBox(box.x + padding, inputY, width - 2 * padding, row, InterfacePalette.ROW);
+		surface.drawBoxBorder(box.x + padding, width - 2 * padding, inputY, row, InterfacePalette.BORDER);
 		drawTradeText(inputTextCurrent + "*", box.x + padding + 6, tradeTextBaseline(inputY, row, text.bodyFont),
 			width - 2 * padding - 12, text.bodyFont, 0xFFFFFF);
 		drawTradeButton(accept, "OK", text.bodyFont, true);
@@ -9379,7 +9380,7 @@ public final class mudclient implements Runnable {
 			int end = tradeReviewFirstRow + layout.reviewRows;
 			drawTradeText((tradeReviewFirstRow + 1) + "-" + end + " / " + (layout.reviewRows + maxScroll),
 				layout.secondColumn + layout.columnWidth / 2, tradeTextBaseline(layout.reviewUp.y, layout.labelHeight, layout.labelFont),
-				layout.reviewUp.x - layout.secondColumn - layout.columnWidth / 2 - 3, layout.labelFont, 0xB6C6DE);
+				layout.reviewUp.x - layout.secondColumn - layout.columnWidth / 2 - 3, layout.labelFont, InterfacePalette.MUTED_TEXT);
 			drawTradeButton(layout.reviewUp, "^", layout.labelFont, tradeReviewFirstRow > 0);
 			drawTradeButton(layout.reviewDown, "v", layout.labelFont, tradeReviewFirstRow < maxScroll);
 		}
@@ -9403,21 +9404,21 @@ public final class mudclient implements Runnable {
 	private void drawTradeFrame(TradeWindowLayout layout, String title) {
 		Rectangle bounds = layout.window;
 		MudClientGraphics surface = getSurface();
-		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, 0x182333, 246);
-		surface.drawVerticalGradient(bounds.x, bounds.y, bounds.width, layout.headerHeight, 0x3B4C67, 0x28354A);
-		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, 0x667993);
+		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, InterfacePalette.PANEL, 246);
+		surface.drawVerticalGradient(bounds.x, bounds.y, bounds.width, layout.headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, InterfacePalette.BORDER);
 		drawTradeText(title, layout.firstColumn, tradeTextBaseline(bounds.y, layout.headerHeight, layout.bodyFont),
 			bounds.width - 2 * layout.padding, layout.bodyFont, 0xFFDC82);
 	}
 
 	private void drawTradeGrid(TradeWindowLayout layout, TradeWindowLayout.Grid grid, Item[] items, int count, int hover, String title) {
 		drawTradeText(title, grid.x, tradeTextBaseline(grid.y - layout.labelHeight, layout.labelHeight, layout.labelFont),
-			grid.columns * grid.cellWidth, layout.labelFont, 0xD8E1EE);
+			grid.columns * grid.cellWidth, layout.labelFont, InterfacePalette.TEXT);
 		MudClientGraphics surface = getSurface();
 		for (int slot = 0; slot < grid.capacity; slot++) {
 			int x = grid.x(slot), y = grid.y(slot);
-			surface.drawBox(x, y, grid.cellWidth - 1, grid.cellHeight - 1, hover == slot ? 0x3A4C67 : 0x233144);
-			surface.drawBoxBorder(x, grid.cellWidth - 1, y, grid.cellHeight - 1, 0x465872);
+			surface.drawBox(x, y, grid.cellWidth - 1, grid.cellHeight - 1, hover == slot ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW);
+			surface.drawBoxBorder(x, grid.cellWidth - 1, y, grid.cellHeight - 1, InterfacePalette.CONTROL_DISABLED);
 			if (slot >= count || items[slot].getItemDef() == null) continue;
 			Item item = items[slot];
 			int iconHeight = grid.cellHeight - 4;
@@ -9433,17 +9434,17 @@ public final class mudclient implements Runnable {
 	private void drawTradeReviewColumn(TradeWindowLayout layout, int x, String title, Item[] items, int count) {
 		int headerTop = layout.reviewTop - layout.labelHeight;
 		drawTradeText(title, x, tradeTextBaseline(headerTop, layout.labelHeight, layout.labelFont),
-			layout.columnWidth, layout.labelFont, 0xD8E1EE);
+			layout.columnWidth, layout.labelFont, InterfacePalette.TEXT);
 		if (count == 0) {
 			drawTradeText("Nothing", x, tradeTextBaseline(layout.reviewTop, layout.lineHeight, layout.bodyFont),
-				layout.columnWidth, layout.bodyFont, 0xB6C6DE);
+				layout.columnWidth, layout.bodyFont, InterfacePalette.MUTED_TEXT);
 			return;
 		}
 		for (int row = 0; row < layout.reviewRows && tradeReviewFirstRow + row < count; row++) {
 			Item item = items[tradeReviewFirstRow + row];
 			if (item.getItemDef() == null) continue;
 			int y = layout.reviewTop + row * layout.lineHeight;
-			getSurface().drawBox(x, y, layout.columnWidth, layout.lineHeight - 1, 0x233144);
+			getSurface().drawBox(x, y, layout.columnWidth, layout.lineHeight - 1, InterfacePalette.ROW);
 			String amount = item.getNoted() || item.getItemDef().isStackable()
 				? Integer.toString(item.getAmount()) : "";
 			int amountWidth = getSurface().stringWidth(layout.labelFont, amount);
@@ -9460,10 +9461,10 @@ public final class mudclient implements Runnable {
 	private void drawTradeButton(Rectangle bounds, String label, int font, boolean enabled) {
 		MudClientGraphics surface = getSurface();
 		boolean hover = enabled && bounds.contains(mouseX, mouseY);
-		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, hover ? 0x3A4C67 : 0x28354A);
-		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, enabled ? 0x667993 : 0x465872);
+		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, hover ? InterfacePalette.CONTROL_HOVER : InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, enabled ? InterfacePalette.BORDER : InterfacePalette.CONTROL_DISABLED);
 		surface.drawColoredStringCentered(bounds.x + bounds.width / 2, label,
-			enabled ? 0xFFFFFF : 0xB6C6DE, 0, font, tradeTextBaseline(bounds.y, bounds.height, font));
+			enabled ? 0xFFFFFF : InterfacePalette.MUTED_TEXT, 0, font, tradeTextBaseline(bounds.y, bounds.height, font));
 	}
 
 	private int tradeTextBaseline(int y, int height, int font) {
@@ -12474,19 +12475,19 @@ public final class mudclient implements Runnable {
 	private void renderScaledContextMenu(ContextMenuLayout layout, int firstRow) {
 		int hovered = layout.itemAt(mouseX, mouseY, firstRow);
 		MudClientGraphics surface = getSurface();
-		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.height, 0x182333, 244);
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.height, InterfacePalette.PANEL, 244);
 		if (layout.title != null) {
-			surface.drawVerticalGradient(layout.left, layout.top, layout.width, layout.headerHeight, 0x3B4C67, 0x28354A);
+			surface.drawVerticalGradient(layout.left, layout.top, layout.width, layout.headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
 			surface.drawString(layout.title, layout.left + layout.padding,
 				layout.top + (layout.headerHeight + layout.titleLine) / 2 - 3, 0xFFDC82, layout.titleFont);
-			surface.drawLineHoriz(layout.left + 1, layout.rowsTop() - 1, layout.width - 2, 0x667993);
+			surface.drawLineHoriz(layout.left + 1, layout.rowsTop() - 1, layout.width - 2, InterfacePalette.BORDER);
 		}
 		int rowWidth = Math.min(layout.width - 2, layout.scrollbarLeft() - layout.left - 1);
 		for (int row = 0; row < layout.visibleRows; row++) {
 			int action = firstRow + row;
 			int y = layout.rowTop(row);
 			if (action == hovered) {
-				surface.drawBox(layout.left + 1, y, rowWidth, layout.rowHeight, 0x3A4C67);
+				surface.drawBox(layout.left + 1, y, rowWidth, layout.rowHeight, InterfacePalette.CONTROL_HOVER);
 			}
 			surface.drawString(layout.label(action), layout.left + layout.padding,
 				y + (layout.rowHeight + layout.bodyLine) / 2 - 3, action == hovered ? 0xFFDC82 : 0xFFFFFF, layout.bodyFont);
@@ -12497,10 +12498,10 @@ public final class mudclient implements Runnable {
 			int y = layout.rowsTop() + (body - thumb) * firstRow / layout.maxScroll();
 			int x = layout.scrollbarLeft();
 			int width = layout.left + layout.width - x;
-			surface.drawBox(x, layout.rowsTop(), width - 1, body, 0x283548);
-			surface.drawBox(x + 2, y, width - 4, thumb, 0x8799B2);
+			surface.drawBox(x, layout.rowsTop(), width - 1, body, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(x + 2, y, width - 4, thumb, InterfacePalette.SCROLL_THUMB);
 		}
-		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.height, 0x667993);
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.height, InterfacePalette.BORDER);
 	}
 
 	private boolean drawMenuMessage(String otherAccountName, int var2, String otherDisplayName) {
@@ -14964,8 +14965,8 @@ public final class mudclient implements Runnable {
 		if (!C_CUSTOM_UI) {
 			drawAuthenticSidebarHeader(GUIPARTS.BAGTAB, Config.INVENTORY_TAB, layout.left + layout.width);
 		}
-		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom() - layout.top, 0x182333, 225);
-		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom() - layout.top, 0x667993);
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom() - layout.top, InterfacePalette.PANEL, 225);
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom() - layout.top, InterfacePalette.BORDER);
 		if (tabEquipmentIndex == InventoryEquipmentLayout.EQUIPMENT && S_WANT_EQUIPMENT_TAB) {
 			drawEquipmentPreview(layout, acceptInput);
 		} else {
@@ -14992,10 +14993,10 @@ public final class mudclient implements Runnable {
 										 int baseline, boolean active, boolean hovered) {
 		MudClientGraphics surface = getSurface();
 		surface.drawVerticalGradient(x, y, width, height,
-			active ? 0x596A83 : hovered ? 0x465873 : 0x34425A,
-			active ? 0x344258 : 0x252F41);
-		surface.drawBoxBorder(x, width, y, height, 0x141E2E);
-		surface.drawLineHoriz(x + 1, y + 1, width - 2, active ? 0xD2B873 : 0x667993);
+			active ? InterfacePalette.CONTROL_SELECTED : hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.CONTROL,
+			active ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_LOW);
+		surface.drawBoxBorder(x, width, y, height, InterfacePalette.SEAM);
+		surface.drawLineHoriz(x + 1, y + 1, width - 2, active ? 0xD2B873 : InterfacePalette.BORDER);
 		surface.drawColoredStringCentered(x + width / 2, label, active ? 0xFFDC82 : 0xFFFFFF, 0, font, baseline);
 	}
 
@@ -15010,7 +15011,7 @@ public final class mudclient implements Runnable {
 			int y = layout.cellY(slot);
 			boolean unlocked = slot < inventoryCapacity;
 			boolean occupied = unlocked && slot < inventoryItemCount;
-			int color = unlocked ? occupied ? 0x34445A : 0x243143 : 0x1C2531;
+			int color = !unlocked ? InterfacePalette.INSET : occupied ? InterfacePalette.ROW : InterfacePalette.ROW_ALTERNATE;
 			if (occupied && !S_WANT_EQUIPMENT_TAB && getInventoryItemEquippedID(slot) == 1) {
 				color = 0x64444B;
 			}
@@ -15090,7 +15091,7 @@ public final class mudclient implements Runnable {
 		}
 
 		surface.drawLineHoriz(layout.left + layout.padding, layout.statsTop - layout.padding / 2,
-			layout.width - 2 * layout.padding, 0x667993);
+			layout.width - 2 * layout.padding, InterfacePalette.BORDER);
 		for (int row = 0; row < 4; row++) {
 			int baseline = layout.statsTop + (row + 1) * layout.statRowHeight - 3;
 			drawEquipmentStatusValue(row == 3 ? 4 : row, layout.left + 2 * layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
@@ -15500,8 +15501,8 @@ public final class mudclient implements Runnable {
 		}
 		int tab = panelSocialTab;
 		int width = layout.right - layout.left;
-		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, 0x182333, 228);
-		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, 0x667993);
+		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
+		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
 		for (int index = SocialPanelLayout.FRIENDS; index <= SocialPanelLayout.ONLINE; index++) {
 			if (layout.tabWidth(index) > 0) {
 				drawInterfacePreviewTab(layout.tabLeft(index), layout.top, layout.tabWidth(index), layout.tabHeight,
@@ -15512,7 +15513,7 @@ public final class mudclient implements Runnable {
 
 		switch (tab) {
 			case SocialPanelLayout.FRIENDS:
-				drawSocialText(layout, "Select an online friend to message.", layout.contentTop(), 0xC4D0E0);
+				drawSocialText(layout, "Select an online friend to message.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
 				drawSocialMembers(layout, tab, SocialLists.friendListCount, acceptInput);
 				drawSocialAction(layout, 0, 1, "Add Friend", acceptInput, this::openAddFriendPrompt);
 				break;
@@ -15531,11 +15532,11 @@ public final class mudclient implements Runnable {
 
 	private void drawOnlinePlayers(SocialPanelLayout layout, boolean acceptInput) {
 		if (!S_WANT_PLAYER_COMMANDS || insideTutorial) {
-			drawSocialText(layout, "The online player list is unavailable here.", layout.contentTop(), 0xC4D0E0);
+			drawSocialText(layout, "The online player list is unavailable here.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
 			return;
 		}
 		if (!onlineSidebarSupported) {
-			drawSocialText(layout, "Open the online list from Settings on this server.", layout.contentTop(), 0xC4D0E0);
+			drawSocialText(layout, "Open the online list from Settings on this server.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
 			return;
 		}
 		long now = System.nanoTime();
@@ -15545,12 +15546,12 @@ public final class mudclient implements Runnable {
 			packetHandler.getClientStream().finishPacket();
 		}
 		if (onlineSidebarPlayers == null) {
-			drawSocialText(layout, "Loading online players...", layout.contentTop(), 0xC4D0E0);
+			drawSocialText(layout, "Loading online players...", layout.contentTop(), InterfacePalette.MUTED_TEXT);
 			return;
 		}
 		int count = onlineSidebarPlayers.size();
 		drawSocialText(layout, count == 0 ? "No players are visible." : "Online players (" + count + ")",
-			layout.contentTop(), 0xC4D0E0);
+			layout.contentTop(), InterfacePalette.MUTED_TEXT);
 		if (count > 0) drawSocialMembers(layout, SocialPanelLayout.ONLINE, count, acceptInput);
 	}
 
@@ -15589,15 +15590,15 @@ public final class mudclient implements Runnable {
 			drawSocialName(layout, "Clan: " + clan.getClanName(), layout.bodyLeft(), layout.contentTop() + layout.bodyLine - 3,
 				layout.bodyRight(), 0xFFDC82);
 			drawSocialName(layout, "Tag: " + clan.getClanTag(), layout.bodyLeft(), layout.contentTop() + 2 * layout.bodyLine - 3,
-				layout.bodyRight(), 0xC4D0E0);
+				layout.bodyRight(), InterfacePalette.MUTED_TEXT);
 			drawSocialName(layout, "Leader: " + clan.getClanLeaderUsername(), layout.bodyLeft(),
-				layout.contentTop() + 3 * layout.bodyLine - 3, layout.bodyRight(), 0xC4D0E0);
+				layout.contentTop() + 3 * layout.bodyLine - 3, layout.bodyRight(), InterfacePalette.MUTED_TEXT);
 			drawSocialMembers(layout, SocialPanelLayout.CLAN, SocialLists.clanListCount, acceptInput);
 			drawSocialAction(layout, 0, 2, "Leave Clan", acceptInput,
 				() -> openClanConfirmation(ClanWindow.Confirmation.LEAVE, null));
 			drawSocialAction(layout, 1, 2, "Manage Clan", acceptInput, this::openScaledClanWindow);
 		} else {
-			drawSocialText(layout, "You are not currently in a clan.", layout.contentTop(), 0xC4D0E0);
+			drawSocialText(layout, "You are not currently in a clan.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
 			drawSocialAction(layout, 0, 2, "Find a Clan", acceptInput, this::openScaledClanSearch);
 			drawSocialAction(layout, 1, 2, "Create Clan", acceptInput, this::openScaledClanWindow);
 		}
@@ -15605,7 +15606,7 @@ public final class mudclient implements Runnable {
 
 	private void drawSocialParty(SocialPanelLayout layout, boolean acceptInput) {
 		if (!party.inParty()) {
-			drawSocialText(layout, "Create a party to invite up to four other players.", layout.contentTop(), 0xC4D0E0);
+			drawSocialText(layout, "Create a party to invite up to four other players.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
 			drawSocialAction(layout, 0, 1, "Create Party", acceptInput, () -> party.showPartySetupInterface(false));
 			return;
 		}
@@ -15644,12 +15645,12 @@ public final class mudclient implements Runnable {
 			}
 			int thumb = Math.min(listHeight, Math.max(layout.padding, listHeight * visible / count));
 			int thumbTop = top + (listHeight - thumb) * scroll / maxScroll;
-			surface.drawBox(layout.scrollbarLeft() + 1, top, layout.scrollWidth - 2, listHeight, 0x283548);
-			surface.drawBox(layout.scrollbarLeft() + 2, thumbTop, layout.scrollWidth - 4, thumb, 0x8799B2);
+			surface.drawBox(layout.scrollbarLeft() + 1, top, layout.scrollWidth - 2, listHeight, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbTop, layout.scrollWidth - 4, thumb, InterfacePalette.SCROLL_THUMB);
 		}
 		socialScroll[tab] = scroll;
 		if (count == 0 && tab == SocialPanelLayout.FRIENDS) {
-			drawSocialText(layout, "Your friends list is empty.", top, 0xC4D0E0);
+			drawSocialText(layout, "Your friends list is empty.", top, InterfacePalette.MUTED_TEXT);
 		}
 		int hovered = acceptInput ? layout.rowAt(tab, mouseX, mouseY, top, scroll, count) : -1;
 		int removeLeft = layout.scrollbarLeft() - surface.stringWidth(layout.bodyFont, "Remove") - 2 * layout.padding;
@@ -15657,7 +15658,7 @@ public final class mudclient implements Runnable {
 			int y = top + (index - scroll) * layout.rowHeight;
 			int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
 			surface.drawBoxAlpha(layout.bodyLeft(), y, layout.scrollbarLeft() - layout.bodyLeft(),
-				layout.rowHeight - 1, index == hovered ? 0x3A4C67 : 0x29374E, 192);
+				layout.rowHeight - 1, index == hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW, 192);
 			int nameX = layout.bodyLeft() + layout.padding;
 			if (tab == SocialPanelLayout.FRIENDS) {
 				int status = SocialLists.friendListOnlineStatus[index];
@@ -15665,11 +15666,11 @@ public final class mudclient implements Runnable {
 				drawSocialName(layout, SocialLists.friendList[index], nameX, baseline, removeLeft - layout.padding, color);
 				boolean remove = index == hovered && mouseX >= removeLeft;
 				if (remove) surface.drawBoxAlpha(removeLeft, y, layout.scrollbarLeft() - removeLeft,
-					layout.rowHeight - 1, 0x526784, 210);
+					layout.rowHeight - 1, InterfacePalette.CONTROL, 210);
 				surface.drawString("Remove", removeLeft + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
 			} else if (tab == SocialPanelLayout.CLAN) {
 				drawSocialName(layout, clan.username[index], nameX, baseline, layout.scrollbarLeft() - layout.padding,
-					clan.onlineClanMember[index] != 0 ? 0x69E875 : 0xC4D0E0);
+					clan.onlineClanMember[index] != 0 ? 0x69E875 : InterfacePalette.MUTED_TEXT);
 			} else if (tab == SocialPanelLayout.PARTY) {
 				drawSocialPartyMember(layout, index, nameX, y, baseline);
 			} else {
@@ -15721,7 +15722,7 @@ public final class mudclient implements Runnable {
 		String name = party.username[index] == null ? "Unknown" : party.username[index];
 		drawSocialName(layout, name, x, baseline, levelX - layout.padding,
 			party.onlinePartyMember[index] != 0 ? 0x69E875 : 0xFF8585);
-		surface.drawString(level, levelX, baseline, 0xC4D0E0, layout.bodyFont);
+		surface.drawString(level, levelX, baseline, InterfacePalette.MUTED_TEXT, layout.bodyFont);
 		int maxHits = Math.max(1, party.maxHp[index]);
 		int hits = Math.max(0, Math.min(maxHits, party.curHp[index]));
 		int barHeight = Math.max(3, layout.padding / 2);
@@ -16361,8 +16362,8 @@ public final class mudclient implements Runnable {
 		SpellbookLayoutSettings.Mode mode = SpellbookLayoutSettings.mode(book);
 		boolean text = mode == SpellbookLayoutSettings.Mode.TEXT;
 		int width = layout.right - layout.left;
-		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, 0x182333, 228);
-		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, 0x667993);
+		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
+		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
 		surface.drawString(book.title, layout.left + layout.padding,
 			layout.top + (layout.headerHeight + layout.labelHeight) / 2 - 3, 0xFFDC82, layout.labelFont);
 		drawInterfacePreviewTab(layout.toggleLeft, layout.toggleTop(), layout.right - layout.padding - layout.toggleLeft,
@@ -16402,15 +16403,15 @@ public final class mudclient implements Runnable {
 			int thumbSize = Math.min(listHeight, Math.max(layout.padding * 2, listHeight * layout.visibleRows(text)
 				/ (layout.visibleRows(text) + maxScroll)));
 			int thumbY = layout.firstRowY + (listHeight - thumbSize) * scroll / maxScroll;
-			surface.drawBox(layout.scrollbarLeft() + 1, layout.firstRowY, layout.scrollWidth - 2, listHeight, 0x283548);
-			surface.drawBox(layout.scrollbarLeft() + 2, thumbY, layout.scrollWidth - 4, thumbSize, 0x8799B2);
+			surface.drawBox(layout.scrollbarLeft() + 1, layout.firstRowY, layout.scrollWidth - 2, listHeight, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbY, layout.scrollWidth - 4, thumbSize, InterfacePalette.SCROLL_THUMB);
 		}
 		if (count > 0) {
 			int focus = Math.min(abilityFocus[bookIndex], count - 1);
 			drawAbilityDetails(layout, book, abilityId(book, focus), prayerFree);
 		} else {
 			surface.drawString("No abilities available", layout.left + layout.padding, layout.firstRowY + layout.lineHeight,
-				0xC4D0E0, layout.bodyFont);
+				InterfacePalette.MUTED_TEXT, layout.bodyFont);
 		}
 		if (hovered >= 0 && mouseButtonClick == 1) {
 			int id = abilityId(book, hovered);
@@ -16466,7 +16467,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private enum AbilityState {
-		READY("", 0xFFFFFF), LOCKED("", 0xAAB8C9), SELECTED("Selected", 0xFFDC82),
+		READY("", 0xFFFFFF), LOCKED("", InterfacePalette.DISABLED_TEXT), SELECTED("Selected", 0xFFDC82),
 		AUTO_CAST("Auto-cast", 0x9FE0AC), ACTIVE("Active", 0x9FE0AC);
 		final String label;
 		final int color;
@@ -16511,9 +16512,9 @@ public final class mudclient implements Runnable {
 		int height = text ? layout.rowHeight - 1 : layout.iconSize;
 		boolean active = !state.label.isEmpty();
 		surface.drawBoxAlpha(x, y, width, height,
-			hovered ? 0x54647C : active ? 0x345949 : state == AbilityState.LOCKED ? 0x232D3D : 0x34455C, 230);
+			hovered ? InterfacePalette.CONTROL_SELECTED : active ? 0x345949 : state == AbilityState.LOCKED ? InterfacePalette.CONTROL_DISABLED : InterfacePalette.ROW, 230);
 		if (hovered || active || !text) {
-			surface.drawBoxBorder(x, width, y, height, hovered ? 0xFFDC82 : active ? state.color : 0x667993);
+			surface.drawBoxBorder(x, width, y, height, hovered ? 0xFFDC82 : active ? state.color : InterfacePalette.BORDER);
 		}
 
 		if (text) {
@@ -16550,7 +16551,7 @@ public final class mudclient implements Runnable {
 				0, layout.labelFont, y + (height + layout.labelHeight) / 2 - 2);
 		}
 		if (state == AbilityState.LOCKED && (icon != null || book == AbilityBook.CLERIC)) {
-			surface.drawBoxAlpha(x + 1, y + 1, width - 2, height - 2, 0x101825, 120);
+			surface.drawBoxAlpha(x + 1, y + 1, width - 2, height - 2, InterfacePalette.INSET, 120);
 		}
 	}
 
@@ -16601,7 +16602,7 @@ public final class mudclient implements Runnable {
 		int width = contentRight - x;
 		int titleY = layout.lastRowY + layout.labelHeight + layout.padding;
 		int contentTop = titleY + 3;
-		surface.drawLineHoriz(x, layout.lastRowY + 2, layout.right - layout.padding - x, 0x667993);
+		surface.drawLineHoriz(x, layout.lastRowY + 2, layout.right - layout.padding - x, InterfacePalette.BORDER);
 		surface.drawString(abilityName(book, id), x, titleY - 3, 0xFFDC82, layout.labelFont);
 
 		java.util.List<String> lines = new java.util.ArrayList<>();
@@ -16631,8 +16632,8 @@ public final class mudclient implements Runnable {
 		if (max > 0 && height > 0) {
 			int thumb = Math.max(8, height * visible / lines.size());
 			int thumbY = contentTop + (height - thumb) * scroll / max;
-			surface.drawBox(contentRight + 2, contentTop, layout.scrollWidth - 3, height, 0x283548);
-			surface.drawBox(contentRight + 3, thumbY, layout.scrollWidth - 5, thumb, 0x8799B2);
+			surface.drawBox(contentRight + 2, contentTop, layout.scrollWidth - 3, height, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(contentRight + 3, thumbY, layout.scrollWidth - 5, thumb, InterfacePalette.SCROLL_THUMB);
 		}
 	}
 
@@ -18175,11 +18176,11 @@ public final class mudclient implements Runnable {
 		MapViewport viewport = frame.viewport;
 		if (frame.bottom <= frame.top || viewport.bottom <= viewport.top) return;
 		MudClientGraphics surface = getSurface();
-		surface.drawBoxAlpha(frame.left, frame.top, frame.width, frame.bottom - frame.top, 0x182333, 244);
-		surface.drawVerticalGradient(frame.left, frame.top, frame.width, frame.headerHeight, 0x3B4C67, 0x28354A);
-		surface.drawBoxBorder(frame.left, frame.width, frame.top, frame.bottom - frame.top, 0x667993);
+		surface.drawBoxAlpha(frame.left, frame.top, frame.width, frame.bottom - frame.top, InterfacePalette.PANEL, 244);
+		surface.drawVerticalGradient(frame.left, frame.top, frame.width, frame.headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(frame.left, frame.width, frame.top, frame.bottom - frame.top, InterfacePalette.BORDER);
 		int bodyTop = frame.top + frame.headerHeight;
-		surface.drawLineHoriz(frame.left + 1, bodyTop - 1, frame.width - 2, 0x667993);
+		surface.drawLineHoriz(frame.left + 1, bodyTop - 1, frame.width - 2, InterfacePalette.BORDER);
 		int baseline = frame.top + (frame.headerHeight + viewport.labelLine) / 2 - 3;
 		surface.drawString("Minimap", frame.left + frame.padding, baseline, 0xFFDC82, viewport.labelFont);
 		boolean expandHovered = frame.expand.contains(mouseX, mouseY);
@@ -18187,7 +18188,7 @@ public final class mudclient implements Runnable {
 		if (acceptInput && expandHovered) {
 			String label = "Open world map";
 			int labelX = frame.expand.x - frame.padding - surface.stringWidth(viewport.labelFont, label);
-			surface.drawString(label, labelX, baseline, 0xF2F5FA, viewport.labelFont);
+			surface.drawString(label, labelX, baseline, InterfacePalette.TEXT, viewport.labelFont);
 		}
 		if (localPlayer == null) return;
 		int tileX = Math.floorDiv(localPlayer.currentX, tileSize);
@@ -18445,8 +18446,16 @@ public final class mudclient implements Runnable {
 		int height = chatLayout == null ? HEALTH_HUD_HEIGHT : Math.max(hudPixels(HEALTH_HUD_HEIGHT), lineHeight + 3);
 		int toggleSize = chatLayout == null ? AUTO_ATTACK_HUD_SIZE : Math.max(hudPixels(AUTO_ATTACK_HUD_SIZE), height);
 		int gap = hudPixels(AUTO_ATTACK_HUD_GAP);
-		int x = Math.max(7 + toggleSize + gap, right - width - hudPixels(HEALTH_HUD_RIGHT_OF_MENU_GAP));
+		int barRight = right - hudPixels(HEALTH_HUD_RIGHT_OF_MENU_GAP);
+		int minX = 7 + toggleSize + gap;
 		int y = hudPixels(HEALTH_HUD_TOP_MARGIN);
+		int available = barRight - minX;
+		if (toolbar != null && !C_CUSTOM_UI && available < width) {
+			int labelWidth = getSurface().stringWidth(font, "999/999") + 2 * gap;
+			if (available >= labelWidth) width = available;
+			else y = toolbar.bottom() + gap;
+		}
+		int x = Math.max(minX, barRight - width);
 		drawAutoAttackHudButton(x - toggleSize - gap, y + (height - toggleSize) / 2, toggleSize, font);
 		drawPlayerHealthBar(x, y, width, height, font);
 		if (showCoordinatesOverlay) {
@@ -18831,8 +18840,8 @@ public final class mudclient implements Runnable {
 			settingTab = hoveredTab;
 			mouseButtonClick = 0;
 		}
-		surface.drawBoxAlpha(layout.left, layout.top, layout.right - layout.left, layout.bottom - layout.top, 0x182333, 228);
-		surface.drawBoxBorder(layout.left, layout.right - layout.left, layout.top, layout.bottom - layout.top, 0x667993);
+		surface.drawBoxAlpha(layout.left, layout.top, layout.right - layout.left, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
+		surface.drawBoxBorder(layout.left, layout.right - layout.left, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
 		for (int tab = 0; tab < SETTINGS_TAB_LABELS.length; tab++) {
 			drawInterfacePreviewTab(layout.tabLeft(tab), layout.top, layout.tabLeft(tab + 1) - layout.tabLeft(tab),
 				layout.tabHeight, SETTINGS_TAB_LABELS[tab], layout.labelFont,
@@ -18890,8 +18899,8 @@ public final class mudclient implements Runnable {
 			int thumb = Math.max(layout.padding * 2, height * (rows.length - maxScroll) / rows.length);
 			int y = layout.listTop();
 			int x = layout.scrollbarLeft();
-			surface.drawBox(x + 1, y, layout.scrollWidth - 2, height, 0x283548);
-			surface.drawBox(x + 2, y + (height - thumb) * scroll / maxScroll, layout.scrollWidth - 4, thumb, 0x8799B2);
+			surface.drawBox(x + 1, y, layout.scrollWidth - 2, height, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(x + 2, y + (height - thumb) * scroll / maxScroll, layout.scrollWidth - 4, thumb, InterfacePalette.SCROLL_THUMB);
 		}
 
 		int logoutTop = layout.logoutTop();
@@ -18958,7 +18967,7 @@ public final class mudclient implements Runnable {
 		int left = layout.listLeft();
 		int right = layout.scrollbarLeft();
 		if (!row.section) {
-			surface.drawBoxAlpha(left, y, right - left, row.height - 1, hovered ? 0x3A4C67 : 0x29374E, 192);
+			surface.drawBoxAlpha(left, y, right - left, row.height - 1, hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW, 192);
 		}
 		int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
 		for (int i = 0; i < row.labelLines.size(); i++) {
@@ -18968,7 +18977,7 @@ public final class mudclient implements Runnable {
 		if (!row.value.isEmpty()) {
 			int x = right - layout.padding - surface.stringWidth(layout.bodyFont, row.value);
 			surface.drawString(row.value, x, baseline + (row.stacked ? row.labelLines.size() * layout.bodyLine : 0),
-				0xC4D0E0, layout.bodyFont);
+				InterfacePalette.MUTED_TEXT, layout.bodyFont);
 		}
 	}
 
@@ -18987,12 +18996,12 @@ public final class mudclient implements Runnable {
 		int centerY = layout.sliderY(y);
 		int thumbX = SettingsPanelLayout.sliderX(level, left, right, min, max);
 		int trackY = centerY - layout.trackHeight / 2;
-		surface.drawBox(left, trackY, right - left + 1, layout.trackHeight, 0x142032);
-		surface.drawBox(left, trackY, thumbX - left + 1, layout.trackHeight, highlight ? 0x8DBDFF : 0x739CD4);
+		surface.drawBox(left, trackY, right - left + 1, layout.trackHeight, InterfacePalette.SCROLL_TRACK);
+		surface.drawBox(left, trackY, thumbX - left + 1, layout.trackHeight, highlight ? 0xD2B873 : InterfacePalette.SCROLL_THUMB);
 		int half = layout.thumbSize / 2;
 		surface.drawBox(thumbX - half, centerY - half, layout.thumbSize, layout.thumbSize,
-			highlight ? 0xF3D589 : 0xDFE8F7);
-		surface.drawBoxBorder(thumbX - half, layout.thumbSize, centerY - half, layout.thumbSize, 0x526785);
+			highlight ? 0xF3D589 : InterfacePalette.TEXT);
+		surface.drawBoxBorder(thumbX - half, layout.thumbSize, centerY - half, layout.thumbSize, InterfacePalette.BORDER);
 	}
 
 	private void drawSettingsScaleButtons(SettingsPanelLayout layout, RendererSettingsPanel.State graphics,
@@ -19001,7 +19010,7 @@ public final class mudclient implements Runnable {
 		int left = layout.listLeft();
 		int right = layout.scrollbarLeft();
 		int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
-		surface.drawBoxAlpha(left, y, right - left, layout.rowHeight - 1, 0x29374E, 192);
+		surface.drawBoxAlpha(left, y, right - left, layout.rowHeight - 1, InterfacePalette.ROW, 192);
 		surface.drawString("Window scale", left + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
 		String value = graphics.renderingScalar + "x";
 		int buttonWidth = layout.rowHeight;
@@ -20730,8 +20739,8 @@ public final class mudclient implements Runnable {
 	private void drawAccomplishmentsPreview(AccomplishmentsLayout layout, boolean acceptInput) {
 		MudClientGraphics surface = getSurface();
 		if (!C_CUSTOM_UI) drawAuthenticSidebarHeader(GUIPARTS.SKILLSTAB, Config.SKILLS_AND_QUESTS_TAB, layout.left + layout.width);
-		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom - layout.top, 0x182333, 228);
-		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom - layout.top, 0x667993);
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
 
 		int hoveredTab = acceptInput ? layout.tabAt(mouseX, mouseY) : -1;
 		if (hoveredTab >= 0 && mouseButtonClick == 1) {
@@ -20777,8 +20786,8 @@ public final class mudclient implements Runnable {
 		if (maxScroll > 0) {
 			int thumbHeight = Math.max(layout.padding * 2, listHeight * listHeight / (listHeight + maxScroll));
 			int thumbTop = listTop + (listHeight - thumbHeight) * scroll / maxScroll;
-			surface.drawBoxAlpha(layout.scrollbarLeft() + 1, listTop, layout.scrollbarWidth - 1, listHeight, 0x283548, 230);
-			surface.drawBox(layout.scrollbarLeft() + 2, thumbTop, layout.scrollbarWidth - 3, thumbHeight, 0x8799B2);
+			surface.drawBoxAlpha(layout.scrollbarLeft() + 1, listTop, layout.scrollbarWidth - 1, listHeight, InterfacePalette.SCROLL_TRACK, 230);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbTop, layout.scrollbarWidth - 3, thumbHeight, InterfacePalette.SCROLL_THUMB);
 		}
 		if (hoveredSkill >= 0 && !skillGuideInterface.isVisible()) {
 			drawAccomplishmentsSkillDetails(layout, hoveredSkill);
@@ -20793,7 +20802,7 @@ public final class mudclient implements Runnable {
 			if (y + quest.height <= layout.listTop(AccomplishmentsLayout.QUESTS) || y >= layout.listBottom()) continue;
 
 			if (hovered == quest.id && S_WANT_QUEST_MENUS) {
-				surface.drawBoxAlpha(layout.bodyLeft(), y, layout.scrollbarLeft() - layout.bodyLeft(), quest.height, 0x54647C, 200);
+				surface.drawBoxAlpha(layout.bodyLeft(), y, layout.scrollbarLeft() - layout.bodyLeft(), quest.height, InterfacePalette.CONTROL_SELECTED, 200);
 			}
 			int baseline = y + (quest.height - quest.lines.size() * layout.bodyHeight) / 2 + layout.bodyHeight - 3;
 			int nameX = layout.bodyLeft() + layout.padding;
@@ -20802,13 +20811,13 @@ public final class mudclient implements Runnable {
 				baseline += layout.bodyHeight;
 			}
 			int stage = questStages[quest.id];
-			int progressColor = stage < 0 ? 0x9FE0AC : stage > 0 && S_WANT_QUEST_STARTED_INDICATOR ? 0xFFDC82 : 0xB4C1D1;
+			int progressColor = stage < 0 ? 0x9FE0AC : stage > 0 && S_WANT_QUEST_STARTED_INDICATOR ? 0xFFDC82 : InterfacePalette.MUTED_TEXT;
 			String progress = stage < 0 ? "Completed" : S_WANT_QUEST_STARTED_INDICATOR
 				? (stage > 0 ? "In progress" : "Not started") : "Incomplete";
 			int progressX = layout.questStatusRight() - surface.stringWidth(layout.bodyFont, progress);
 			surface.drawString(progress, progressX, y + (quest.height + layout.bodyHeight) / 2 - 3,
 				progressColor, layout.bodyFont);
-			surface.drawLineHoriz(layout.bodyLeft(), y + quest.height - 1, layout.scrollbarLeft() - layout.bodyLeft(), 0x35455C);
+			surface.drawLineHoriz(layout.bodyLeft(), y + quest.height - 1, layout.scrollbarLeft() - layout.bodyLeft(), InterfacePalette.SEAM);
 		}
 		if (hovered >= 0 && S_WANT_QUEST_MENUS && mouseButtonClick == 1) {
 			openQuestGuideFromSidebar(hovered);
@@ -20829,14 +20838,14 @@ public final class mudclient implements Runnable {
 			int column = index / layout.skillRows;
 			int x = layout.columnLeft(column);
 			if (skill == hovered && S_WANT_SKILL_MENUS) {
-				surface.drawBoxAlpha(x, y, layout.columnWidth() - 1, layout.rowHeight, 0x54647C, 200);
+				surface.drawBoxAlpha(x, y, layout.columnWidth() - 1, layout.rowHeight, InterfacePalette.CONTROL_SELECTED, 200);
 			}
 			int baseline = y + (layout.rowHeight + layout.bodyHeight) / 2 - 3;
 			surface.drawString(skillNameLong[skill], x + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
 			String levelsText = playerStatCurrent[skill] + "/" + playerStatBase[skill];
 			surface.drawString(levelsText, x + layout.columnWidth() - layout.padding - surface.stringWidth(layout.bodyFont, levelsText),
 				baseline, 0xFFDC82, layout.bodyFont);
-			surface.drawLineHoriz(x + 1, y + layout.rowHeight - 1, layout.columnWidth() - 2, 0x35455C);
+			surface.drawLineHoriz(x + 1, y + layout.rowHeight - 1, layout.columnWidth() - 2, InterfacePalette.SEAM);
 		}
 		int row = layout.skillRows;
 		drawAccomplishmentsStatRow(layout, scroll, row++, "Equipment status", null, 0xFFDC82);
@@ -20892,8 +20901,8 @@ public final class mudclient implements Runnable {
 		int x = Math.max(layout.padding, layout.left - layout.padding - width);
 		int height = lines.size() * layout.bodyHeight + 2 * layout.padding;
 		int y = Math.max(layout.top, Math.min(mouseY, layout.bottom - height));
-		surface.drawBoxAlpha(x, y, width, height, 0x182333, 245);
-		surface.drawBoxBorder(x, width, y, height, 0x667993);
+		surface.drawBoxAlpha(x, y, width, height, InterfacePalette.PANEL, 245);
+		surface.drawBoxBorder(x, width, y, height, InterfacePalette.BORDER);
 		for (int row = 0; row < lines.size(); row++) {
 			surface.drawString(lines.get(row), x + layout.padding,
 				y + layout.padding + (row + 1) * layout.bodyHeight - 3, row == 0 ? 0xFFDC82 : 0xFFFFFF, layout.bodyFont);
@@ -24562,22 +24571,25 @@ public final class mudclient implements Runnable {
 		Sprite strip = spriteSelect(GUIPARTS.MENUBAR.getDef());
 		int hovered = toolbar.buttonAt(mouseX, mouseY);
 		int active = getVisibleSideMenuTab();
-		int iconInset = (toolbar.buttonSize - SideToolbarLayout.ICON_SIZE) / 2;
+		int iconInset = (toolbar.buttonSize - toolbar.iconSize) / 2;
 		for (int index = 0; index < SideToolbarLayout.BUTTON_COUNT; index++) {
 			int x = toolbar.leftOf(index);
 			int tab = SideToolbarLayout.tabAtIndex(index);
 			boolean pinned = tab == Config.MINIMAP_AND_COMPASS_TAB ? minimapPinned : pinnedSideMenuTab == tab;
 			boolean selected = active == tab || pinned;
 			surface.drawVerticalGradient(x, toolbar.top, toolbar.buttonSize, toolbar.buttonSize,
-				selected ? 0x596A83 : 0x34425A, selected ? 0x344258 : 0x252F41);
-			int border = hovered == index ? 0xD5E1F2 : selected ? 0xD2B873 : 0x667993;
+				selected ? InterfacePalette.CONTROL_SELECTED : InterfacePalette.CONTROL,
+				selected ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_LOW);
+			int border = hovered == index ? InterfacePalette.TEXT : selected ? 0xD2B873 : InterfacePalette.BORDER;
 			surface.drawBoxBorder(x, toolbar.buttonSize, toolbar.top, toolbar.buttonSize, border);
 			AbilityBook book = AbilityBook.forTab(tab);
 			if (book == null) {
 				Sprite icon = sideToolbarArtwork.icon(strip, Config.OPTIONS_TAB - tab);
-				if (icon != null) surface.drawSprite(icon, x + iconInset, toolbar.top + iconInset);
+				if (icon != null) {
+					surface.drawSprite(icon, x + iconInset, toolbar.top + iconInset, toolbar.iconSize, toolbar.iconSize, 5924);
+				}
 			} else {
-				int font = 6;
+				int font = toolbar.iconSize > SideToolbarLayout.ICON_SIZE ? 7 : 6;
 				surface.drawColoredStringCentered(x + toolbar.buttonSize / 2, book.letter,
 					selected ? 0xFFDC82 : 0xFFFFFF, 0, font, toolbar.top + (toolbar.buttonSize + surface.fontHeight(font)) / 2 - 3);
 			}

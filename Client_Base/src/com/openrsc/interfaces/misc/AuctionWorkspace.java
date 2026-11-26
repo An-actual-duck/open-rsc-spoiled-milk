@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import orsc.Config;
+import orsc.InterfacePalette;
 import orsc.graphics.gui.Panel;
 import orsc.mudclient;
 
@@ -303,7 +304,8 @@ final class AuctionWorkspace {
 	private void drawListingRow(AuctionItem auction, int x, int y, int w, int h, boolean ownListing) {
 		boolean selected = selectedId == auction.getAuctionID();
 		boolean over = style.over(x, y, w, h - 2);
-		client.getSurface().drawBox(x, y, w, h - 2, selected ? 0x405C65 : over ? 0x344C60 : 0x243443);
+		client.getSurface().drawBox(x, y, w, h - 2,
+			selected ? InterfacePalette.CONTROL_SELECTED : over ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW);
 		client.getSurface().drawBoxBorder(x, w, y, h - 2, BORDER);
 		int iconWidth = Math.min(size(54), (h - 4) * 3 / 2);
 		int iconHeight = iconWidth * 2 / 3;
@@ -498,7 +500,8 @@ final class AuctionWorkspace {
 		ItemDef definition = item == null ? null : item.getItemDef();
 		boolean over = style.over(x, y, w, h);
 		boolean selected = definition != null && draft != null && draft.id == definition.id;
-		client.getSurface().drawBox(x, y, w, h, selected ? 0x405C65 : over ? 0x344C60 : 0x243443);
+		client.getSurface().drawBox(x, y, w, h,
+			selected ? InterfacePalette.CONTROL_SELECTED : over ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW);
 		client.getSurface().drawBoxBorder(x, w, y, h, BORDER);
 		if (definition == null) return;
 		int icon = Math.min(w - 4, (h - 4) * 3 / 2);
@@ -542,7 +545,7 @@ final class AuctionWorkspace {
 		boxWidth = Math.min(boxWidth, w * 2 / 3);
 		int left = x + w - boxWidth;
 		style.draw(style.fit(label, left - x - 4), x, y + (style.button + style.line) / 2 - 2, MUTED);
-		client.getSurface().drawBox(left, y, boxWidth, style.button, 0x16212D);
+		client.getSurface().drawBox(left, y, boxWidth, style.button, InterfacePalette.INSET);
 		client.getSurface().drawBoxBorder(left, boxWidth, y, style.button, BORDER);
 		input.reposition(handle, left + 5, y + style.button / 2, boxWidth - 10, style.button - 4);
 		input.setTextFont(handle, style.font);

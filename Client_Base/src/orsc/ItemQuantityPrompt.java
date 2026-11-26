@@ -109,7 +109,7 @@ final class ItemQuantityPrompt {
 			part -> surface.literalStringWidth(style.bodyFont, part));
 		surface.drawLiteralString(name, left + iconWidth + pad, itemY + (itemRow + bodyLine) / 2 - 3,
 			0xFFFFFF, style.bodyFont);
-		surface.drawString("Quantity", left, labelY, 0xC4D0E0, style.labelFont);
+		surface.drawString("Quantity", left, labelY, InterfacePalette.MUTED_TEXT, style.labelFont);
 		editor.draw(client, field, 1, style.bodyFont, pad);
 		String feedback;
 		if (maximum == 0) {
@@ -123,7 +123,7 @@ final class ItemQuantityPrompt {
 		}
 		feedback = ContextMenuLayout.fitLabel(feedback, inner, part -> surface.stringWidth(style.labelFont, part));
 		surface.drawString(feedback, left, feedbackY, maximum == 0 || requested > maximum
-			|| showValidation && requested == 0 ? 0xFFBC8D : 0xC4D0E0, style.labelFont);
+			|| showValidation && requested == 0 ? 0xFFBC8D : InterfacePalette.MUTED_TEXT, style.labelFont);
 		SocialTextPrompt.drawButton(surface, cancel, "Cancel", true, cancel.contains(mouseX, mouseY), style.labelFont, labelLine);
 		SocialTextPrompt.drawButton(surface, submit, action.label, enabled, submit.contains(mouseX, mouseY),
 			style.labelFont, labelLine);

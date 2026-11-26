@@ -40,12 +40,12 @@ final class BankPinWindow {
 
 		SocialTextPrompt.drawFrame(surface, layout.frame, layout.header, layout.padding, "Bank PIN",
 			text.bodyFont, bodyLine);
-		surface.drawColoredStringCentered(layout.center, "Click the four digits of your PIN.", 0xC4D0E0,
+		surface.drawColoredStringCentered(layout.center, "Click the four digits of your PIN.", InterfacePalette.MUTED_TEXT,
 			0, text.labelFont, layout.instructionBaseline);
 		for (int i = 0; i < layout.slots.length; i++) {
 			Rectangle slot = layout.slots[i];
-			surface.drawBox(slot.x, slot.y, slot.width, slot.height, 0x101923);
-			surface.drawBoxBorder(slot.x, slot.width, slot.y, slot.height, 0x667993);
+			surface.drawBox(slot.x, slot.y, slot.width, slot.height, InterfacePalette.INSET);
+			surface.drawBoxBorder(slot.x, slot.width, slot.y, slot.height, InterfacePalette.BORDER);
 			if (i < pin.length()) {
 				surface.drawColoredStringCentered(slot.x + slot.width / 2, "*", 0xFFDC82, 0, text.bodyFont,
 					slot.y + (slot.height + bodyLine) / 2 - 2);
