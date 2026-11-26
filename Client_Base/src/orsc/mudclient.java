@@ -1244,6 +1244,8 @@ public final class mudclient implements Runnable {
 	private volatile SocialTextPrompt socialTextPrompt;
 	private volatile PartyWindow partyWindow;
 	private volatile PartyWindow partyInvitation;
+	private volatile ClanWindow clanWindow;
+	private volatile ClanWindow clanInvitation;
 	boolean deathItemsSupported;
 	private volatile DeathItemsWindow deathItemsWindow;
 	private volatile ItemQuantityPrompt itemQuantityPrompt;
@@ -8792,9 +8794,21 @@ public final class mudclient implements Runnable {
 				int headerEnd = serverMessage.indexOf('%');
 				if (headerEnd > 0) {
 					String header = serverMessage.substring(0, headerEnd);
-					if (header.equals("Auction House") || header.equals("Auction collections")) {
-						title = header;
-						body = serverMessage.substring(headerEnd + 1);
+					switch (header) {
+						case "Auction House":
+						case "Auction collections":
+						case "Fishing Trawler":
+						case "Gnome Ball":
+						case "Combat Odyssey":
+						case "Gnome Restaurant":
+						case "Gnome Bar":
+						case "Dwarf Rescue":
+						case "A Lumbridge Carol":
+							title = header;
+							body = serverMessage.substring(headerEnd + 1);
+							break;
+						default:
+							break;
 					}
 				}
 				serverNotice = new SessionNoticeWindow(title, body, "Close", null,
@@ -15579,18 +15593,13 @@ public final class mudclient implements Runnable {
 			drawSocialName(layout, "Leader: " + clan.getClanLeaderUsername(), layout.bodyLeft(),
 				layout.contentTop() + 3 * layout.bodyLine - 3, layout.bodyRight(), 0xC4D0E0);
 			drawSocialMembers(layout, SocialPanelLayout.CLAN, SocialLists.clanListCount, acceptInput);
-			drawSocialAction(layout, 0, 2, "Leave Clan", acceptInput, () ->
-				showItemModX(new String[]{"Are you sure you want to leave the clan?"}, InputXAction.CLAN_LEAVE, false));
-			drawSocialAction(layout, 1, 2, "Clan Setup", acceptInput, () -> clan.showClanSetupInterface(true));
+			drawSocialAction(layout, 0, 2, "Leave Clan", acceptInput,
+				() -> openClanConfirmation(ClanWindow.Confirmation.LEAVE, null));
+			drawSocialAction(layout, 1, 2, "Manage Clan", acceptInput, this::openScaledClanWindow);
 		} else {
 			drawSocialText(layout, "You are not currently in a clan.", layout.contentTop(), 0xC4D0E0);
-			drawSocialAction(layout, 0, 2, "Clan Search", acceptInput, () -> {
-				clan.showClanSetupInterface(false);
-				clan.getClanInterface().clanActivePanel = 3;
-				clan.getClanInterface().resetAll();
-				clan.getClanInterface().sendClanSearch();
-			});
-			drawSocialAction(layout, 1, 2, "Clan Setup", acceptInput, () -> clan.showClanSetupInterface(false));
+			drawSocialAction(layout, 0, 2, "Find a Clan", acceptInput, this::openScaledClanSearch);
+			drawSocialAction(layout, 1, 2, "Create Clan", acceptInput, this::openScaledClanWindow);
 		}
 	}
 
@@ -15743,6 +15752,42 @@ public final class mudclient implements Runnable {
 		showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
 	}
 
+	void openClanInvitePrompt() {
+		if (!clan.inClan() || !clan.isAllowed(1)) return;
+		openScaledSocialPrompt(SocialTextPrompt.Action.CLAN_INVITE, null);
+	}
+
+	public boolean openScaledClanWindow() {
+		if (!S_WANT_CLANS || chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		clanWindow = new ClanWindow(clan.inClan() ? ClanWindow.View.MEMBERS : ClanWindow.View.CREATE);
+		return true;
+	}
+
+	private boolean openScaledClanSearch() {
+		if (!S_WANT_CLANS || chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		clanWindow = new ClanWindow(ClanWindow.View.SEARCH);
+		clan.getClanInterface().sendClanSearch();
+		return true;
+	}
+
+	public boolean openScaledClanInvitation(String inviter, String clanName) {
+		if (!S_WANT_CLANS || chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		clanInvitation = new ClanWindow(inviter, clanName);
+		return true;
+	}
+
+	private boolean openClanConfirmation(ClanWindow.Confirmation action, String target) {
+		if (!S_WANT_CLANS || chatLayout == null || isAndroid() || !clan.inClan()) return false;
+		closeTopMouseMenu();
+		ClanWindow window = new ClanWindow(ClanWindow.View.MEMBERS);
+		window.confirm(action, target);
+		clanWindow = window;
+		return true;
+	}
+
 	public boolean openScaledPartyWindow() {
 		if (chatLayout == null || isAndroid()) return false;
 		closeTopMouseMenu();
@@ -15765,7 +15810,8 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean hasSocialPromptInput() {
-		return (partyInvitation != null || socialTextPrompt != null || partyWindow != null)
+		return (partyInvitation != null || socialTextPrompt != null || partyWindow != null
+			|| clanInvitation != null || clanWindow != null)
 			&& chatLayout != null && currentViewMode == GameMode.GAME
 			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
 			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
@@ -15776,21 +15822,29 @@ public final class mudclient implements Runnable {
 
 	public boolean handleSocialPromptKey(char key, int code, boolean shortcut) {
 		if (!hasSocialPromptInput()) return false;
+		ClanWindow invitationToClan = clanInvitation;
+		ClanWindow clanSetup = clanWindow;
 		PartyWindow invitation = partyInvitation;
 		SocialTextPrompt prompt = socialTextPrompt;
 		PartyWindow window = partyWindow;
-		if (invitation != null) invitation.keyPressed(code);
+		if (invitationToClan != null) invitationToClan.keyPressed(key, code, shortcut);
+		else if (invitation != null) invitation.keyPressed(code);
 		else if (prompt != null) prompt.keyPressed(key, code, shortcut);
+		else if (clanSetup != null) clanSetup.keyPressed(key, code, shortcut);
 		else if (window != null) window.keyPressed(code);
 		return true;
 	}
 
 	private void drawSocialPrompt() {
 		int bottom = chatLayout.entryTop();
-		if (partyInvitation != null) {
+		if (clanInvitation != null) {
+			if (clanInvitation.draw(this, bottom)) clanInvitation = null;
+		} else if (partyInvitation != null) {
 			if (partyInvitation.draw(this, bottom)) partyInvitation = null;
 		} else if (socialTextPrompt != null) {
 			drawSocialTextPrompt(bottom);
+		} else if (clanWindow != null) {
+			if (clanWindow.draw(this, bottom)) clanWindow = null;
 		} else if (partyWindow != null && partyWindow.draw(this, bottom)) {
 			partyWindow = null;
 		}
@@ -15806,6 +15860,9 @@ public final class mudclient implements Runnable {
 			switch (prompt.action) {
 				case ADD_FRIEND: addFriend(prompt.value().trim()); break;
 				case PRIVATE_MESSAGE: putStringPair(prompt.recipient, prompt.value()); break;
+				case CLAN_INVITE:
+					if (clan.inClan() && clan.isAllowed(1)) clan.getClanInterface().sendClanInvite(prompt.value().trim());
+					break;
 				case PARTY_INVITE: addPartyInv(prompt.value().trim()); break;
 			}
 		}
@@ -15823,7 +15880,8 @@ public final class mudclient implements Runnable {
 		if (name == null) return;
 		String key = StringUtil.displayNameToKey(name);
 		if (key.equals(StringUtil.displayNameToKey(localPlayer.accountName))) return;
-		if (clan.isClanLeader() || clan.isAllowed(0)) {
+		if ((clan.isClanLeader() || clan.isAllowed(0))
+			&& !key.equals(StringUtil.displayNameToKey(clan.getClanLeaderUsername()))) {
 			menuCommon.addItem_With2Strings("Kick user", "@whi@" + name, name, MenuItemAction.CLAN_MENU_KICK, name);
 		}
 		for (int index = 0; index < SocialLists.friendListCount; index++) {
@@ -16014,10 +16072,12 @@ public final class mudclient implements Runnable {
 						&& this.mouseY < var6 + var4 + 12) {
 						buttonColorA = 0x263751;
 						if (getMouseClick() == 1) {
-							clan.showClanSetupInterface(clan.inClan());
-							clan.getClanInterface().clanActivePanel = 3;
-							clan.getClanInterface().resetAll();
-							clan.getClanInterface().sendClanSearch();
+							if (!openScaledClanSearch()) {
+								clan.showClanSetupInterface(clan.inClan());
+								clan.getClanInterface().clanActivePanel = 3;
+								clan.getClanInterface().resetAll();
+								clan.getClanInterface().sendClanSearch();
+							}
 							if (!C_CUSTOM_UI)
 								this.showUiTab = 0;
 							setMouseClick(0);
@@ -22240,7 +22300,7 @@ public final class mudclient implements Runnable {
 				if (!this.isSleeping) {
 					if (chatLayout != null) {
 						if (worldMapWindow == null && !hasBankPinInput() && !hasSessionNoticeInput() && !hasItemQuantityInput()
-							&& !hasReportPlayerInput() && !hasPasswordChangeInput() && !hasGameplayPromptInput()) {
+								&& !hasReportPlayerInput() && !hasPasswordChangeInput() && !hasGameplayPromptInput() && !hasSocialPromptInput()) {
 							handleScaledChatTabSelection();
 						}
 					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
@@ -24011,6 +24071,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case CLAN_MENU_KICK: {
+					if (openClanConfirmation(ClanWindow.Confirmation.KICK, var9)) break;
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");
 					kickClanPlayer(playerName);
@@ -28609,6 +28670,9 @@ public final class mudclient implements Runnable {
 			socialTextPrompt = null;
 			partyWindow = null;
 			partyInvitation = null;
+			clanWindow = null;
+			clanInvitation = null;
+			if (fishingTrawlerInterface != null) fishingTrawlerInterface.hide();
 			closeDeathItemsWindow();
 			itemQuantityPrompt = null;
 			reportPlayerWindow = null;
@@ -28731,6 +28795,9 @@ public final class mudclient implements Runnable {
 			socialTextPrompt = null;
 			partyWindow = null;
 			partyInvitation = null;
+			clanWindow = null;
+			clanInvitation = null;
+			if (fishingTrawlerInterface != null) fishingTrawlerInterface.hide();
 			closeDeathItemsWindow();
 			itemQuantityPrompt = null;
 			reportPlayerWindow = null;
@@ -34183,7 +34250,14 @@ public final class mudclient implements Runnable {
 			else if (tracker != null && travelConfirmation == null) tracker.scroll(x);
 			return;
 		}
-		if (hasSocialPromptInput() || hasItemQuantityInput() || hasPasswordChangeInput()) return;
+		if (hasSocialPromptInput()) {
+			ClanWindow window = clanWindow;
+			if (window != null && clanInvitation == null && partyInvitation == null && socialTextPrompt == null) {
+				window.scroll(mouseX, mouseY, x);
+			}
+			return;
+		}
+		if (hasItemQuantityInput() || hasPasswordChangeInput()) return;
 		ReportPlayerWindow report = reportPlayerWindow;
 		if (report != null && hasReportPlayerInput()) {
 			report.scroll(x);

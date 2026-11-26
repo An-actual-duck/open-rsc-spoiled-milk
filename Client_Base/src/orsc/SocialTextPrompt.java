@@ -12,6 +12,7 @@ final class SocialTextPrompt {
 	enum Action {
 		ADD_FRIEND("Add Friend", "Add", 20),
 		PRIVATE_MESSAGE("Private Message", "Send", 80),
+		CLAN_INVITE("Invite to Clan", "Invite", 20),
 		PARTY_INVITE("Invite to Party", "Invite", 20);
 
 		final String title;

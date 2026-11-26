@@ -643,7 +643,7 @@ public class ALumbridgeCarol implements OpInvTrigger, TalkNpcTrigger, UseInvTrig
 			mes("Which page would you like to turn to?");
 			int page = multi("page 1", "page 2", "page 3");
 			if (page == 0) {
-				ActionSender.sendBox(player, " %Tonight I was visited by three spirits %"
+				ActionSender.sendActivityNotice(player, "A Lumbridge Carol", " %Tonight I was visited by three spirits %"
 					+ "The first spirit told me that his name was Praeteritum %"
 					+ "He then showed me a vision of a Christmas from my past %"
 					+ "I remember it well %"
@@ -655,13 +655,13 @@ public class ALumbridgeCarol implements OpInvTrigger, TalkNpcTrigger, UseInvTrig
 					+ "I broke her heart %"
 					+ "And she never came around again", true);
 			} else if (page == 1) {
-				ActionSender.sendBox(player, " %The second spirit said his name was Praesens %"
+				ActionSender.sendActivityNotice(player, "A Lumbridge Carol", " %The second spirit said his name was Praesens %"
 					+ "He showed me a vision of a man that I recently banished from Lumbridge %"
 					+ "I kicked him out because he ruined Thanksgiving dinner %"
 					+ "He forgot to buy ingredients for the pie %"
 					+ "Apparently he is now living as a tramp in Varrock", true);
 			} else if (page == 2) {
-				ActionSender.sendBox(player, "The third and final spirit told me his name was Futurum %"
+				ActionSender.sendActivityNotice(player, "A Lumbridge Carol", "The third and final spirit told me his name was Futurum %"
 					+ "The vision he had for me was the strangest of all %"
 					+ "It seemed to be a vision of the future %"
 					+ "In the vision, it was Christmas time like it is now %"
@@ -696,7 +696,7 @@ public class ALumbridgeCarol implements OpInvTrigger, TalkNpcTrigger, UseInvTrig
 			remove(ItemId.DUKE_PARCHMENT.id(), 1);
 			give(ItemId.APOLOGY_LETTER.id(), 1);
 		} else if (item.getCatalogId() == ItemId.APOLOGY_LETTER.id()) {
-			ActionSender.sendBox(player, "My Love, % %"
+			ActionSender.sendActivityNotice(player, "A Lumbridge Carol", "My Love, % %"
 				+ "I hope you're doing well. I've been reflecting on our past and the "
 				+ "choices I made, and I want to sincerely apologize for my actions. I "
 				+ "realize I made a terrible mistake by prioritizing my career over our "

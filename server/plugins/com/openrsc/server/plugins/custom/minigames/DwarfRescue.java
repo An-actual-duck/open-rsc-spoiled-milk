@@ -23,7 +23,7 @@ public class DwarfRescue implements TalkNpcTrigger, OpInvTrigger {
 	public void onOpInv(Player player, Integer invIndex, Item item, String command) {
 		if (item.getCatalogId() == ItemId.DWARF_SMITHY_NOTE.id()) {
 			mes("the note reads....");
-			ActionSender.sendBox(player, "How to obtain dragon armour% %"
+			ActionSender.sendActivityNotice(player, "Dwarf Rescue", "How to obtain dragon armour% %"
 				+ "Complete Dwarf Youth Rescue to access the lava forge% "
 				+ "Repair the lava forge with 100 Black dragon scales and 1,000,000 coins% %"
 				+ "Dragon bar:% %"

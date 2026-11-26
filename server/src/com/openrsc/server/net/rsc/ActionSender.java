@@ -267,6 +267,10 @@ public class ActionSender {
 		tryFinalizeAndSendPacket(opcode, struct, player);
 	}
 
+	public static void sendActivityNotice(Player player, String activity, String message, boolean big) {
+		sendBox(player, activity + "%" + message, big);
+	}
+
 	/**
 	 * Inform client to start displaying the appearance changing screen.
 	 *

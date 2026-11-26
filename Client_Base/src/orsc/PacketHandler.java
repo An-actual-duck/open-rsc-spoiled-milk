@@ -2717,6 +2717,8 @@ public class PacketHandler {
 
 	private void fishingTrawlerUpdate() {
 		int action = packetsIncoming.getByte();
+		// The custom server prefixes Trawler actions with interface ID 6.
+		if (action == 6) action = packetsIncoming.getByte();
 		switch (action) {
 			case 0:
 				mc.getFishingTrawlerInterface().show();

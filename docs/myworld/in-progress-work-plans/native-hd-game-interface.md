@@ -101,16 +101,6 @@ The account rework will retire recovery questions and email-based recovery.
 Remove email and personal contact information from the account forms that
 collect them as part of that rework.
 
-## Needs further exploration
-
-Revisit these after the more straightforward UI updates are complete.
-
-- **Clans**. Defer the UI redesign until the owner has reviewed the existing
-  creation, search, joining, invitations, and member management flows in game.
-- **Activity windows**. Review territory and minigame screens, point
-  configuration, and other activity-specific windows individually. Establish
-  what players need to see or do in each before choosing a layout.
-
 ## Dialogue and item windows
 
 The dialogue preview moves existing response choices into a translucent panel
@@ -314,6 +304,27 @@ Manage Party shows the roster with rank, health and combat level. Owners
 can change who can kick or invite from the Permissions tab. Select a
 member to change their rank, transfer leadership or kick them when your
 rank permits it. The window confirms transfers, kicks and leaving a party.
+
+### Clans
+
+Social → Clan opens the scaled creation form, clan search, and member roster.
+Search matches the clan name and tag. Listings show member count and points,
+and the detail view shows rank and whether the clan accepts members. Incoming
+invitations show the sender and clan with Accept and Decline.
+
+Members can see ranks and online status. Authorized players can invite or
+remove members. Clan owners can promote a member, transfer leadership, and
+set who can kick, invite, or join. Removing a member, transferring leadership,
+and leaving the clan each have a confirmation.
+
+## Activity and minigame preview
+
+Fishing Trawler uses a scaled status HUD for water, net condition, catch and
+time. The server shows it aboard the boat and closes it on exit. Voyage results
+and net alerts use the activity title. Gnome Ball scores, Combat Odyssey tasks,
+gnome cooking and bartending recipes, Dwarf Rescue instructions, and
+A Lumbridge Carol notes use the scaled notice frame. Territory signup is
+an unfinished prototype. OpenPK points controls are disabled in MyWorld.
 
 ## Settings preview
 

@@ -83,6 +83,10 @@ final class ModalTextField {
 		draw(client, field, rows, font, pad, true, false);
 	}
 
+	void draw(mudclient client, Rectangle field, int font, int pad, boolean focused) {
+		draw(client, field, 1, font, pad, focused, false);
+	}
+
 	void drawMasked(mudclient client, Rectangle field, int font, int pad, boolean focused) {
 		draw(client, field, 1, font, pad, focused, true);
 	}

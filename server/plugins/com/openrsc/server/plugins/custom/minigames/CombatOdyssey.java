@@ -479,18 +479,13 @@ public class CombatOdyssey implements DropObjTrigger, KillNpcTrigger, OpInvTrigg
 		} else if (option == 2) {
 			say("What tasks do I have left to do?");
 			StringBuilder tasksRemaining = new StringBuilder();
-			tasksRemaining.append("@yel@Human still has to kill @whi@ % % ");
-			boolean firstTask = true;
+			tasksRemaining.append("Remaining targets");
 			for (Task task : tierData.getTasks()) {
 				if (isTaskAlreadyComplete(player, task.getTaskId())) {
 					continue;
 				}
 
-				if (!firstTask) {
-					tasksRemaining.append(", ");
-				}
-
-				firstTask = false;
+				tasksRemaining.append('%');
 
 				if (task.getTaskId() == getCurrentTask(player)) {
 					tasksRemaining.append(task.getKills() - getCurrentKills(player));
@@ -501,7 +496,7 @@ public class CombatOdyssey implements DropObjTrigger, KillNpcTrigger, OpInvTrigg
 				tasksRemaining.append(task.getDescription());
 			}
 
-			ActionSender.sendBox(player, tasksRemaining.toString(), true);
+			ActionSender.sendActivityNotice(player, "Combat Odyssey", tasksRemaining.toString(), true);
 		} else if (option == 3 && player.isDev()) {
 			developerOptions(player, player);
 		}
