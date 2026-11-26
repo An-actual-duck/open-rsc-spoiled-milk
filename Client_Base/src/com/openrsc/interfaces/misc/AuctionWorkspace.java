@@ -106,11 +106,8 @@ final class AuctionWorkspace {
 
 		market.auctionMenu.hide(market.auctionScrollHandle);
 		market.myAuctions.hide(market.myAuctionScrollHandle);
-		market.auctionMenu.hide(market.textField_buyAmount);
-		market.myAuctions.hide(market.textField_amount);
-		market.myAuctions.hide(market.textField_price);
-		market.myAuctions.hide(market.textField_priceEach);
 		if (browsing) {
+			hideSellerFields();
 			market.auctionMenu.show(market.auctionSearchHandle);
 			sidebar.draw(layout.filters, style, market.auctionMenu, market.auctionSearchHandle,
 				currentFilters(), this::applyFilters, false, false, null);
@@ -120,6 +117,7 @@ final class AuctionWorkspace {
 			market.auctionMenu.drawPanel();
 		} else {
 			market.auctionMenu.hide(market.auctionSearchHandle);
+			hideBuyField();
 			updateResults();
 			if (choosingItem) drawInventory(layout.mine);
 			else drawListings(layout.mine, ownResults, true);
@@ -276,6 +274,7 @@ final class AuctionWorkspace {
 		int y = panel.y + style.header + style.gap;
 		y = line("Carried  " + gp(client.getInventoryCount(10)), x, y, w, GOLD);
 		if (auction == null) {
+			hideBuyField();
 			line("Select a listing to view it.", x, y, w, MUTED);
 			return;
 		}
@@ -284,6 +283,7 @@ final class AuctionWorkspace {
 		y = line("Seller  " + auction.getSeller(), x, y, w, MUTED);
 		y = line(number.format(auction.getAmount()) + " available at " + gp(unitPrice(auction)) + " each", x, y, w, MUTED);
 		if (own(auction)) {
+			hideBuyField();
 			line("Manage this in My Auctions.", x, y, w, MUTED);
 			return;
 		}
@@ -309,6 +309,7 @@ final class AuctionWorkspace {
 	}
 
 	private void drawSeller(Rectangle panel, AuctionItem auction) {
+		if (!choosingItem || draft == null) hideSellerFields();
 		style.panel(panel, choosingItem ? "Create listing" : "Manage listings");
 		int x = panel.x + style.gap;
 		int w = panel.width - 2 * style.gap;
@@ -316,6 +317,7 @@ final class AuctionWorkspace {
 		if (style.button(x, y, w, style.button, choosingItem ? "Back to listings" : "Select item to list", false, true)) {
 			choosingItem = !choosingItem;
 			draft = null;
+			hideSellerFields();
 			clearSelection();
 			resetScroll();
 			return;
@@ -355,9 +357,22 @@ final class AuctionWorkspace {
 			market.sendCreateAuction(draft.id, quantity, total);
 			choosingItem = false;
 			draft = null;
+			hideSellerFields();
 			clearSelection();
 			resetScroll();
 		}
+	}
+
+	private void hideBuyField() {
+		market.auctionMenu.hide(market.textField_buyAmount);
+		if (market.auctionMenu.focusOn(market.textField_buyAmount)) market.auctionMenu.setFocus(-1);
+	}
+
+	private void hideSellerFields() {
+		market.myAuctions.hide(market.textField_amount);
+		market.myAuctions.hide(market.textField_price);
+		market.myAuctions.hide(market.textField_priceEach);
+		market.myAuctions.setFocus(-1);
 	}
 
 	private void drawInventory(Rectangle panel) {
