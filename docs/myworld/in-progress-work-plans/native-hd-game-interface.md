@@ -107,9 +107,8 @@ Revisit these after the more straightforward UI updates are complete.
 
 - **Clans**. Defer the UI redesign until the owner has reviewed the existing
   creation, search, joining, invitations, and member management flows in game.
-- **Auction House**. Walk through listing, buying, cancelling, expiry, and
-  collection with two accounts. Use that walkthrough to decide what changes
-  would help on a small server.
+- **Auction collection and expiry**. Review the clerk and banker collection
+  flow and expiry before changing how players retrieve proceeds and returned items.
 - **Player report review**. Verify the deployed report path end to end with a
   test report. Follow server validation, the `game_reports` record and
   attached evidence, and any configured Discord delivery. Establish where the
@@ -461,6 +460,17 @@ and text size settings. Talk to a banker and ask about bank PINs to set, change,
 or remove one. The keypad masks the entered digits and submits the fourth click
 automatically. Cancel or Escape dismisses the prompt.
 
+
+## Auction House preview
+
+Browse and My Auctions are the two top tabs. Browse uses the bank’s left Filters
+panel, including item search, skill and item tags, AND/OR matching, and Clear.
+The listings panel contains sorting, refresh, and paging. Selecting a listing
+shows the seller, available quantity, and purchase total in the right panel.
+
+My Auctions shows the player’s active listings and keeps item selection, listing
+price, quantity, and cancellation in the same window. Listing actions use the
+existing auction clerk and market server flow.
 
 ## Trade preview
 

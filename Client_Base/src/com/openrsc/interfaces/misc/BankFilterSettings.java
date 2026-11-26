@@ -1,5 +1,7 @@
 package com.openrsc.interfaces.misc;
 
+import com.openrsc.client.entityhandling.defs.ItemDef;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Objects;
@@ -51,6 +53,18 @@ final class BankFilterSettings {
 
 	boolean isActive() {
 		return !query.isEmpty() || !tags.isEmpty();
+	}
+
+	boolean matches(ItemDef definition) {
+		if (definition == null || definition.getName() == null) return false;
+		if (!isActive()) return true;
+		boolean hasSearch = !query.isEmpty();
+		boolean searchMatch = hasSearch && definition.getName().toLowerCase(Locale.ENGLISH).contains(query);
+		if (tags.isEmpty()) return searchMatch;
+		if (hasSearch && andMode && !searchMatch) return false;
+		if (!andMode && searchMatch) return true;
+		EnumSet<BankItemTag> itemTags = BankItemTag.classify(definition);
+		return andMode ? itemTags.containsAll(tags) : !Collections.disjoint(itemTags, tags);
 	}
 
 	@Override

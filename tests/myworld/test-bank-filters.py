@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 BANK = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/CustomBankInterface.java"
 TAGS = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/BankItemTag.java"
+MATCHER = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/BankFilterSettings.java"
 
 
 def fail(message: str) -> None:
@@ -79,8 +80,7 @@ def main() -> None:
         'drawFilterModeButton("OR"',
         'drawString("Search"',
         "private ArrayList<BankItem> filteredBankItems()",
-        "matches = (!hasSearch || searchMatch) && (!hasTags || tagMatch);",
-        "matches = (hasSearch && searchMatch) || (hasTags && tagMatch);",
+        "filters.matches(item.getItem().getItemDef())",
         "selectedBankSlot = bankItem.bankID;",
         "if (filtersActive())",
         "filterPanelDocked",
@@ -88,6 +88,10 @@ def main() -> None:
     ):
         require(bank, snippet, "CustomBankInterface")
 
+    matcher = MATCHER.read_text(encoding="utf-8")
+    require(matcher, "if (hasSearch && andMode && !searchMatch) return false;", "AND search")
+    require(matcher, "if (!andMode && searchMatch) return true;", "OR search")
+    require(matcher, "andMode ? itemTags.containsAll(tags) : !Collections.disjoint(itemTags, tags)", "shared tag matching")
     forbid(bank, 'drawString("Search for item:"', "legacy bank search")
     require(tags, 'endsWithAny(name, "-rune", " rune", " runes")', "rune item classification")
     require(tags, "if (def.untradeable", "quest item classification")

@@ -11,28 +11,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** The scaled bank view and its independent, live filter tabs. */
 final class BankWorkspace {
-	static final int TEXT = 0xE6EDF2;
-	static final int GOLD = 0xF2D393;
-	static final int MUTED = 0xA9B9C6;
-	static final int BORDER = 0x516679;
+	static final int TEXT = ItemWorkspaceStyle.TEXT;
+	static final int GOLD = ItemWorkspaceStyle.GOLD;
+	static final int MUTED = ItemWorkspaceStyle.MUTED;
+	static final int BORDER = ItemWorkspaceStyle.BORDER;
 	private static final int SAVE_FILTER_TAB = 32;
 
 	private final CustomBankInterface bank;
 	private final mudclient client;
 	private final ArrayList<Tab> tabs = new ArrayList<>();
 	private final AtomicInteger stockWheel = new AtomicInteger();
-	private final AtomicInteger filterWheel = new AtomicInteger();
+	private final ItemFilterSidebar filterSidebar;
+	private ItemWorkspaceStyle style;
 	private final AtomicInteger carriedWheel = new AtomicInteger();
 	private volatile BankWorkspaceLayout layout;
 	private boolean supported;
 	private boolean held;
 	private int active;
-	private int filterRow;
 	private int carriedRow;
 
 	BankWorkspace(CustomBankInterface bank, mudclient client) {
 		this.bank = bank;
 		this.client = client;
+		filterSidebar = new ItemFilterSidebar(client);
 		tabs.add(new Tab(null));
 	}
 
@@ -45,12 +46,14 @@ final class BankWorkspace {
 		}
 		if (tabs.isEmpty()) tabs.add(new Tab(null));
 		active = 0;
-		filterRow = carriedRow = 0;
+		filterSidebar.reset();
+		carriedRow = 0;
 		held = client.getMouseButtonDown() == 1;
 		selected();
 	}
 
 	BankWorkspaceLayout begin(boolean presets, boolean notes) {
+		style = new ItemWorkspaceStyle(client, bank::workspaceCanClick);
 		layout = new BankWorkspaceLayout(client, presets, notes);
 		boolean down = client.getMouseButtonDown() == 1;
 		if (down && bank.workspaceCanClick()) {
@@ -73,8 +76,8 @@ final class BankWorkspace {
 		int x = client.getMouseX();
 		int y = client.getMouseY();
 		if (view.stock.contains(x, y)) stockWheel.addAndGet(step);
-		else if (view.filterList.contains(x, y)) filterWheel.addAndGet(step);
 		else if (view.carried.contains(x, y)) carriedWheel.addAndGet(step);
+		else filterSidebar.scroll(x, y, step);
 	}
 
 	ArrayList<BankInterface.BankItem> stock() {
@@ -169,62 +172,12 @@ final class BankWorkspace {
 	}
 
 	void drawFilters() {
-		BankWorkspaceLayout view = layout;
-		panel(view.filters, "Filters");
-		int x = view.filters.x + view.gap;
-		int width = view.filters.width - 2 * view.gap;
-		int split = width / 2;
-		int y = view.filters.y + view.header + view.gap;
-		draw("Search", x, y + view.line - 2, view.font, MUTED);
-		y += view.line;
-		client.getSurface().drawBox(x, y, width, view.button, 0x16212D);
-		client.getSurface().drawBoxBorder(x, width, y, view.button, BORDER);
-		bank.positionWorkspaceSearch(x + 5, y + 2, width - 10, view.button - 4, view.font);
-		y += view.button + view.gap;
-		if (button(x, y, split - 2, view.button, "AND", bank.bankFilterAndMode(), true)) bank.setBankFilterAndMode(true);
-		if (button(x + split, y, width - split, view.button, "OR", !bank.bankFilterAndMode(), true)) bank.setBankFilterAndMode(false);
-		y += view.button + view.gap;
 		Tab tab = tabs.get(active);
-		int clearWidth = Math.min(width / 3, measure(view.font, "Clear") + view.gap);
-		if (button(x, y, width - clearWidth - 3, view.button, tab.saved == null ? "Save filters" : "Save filters [X]",
-			tab.saved != null, supported)) {
-			tab.saved = tab.saved == null ? bank.currentBankFilters() : null;
-			send(active, tab.saved);
-		}
-		if (button(x + width - clearWidth, y, clearWidth, view.button, "Clear", false, true)) bank.clearWorkspaceFilters();
-		drawFilterList();
-	}
-
-	private void drawFilterList() {
-		BankWorkspaceLayout view = layout;
-		Rectangle area = view.filterList;
-		int visible = area.height / view.filterRowHeight;
-		int count = BankItemTag.values().length + BankItemTag.Group.values().length;
-		int max = Math.max(0, count - visible);
-		filterRow = clamp(filterRow + filterWheel.getAndSet(0), 0, max);
-		int index = 0;
-		for (BankItemTag.Group group : BankItemTag.Group.values()) {
-			int y = area.y + (index - filterRow) * view.filterRowHeight;
-			if (index >= filterRow && index < filterRow + visible) {
-				draw(group == BankItemTag.Group.SKILLS ? "Skills" : "Item types", area.x + 2, y + view.line, view.font, GOLD);
-			}
-			index++;
-			for (BankItemTag tag : BankItemTag.values()) {
-				if (tag.group != group) continue;
-				if (index >= filterRow && index < filterRow + visible) {
-					y = area.y + (index - filterRow) * view.filterRowHeight;
-					boolean selected = bank.hasBankFilterTag(tag);
-					int check = view.filterRowHeight - 4;
-					if (button(area.x, y + 2, check, check, selected ? "X" : "", selected, true)
-						|| click(area.x + check, y, area.width - check, view.filterRowHeight)) bank.toggleBankFilterTag(tag);
-					draw(fit(tag.label, area.width - check - 6), area.x + check + 5, y + view.line, view.font, TEXT);
-				}
-				index++;
-			}
-		}
-		if (max > 0) {
-			filterRow = pager(area.x, area.x + area.width, area.y + area.height + 2, filterRow, visible, max, layout.button);
-		}
+		filterSidebar.draw(layout.filters, style, bank.bank, bank.bankSearch, bank.currentBankFilters(),
+			bank::updateWorkspaceFilters, true, tab.saved != null, supported ? () -> {
+				tab.saved = tab.saved == null ? bank.currentBankFilters() : null;
+				send(active, tab.saved);
+			} : null);
 	}
 
 	private int pager(int x, int right, int y, int row, int step, int max, int w) {
@@ -234,22 +187,11 @@ final class BankWorkspace {
 	}
 
 	void panel(Rectangle area, String title) {
-		client.getSurface().drawBoxAlpha(area.x, area.y, area.width, area.height, 0x1B2935, 242);
-		client.getSurface().drawBoxBorder(area.x, area.width, area.y, area.height, BORDER);
-		client.getSurface().drawVerticalGradient(area.x + 1, area.y + 1, area.width - 2, layout.header - 1, 0x395065, 0x263B4A);
-		draw(title, area.x + layout.gap, area.y + (layout.header + client.getSurface().fontHeight(layout.titleFont)) / 2 - 2,
-			layout.titleFont, TEXT);
+		style.panel(area, title);
 	}
 
 	boolean button(int x, int y, int w, int h, String text, boolean selected, boolean enabled) {
-		boolean hover = over(x, y, w, h);
-		int bg = selected ? 0x405C65 : enabled && hover ? 0x415468 : enabled ? 0x2C3C50 : 0x202C38;
-		client.getSurface().drawBoxAlpha(x, y, w, h, bg, 245);
-		client.getSurface().drawBoxBorder(x, w, y, h, selected ? 0xA8BB9F : BORDER);
-		if (!text.isEmpty()) {
-			center(fit(text, w - 4), x, y + (h + layout.line) / 2 - 2, w, layout.font, enabled ? TEXT : MUTED);
-		}
-		return enabled && click(x, y, w, h);
+		return style.button(x, y, w, h, text, selected, enabled);
 	}
 
 	void drawItem(Item item, int x, int y, int width, int height, int tint) {
@@ -290,17 +232,6 @@ final class BankWorkspace {
 
 	private int measure(int font, String text) {
 		return client.getSurface().stringWidth(font, text);
-	}
-
-	private boolean click(int x, int y, int w, int h) {
-		if (client.getMouseClick() != 1 || !bank.workspaceCanClick() || !over(x, y, w, h)) return false;
-		client.setMouseClick(0);
-		return true;
-	}
-
-	private boolean over(int x, int y, int w, int h) {
-		return client.getMouseX() >= x && client.getMouseX() < x + w
-			&& client.getMouseY() >= y && client.getMouseY() < y + h;
 	}
 
 	void rememberActive(BankFilterSettings current) {

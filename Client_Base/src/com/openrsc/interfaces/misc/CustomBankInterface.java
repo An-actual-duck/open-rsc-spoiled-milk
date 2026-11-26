@@ -15,7 +15,6 @@ import orsc.util.GenUtil;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Locale;
 
 import static orsc.Config.*;
 import static orsc.net.Opcodes.Out.ITEM_REMOVE_TO_BANK;
@@ -1338,31 +1337,15 @@ public final class CustomBankInterface extends BankInterface {
 		resetWorkspaceSelection();
 	}
 
-	void clearWorkspaceFilters() {
-		applyBankFilters(BankFilterSettings.ALL);
-	}
-
-	boolean hasBankFilterTag(BankItemTag tag) {
-		return selectedTags.contains(tag);
-	}
-
-	void toggleBankFilterTag(BankItemTag tag) {
-		if (!selectedTags.remove(tag)) selectedTags.add(tag);
+	void updateWorkspaceFilters(BankFilterSettings settings) {
+		if (settings == BankFilterSettings.ALL) {
+			applyBankFilters(settings);
+			return;
+		}
+		selectedTags.clear();
+		selectedTags.addAll(settings.tags);
+		filterAndMode = settings.andMode;
 		resetWorkspaceSelection();
-	}
-
-	boolean bankFilterAndMode() {
-		return filterAndMode;
-	}
-
-	void setBankFilterAndMode(boolean and) {
-		filterAndMode = and;
-		resetWorkspaceSelection();
-	}
-
-	void positionWorkspaceSearch(int x, int y, int width, int height, int font) {
-		bank.reposition(bankSearch, x, y + height / 2, width, height);
-		bank.setTextFont(bankSearch, font);
 	}
 
 	@Override
@@ -2055,48 +2038,12 @@ public final class CustomBankInterface extends BankInterface {
 
 	ArrayList<BankItem> filterBankItems(BankFilterSettings filters) {
 		ArrayList<BankItem> filtered = new ArrayList<>();
-		String search = filters.query;
-		boolean hasSearch = !search.isEmpty();
-		boolean hasTags = !filters.tags.isEmpty();
-
 		for (BankItem item : bankItems) {
-			if (item == null || item.getItem() == null || item.getItem().getItemDef() == null
-				|| item.getItem().getItemDef().getName() == null) {
-				continue;
-			}
-			if (!hasSearch && !hasTags) {
-				filtered.add(item);
-				continue;
-			}
-
-			ItemDef def = item.getItem().getItemDef();
-			boolean searchMatch = hasSearch
-				&& def.getName().toLowerCase(Locale.ENGLISH).contains(search);
-			EnumSet<BankItemTag> itemTags = BankItemTag.classify(def);
-			boolean tagMatch = filters.andMode
-				? itemTags.containsAll(filters.tags)
-				: hasMatchingTag(itemTags, filters.tags);
-
-			boolean matches;
-			if (filters.andMode) {
-				matches = (!hasSearch || searchMatch) && (!hasTags || tagMatch);
-			} else {
-				matches = (hasSearch && searchMatch) || (hasTags && tagMatch);
-			}
-			if (matches) {
+			if (item != null && item.getItem() != null && filters.matches(item.getItem().getItemDef())) {
 				filtered.add(item);
 			}
 		}
 		return filtered;
-	}
-
-	private boolean hasMatchingTag(EnumSet<BankItemTag> itemTags, EnumSet<BankItemTag> required) {
-		for (BankItemTag tag : required) {
-			if (itemTags.contains(tag)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private boolean filtersActive() {

@@ -10,7 +10,6 @@ final class BankWorkspaceLayout {
 	final Rectangle bank;
 	final Rectangle actions;
 	final Rectangle stock;
-	final Rectangle filterList;
 	final Rectangle carried;
 	final int font;
 	final int titleFont;
@@ -25,7 +24,6 @@ final class BankWorkspaceLayout {
 	final int stockRows;
 	final int stockCellWidth;
 	final int stockCellHeight;
-	final int filterRowHeight;
 
 	BankWorkspaceLayout(mudclient client, boolean hasPresets, boolean hasNotes) {
 		font = GameInterfaceSettings.textSize().labelFont;
@@ -58,10 +56,6 @@ final class BankWorkspaceLayout {
 		stockRows = Math.max(1, (y + height - stockTop - footer) / stockCellHeight);
 		stock = new Rectangle(bank.x + gap, stockTop, stockColumns * stockCellWidth, stockRows * stockCellHeight);
 
-		int filterTop = y + header + 3 * (button + gap) + line + gap;
-		filterRowHeight = Math.max(size(18), line + 2);
-		filterList = new Rectangle(filters.x + gap, filterTop, filters.width - 2 * gap,
-			Math.max(1, (y + height - filterTop - button - 2 * gap) / filterRowHeight) * filterRowHeight);
 		int actionRows = 3 + (hasPresets ? 2 : 0) + (hasNotes ? 1 : 0);
 		actionGap = Math.min(4, gap / 2);
 		int carryTarget = 2 * Math.max(size(30), line + 6) + line + 4 + actionGap;

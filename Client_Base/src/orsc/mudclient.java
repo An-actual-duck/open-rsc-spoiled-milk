@@ -22809,7 +22809,8 @@ public final class mudclient implements Runnable {
 							clientPort.closeKeyboard();
 						}
 					}
-					if (auctionHouse.isVisible() && (auctionHouse.auctionMenu.focusOn(auctionHouse.auctionSearchHandle)
+					if (auctionHouse.isVisible() && (auctionHouse.usesWorkspace() && key == 27
+						|| auctionHouse.auctionMenu.focusOn(auctionHouse.auctionSearchHandle)
 						|| auctionHouse.myAuctions.focusOn(auctionHouse.textField_priceEach)
 						|| auctionHouse.auctionMenu.focusOn(auctionHouse.textField_buyAmount)
 						|| auctionHouse.myAuctions.focusOn(auctionHouse.textField_amount)
@@ -34300,11 +34301,7 @@ public final class mudclient implements Runnable {
 				bank.bank.scrollMethodList(bank.bankScroll, x);
 			}
 		} else if (auctionHouse.isVisible()) {
-			if (auctionHouse.activeInterface == 0) {
-				auctionHouse.auctionMenu.scrollMethodList(auctionHouse.auctionScrollHandle, x);
-			} else {
-				auctionHouse.myAuctions.scrollMethodList(auctionHouse.myAuctionScrollHandle, x);
-			}
+			auctionHouse.scroll(x);
 		} else if (clan.getClanInterface().isVisible()) {
 			if (clan.getClanInterface().clanActivePanel == 3) {
 				clan.getClanInterface().clanSetupPanel.scrollMethodList(clan.getClanInterface().clanSearchScroll, x);
