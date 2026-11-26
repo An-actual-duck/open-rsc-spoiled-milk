@@ -184,11 +184,7 @@ public final class SkillGuideInterface {
 
 	private void drawHiscoreList(int x, int y) {
 		HiscoreData data = mc.getHiscoreData();
-		int skillId = mc.getHiscoreGuideSkillId();
-		if (skillId >= 0 && data.shouldRequest()) {
-			data.markRequested(skillId);
-			mc.sendHiscoreRequest(skillId);
-		}
+		mc.requestHiscoresIfNeeded();
 
 		// Keep the guide list empty so its scrollbar never draws in this mode
 		skillGuide.clearList(skillGuideScroll);

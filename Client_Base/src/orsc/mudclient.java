@@ -1542,6 +1542,7 @@ public final class mudclient implements Runnable {
 	private static final int COOKS_ASSISTANT_QUEST = 1;
 	private volatile QuestGuideWindow questGuidePreview;
 	private volatile SkillGuideWindow skillGuidePreview;
+	private volatile HiscoresWindow hiscoresPreview;
 	private final java.util.concurrent.atomic.AtomicInteger skillGuideWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private final java.util.concurrent.atomic.AtomicInteger questGuideWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private volatile boolean questGuideDismiss;
@@ -20865,6 +20866,7 @@ public final class mudclient implements Runnable {
 		skillGuideWheel.set(0);
 		skillGuidePreview = chatLayout == null || hiscores ? null : skillGuideInterface.createGuideWindow();
 		skillGuideInterface.setHiscoresMode(hiscores);
+		hiscoresPreview = hiscores && chatLayout != null ? new HiscoresWindow(skillName, hiscoreGuideSkillId) : null;
 		skillGuideInterface.setVisible(true);
 		if (!C_CUSTOM_UI) showUiTab = 0;
 	}
@@ -28810,6 +28812,13 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	public void requestHiscoresIfNeeded() {
+		if (hiscoreGuideSkillId >= 0 && hiscoreData.shouldRequest()) {
+			hiscoreData.markRequested(hiscoreGuideSkillId);
+			sendHiscoreRequest(hiscoreGuideSkillId);
+		}
+	}
+
 	public HiscoreData getHiscoreData() {
 		return hiscoreData;
 	}
@@ -33588,7 +33597,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean hasSkillGuidePreviewInput() {
-		return skillGuidePreview != null && chatLayout != null && skillGuideInterface.isVisible()
+		return (skillGuidePreview != null || hiscoresPreview != null) && chatLayout != null && skillGuideInterface.isVisible()
 			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !optionsMenuShow
 			&& inputX_Action == InputXAction.ACT_0 && logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage
 			&& showUiWildWarn != 1 && !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank()
@@ -33598,25 +33607,38 @@ public final class mudclient implements Runnable {
 	private void closeSkillGuidePreview() {
 		if (skillGuideInterface != null) skillGuideInterface.setVisible(false);
 		skillGuidePreview = null;
+		hiscoresPreview = null;
+		hiscoreData.clear();
 		skillGuideWheel.set(0);
 	}
 
 	private void drawSkillGuide() {
 		if (!skillGuideInterface.isVisible()) return;
 		SkillGuideWindow guide = skillGuidePreview;
-		if (guide == null || chatLayout == null || skillGuideInterface.isHiscoresView()) {
+		HiscoresWindow rankings = hiscoresPreview;
+		if (chatLayout == null || (guide == null && rankings == null)) {
 			skillGuideInterface.onRender(getSurface());
-			if (guide != null) {
-				if (!skillGuideInterface.isVisible()) closeSkillGuidePreview();
-				mouseButtonClick = 0;
-			}
+			if ((guide != null || rankings != null) && !skillGuideInterface.isVisible()) closeSkillGuidePreview();
 			return;
 		}
 		if (!hasSkillGuidePreviewInput()) return;
-		SkillGuideWindow.Action action = guide.draw(this, chatLayout.entryTop(),
-			Config.S_WANT_HISCORES && hiscoreGuideSkillId >= 0, skillGuideWheel.getAndSet(0));
-		if (action == SkillGuideWindow.Action.CLOSE) closeSkillGuidePreview();
-		if (action == SkillGuideWindow.Action.HISCORES) skillGuideInterface.setHiscoresMode(true);
+		int wheel = skillGuideWheel.getAndSet(0);
+		if (rankings != null) {
+			HiscoresWindow.Action action = rankings.draw(this, chatLayout.entryTop(), wheel);
+			if (action == HiscoresWindow.Action.CLOSE) closeSkillGuidePreview();
+			if (action == HiscoresWindow.Action.GUIDE) {
+				skillGuideInterface.setHiscoresMode(false);
+				hiscoresPreview = null;
+			}
+		} else {
+			SkillGuideWindow.Action action = guide.draw(this, chatLayout.entryTop(),
+				Config.S_WANT_HISCORES && hiscoreGuideSkillId >= 0, wheel);
+			if (action == SkillGuideWindow.Action.CLOSE) closeSkillGuidePreview();
+			if (action == SkillGuideWindow.Action.HISCORES) {
+				skillGuideInterface.setHiscoresMode(true);
+				hiscoresPreview = new HiscoresWindow(skillGuideChosen, hiscoreGuideSkillId);
+			}
+		}
 		mouseButtonClick = 0;
 	}
 
@@ -34203,11 +34225,7 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		if (hasSkillGuidePreviewInput()) {
-			if (skillGuideInterface.isHiscoresView()) {
-				skillGuideInterface.skillGuide.scrollMethodList(skillGuideInterface.hiscoreScroll, x);
-			} else {
-				skillGuideWheel.addAndGet(x);
-			}
+			skillGuideWheel.addAndGet(x);
 			return;
 		}
 		if (usesTradePreview()) {

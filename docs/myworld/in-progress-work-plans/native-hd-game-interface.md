@@ -272,7 +272,14 @@ the window and control dimensions, and text size sets the fonts and wrapping.
 Most sections start with a single page of existing information. Smithing gear
 sections split by metal, and Worship → Spells places the existing god-line
 filters in the topic column. Future guide articles can add topics as they are
-written. Hiscores still use the existing view.
+written.
+
+### Hiscores
+
+In Stats, click Overall levels for the overall rankings. Individual skill
+guides open their rankings with the Hiscores button. The scaled table keeps
+the player's rank, level, and XP visible above the scrollable results.
+The Guide button returns to the same skill guide topic.
 
 ## Ability books preview
 

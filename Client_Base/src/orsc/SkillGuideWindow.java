@@ -220,7 +220,7 @@ public final class SkillGuideWindow {
 		}
 	}
 
-	private static int scroll(MudClientGraphics surface, Rectangle bounds, int width, int visible, int max, int offset,
+	static int scroll(MudClientGraphics surface, Rectangle bounds, int width, int visible, int max, int offset,
 							  int mouseX, int mouseY, boolean click) {
 		if (max == 0) return 0;
 		int x = bounds.x + bounds.width - width;
