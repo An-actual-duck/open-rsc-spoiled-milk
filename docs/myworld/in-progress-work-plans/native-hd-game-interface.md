@@ -409,9 +409,9 @@ per-tile grouping, duplicate counts, and collision handling. The satchel count
 fits its toolbar button. Walk and interaction clicks reuse the original
 four-frame markers at a readable size on the preview surface.
 
-The appearance picker belongs with the classic account entry screens. Review
-the same picker through the Makeover Mage when updating that flow. Sleep and
-the kill feed are disabled in the MyWorld configurations.
+First login and the Makeover Mage share the classic appearance picker. The
+preview centers it and doubles its controls, click targets, and character
+views at 1080p. Sleep and the kill feed are disabled in the MyWorld configurations.
 
 ## Preview
 

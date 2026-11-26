@@ -54,12 +54,18 @@ public final class Panel {
 	private int currMouseY = 0;
 	private int focusControlIndex = -1;
 	private GraphicsController graphics;
+	private final int artworkScale;
 	private boolean[] isScrolling;
 	private int lastMouseButtonDown = 0;
 
 	private boolean m_t = true;
 
 	public Panel(GraphicsController var1, int maxControls) {
+		this(var1, maxControls, 1);
+	}
+
+	public Panel(GraphicsController var1, int maxControls, int artworkScale) {
+		this.artworkScale = artworkScale;
 		try {
 			this.controlListEntryString2 = new String[maxControls][];
 			this.controlUseAlternativeColour = new boolean[maxControls];
@@ -217,6 +223,10 @@ public final class Panel {
 	}
 
 	public final int addHorizontalList(int x, int y, String entries[], int font, boolean useAltColour) {
+		return addHorizontalList(x, y, entries, font, useAltColour, 0);
+	}
+
+	public final int addHorizontalList(int x, int y, String[] entries, int font, boolean useAltColour, int selectedIndex) {
 		try {
 			this.controlType[this.controlCount] = PanelControlType.HORIZONTAL_LIST;
 			this.controlVisible[this.controlCount] = true;
@@ -226,7 +236,7 @@ public final class Panel {
 			this.controlX[this.controlCount] = x;
 			this.controlY[this.controlCount] = y;
 			this.controlListEntryString[this.controlCount] = entries;
-			this.controlClickedListIndex[this.controlCount] = 0;
+			this.controlClickedListIndex[this.controlCount] = selectedIndex;
 			return this.controlCount++;
 		} catch (RuntimeException var10) {
 			throw GenUtil.makeThrowable(var10, "qa.LL(" + x + ',' + useAltColour + ','
@@ -340,8 +350,8 @@ public final class Panel {
 	public final int addSprite(int x, int y, Sprite e) {
 		try {
 
-			int width = e.getWidth();
-			int height = e.getHeight();
+			int width = e.getWidth() * artworkScale;
+			int height = e.getHeight() * artworkScale;
 			this.controlType[this.controlCount] = PanelControlType.SPRITE;
 			this.controlVisible[this.controlCount] = true;
 			this.controlClicked[this.controlCount] = false;
@@ -364,8 +374,8 @@ public final class Panel {
 		int centerX = this.controlX[control] + this.controlWidth[control] / 2;
 		int centerY = this.controlY[control] + this.controlHeight[control] / 2;
 		this.controlArgSprite[control] = sprite;
-		this.controlWidth[control] = sprite.getWidth();
-		this.controlHeight[control] = sprite.getHeight();
+		this.controlWidth[control] = sprite.getWidth() * artworkScale;
+		this.controlHeight[control] = sprite.getHeight() * artworkScale;
 		this.controlX[control] = centerX - this.controlWidth[control] / 2;
 		this.controlY[control] = centerY - this.controlHeight[control] / 2;
 	}
@@ -761,14 +771,18 @@ public final class Panel {
 		try {
 			this.graphics.drawBox(x, y, width, height, 0);
 
-			this.graphics.drawBoxBorder(x, width, y, height, this.colorF);
-			this.graphics.drawBoxBorder(1 + x, width - 2, 1 + y, height - 2, this.colorG);
-			this.graphics.drawBoxBorder(x + 2, width - 4, 2 + y, height - 4, this.colorH);
+			for (int border = 0; border < 3 * artworkScale; border++) {
+				int layer = border / artworkScale;
+				int color = layer == 0 ? colorF : layer == 1 ? colorG : colorH;
+				graphics.drawBoxBorder(x + border, width - 2 * border, y + border, height - 2 * border, color);
+			}
 
-			this.graphics.drawSprite(this.graphics.spriteSelect(EntityHandler.GUIPARTS.DECORATEDBOXUL.getDef()), x, y);
-			this.graphics.drawSprite(this.graphics.spriteSelect(EntityHandler.GUIPARTS.DECORATEDBOXUR.getDef()), width + x - 7, y);
-			this.graphics.drawSprite(this.graphics.spriteSelect(EntityHandler.GUIPARTS.DECORATEDBOXLL.getDef()), x, y - (7 - height));
-			this.graphics.drawSprite(this.graphics.spriteSelect(EntityHandler.GUIPARTS.DECORATEDBOXLR.getDef()), x + width - 7, height - 7 + y);
+			int right = x + width - 7 * artworkScale;
+			int bottom = y + height - 7 * artworkScale;
+			renderSprite(x, y, graphics.spriteSelect(EntityHandler.GUIPARTS.DECORATEDBOXUL.getDef()));
+			renderSprite(right, y, graphics.spriteSelect(EntityHandler.GUIPARTS.DECORATEDBOXUR.getDef()));
+			renderSprite(x, bottom, graphics.spriteSelect(EntityHandler.GUIPARTS.DECORATEDBOXLL.getDef()));
+			renderSprite(right, bottom, graphics.spriteSelect(EntityHandler.GUIPARTS.DECORATEDBOXLR.getDef()));
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "qa.V(" + y + ',' + width + ',' + "true" + ',' + x + ',' + height + ')');
 		}
@@ -1184,7 +1198,12 @@ public final class Panel {
 
 	private void renderSprite(int x, int y, Sprite sprite) {
 		try {
-			this.graphics.drawSprite(sprite, x, y);
+			if (artworkScale == 1) {
+				this.graphics.drawSprite(sprite, x, y);
+			} else {
+				graphics.drawSpriteClipping(sprite, x, y, sprite.getWidth() * artworkScale,
+					sprite.getHeight() * artworkScale, 0, 0, 0, false, 0, 1);
+			}
 
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6, "qa.LA(" + "dummy" + ',' + y + ',' + x + ',' + sprite.getID() + ')');

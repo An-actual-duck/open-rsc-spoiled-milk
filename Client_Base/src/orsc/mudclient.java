@@ -1163,6 +1163,10 @@ public final class mudclient implements Runnable {
 	private int controlPartyPanel;
 	private Panel panelParty;
 	private Panel panelAppearance;
+	private int appearancePanelX;
+	private int appearancePanelY;
+	private int appearancePanelScale;
+	private int appearancePanelType;
 	private final int[] appearanceSpriteControls = new int[12];
 	private int appearanceSpriteControlCount;
 	private Panel panelLogin;
@@ -3242,99 +3246,102 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void createAppearancePanel(int var1, int type) {
-		// type 1 is for worlds with the 1x XP mode selector
-		// type 2 is for world with classes and global pk mode
-		int factor = type > 0 ? 2 : 1;
-		try {
-			this.panelAppearance = new Panel(this.getSurface(), 100);
-			this.appearanceSpriteControlCount = 0;
-
-			this.panelAppearance.addCenteredText(256, 10, "Please design Your Character", 4, true);
-			short var2 = 140;
-			byte var3 = 34;
-			int var6 = var2 + 116;
-			// divide in 2 if typed (modes)
-			var6 /= factor;
-			int yFromTopDistance = var3 - 10;
-			this.panelAppearance.addCenteredText(var6 - 55, yFromTopDistance + 110, "Front", 3, true);
-			this.panelAppearance.addCenteredText(var6, yFromTopDistance + 110, "Side", 3, true);
-			this.panelAppearance.addCenteredText(var6 + 55, 110 + yFromTopDistance, "Back", 3, true);
-			yFromTopDistance += 145;
-			byte var4 = 54;
-			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Head", 1, true);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Type", 1, true);
-			this.addAppearanceSprite(var6 - var4 - 40, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceHeadMinus = this.panelAppearance.addButton(-40 - var4 + var6, yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(var6 - var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceHeadPlus = this.panelAppearance.addButton(var6 + (40 - var4), yFromTopDistance, 20, 20);
-			this.panelAppearance.addDecoratedBox((var6 + var4), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var6 + var4, yFromTopDistance - 8, "Hair", 1, true);
-			this.panelAppearance.addCenteredText(var4 + var6, 8 + yFromTopDistance, "Color", 1, true);
-			this.addAppearanceSprite(var4 + (var6 - 40), yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceHair1 = this.panelAppearance.addButton(var6 + var4 - 40, yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(40 + var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceHair2 = this.panelAppearance.addButton(40 + var4 + var6, yFromTopDistance, 20, 20);
-			yFromTopDistance += 50;
-			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Body", 1, true);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Type", 1, true);
-			this.addAppearanceSprite(var6 - var4 - 40, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceGender1 = this.panelAppearance.addButton(var6 - 40 - var4, yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(40 - var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceGender2 = this.panelAppearance.addButton(40 + (var6 - var4), yFromTopDistance, 20, 20);
-			this.panelAppearance.addDecoratedBox((var4 + var6), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance - 8, "Top", 1, true);
-			this.panelAppearance.addCenteredText(var4 + var6, 8 + yFromTopDistance, "Color", 1, true);
-			this.addAppearanceSprite(var6 + (var4 - 40), yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceTop1 = this.panelAppearance.addButton(var4 + (var6 - 40), yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(40 + var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceTop2 = this.panelAppearance.addButton(var6 - (-var4 - 40), yFromTopDistance, 20, 20);
-			yFromTopDistance += 50;
-			if (var1 != -24595) {
-				this.renderLoginScreenViewports(-127);
-			}
-
-			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Skin", 1, true);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Color", 1, true);
-			this.addAppearanceSprite(var6 - 40 - var4, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceSkin1 = this.panelAppearance.addButton(var6 - var4 - 40, yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(var6 - var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceSkin2 = this.panelAppearance.addButton(var6 + (40 - var4), yFromTopDistance, 20, 20);
-			this.panelAppearance.addDecoratedBox((var4 + var6), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance - 8, "Bottom", 1, true);
-			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance + 8, "Color", 1, true);
-			this.addAppearanceSprite(var4 - 40 + var6, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceBottom1 = this.panelAppearance.addButton(var6 - (40 - var4), yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(var6 + var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceBottom2 = this.panelAppearance.addButton(40 + var4 + var6, yFromTopDistance, 20, 20);
-			yFromTopDistance += 82;
-			yFromTopDistance -= 35;
-			this.panelAppearance.addButtonBackground(var6 * factor, yFromTopDistance, 200, 30);
-			this.panelAppearance.addCenteredText(var6 * factor, yFromTopDistance, "Accept", 4, false);
-			this.controlButtonAppearanceAccept = this.panelAppearance.addButton(var6 * factor, yFromTopDistance, 200, 30);
-
-			yFromTopDistance = 50;
-			if (type == 1) {
-				var6 = 372;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "Use the world's " + Config.S_SKILLING_EXP_RATE + "X xp rate", 0, true);
-				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "or keep the original 1X rate.", 0, true);
-				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "This only affects your new character.", 0, true);
-				yFromTopDistance += 13;
-				yFromTopDistance += 60;
-				this.panelAppearance.addDecoratedBox(var6, yFromTopDistance + 21, 215, 60);
-				String[] modes_xp = {
-					"Yes please", "No, original"
-				};
-				this.playerMode2 = this.panelAppearance.addHorizontalList(var6, yFromTopDistance, modes_xp, 1, true);
-			}
-		} catch (RuntimeException var5) {
-			throw GenUtil.makeThrowable(var5, "client.J(" + var1 + ',' + type + ')');
+	private void ensureAppearancePanel(int type) {
+		boolean preview = !isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled();
+		int scale = accountEntryScale();
+		int x = preview ? Math.max(0, (getGameWidth() - 512 * scale) / 2) : 0;
+		int y = preview ? Math.max(0, (getGameHeight() - 346 * scale) / 2) : 0;
+		if (panelAppearance != null && appearancePanelX == x && appearancePanelY == y
+			&& appearancePanelScale == scale && appearancePanelType == type) {
+			return;
 		}
+		int xpMode = panelAppearance != null && appearancePanelType == 1 && type == 1
+			? panelAppearance.getControlClickedListIndex(playerMode2) : 0;
+		appearancePanelX = x;
+		appearancePanelY = y;
+		appearancePanelScale = scale;
+		appearancePanelType = type;
+
+		panelAppearance = new Panel(getSurface(), 100, scale);
+		appearanceSpriteControlCount = 0;
+		int center = appearanceCharacterCenter();
+		addAppearanceLabel(256, 10, "Please design Your Character", 4, true);
+		addAppearanceLabel(center - 55, 134, "Front", 3, true);
+		addAppearanceLabel(center, 134, "Side", 3, true);
+		addAppearanceLabel(center + 55, 134, "Back", 3, true);
+
+		int left = center - 54;
+		int right = center + 54;
+		addAppearanceOption(left, 169, "Head", "Type");
+		controlButtonAppearanceHeadMinus = addAppearanceArrow(left - 40, 169, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceHeadPlus = addAppearanceArrow(left + 40, 169, GUIPARTS.RIGHTARROW);
+		addAppearanceOption(right, 169, "Hair", "Color");
+		controlButtonAppearanceHair1 = addAppearanceArrow(right - 40, 169, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceHair2 = addAppearanceArrow(right + 40, 169, GUIPARTS.RIGHTARROW);
+
+		addAppearanceOption(left, 219, "Body", "Type");
+		controlButtonAppearanceGender1 = addAppearanceArrow(left - 40, 219, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceGender2 = addAppearanceArrow(left + 40, 219, GUIPARTS.RIGHTARROW);
+		addAppearanceOption(right, 219, "Top", "Color");
+		controlButtonAppearanceTop1 = addAppearanceArrow(right - 40, 219, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceTop2 = addAppearanceArrow(right + 40, 219, GUIPARTS.RIGHTARROW);
+
+		addAppearanceOption(left, 269, "Skin", "Color");
+		controlButtonAppearanceSkin1 = addAppearanceArrow(left - 40, 269, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceSkin2 = addAppearanceArrow(left + 40, 269, GUIPARTS.RIGHTARROW);
+		addAppearanceOption(right, 269, "Bottom", "Color");
+		controlButtonAppearanceBottom1 = addAppearanceArrow(right - 40, 269, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceBottom2 = addAppearanceArrow(right + 40, 269, GUIPARTS.RIGHTARROW);
+
+		panelAppearance.addButtonBackground(appearanceX(256), appearanceY(316), 200 * scale, 30 * scale);
+		addAppearanceLabel(256, 316, "Accept", 4, false);
+		controlButtonAppearanceAccept = panelAppearance.addButton(appearanceX(256), appearanceY(316), 200 * scale, 30 * scale);
+
+		if (type == 1) {
+			addAppearanceLabel(372, 50, "Use the world's " + Config.S_SKILLING_EXP_RATE + "X xp rate", 0, true);
+			addAppearanceLabel(372, 63, "or keep the original 1X rate.", 0, true);
+			addAppearanceLabel(372, 76, "This only affects your new character.", 0, true);
+			panelAppearance.addDecoratedBox(appearanceX(372), appearanceY(170), 215 * scale, 60 * scale);
+			String[] modes = {"Yes please", "No, original"};
+			playerMode2 = panelAppearance.addHorizontalList(appearanceX(372), appearanceY(149), modes,
+				appearanceFont(1), true, xpMode);
+		}
+	}
+
+	private int appearanceCharacterCenter() {
+		return appearancePanelType > 0 ? 128 : 256;
+	}
+
+	private int appearanceX(int x) {
+		return appearancePanelX + x * appearancePanelScale;
+	}
+
+	private int appearanceY(int y) {
+		return appearancePanelY + y * appearancePanelScale;
+	}
+
+	private int appearanceFont(int classicFont) {
+		if (appearancePanelScale == 1) return classicFont;
+		if (classicFont == 0) return 5;
+		return classicFont == 1 ? 6 : 7;
+	}
+
+	private void addAppearanceLabel(int x, int y, String label, int font, boolean light) {
+		panelAppearance.addCenteredText(appearanceX(x), appearanceY(y), label, appearanceFont(font), light);
+	}
+
+	private void addAppearanceOption(int x, int y, String firstLine, String secondLine) {
+		panelAppearance.addDecoratedBox(appearanceX(x), appearanceY(y), 53 * appearancePanelScale, 41 * appearancePanelScale);
+		addAppearanceLabel(x, y - 8, firstLine, 1, true);
+		addAppearanceLabel(x, y + 8, secondLine, 1, true);
+	}
+
+	private int addAppearanceArrow(int x, int y, GUIPARTS arrow) {
+		int scaledX = appearanceX(x);
+		int scaledY = appearanceY(y);
+		addAppearanceSprite(scaledX, scaledY, spriteSelect(arrow.getDef()));
+		int size = 20 * appearancePanelScale;
+		return panelAppearance.addButton(scaledX, scaledY, size, size);
 	}
 
 	private void addAppearanceSprite(int x, int y, Sprite sprite) {
@@ -7389,68 +7396,31 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void drawAppearancePanelCharacterSprites(int var1, int type) {
-		// see createAppearancePanel for type
-		int factor = type > 0 ? 2 : 1;
-		try {
+	private void drawAppearancePanelCharacterSprites() {
+		ensureAppearancePanel(Config.S_CHARACTER_CREATION_MODE);
+		getSurface().interlace = false;
+		getSurface().blackScreen(true);
+		getSurface().captureRenderer2DUiBaseFrame();
+		getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
+		panelAppearance.drawPanel();
 
-			this.getSurface().interlace = false;
-			this.getSurface().blackScreen(true);
-			this.getSurface().captureRenderer2DUiBaseFrame();
-			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
-			this.panelAppearance.drawPanel();
-			short var2 = 140;
-			int var5 = var2 + 116;
-
-			var5 /= factor;
-
-			byte var3 = 50;
-			int y = var3 - 25;
-
-			// pants
-			this.getSurface().spriteClip3(var5 - 87, this.getPlayerClothingColors()[this.characterBottomColour],
-				spriteSelect(EntityHandler.getAnimationDef(this.character2Colour), 0), y, 102, (byte) 105, 64);
-
-			// body
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(appearanceBodyGender), 0), var5 - 32 - 55, y, 64,
-				102, this.getPlayerClothingColors()[this.characterTopColour], this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0, 1);
-
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(appearanceHeadType), 0),
-				var5 - 32 - 55, y, 64, 102, this.getPlayerHairColors()[this.appearanceHairColour],
-				this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0, var1 + 13760);
-
-			this.getSurface().spriteClip3(var5 - 32, this.getPlayerClothingColors()[this.characterBottomColour],
-				spriteSelect(EntityHandler.getAnimationDef(character2Colour), 6), y, 102, (byte) 105, 64);
-
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(this.appearanceBodyGender), 6), var5 - 32, y,
-				64, 102, this.getPlayerClothingColors()[this.characterTopColour], this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0,
-				1);
-
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(this.appearanceHeadType), 6),
-				var5 - 32, y, 64, 102, this.getPlayerHairColors()[this.appearanceHairColour], this.getPlayerSkinColors()[this.appearanceSkinColour],
-				0, false, 0, 1);
-
-			this.getSurface().spriteClip3(var5 + 55 - 32, this.getPlayerClothingColors()[this.characterBottomColour],
-				spriteSelect(EntityHandler.getAnimationDef(this.character2Colour), 12), y, 102, (byte) 110, 64);
-
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(this.appearanceBodyGender), 12),
-				55 + (var5 - 32), y, 64, 102, this.getPlayerClothingColors()[this.characterTopColour],
-				this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0, var1 + 13760);
-
-			this.getSurface().drawSpriteClipping(
-				spriteSelect(EntityHandler.getAnimationDef(this.appearanceHeadType), 12), var5 + 55 - 32, y, 64, 102,
-				this.getPlayerHairColors()[this.appearanceHairColour], this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0, 1);
-			this.getSurface().drawSprite(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, this.getGameHeight());
-			// this.getSurface().draw(this.graphics, this.screenOffsetX, 256,
-			// this.screenOffsetY);
-			clientPort.draw();
-			if (var1 != -13759) {
-				this.drawCharacterOverlay();
-			}
-
-		} catch (RuntimeException var4) {
-			throw GenUtil.makeThrowable(var4, "client.GD(" + var1 + ',' + type + ')');
+		int center = appearanceCharacterCenter();
+		int y = appearanceY(25);
+		int width = 64 * appearancePanelScale;
+		int height = 102 * appearancePanelScale;
+		int skin = getPlayerSkinColors()[appearanceSkinColour];
+		for (int view = 0; view < 3; view++) {
+			int frame = view * 6;
+			int x = appearanceX(center + (view - 1) * 55 - 32);
+			getSurface().spriteClip3(x, getPlayerClothingColors()[characterBottomColour],
+				spriteSelect(EntityHandler.getAnimationDef(character2Colour), frame), y, height, (byte) 105, width);
+			getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(appearanceBodyGender), frame),
+				x, y, width, height, getPlayerClothingColors()[characterTopColour], skin, 0, false, 0, 1);
+			getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(appearanceHeadType), frame),
+				x, y, width, height, getPlayerHairColors()[appearanceHairColour], skin, 0, false, 0, 1);
 		}
+		getSurface().drawSprite(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, getGameHeight());
+		clientPort.draw();
 	}
 
 	public Sprite spriteSelect(ItemDef item) {
@@ -10506,7 +10476,7 @@ public final class mudclient implements Runnable {
 					// 256, this.screenOffsetY);
 					clientPort.draw();
 				} else if (this.showAppearanceChange) {
-					this.drawAppearancePanelCharacterSprites(-13759, Config.S_CHARACTER_CREATION_MODE);
+					this.drawAppearancePanelCharacterSprites();
 				} else if (this.showSetRecoveryQuestion) {
 					this.method_182();
 				} else if (this.showSetContactDetails) {
@@ -21742,6 +21712,7 @@ public final class mudclient implements Runnable {
 
 	private void handleAppearancePanelControls(int var1) {
 		try {
+			ensureAppearancePanel(Config.S_CHARACTER_CREATION_MODE);
 			this.panelAppearance.handleMouse(this.mouseX, this.mouseY, this.currentMouseButtonDown,
 				this.lastMouseButtonDown);
 
@@ -31257,10 +31228,8 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setShowAppearanceChange(boolean show) {
-		if (show && this.panelAppearance == null) {
-			this.createAppearancePanel(-24595, Config.S_CHARACTER_CREATION_MODE);
-		}
 		if (show) {
+			ensureAppearancePanel(Config.S_CHARACTER_CREATION_MODE);
 			this.appearanceInputBlockTicks = 2;
 			this.currentMouseButtonDown = 0;
 			this.lastMouseButtonDown = 0;
@@ -32889,7 +32858,6 @@ public final class mudclient implements Runnable {
 										clientPort.showLoadingProgress(100, "Starting game...");
 										this.createMessageTabPanel(56);
 										this.createLoginPanels(3845);
-										this.createAppearancePanel(var1 ^ 24649, Config.S_CHARACTER_CREATION_MODE);
 										this.createRecoveryQuestionPanel();
 										this.createPasswordRecoveryPanel();
 										this.createContactDetailsPanel();
@@ -32930,7 +32898,6 @@ public final class mudclient implements Runnable {
 										clientPort.showLoadingProgress(100, "Starting game...");
 										this.createMessageTabPanel(56);
 										this.createLoginPanels(3845);
-										this.createAppearancePanel(var1 ^ 24649, Config.S_CHARACTER_CREATION_MODE);
 										this.createRecoveryQuestionPanel();
 										this.createPasswordRecoveryPanel();
 										this.createContactDetailsPanel();
