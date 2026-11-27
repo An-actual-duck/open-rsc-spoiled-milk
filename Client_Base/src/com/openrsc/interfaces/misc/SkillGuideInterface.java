@@ -560,6 +560,10 @@ public final class SkillGuideInterface {
 
 	public SkillGuideWindow createGuideWindow() {
 		String skill = mc.getSkillGuideChosen();
+		if ("Worship".equalsIgnoreCase(skill)) {
+			return new SkillGuideWindow(skill, WorshipGuideTopics.SECTIONS,
+				index -> WorshipGuideTopics.load(index, mc.getClericSpellbookDefinitions(), this::itemName));
+		}
 		List<String> sections = new ArrayList<>(mc.skillGuideChosenTabs);
 		int info = sections.indexOf("Info");
 		if (info < 0 || !hasContextualNotes(skill)) {
@@ -606,7 +610,6 @@ public final class SkillGuideInterface {
 
 	private List<SkillGuideWindow.Topic> loadGuideTopics(int section, List<SkillMenuEntry> notes) {
 		curTab = section;
-		if (isClericSpellsTab()) return loadClericTopics();
 
 		populateSkillItems();
 		Map<String, List<SkillGuideWindow.Article>> byTopic = new LinkedHashMap<>();
@@ -633,23 +636,6 @@ public final class SkillGuideInterface {
 		List<SkillGuideWindow.Topic> topics = new ArrayList<>();
 		byTopic.forEach((label, articles) -> topics.add(new SkillGuideWindow.Topic(label, articles)));
 		if (isEnchantingGuide(mc.getSkillGuideChosen())) EnchantingGuideTopics.append(sectionName, topics);
-		return topics;
-	}
-
-	private List<SkillGuideWindow.Topic> loadClericTopics() {
-		List<SkillGuideWindow.Topic> topics = new ArrayList<>();
-		for (int i = 0; i < CLERIC_FILTER_KEYS.length; i++) {
-			List<SkillGuideWindow.Article> articles = new ArrayList<>();
-			for (ClericSpellGuideCatalog.Entry entry : ClericSpellGuideCatalog.buildDocument(
-				mc.getClericSpellbookDefinitions(), this::itemName, CLERIC_FILTER_KEYS[i])) {
-				articles.add(new SkillGuideWindow.Article(entry.getHeader(), entry.getParagraphs()));
-			}
-			if (articles.isEmpty()) {
-				articles.add(new SkillGuideWindow.Article("",
-					Collections.singletonList("Cleric spell details are unavailable until the catalog loads.")));
-			}
-			topics.add(new SkillGuideWindow.Topic(CLERIC_FILTER_LABELS[i], articles));
-		}
 		return topics;
 	}
 
@@ -1714,7 +1700,7 @@ public final class SkillGuideInterface {
             skillMenuEntries.add(new SkillMenuItem(3444, "80", "Saradomin crossbow - Ranged; matching god required"));
             skillMenuEntries.add(new SkillMenuItem(3445, "80", "Zamorak crossbow - Ranged; matching god required"));
             skillMenuEntries.add(new SkillMenuItem(3446, "80", "Guthix crossbow - Ranged; matching god required"));
-            skillMenuEntries.add(new SkillMenuEntry("", "Artifacts: 80 Worship and 800 devotion; costs 400 devotion"));
+            skillMenuEntries.add(new SkillMenuEntry("", "High devotion can earn unique artifacts from your god"));
             skillMenuEntries.add(new SkillMenuEntry("", "Crossbows use normal bolts unless their prayer is active"));
             skillMenuEntries.add(new SkillMenuEntry("", "Free bolts override equipped ammo without consuming it"));
 			skillMenuEntries.add(new SkillMenuItem(1218, "", "God gear gives prayer points and empowers god spells"));

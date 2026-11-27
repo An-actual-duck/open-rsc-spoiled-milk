@@ -265,8 +265,11 @@ wrap and keep their paragraph breaks.
 
 Magic, Woodcutting, Fishing, Crafting, Smithing, Mining, and Summoning place
 their former Info entries beside the relevant unlocks. Smithing gear sections
-split by metal, and Worship → Spells lists god-line filters in the topic
-column.
+split by metal. Worship groups Prayers by god and explains point reservation
+under Mechanics. Devotion covers offerings, gear growth, and faction
+hostility. Equipment shows active sources and stats, with artifact discovery
+left to players. Cleric Spells uses the server's spell catalog for unlocks and
+descriptions.
 
 ### Hiscores
 

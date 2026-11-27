@@ -28,8 +28,8 @@ public final class ClericSpellGuideCatalog {
   }
 
   static List<Entry> buildDocument(
-      List<ClericSpellDef> definitions, IntFunction<String> resourceName, String alignment) {
-    return build(definitions, resourceName, alignment, false);
+      List<ClericSpellDef> definitions, IntFunction<String> resourceName) {
+    return build(definitions, resourceName, "all", false);
   }
 
   private static List<Entry> build(
@@ -43,7 +43,7 @@ public final class ClericSpellGuideCatalog {
           return level != 0 ? level : Integer.compare(a.getStableCode(), b.getStableCode());
         });
     ArrayList<Entry> entries = new ArrayList<Entry>();
-    if ("all".equals(alignment)) addOverview(entries, paginated);
+    if (paginated && "all".equals(alignment)) addOverview(entries, paginated);
     for (ClericSpellDef d : ordered) {
       if ("all".equals(alignment) || d.getAlignment().equals(alignment))
         addEntry(entries, format(d, resourceName), paginated);
