@@ -256,10 +256,16 @@ and the right column holds the selected topic's text, levels and existing
 illustrations. The topic list and article scroll independently. UI size sets
 the window and control dimensions, and text size sets the fonts and wrapping.
 
-Most sections start with a single page of existing information. Smithing gear
-sections split by metal, and Worship → Spells places the existing god-line
-filters in the topic column. Future guide articles can add topics as they are
-written.
+Most sections start with Unlocks. Enchanting → Robes adds Costs, Effects, and
+More info for the rune price per piece, the distinct altar effects, and the
+upgrade rules. Staves and Jewelry show their costs in their own sections, and
+Altars includes how to make runes. Longer explanations wrap and keep their
+paragraph breaks.
+
+Magic, Woodcutting, Fishing, Crafting, Smithing, Mining, and Summoning place
+their former Info entries beside the relevant unlocks. Smithing gear sections
+split by metal, and Worship → Spells lists god-line filters in the topic
+column.
 
 ### Hiscores
 

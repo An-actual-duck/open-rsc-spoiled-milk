@@ -559,10 +559,52 @@ public final class SkillGuideInterface {
 	}
 
 	public SkillGuideWindow createGuideWindow() {
-		return new SkillGuideWindow(mc.getSkillGuideChosen(), mc.skillGuideChosenTabs, this::loadGuideTopics);
+		String skill = mc.getSkillGuideChosen();
+		List<String> sections = new ArrayList<>(mc.skillGuideChosenTabs);
+		int info = sections.indexOf("Info");
+		if (info < 0 || !hasContextualNotes(skill)) {
+			return new SkillGuideWindow(skill, sections, index -> loadGuideTopics(index, Collections.emptyList()));
+		}
+		sections.remove(info);
+		List<SkillMenuEntry> notes = isEnchantingGuide(skill) ? Collections.emptyList() : loadContextualNotes(info);
+		return new SkillGuideWindow(skill, sections, index -> loadGuideTopics(index < info ? index : index + 1, notes));
 	}
 
-	private List<SkillGuideWindow.Topic> loadGuideTopics(int section) {
+	private static boolean hasContextualNotes(String skill) {
+		switch (skill) {
+			case "Magic":
+			case "Woodcutting":
+			case "Fishing":
+			case "Crafting":
+			case "Smithing":
+			case "Mining":
+			case "Summoning":
+				return true;
+			default:
+				return isEnchantingGuide(skill);
+		}
+	}
+
+	private static boolean isEnchantingGuide(String skill) {
+		return skill.equalsIgnoreCase("Enchanting") || skill.equalsIgnoreCase("Magecraft")
+			|| skill.equalsIgnoreCase("Runecraft");
+	}
+
+	private List<SkillMenuEntry> loadContextualNotes(int info) {
+		int previousTab = curTab;
+		ArrayList<SkillMenuEntry> previousEntries = skillMenuEntries;
+		curTab = info;
+		skillMenuEntries = new ArrayList<>();
+		try {
+			populateSkillItems();
+			return skillMenuEntries;
+		} finally {
+			curTab = previousTab;
+			skillMenuEntries = previousEntries;
+		}
+	}
+
+	private List<SkillGuideWindow.Topic> loadGuideTopics(int section, List<SkillMenuEntry> notes) {
 		curTab = section;
 		if (isClericSpellsTab()) return loadClericTopics();
 
@@ -570,12 +612,19 @@ public final class SkillGuideInterface {
 		Map<String, List<SkillGuideWindow.Article>> byTopic = new LinkedHashMap<>();
 		String defaultTopic = isExpositoryTab() ? "Overview" : "Unlocks";
 		for (SkillMenuEntry entry : skillMenuEntries) {
-			String topic = entry.topic;
+			String topic = entry.contextSection == null ? entry.topic : null;
 			if (topic == null) {
 				topic = mc.getSkillGuideChosen().equals("Smithing") && curTab == 6
 					? "Other recipes" : defaultTopic;
 			}
 			byTopic.computeIfAbsent(topic, key -> new ArrayList<>()).add(guideArticle(entry));
+		}
+		String sectionName = mc.skillGuideChosenTabs.get(section);
+		for (SkillMenuEntry note : notes) {
+			if (sectionName.equals(note.contextSection)) {
+				byTopic.computeIfAbsent(note.topic, key -> new ArrayList<>()).add(
+					new SkillGuideWindow.Article("", Collections.singletonList(note.getSkillDetail())));
+			}
 		}
 		if (byTopic.isEmpty()) {
 			byTopic.put(defaultTopic, Collections.singletonList(new SkillGuideWindow.Article("",
@@ -583,6 +632,7 @@ public final class SkillGuideInterface {
 		}
 		List<SkillGuideWindow.Topic> topics = new ArrayList<>();
 		byTopic.forEach((label, articles) -> topics.add(new SkillGuideWindow.Topic(label, articles)));
+		if (isEnchantingGuide(mc.getSkillGuideChosen())) EnchantingGuideTopics.append(sectionName, topics);
 		return topics;
 	}
 
@@ -918,20 +968,20 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(3251, "80", "Staff of Enlightenment"));
 				addSkillCapeGuide(1382, "Magic");
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(185, "", "Magic Guild can be entered at level 66"));
-				skillMenuEntries.add(new SkillMenuItem(35, "", "Combat spells can be toggled for auto-cast"));
-				skillMenuEntries.add(new SkillMenuItem(36, "", "Heal spells have their own cooldown"));
-				skillMenuEntries.add(new SkillMenuItem(42, "", "Teleport spells charge before moving you"));
-				skillMenuEntries.add(new SkillMenuItem(33, "", "Unsteady lowers average damage for 5 attacks"));
-				skillMenuEntries.add(new SkillMenuItem(32, "", "Dampen lowers max damage for 5 attacks"));
-				skillMenuEntries.add(new SkillMenuItem(34, "", "Slow 1 / Slow 2: delays combat actions by 1 / 2 ticks; fades over time"));
-				skillMenuEntries.add(new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
-				skillMenuEntries.add(new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
-				skillMenuEntries.add(new SkillMenuItem(701, "", "Chaos gauntlets raise mind-rune combat spells to the chaos-rune damage cap"));
-				skillMenuEntries.add(new SkillMenuItem(31, "", "Thunder can Startle: staggers for 1 attack; then 5 unstaggered attacks before reapplication"));
-				skillMenuEntries.add(new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
-				skillMenuEntries.add(new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
-				skillMenuEntries.add(new SkillMenuItem(32, "", "Wood spells can Splinter to hit another eligible enemy"));
+				addContextNote("Equipment", "More info", new SkillMenuItem(185, "", "Magic Guild can be entered at level 66"));
+				addContextNote("Spells", "Casting", new SkillMenuItem(35, "", "Combat spells can be toggled for auto-cast"));
+				addContextNote("Spells", "Casting", new SkillMenuItem(36, "", "Heal spells have their own cooldown"));
+				addContextNote("Spells", "Casting", new SkillMenuItem(42, "", "Teleport spells charge before moving you"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(33, "", "Unsteady lowers average damage for 5 attacks"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(32, "", "Dampen lowers max damage for 5 attacks"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(34, "", "Slow 1 / Slow 2: delays combat actions by 1 / 2 ticks; fades over time"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
+				addContextNote("Equipment", "More info", new SkillMenuItem(701, "", "Chaos gauntlets raise mind-rune combat spells to the chaos-rune damage cap"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(31, "", "Thunder can Startle: staggers for 1 attack; then 5 unstaggered attacks before reapplication"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(32, "", "Wood spells can Splinter to hit another eligible enemy"));
 				addPvpGuideInfo();
 			}
 		}
@@ -1031,16 +1081,16 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(405, "70", "Rune hatchet"));
 			} else if (curTab == 2) {
 				if (Config.S_WANT_WOODCUTTING_GUILD) {
-					skillMenuEntries.add(new SkillMenuItem(405, "", "Woodcutting Guild can be entered at level 55 after paying 1000 coins"));
+					addContextNote("Trees", "More info", new SkillMenuItem(405, "", "Woodcutting Guild can be entered at level 55 after paying 1000 coins"));
 				}
-				skillMenuEntries.add(new SkillMenuItem(405, "", "Hatchet must be equipped to chop trees"));
-				skillMenuEntries.add(new SkillMenuItem(2707, "", "Resource seeds can appear as side rewards"));
-				skillMenuEntries.add(new SkillMenuItem(2707, "", "Seed focus: No seeds, A few, More, or Even more"));
-				skillMenuEntries.add(new SkillMenuItem(2707, "", "Seeds can roll up to hatchet tier plus 2"));
-				skillMenuEntries.add(new SkillMenuItem(2707, "", "Above-tier seeds roll at reduced weight"));
-				skillMenuEntries.add(new SkillMenuItem(2708, "", "Knowledge and Money seeds scale to your level"));
+				addContextNote("Hatchets", "More info", new SkillMenuItem(405, "", "Hatchet must be equipped to chop trees"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2707, "", "Resource seeds can appear as side rewards"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2707, "", "Seed focus: No seeds, A few, More, or Even more"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2707, "", "Seeds can roll up to hatchet tier plus 2"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2707, "", "Above-tier seeds roll at reduced weight"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2708, "", "Knowledge and Money seeds scale to your level"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					addSkillCapeGuide(1525, "Woodcutting");
+					addContextNote("Trees", "More info", new SkillMenuItem(1525, "", "Woodcutting cape unlocked at level 99"));
 				}
 			}
 		}
@@ -1077,18 +1127,18 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(2689, "62", "Magic Fishing Rod - T9, +40 effective Fishing"));
 				skillMenuEntries.add(new SkillMenuItem(2690, "70", "Blood Fishing Rod - T10, +45 effective Fishing"));
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(379, "", "Fishing Guild can be entered at level 68"));
-				skillMenuEntries.add(new SkillMenuItem(377, "", "Fishing shops sell rods through T6"));
-				skillMenuEntries.add(new SkillMenuItem(2686, "", "Fishing Guild sells rods through T10"));
-				skillMenuEntries.add(new SkillMenuItem(377, "", "Rods catch their tier and 3 tiers below"));
-				skillMenuEntries.add(new SkillMenuItem(793, "", "Side rewards: oyster, seaweed, casket"));
-				skillMenuEntries.add(new SkillMenuItem(1837, "", "Side rewards: leather gloves and boots by rod tier"));
-				skillMenuEntries.add(new SkillMenuItem(793, "", "Loot focus: Just the fish, A little, Plenty, Lots"));
-				skillMenuEntries.add(new SkillMenuItem(1837, "", "Side loot can roll up to rod tier plus 2"));
-				skillMenuEntries.add(new SkillMenuItem(1837, "", "Above-tier side loot rolls at reduced weight"));
-				skillMenuEntries.add(new SkillMenuItem(589, "", "Fishing Contest and Dragon Slayer keep quest exceptions"));
+				addContextNote("Catches", "More info", new SkillMenuItem(379, "", "Fishing Guild can be entered at level 68"));
+				addContextNote("Rods", "More info", new SkillMenuItem(377, "", "Fishing shops sell rods through T6"));
+				addContextNote("Rods", "More info", new SkillMenuItem(2686, "", "Fishing Guild sells rods through T10"));
+				addContextNote("Rods", "More info", new SkillMenuItem(377, "", "Rods catch their tier and 3 tiers below"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(793, "", "Side rewards: oyster, seaweed, casket"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(1837, "", "Side rewards: leather gloves and boots by rod tier"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(793, "", "Loot focus: Just the fish, A little, Plenty, Lots"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(1837, "", "Side loot can roll up to rod tier plus 2"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(1837, "", "Above-tier side loot rolls at reduced weight"));
+				addContextNote("Catches", "More info", new SkillMenuItem(589, "", "Fishing Contest and Dragon Slayer keep quest exceptions"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					addSkillCapeGuide(1380, "Fishing");
+					addContextNote("Catches", "More info", new SkillMenuItem(1380, "", "Fishing cape unlocked at level 99"));
 				}
 			}
 		}
@@ -1260,9 +1310,7 @@ public final class SkillGuideInterface {
 				}
 			}
 		}
-		if (mc.getSkillGuideChosen().equalsIgnoreCase("Enchanting")
-			|| mc.getSkillGuideChosen().equalsIgnoreCase("Magecraft")
-			|| mc.getSkillGuideChosen().equalsIgnoreCase("Runecraft")) {
+		if (isEnchantingGuide(mc.getSkillGuideChosen())) {
 			if (curTab == 0) {
 				addStaffTierGuide();
 			} else if (curTab == 1) {
@@ -1444,19 +1492,19 @@ public final class SkillGuideInterface {
 			addSummonGuide(298, "64", "Spell Echo - 15% chance for magic bonus damage");
 			addSummonGuide(184, "70", "Hellfire - 10% chance for Hell's Fire damage");
 		} else if (curTab == 3) {
-			addSummonGuide(23, "", "Combat summons stay until death or dismissal");
-			addSummonGuide(8, "", "Combat summons absorb only their listed share");
-			addSummonGuide(0, "", "Support summons last 1 minute by default");
-			addSummonGuide(0, "", "They automatically consume life runes to renew; without upkeep they leave");
-			addSummonGuide(0, "", "Each successful upkeep consumption gives 10 base Summoning XP, not per rune");
-			addSummonGuide(0, "", "Commanding an active support summon also earns Summoning XP each minute");
-			addSummonGuide(0, "", "Preserved upkeep runes give no consumption XP; Command XP still progresses");
-			addSummonGuide(0, "", "Support upkeep rises every 3 minutes active");
-			addSummonGuide(0, "", "Upkeep recovers 1 step per minute inactive");
-			addSummonGuide(241, "", "Utility uses are spent only on successful tasks");
-			addSummonGuide(13, "", "Utility Bangels add +1, +2, +3, +5, or +8 uses");
-			addSummonGuide(114, "", "Only one manual summon can be active");
-			addSummonGuide(53, "", "Summoning has a 5 second interruptible charge");
+			addContextNote("Summons", "Combat", new SkillMenuNPC(23, "", "Combat summons stay until death or dismissal"));
+			addContextNote("Summons", "Combat", new SkillMenuNPC(8, "", "Combat summons absorb only their listed share"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Support summons last 1 minute by default"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "They automatically consume life runes to renew; without upkeep they leave"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Each successful upkeep consumption gives 10 base Summoning XP, not per rune"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Commanding an active support summon also earns Summoning XP each minute"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Preserved upkeep runes give no consumption XP; Command XP still progresses"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Support upkeep rises every 3 minutes active"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Upkeep recovers 1 step per minute inactive"));
+			addContextNote("Summons", "Utility", new SkillMenuNPC(241, "", "Utility uses are spent only on successful tasks"));
+			addContextNote("Summons", "Utility", new SkillMenuNPC(13, "", "Utility Bangels add +1, +2, +3, +5, or +8 uses"));
+			addContextNote("Summons", "Casting", new SkillMenuNPC(114, "", "Only one manual summon can be active"));
+			addContextNote("Summons", "Casting", new SkillMenuNPC(53, "", "Summoning has a 5 second interruptible charge"));
 		}
 	}
 
@@ -1511,11 +1559,11 @@ public final class SkillGuideInterface {
 	}
 
 	private void addPvpGuideInfo() {
-		skillMenuEntries.add(new SkillMenuEntry("", "Player combat is limited to legally attackable targets in the Wilderness"));
-		skillMenuEntries.add(new SkillMenuEntry("", "Player splash requires a player target; NPC attacks never splash players"));
-		skillMenuEntries.add(new SkillMenuEntry("", "Every splash target must qualify separately, including the Wilderness boundary"));
-		skillMenuEntries.add(new SkillMenuEntry("", "Area attacks and curses exclude your party, clanmates and players on your friends list"));
-		skillMenuEntries.add(new SkillMenuEntry("", "Adding a friend protects them from your effects, not you from theirs; direct attacks are separate"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Player combat is limited to legally attackable targets in the Wilderness"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Player splash requires a player target; NPC attacks never splash players"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Every splash target must qualify separately, including the Wilderness boundary"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Area attacks and curses exclude your party, clanmates and players on your friends list"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Adding a friend protects them from your effects, not you from theirs; direct attacks are separate"));
 	}
 
 	private void addRangedBowGuide(String name, int level, int shortbowId, int longbowId) {
@@ -1533,6 +1581,12 @@ public final class SkillGuideInterface {
 
 	private void addSkillCapeGuide(int itemId, String skillName) {
 		skillMenuEntries.add(new SkillMenuItem(itemId, "", skillName + " cape unlocked at level 99"));
+	}
+
+	private void addContextNote(String section, String topic, SkillMenuEntry entry) {
+		entry.contextSection = section;
+		entry.topic = topic;
+		skillMenuEntries.add(entry);
 	}
 
 	private void addThrownGuide(String name, int level, int dartId, int knifeId, int shurikenId) {
@@ -1765,13 +1819,13 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(2049, "62", "Orichalcum Pickaxe"));
 			skillMenuEntries.add(new SkillMenuItem(1262, "70", "Rune Pickaxe"));
 		} else if (curTab == 2) {
-			skillMenuEntries.add(new SkillMenuItem(1259, "", "Mining Guild can be entered at level 60"));
-			skillMenuEntries.add(new SkillMenuItem(1260, "", "Pickaxe must be equipped to mine rocks"));
-			skillMenuEntries.add(new SkillMenuItem(3178, "", "Geode focus: Just the ore, A few, Plenty, Lots"));
-			skillMenuEntries.add(new SkillMenuItem(3178, "", "Higher geode focus increases rare geode rolls"));
-			skillMenuEntries.add(new SkillMenuItem(1299, "", "Stone comes only from regular rock nodes"));
+			addContextNote("Ores", "More info", new SkillMenuItem(1259, "", "Mining Guild can be entered at level 60"));
+			addContextNote("Pickaxes", "More info", new SkillMenuItem(1260, "", "Pickaxe must be equipped to mine rocks"));
+			addContextNote("Ores", "Geodes", new SkillMenuItem(3178, "", "Geode focus: Just the ore, A few, Plenty, Lots"));
+			addContextNote("Ores", "Geodes", new SkillMenuItem(3178, "", "Higher geode focus increases rare geode rolls"));
+			addContextNote("Ores", "More info", new SkillMenuItem(1299, "", "Stone comes only from regular rock nodes"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				addSkillCapeGuide(1377, "Mining");
+				addContextNote("Ores", "More info", new SkillMenuItem(1377, "", "Mining cape unlocked at level 99"));
 			}
 		}
 	}
@@ -1879,21 +1933,21 @@ public final class SkillGuideInterface {
 			addWoodcraftGuide("Magic", 50, 62, 667, 61, 666, 64, 2175, 65, 1784, 62, 2689, 62);
 			addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70, 2690, 70);
 		} else if (curTab == 6) {
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor has set effects if all five pieces are worn"));
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor mimics the defenses of its creature"));
-			skillMenuEntries.add(new SkillMenuItem(148, "", "Hides and carapaces must be tanned at tanning racks"));
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
-			skillMenuEntries.add(new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor slots lower Magic Power"));
-			skillMenuEntries.add(new SkillMenuItem(1076, "", "Arrowheads moved to Crafting and use molds"));
-			skillMenuEntries.add(new SkillMenuItem(11, "", "Bolts moved to Crafting and use molds"));
-			skillMenuEntries.add(new SkillMenuItem(1013, "", "Dart tips moved to Crafting and use molds"));
-			skillMenuEntries.add(new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
-			skillMenuEntries.add(new SkillMenuItem(3208, "", "Shuriken use Crafting and molds"));
-			skillMenuEntries.add(new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron"));
-			skillMenuEntries.add(new SkillMenuItem(191, "", "Gem-dragon caves below the guild require 70 Crafting; prepare for dangerous combat"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1839, "", "Leather armor has set effects if all five pieces are worn"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1839, "", "Leather armor mimics the defenses of its creature"));
+			addContextNote("Leather", "More info", new SkillMenuItem(148, "", "Hides and carapaces must be tanned at tanning racks"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1839, "", "Leather armor slots lower Magic Power"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(1076, "", "Arrowheads moved to Crafting and use molds"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(11, "", "Bolts moved to Crafting and use molds"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(1013, "", "Dart tips moved to Crafting and use molds"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(3208, "", "Shuriken use Crafting and molds"));
+			addContextNote("Materials", "More info", new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron"));
+			addContextNote("Materials", "More info", new SkillMenuItem(191, "", "Gem-dragon caves below the guild require 70 Crafting; prepare for dangerous combat"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				addSkillCapeGuide(1384, "Crafting");
+				addContextNote("Materials", "More info", new SkillMenuItem(1384, "", "Crafting cape unlocked at level 99"));
 			}
 		}
 	}
@@ -1981,11 +2035,11 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(419, "34", "Nails - 1 steel bar makes 2"));
 			skillMenuEntries.add(new SkillMenuItem(1278, "60", "Dragon square shield - smith the 2 halves together"));
 		} else if (curTab == 7) {
-			skillMenuEntries.add(new SkillMenuEntry("", "Dragon bars require the repaired lava forge"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Purified Rune Bars require the repaired lava forge"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Repair the forge after Dwarf Youth Rescue"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Repair cost: 100 black dragon scales and 1,000,000 coins"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Dragon and Exalted Rune gear are smithed at normal anvils"));
+			addContextNote("Smelting", "Lava forge", new SkillMenuEntry("", "Dragon bars require the repaired lava forge"));
+			addContextNote("Smelting", "Lava forge", new SkillMenuEntry("", "Purified Rune Bars require the repaired lava forge"));
+			addContextNote("Smelting", "Lava forge", new SkillMenuEntry("", "Repair the forge after Dwarf Youth Rescue"));
+			addContextNote("Smelting", "Lava forge", new SkillMenuEntry("", "Repair cost: 100 black dragon scales and 1,000,000 coins"));
+			addContextNote("Special", "More info", new SkillMenuEntry("", "Dragon and Exalted Rune gear are smithed at normal anvils"));
 		}
 	}
 
@@ -2040,6 +2094,7 @@ class SkillMenuEntry {
 
 	private final String levelReq, skillDetail;
 	String topic;
+	String contextSection;
 
 	protected SkillMenuEntry(String levelReq, String skillDetail) {
 		this.levelReq = levelReq;

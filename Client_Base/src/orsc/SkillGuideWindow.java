@@ -154,9 +154,10 @@ public final class SkillGuideWindow {
 		if (body.height <= 0) return;
 		int available = body.width - railWidth - 2 * pad;
 		int rowPad = Math.max(4, pad / 2);
+		int paragraphGap = Math.max(3, lineHeight / 4);
 		boolean hasRoomForIcon = available >= iconSize * 3;
 		updateArticles(current, Math.max(1, available), font,
-			lineHeight, pad, rowPad, hasRoomForIcon, iconSize, value -> surface.stringWidth(font, value));
+			lineHeight, pad, rowPad, paragraphGap, hasRoomForIcon, iconSize, value -> surface.stringWidth(font, value));
 		articleScroll = scroll(surface, body, railWidth, body.height, Math.max(0, articleHeight - body.height),
 			articleScroll + wheel * lineHeight, mouseX, mouseY, click);
 		surface.setClip(body.x, body.x + body.width - railWidth, body.y + body.height, body.y);
@@ -170,8 +171,7 @@ public final class SkillGuideWindow {
 				if (hasRoomForIcon && row.article.icon != null) {
 					row.article.icon.draw(textX, top + (row.height - iconSize) / 2, iconSize);
 				}
-				int textHeight = (row.heading.size() + row.details.size()) * lineHeight;
-				int baseline = top + (row.height - textHeight) / 2 + lineHeight - 3;
+				int baseline = top + (row.height - row.textHeight) / 2 + lineHeight - 3;
 				if (!row.article.level.isEmpty()) {
 					int levelX = textX + row.indent - row.levelWidth;
 					surface.drawString(row.article.level, levelX, baseline, 0xFFDC82, font);
@@ -180,9 +180,12 @@ public final class SkillGuideWindow {
 					surface.drawString(line, textX + row.indent, baseline, 0xFFDC82, font);
 					baseline += lineHeight;
 				}
-				for (String line : row.details) {
-					surface.drawString(line, textX + row.indent, baseline, InterfacePalette.TEXT, font);
-					baseline += lineHeight;
+				for (List<String> paragraph : row.details) {
+					for (String line : paragraph) {
+						surface.drawString(line, textX + row.indent, baseline, InterfacePalette.TEXT, font);
+						baseline += lineHeight;
+					}
+					baseline += paragraphGap;
 				}
 			}
 		} finally {
@@ -190,8 +193,8 @@ public final class SkillGuideWindow {
 		}
 	}
 
-	private void updateArticles(Topic current, int width, int font, int lineHeight, int pad, int rowPad, boolean icons,
-								int iconSize, ToIntFunction<String> measure) {
+	private void updateArticles(Topic current, int width, int font, int lineHeight, int pad, int rowPad,
+								int paragraphGap, boolean icons, int iconSize, ToIntFunction<String> measure) {
 		if (articles != null && width == wrappedWidth && font == wrappedFont && icons == wrappedIcons
 			&& pad == wrappedPadding && iconSize == wrappedIconSize) return;
 		wrappedWidth = width;
@@ -211,11 +214,17 @@ public final class SkillGuideWindow {
 			int indent = (hasIcon ? iconSize + pad : 0) + levelWidth;
 			int textWidth = Math.max(1, width - indent);
 			List<String> heading = ClericTextLayout.wrap(article.title, textWidth, measure);
-			List<String> details = new ArrayList<>();
-			for (String detail : article.paragraphs) details.addAll(ClericTextLayout.wrap(detail, textWidth, measure));
-			int rowHeight = 2 * rowPad + Math.max(hasIcon ? iconSize : 0,
-				(heading.size() + details.size()) * lineHeight);
-			articles.add(new WrappedArticle(article, heading, details, articleHeight, rowHeight, indent, levelWidth));
+			List<List<String>> details = new ArrayList<>();
+			int textHeight = heading.size() * lineHeight;
+			for (String detail : article.paragraphs) {
+				List<String> lines = ClericTextLayout.wrap(detail, textWidth, measure);
+				if (lines.isEmpty()) continue;
+				if (!details.isEmpty()) textHeight += paragraphGap;
+				details.add(lines);
+				textHeight += lines.size() * lineHeight;
+			}
+			int rowHeight = 2 * rowPad + Math.max(hasIcon ? iconSize : 0, textHeight);
+			articles.add(new WrappedArticle(article, heading, details, articleHeight, rowHeight, textHeight, indent, levelWidth));
 			articleHeight += rowHeight;
 		}
 	}
@@ -290,15 +299,18 @@ public final class SkillGuideWindow {
 
 	private static final class WrappedArticle {
 		final Article article;
-		final List<String> heading, details;
-		final int top, height, indent, levelWidth;
+		final List<String> heading;
+		final List<List<String>> details;
+		final int top, height, textHeight, indent, levelWidth;
 
-		WrappedArticle(Article article, List<String> heading, List<String> details, int top, int height, int indent, int levelWidth) {
+		WrappedArticle(Article article, List<String> heading, List<List<String>> details, int top, int height,
+					   int textHeight, int indent, int levelWidth) {
 			this.article = article;
 			this.heading = heading;
 			this.details = details;
 			this.top = top;
 			this.height = height;
+			this.textHeight = textHeight;
 			this.indent = indent;
 			this.levelWidth = levelWidth;
 		}
