@@ -57,7 +57,7 @@ final class SkillGuideTopics {
 				fishing(section, topics);
 				break;
 			case "Crafting":
-				crafting(client, section, topics);
+				crafting(section, topics);
 				break;
 			case "Smithing":
 				smithing(section, topics);
@@ -221,10 +221,10 @@ final class SkillGuideTopics {
 		}
 	}
 
-	private static void crafting(mudclient client, String section, Map<String, List<Article>> topics) {
+	private static void crafting(String section, Map<String, List<Article>> topics) {
 		switch (section) {
 			case "Leather":
-				LeatherGuideTopics.append(client, topics);
+				LeatherGuideTopics.append(topics);
 				break;
 			case "Wool":
 				page(topics, "Wool and flax", article("Spinning supplies",
