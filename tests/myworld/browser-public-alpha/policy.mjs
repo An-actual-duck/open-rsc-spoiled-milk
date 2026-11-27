@@ -34,13 +34,14 @@ assert.equal(only.loadingChoices,false);
 assert.equal(only.streaming,true);
 assert.equal(only.streamingOnly,true);
 assert.ok(only.properties.includes('spoiledmilk.browserWorldStreaming=true'));
+assert.ok(only.properties.includes('spoiledmilk.browserStreamingOnly=true'));
 assert.equal(wholeRamPolicy('webgl',only.options).enabled,false);
 assert.equal(wholeZonePolicy('webgl',only.options).enabled,false);
 assert.throws(()=>resolveBrowserDeployment(onlyConfig,at(),'chunks'));
 assert.throws(()=>resolveBrowserDeployment(onlyConfig,at(PUBLIC_ORIGIN,'?mode=chunks')));
 assert.throws(()=>resolveBrowserDeployment({...config,streamingOnly:true},at()));
 assert.equal(resolveBrowserDeployment(onlyConfig,at(PUBLIC_ORIGIN,'?view=embedded'),'streaming').streaming,true);
-checks+=10;
+checks+=11;
 const o=result.options;assert.equal(o.has('fixture'),false);assert.equal(o.get('gpuresidency'),'bounded');assert.equal(o.get('gpubudget'),'512');assert.equal(o.get('loadprofile'),'off');assert.equal(o.get('baselinereuse'),'off');assert.equal(o.get('clonetemplates'),'off');assert.equal(renderWorkerPolicy('webgl',o).enabled,true);assert.equal(wholeZonePolicy('webgl',o).enabled,true);assert.equal(wholeRamPolicy('webgl',o).enabled,true);checks+=9;
 for(const origin of ['http://127.0.0.1:8238','http://private']){const privateMode=resolveBrowserDeployment(null,at(origin,'?benchmark=1&fixture=repeatable-v1'));assert.equal(privateMode.publicAlpha,false);assert.equal(privateMode.options.get('fixture'),'repeatable-v1');assert.equal(privateMode.assetRoot,'/app/');checks+=3;}
 assert.throws(()=>resolveBrowserDeployment(null,at()));checks++;

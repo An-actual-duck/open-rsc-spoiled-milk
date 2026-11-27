@@ -40,7 +40,7 @@ export function resolveBrowserDeployment(config,location,mode=null){
   const streaming=streamingOnly||mode==='streaming';
   if(streaming&&!streamingAvailable)throw new Error('World Streaming is unavailable in this build.');
   return {publicAlpha:true,loadingChoices,streamingOnly,streaming,config:Object.freeze({...config}),options:new URLSearchParams(streaming?STREAMING_OPTIONS:PRESET),assetRoot,websocket:PUBLIC_WEBSOCKET,
-    properties:['spoiledmilk.browserPublicAlpha=true','spoiledmilk.browserPublicOrigin='+PUBLIC_ORIGIN,'spoiledmilk.browserPublicPreset='+PUBLIC_PRESET,'spoiledmilk.browserAssetRoot='+assetRoot,...(streaming?STREAMING_PROPERTIES:[])]};
+    properties:['spoiledmilk.browserPublicAlpha=true','spoiledmilk.browserPublicOrigin='+PUBLIC_ORIGIN,'spoiledmilk.browserPublicPreset='+PUBLIC_PRESET,'spoiledmilk.browserAssetRoot='+assetRoot,...(streaming?STREAMING_PROPERTIES:[]),...(streamingOnly?['spoiledmilk.browserStreamingOnly=true']:[])]};
 }
 export function browserCapabilityProblem(win){
   if(!win.isSecureContext)return 'A secure connection is required. Open the HTTPS Play page.';
