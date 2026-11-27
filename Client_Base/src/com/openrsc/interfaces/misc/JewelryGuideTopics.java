@@ -25,7 +25,7 @@ final class JewelryGuideTopics {
 			effect("Life - Combat Command", "Combat summons gain health (" + percentages(10, 20, 30, 50, 100)
 				+ ") and deal more damage (" + percentages(3, 6, 9, 15, 25) + ")."),
 			effect("Mind - Hearthcraft", "Bonus Cooking, Herblaw, and Fishing XP of " + XP_BONUS),
-			effect("Body - Gains", "Bonus Attack, Defense, Strength, and Hits XP of " + XP_BONUS),
+			effect("Body - Gains", "Bonus Melee, Defense, Strength, and Hits XP of " + XP_BONUS),
 			effect("Chaos - Recoil", "Reflect a quarter of the damage you take from an attack with a "
 				+ "10%, 20%, 30%, 50%, 90% chance by gem."),
 			effect("Cosmic - Fortune", "Reroll a failed rare monster drop roll with a 5%, 10%, 15%, 20%, 25% chance by gem."),
@@ -42,8 +42,8 @@ final class JewelryGuideTopics {
 	static Topic bangles() {
 		return topic("Bangle enchantments",
 			effect("Air - Woodcutter's", "Woodcutting log yield increases by " + YIELD_BONUS + "."),
-			effect("Water - Angler's", "Land the best fish available for your spot, rod, and Fishing level with a "
-				+ "10%, 20%, 30%, 60%, 100% chance by gem."),
+			effect("Water - Angler's", "On each catch, the bangle rolls to select the highest-tier fish available "
+				+ "for your spot, rod, and Fishing level. The roll succeeds 10%, 20%, 30%, 60%, 100% of the time by gem."),
 			effect("Earth - Harvester's", "Harvesting produce yield increases by " + YIELD_BONUS + "."),
 			effect("Fire - Miner's", "Mining ore yield increases by " + YIELD_BONUS + "."),
 			effect("Life - Utility Command", "Pack Rat and Delivery Camel gain 1, 2, 3, 5, 8 uses on top of their first use."),
