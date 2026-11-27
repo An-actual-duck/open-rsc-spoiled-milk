@@ -24585,12 +24585,16 @@ public final class mudclient implements Runnable {
 				surface.drawBoxBorder(x + 1, toolbar.buttonSize - 2, toolbar.top + 1, toolbar.buttonSize - 2, border);
 			}
 			AbilityBook book = AbilityBook.forTab(tab);
-			if (book == null) {
-				Sprite icon = sideToolbarArtwork.icon(strip, Config.OPTIONS_TAB - tab);
-				if (icon != null) {
-					surface.drawSprite(icon, x + iconInset, toolbar.top + iconInset, toolbar.iconSize, toolbar.iconSize, 5924);
+			Sprite icon = book == null ? sideToolbarArtwork.icon(strip, Config.OPTIONS_TAB - tab)
+				: sideToolbarArtwork.icon(book, externalAssetLoader);
+			if (icon != null) {
+				int iconX = x + iconInset;
+				int iconY = toolbar.top + iconInset;
+				if (book != null) {
+					surface.drawBox(iconX, iconY, toolbar.iconSize, toolbar.iconSize, SideToolbarArtwork.ICON_BACKING);
 				}
-			} else {
+				surface.drawSprite(icon, iconX, iconY, toolbar.iconSize, toolbar.iconSize, 5924);
+			} else if (book != null) {
 				int font = toolbar.iconSize > SideToolbarLayout.ICON_SIZE ? 7 : 6;
 				surface.drawColoredStringCentered(x + toolbar.buttonSize / 2, book.letter,
 					selected ? 0xFFDC82 : 0xFFFFFF, 0, font, toolbar.top + (toolbar.buttonSize + surface.fontHeight(font)) / 2 - 3);

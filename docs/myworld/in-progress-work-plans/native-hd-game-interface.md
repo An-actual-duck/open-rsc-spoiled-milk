@@ -270,9 +270,9 @@ The Guide button returns to the same skill guide topic.
 
 ## Ability books preview
 
-Mage, Cleric, Prayer and Summoning each have a toolbar button. M, C, P and S
-stand in for artwork. Each book starts in its icon grid and saves its own
-Icon/Text choice from the button in its header. Spell, prayer and summon
+Mage uses a wizard hat, Cleric uses golden buff particles, Prayer uses a lit
+offering bowl, and Summoning uses claw marks. Each book starts in its icon grid
+and saves its own Icon/Text choice from the button in its header. Spell, prayer and summon
 activation still use the existing game actions. Cleric has its own book for
 Worship levels, Holy power and the sigils made through Blessing. Use the
 preview to compare the width of the expanded toolbar at 540p and 1080p.
