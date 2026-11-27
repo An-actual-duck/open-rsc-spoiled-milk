@@ -564,6 +564,10 @@ public final class SkillGuideInterface {
 			return new SkillGuideWindow(skill, WorshipGuideTopics.SECTIONS,
 				index -> WorshipGuideTopics.load(index, mc));
 		}
+		if ("Blessing".equalsIgnoreCase(skill)) {
+			return new SkillGuideWindow(skill, BlessingGuideTopics.SECTIONS,
+				index -> BlessingGuideTopics.load(index, mc));
+		}
 		List<String> sections = new ArrayList<>(mc.skillGuideChosenTabs);
 		int info = sections.indexOf("Info");
 		if (info < 0 || !hasContextualNotes(skill)) {
@@ -636,7 +640,6 @@ public final class SkillGuideInterface {
 		List<SkillGuideWindow.Topic> topics = new ArrayList<>();
 		byTopic.forEach((label, articles) -> topics.add(new SkillGuideWindow.Topic(label, articles)));
 		if (isEnchantingGuide(mc.getSkillGuideChosen())) EnchantingGuideTopics.append(sectionName, topics);
-		if ("Blessing".equalsIgnoreCase(mc.getSkillGuideChosen())) topics.add(WorshipEquipmentGuideTopics.blessingGuide());
 		return topics;
 	}
 

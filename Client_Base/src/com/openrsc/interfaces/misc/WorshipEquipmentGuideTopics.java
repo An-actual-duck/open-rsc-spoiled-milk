@@ -11,7 +11,7 @@ import orsc.mudclient;
 
 /** Equipment effects and acquisition routes confirmed for MyWorld. */
 final class WorshipEquipmentGuideTopics {
-	private static final String BLESSING_GUIDE = " See the Equipment topic in the Blessing guide for details.";
+	private static final String BLESSING_GUIDE = " See Equipment in the Blessing guide for details.";
 
 	private WorshipEquipmentGuideTopics() {
 	}
@@ -79,17 +79,5 @@ final class WorshipEquipmentGuideTopics {
 				+ "for Saradomin, Divine Retribution for Zamorak, or Corrosive Aura for Guthix."),
 			article("God crossbows", client.skillGuideItemIcon(crossbow), "Add ranged power and can fire normal bolts. "
 				+ "Activate the matching prayer for free holy bolts with Revelation, Bleed, or Briar Seeds. See the god pages under Prayers."));
-	}
-
-	static Topic blessingGuide() {
-		return topic("Equipment",
-			article("Bless equipment", "Use the unnoted item on the altar of the god you currently worship. "
-				+ "Blessing converts the item to that god's equipment. You need Devotion with that god, and most equipment blessings spend a little of it."),
-			article("Steel armor and weapons", "Bring an ordinary steel piece. The altar tells you how much Devotion it requires. "
-				+ "A steel dagger or helmet needs 100 Devotion, while a steel plate body needs 400."),
-			article("Wool and wooden staves", "Bring a plain wool piece or a plain wooden staff. Larger wool pieces and higher wood tiers need more Devotion. "
-				+ "Staff blessings also require Worship, with higher levels for higher wood tiers."),
-			article("Symbols", "Craft and string a symbol of your god first. Bless it at the matching altar once you have 50 Devotion. "
-				+ "Blessing a symbol leaves your Devotion balance intact."));
 	}
 }

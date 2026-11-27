@@ -269,7 +269,8 @@ split by metal. Worship groups Prayers by god and explains point reservation
 under Mechanics. Devotion covers offerings, gear growth, and faction
 hostility. Equipment shows active sources and stats, with artifact discovery
 left to players. Cleric Spells uses the server's spell catalog for unlocks and
-descriptions.
+descriptions. Blessing splits sigil unlocks and imbuing from the equipment
+requirements for staves, steel and wool gear, and symbols.
 
 ### Hiscores
 
