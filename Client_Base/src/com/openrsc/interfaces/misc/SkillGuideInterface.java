@@ -642,6 +642,10 @@ public final class SkillGuideInterface {
 		String sectionName = mc.skillGuideChosenTabs.get(section);
 		String defaultTopic = SkillGuideTopics.defaultTopic(skill, sectionName, isExpositoryTab());
 		for (SkillMenuEntry entry : skillMenuEntries) {
+			if ("Summoning".equals(skill) && "Scaling".equals(sectionName)
+				&& entry.getSkillDetail().endsWith("Does not engage in combat")) {
+				continue;
+			}
 			String topic = entry.contextSection == null ? entry.topic : null;
 			if (topic == null) {
 				topic = mc.getSkillGuideChosen().equals("Smithing") && curTab == 6
@@ -1488,21 +1492,21 @@ public final class SkillGuideInterface {
 			addSummonGuide(298, "64", "Astral Wraith - Hits 10 +1/8; dmg 7 +1/14");
 			addSummonGuide(184, "70", "Inner Demon - Hits 18 +1/7; dmg 9 +1/12");
 		} else if (curTab == 2) {
-			addSummonGuide(23, "1", "None - introductory combat summon");
-			addSummonGuide(114, "7", "Mischievous - prevents enemy aggro until you attack");
-			addSummonGuide(838, "12", "Scavenger - collects dropped stackable items");
-			addSummonGuide(8, "14", "Tank - absorbs 60% of incoming damage");
-			addSummonGuide(0, "20", "Divine - grants +10 prayer points");
-			addSummonGuide(43, "26", "Vampirism - heals owner for damage dealt");
-			addSummonGuide(241, "33", "Hoarder - 1 base use; certs matching selected items");
-			addSummonGuide(295, "39", "Relentless - 15% chance for bonus damage");
-			addSummonGuide(296, "45", "Reverent - double XP, +50% Devotion, and full-set healing from auto-offerings");
-			addSummonGuide(53, "51", "Fear - 20% chance to stop enemy attacks");
-			addSummonGuide(748, "55", "Watchful - one enemy; suppresses area attacks");
-			addSummonGuide(13, "58", "Beast of Burden - 1 base use; banks one stack");
-			addSummonGuide(845, "61", "Foundry - each coal costs 5 fire and 1 nature rune");
-			addSummonGuide(298, "64", "Spell Echo - 15% chance for magic bonus damage");
-			addSummonGuide(184, "70", "Hellfire - 10% chance for Hell's Fire damage");
+			addSummonGuide(23, "1", "Broodling Spider - None - introductory combat summon");
+			addSummonGuide(114, "7", "Mischief Imp - Mischievous - prevents enemy aggro until you attack");
+			addSummonGuide(838, "12", "Loot Goblin - Scavenger - collects dropped stackable items");
+			addSummonGuide(8, "14", "Ironhide Bear - Tank - absorbs 60% of incoming damage");
+			addSummonGuide(0, "20", "Sacred Unicorn - Divine - grants +10 prayer points");
+			addSummonGuide(43, "26", "Duskwind Bat - Vampirism - heals owner for damage dealt");
+			addSummonGuide(241, "33", "Pack Rat - Hoarder - 1 base use; certs matching selected items");
+			addSummonGuide(295, "39", "Bound Battleaxe - Relentless - 15% chance for bonus damage");
+			addSummonGuide(296, "45", "Mourning Unicorn - Reverent - double XP, +50% Devotion, and full-set healing from auto-offerings");
+			addSummonGuide(53, "51", "Restless Shade - Fear - 20% chance to stop enemy attacks");
+			addSummonGuide(748, "55", "Guard Dog - Watchful - one enemy; suppresses area attacks");
+			addSummonGuide(13, "58", "Delivery Camel - Beast of Burden - 1 base use; banks one stack");
+			addSummonGuide(845, "61", "Foundry Dragon - Foundry - each coal costs 5 fire and 1 nature rune");
+			addSummonGuide(298, "64", "Astral Wraith - Spell Echo - 15% chance for magic bonus damage");
+			addSummonGuide(184, "70", "Inner Demon - Hellfire - 10% chance for Hell's Fire damage");
 		} else if (curTab == 3) {
 			addContextNote("Summons", "Combat", new SkillMenuNPC(23, "", "Combat summons stay until death or dismissal"));
 			addContextNote("Summons", "Combat", new SkillMenuNPC(8, "", "Combat summons absorb only their listed share"));

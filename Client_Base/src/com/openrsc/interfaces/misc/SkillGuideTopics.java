@@ -20,6 +20,9 @@ final class SkillGuideTopics {
 		if ("Harvest".equals(skill) && !"Shears".equals(section)) {
 			return "Produce";
 		}
+		if ("Summoning".equals(skill) && "Traits".equals(section)) {
+			return "Companion traits";
+		}
 		if ("Cooking".equals(skill) && "Info".equals(section)) {
 			return "Unlocks";
 		}
@@ -220,7 +223,7 @@ final class SkillGuideTopics {
 				break;
 			case "Wool":
 				page(topics, "Wool and flax", article("Spinning supplies",
-					"Spin sheep's wool into balls of wool and flax into bowstrings. The recipe list shows how much wool each piece of clothing needs.",
+					"Use a spinning wheel to turn sheep's wool into balls of wool or flax into bowstrings. Use a needle on a ball of wool to see what you can stitch and how much wool each garment needs.",
 					"See Blessing for god-aligned robes and Enchanting for robe upgrades."));
 				break;
 			case "Materials":
@@ -312,7 +315,7 @@ final class SkillGuideTopics {
 		switch (section) {
 			case "Pickpocket":
 				page(topics, "Pickpocketing", article("Choosing a target",
-					"Right-click an eligible character to pickpocket them. A failed attempt can leave you briefly stunned."));
+					"Right-click an eligible character to pickpocket them. If you fail, they can catch you and start a fight."));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					page(topics, "Progression", article("Thieving skill cape", "The Thieving skill cape unlocks at level 99."));
 				}
@@ -323,7 +326,7 @@ final class SkillGuideTopics {
 				break;
 			case "Chests":
 				page(topics, "Traps", article("Opening thieving chests",
-					"Use the search-for-traps option before opening a trapped chest. The list shows where to find chests and the level they require."));
+					"Choose Search for traps to disarm and loot a thieving chest. The list shows where to find chests and the level they require."));
 				break;
 			default:
 				break;
@@ -359,7 +362,15 @@ final class SkillGuideTopics {
 	}
 
 	private static void summoning(String section, Map<String, List<Article>> topics) {
-		if ("Summons".equals(section) && topics.containsKey("Casting")) {
+		if ("Scaling".equals(section)) {
+			List<Article> stats = topics.remove("Unlocks");
+			page(topics, "Overview", article("How companions grow",
+				"As your Summoning level rises, combat summons can take more damage and deal stronger hits. Use Traits to compare what they do in a fight.",
+				"Support and utility companions help through their traits and commands. See Summons for upkeep and task uses."));
+			if (stats != null) {
+				topics.put("Combat stats", stats);
+			}
+		} else if ("Summons".equals(section) && topics.containsKey("Casting")) {
 			page(topics, "Casting", article("Calling a summon",
 				"Carry the recipe materials and choose your summon in the Summoning panel. Casting takes five seconds and can be interrupted. You can have one manually summoned creature active at a time."));
 			page(topics, "Combat", article("Fighting companions",
