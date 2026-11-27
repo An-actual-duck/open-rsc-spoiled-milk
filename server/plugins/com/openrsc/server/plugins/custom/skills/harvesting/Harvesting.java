@@ -100,47 +100,40 @@ public final class Harvesting implements OpLocTrigger {
 		}
 	}
 
-	private static class ItemLevelXPTrio {
-		private int itemId;
-		private int level;
-		private int xp;
-		ItemLevelXPTrio(int itemId, int level, int xp) {
+	private static final class ClippedProduce {
+		private final int itemId;
+		private final int shearsTier;
+		private final int yieldBaselineLevel;
+		private final int xp;
+
+		ClippedProduce(int itemId, int shearsTier, int yieldBaselineLevel, int xp) {
 			this.itemId = itemId;
-			this.level = level;
+			this.shearsTier = shearsTier;
+			this.yieldBaselineLevel = yieldBaselineLevel;
 			this.xp = xp;
-		}
-
-		int getItemId() { return itemId; }
-
-		int getLevel() {
-			return level;
-		}
-
-		int getXp() {
-			return xp;
 		}
 	}
 
 	enum HerbsProduce {
-		HERB(1274, new ItemLevelXPTrio(ItemId.UNIDENTIFIED_GUAM_LEAF.id(), 1, 50),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_MARRENTILL.id(), 8, 60),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TARROMIN.id(), 15, 72),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_HARRALANDER.id(), 22, 96),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_RANARR_WEED.id(), 30, 122),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_IRIT_LEAF.id(), 38, 194),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_AVANTOE.id(), 46, 246),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_KWUARM.id(), 54, 312),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_CADANTINE.id(), 54, 480),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_DWARF_WEED.id(), 70, 768),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TORSTOL.id(), 70, 960)),
-		SEAWEED(1280, new ItemLevelXPTrio(ItemId.SEAWEED.id(), 22, 84),
-			new ItemLevelXPTrio(ItemId.EDIBLE_SEAWEED.id(), 22, 84)),
-		LIMPWURTROOT(1281, new ItemLevelXPTrio(ItemId.LIMPWURT_ROOT.id(), 38, 144)),
-		SNAPEGRASS(1273, new ItemLevelXPTrio(ItemId.SNAPE_GRASS.id(), 54, 328));
+		HERB(1274, new ClippedProduce(ItemId.UNIDENTIFIED_GUAM_LEAF.id(), 1, 1, 50),
+			new ClippedProduce(ItemId.UNIDENTIFIED_MARRENTILL.id(), 2, 8, 60),
+			new ClippedProduce(ItemId.UNIDENTIFIED_TARROMIN.id(), 3, 15, 72),
+			new ClippedProduce(ItemId.UNIDENTIFIED_HARRALANDER.id(), 4, 22, 96),
+			new ClippedProduce(ItemId.UNIDENTIFIED_RANARR_WEED.id(), 5, 30, 122),
+			new ClippedProduce(ItemId.UNIDENTIFIED_IRIT_LEAF.id(), 6, 38, 194),
+			new ClippedProduce(ItemId.UNIDENTIFIED_AVANTOE.id(), 7, 46, 246),
+			new ClippedProduce(ItemId.UNIDENTIFIED_KWUARM.id(), 8, 54, 312),
+			new ClippedProduce(ItemId.UNIDENTIFIED_CADANTINE.id(), 8, 54, 480),
+			new ClippedProduce(ItemId.UNIDENTIFIED_DWARF_WEED.id(), 10, 70, 768),
+			new ClippedProduce(ItemId.UNIDENTIFIED_TORSTOL.id(), 10, 70, 960)),
+		SEAWEED(1280, new ClippedProduce(ItemId.SEAWEED.id(), 4, 22, 84),
+			new ClippedProduce(ItemId.EDIBLE_SEAWEED.id(), 4, 22, 84)),
+		LIMPWURTROOT(1281, new ClippedProduce(ItemId.LIMPWURT_ROOT.id(), 6, 38, 144)),
+		SNAPEGRASS(1273, new ClippedProduce(ItemId.SNAPE_GRASS.id(), 8, 54, 328));
 
 		private int objId;
-		private ArrayList<ItemLevelXPTrio> produceTable;
-		HerbsProduce(int objId, ItemLevelXPTrio... produce) {
+		private ArrayList<ClippedProduce> produceTable;
+		HerbsProduce(int objId, ClippedProduce... produce) {
 			this.objId = objId;
 			produceTable = new ArrayList<>();
 			produceTable.addAll(Arrays.asList(produce));
@@ -155,8 +148,8 @@ public final class Harvesting implements OpLocTrigger {
 			return null;
 		}
 
-		public ItemLevelXPTrio get(int itemId) {
-			for (ItemLevelXPTrio i : produceTable) {
+		public ClippedProduce get(int itemId) {
+			for (ClippedProduce i : produceTable) {
 				if (i.itemId == itemId) {
 					return i;
 				}
@@ -191,30 +184,6 @@ public final class Harvesting implements OpLocTrigger {
 
 	private int chanceAskSoil = 5;
 	private int chanceAskWatering = 7;
-	public static final int WOOL_UNLOCK_LEVEL = 1;
-	public static final int WOOL_HARVESTING_EXP = 20;
-
-	public static int getTool(Player player) {
-		int lvl = player.getSkills().getLevel(Skill.HARVESTING.id());
-		for (int i = 0; i < Formulae.harvestingShearsIDs.length; i++) {
-			int shearsId = Formulae.harvestingShearsIDs[i];
-			if (player.getCarriedItems().getEquipment().hasCatalogID(shearsId)
-				&& lvl >= getShearsRequiredLevel(shearsId)) {
-				return shearsId;
-			}
-		}
-		return ItemId.NOTHING.id();
-	}
-
-	public static int getShearsRequiredLevel(int shearsId) {
-		for (int i = 0; i < Formulae.harvestingShearsIDs.length; i++) {
-			if (Formulae.harvestingShearsIDs[i] == shearsId) {
-				return Formulae.harvestingShearsLvls[i];
-			}
-		}
-		return 1;
-	}
-
 	public static int getShearsTier(int shearsId) {
 		for (int i = 0; i < Formulae.harvestingShearsIDs.length; i++) {
 			if (Formulae.harvestingShearsIDs[i] == shearsId) {
@@ -224,32 +193,27 @@ public final class Harvesting implements OpLocTrigger {
 		return 1;
 	}
 
-	public static int getRequiredShearsTierForLevel(int harvestingRequirement) {
-		int tier = 1;
-		for (int i = 0; i < Formulae.harvestingShearsLvls.length; i++) {
-			if (harvestingRequirement >= Formulae.harvestingShearsLvls[i]) {
-				tier = Formulae.harvestingShearsIDs.length - i;
-				break;
+	public static int getToolForResource(Player player, int minimumTier, String action) {
+		int minimumIndex = Formulae.harvestingShearsIDs.length - minimumTier;
+		for (int i = 0; i <= minimumIndex; i++) {
+			int toolId = Formulae.harvestingShearsIDs[i];
+			if (player.getCarriedItems().getEquipment().hasEquipped(toolId)) {
+				return toolId;
 			}
 		}
-		return tier;
-	}
 
-	private static boolean hasRequiredShearsTier(int toolId, int harvestingRequirement) {
-		return getShearsTier(toolId) >= getRequiredShearsTierForLevel(harvestingRequirement);
+		int minimumShearsId = Formulae.harvestingShearsIDs[minimumIndex];
+		String minimumShearsName = new Item(minimumShearsId).getDef(player.getWorld()).getName();
+		player.playerServerMessage(MessageType.QUEST, "You need at least " + minimumShearsName + " to " + action + ".");
+		return ItemId.NOTHING.id();
 	}
 
 	private static int getMinimumShearsRewardTier(int shearsTier) {
 		return Math.max(1, shearsTier - HARVESTING_TOOL_REWARD_TIER_SPAN);
 	}
 
-	private static boolean isInShearsRewardTierRange(int shearsTier, int harvestingRequirement) {
-		int produceTier = getRequiredShearsTierForLevel(harvestingRequirement);
+	private static boolean isInShearsRewardTierRange(int shearsTier, int produceTier) {
 		return produceTier >= getMinimumShearsRewardTier(shearsTier) && produceTier <= shearsTier;
-	}
-
-	private static String requiredShearsTierMessage(int harvestingRequirement) {
-		return "tier " + getRequiredShearsTierForLevel(harvestingRequirement) + " harvesting shears";
 	}
 
 	public static boolean isShears(int itemId) {
@@ -294,12 +258,12 @@ public final class Harvesting implements OpLocTrigger {
 					ABoneToPick.pumpkinPatchDialogue(player);
 				}
 			} else {
-				handleHarvesting(object, player, player.click);
+				handleHarvesting(object, player);
 			}
 		} else if (command.equalsIgnoreCase("clip")) {
-			handleClipHarvesting(object, player, player.click);
+			handleClipHarvesting(object, player, HerbsProduce.find(object.getID()));
 		} else {
-			handleHarvesting(object, player, player.click);
+			handleHarvesting(object, player);
 		}
 	}
 
@@ -348,27 +312,13 @@ public final class Harvesting implements OpLocTrigger {
 		}
 	}
 
-	private void handleClipHarvesting(final GameObject object, final Player player,
-								  final int click) {
+	private void handleClipHarvesting(GameObject object, Player player, HerbsProduce prodEnum) {
 		if (!harvestingChecks(object, player)) return;
 
-		GameObject obj = player.getViewArea().getGameObject(object.getID(), object.getX(), object.getY());
-		final String objName = obj.getGameObjectDef().getName().toLowerCase();
-		final HerbsProduce prodEnum = HerbsProduce.find(object.getID());
-		int reqLevel = prodEnum != null ? prodEnum.produceTable.get(0).getLevel() : 1;
+		int toolId = getToolForResource(player, prodEnum.produceTable.get(0).shearsTier, "clip this");
+		if (toolId == ItemId.NOTHING.id()) return;
 
-		int toolId = getTool(player);
-		if (toolId == ItemId.NOTHING.id()) {
-			player.playerServerMessage(MessageType.QUEST,
-				"You need harvesting shears you can use to clip from this harvesting spot");
-			return;
-		}
-		if (!hasRequiredShearsTier(toolId, reqLevel)) {
-			player.playerServerMessage(MessageType.QUEST, "You need " + requiredShearsTierMessage(reqLevel)
-				+ " to clip from the " + objName);
-			return;
-		}
-
+		String objName = object.getGameObjectDef().getName().toLowerCase();
 		startbatch(30);
 		batchClipping(player, object, objName, prodEnum, toolId);
 	}
@@ -384,18 +334,17 @@ public final class Harvesting implements OpLocTrigger {
 		// herb uses herb drop table
 		// seaweed 1/4 chance to be edible
 		int prodId = !objName.contains("herb")
-			? (objName.contains("sea weed") && DataConversions.random(1, 4) == 1 ? prodEnum.produceTable.get(1).getItemId()
-			: prodEnum.produceTable.get(0).getItemId() ) : calculateHerbDropForShearsTier(prodEnum, getShearsTier(toolId));
+			? (objName.contains("sea weed") && DataConversions.random(1, 4) == 1 ? prodEnum.produceTable.get(1).itemId
+			: prodEnum.produceTable.get(0).itemId ) : calculateHerbDropForShearsTier(prodEnum, getShearsTier(toolId));
 		if (objName.contains("herb")) {
 			final double qualityChance = player.getCarriedItems().getEquipment().getCosmicAmuletHerbQualityChance();
 			if (qualityChance > 0.0D && DataConversions.getRandom().nextDouble() < qualityChance) {
 				final int rerollId = calculateHerbDropForShearsTier(prodEnum, getShearsTier(toolId));
-				if (prodEnum.get(rerollId) != null && prodEnum.get(rerollId).getLevel() > prodEnum.get(prodId).getLevel()) {
+				if (prodEnum.get(rerollId) != null && prodEnum.get(rerollId).yieldBaselineLevel > prodEnum.get(prodId).yieldBaselineLevel) {
 					prodId = rerollId;
 				}
 			}
 		}
-		int reqLevel = prodEnum.produceTable.get(0).getLevel();
 		final Item produce = new Item(prodId);
 		if (config().WANT_FATIGUE) {
 			if (config().STOP_SKILLING_FATIGUED >= 1
@@ -404,18 +353,12 @@ public final class Harvesting implements OpLocTrigger {
 				return;
 			}
 		}
-		if (!hasRequiredShearsTier(toolId, reqLevel)) {
-			player.playerServerMessage(MessageType.QUEST, "You need " + requiredShearsTierMessage(reqLevel)
-				+ " to clip from the " + objName);
-			return;
-		}
-
 		GameObject obj = player.getViewArea().getGameObject(object.getID(), object.getX(), object.getY());
 		if (obj == null) {
 			player.playerServerMessage(MessageType.QUEST, "You fail to clip the plant");
 			return;
 		} else {
-			int quantity = Formulae.calcGatheringYield(prodEnum.get(prodId).getLevel(), player.getSkills().getLevel(Skill.HARVESTING.id()), getShearsTier(toolId));
+			int quantity = Formulae.calcGatheringYield(prodEnum.get(prodId).yieldBaselineLevel, player.getSkills().getLevel(Skill.HARVESTING.id()), getShearsTier(toolId));
 			if (SkillCapes.shouldActivate(player, ItemId.HARVESTING_CAPE)) {
 				player.playerServerMessage(MessageType.QUEST, "@or2@Your Harvesting cape activates, yielding double produce");
 				quantity *= 2;
@@ -440,7 +383,7 @@ public final class Harvesting implements OpLocTrigger {
 				player.playerServerMessage(MessageType.QUEST, "Any excess falls to the ground because you have no room");
 			}
 
-			player.incExp(Skill.HARVESTING.id(), prodEnum.get(prodId).getXp() * quantity, true);
+			player.incExp(Skill.HARVESTING.id(), prodEnum.get(prodId).xp * quantity, true);
 			if (player.getConfig().WANT_MYWORLD && bankedQuantity + storedQuantity > 0) {
 				maybeAwardMyWorldHarvestingSeed(player, object, getShearsTier(toolId));
 			}
@@ -461,7 +404,7 @@ public final class Harvesting implements OpLocTrigger {
 		}
 	}
 
-	private void handleHarvesting(final GameObject object, final Player player, final int click) {
+	private void handleHarvesting(final GameObject object, final Player player) {
 		if (!harvestingChecks(object, player)) {
 			player.message("I can't get close enough.");
 			return;
@@ -469,11 +412,8 @@ public final class Harvesting implements OpLocTrigger {
 
 		final ObjectHarvestingDef def = player.getWorld().getServer().getEntityHandler().getObjectHarvestingDef(object.getID());
 
-		final int toolId = getTool(player);
-		if (toolId == ItemId.NOTHING.id()) {
-			player.playerServerMessage(MessageType.QUEST, "You need harvesting shears you can use to gather produce");
-			return;
-		}
+		final int toolId = getToolForResource(player, def.getMinimumShearsTier(), "harvest this");
+		if (toolId == ItemId.NOTHING.id()) return;
 
 		startbatch(30);
 		batchHarvest(player, toolId, object, def);
@@ -530,11 +470,6 @@ public final class Harvesting implements OpLocTrigger {
 				return;
 			}
 		}
-		if (!hasRequiredShearsTier(toolId, def.getReqLevel())) {
-			player.playerServerMessage(MessageType.QUEST, "You need " + requiredShearsTierMessage(def.getReqLevel())
-				+ " to get produce from here");
-			return;
-		}
 
 		if (evt.get() == HarvestingEvents.NEGLECTED.getID()) {
 			player.playerServerMessage(MessageType.QUEST, "But the spot seems weak, you decide to wait");
@@ -546,7 +481,7 @@ public final class Harvesting implements OpLocTrigger {
 				return;
 			} else {
 				String itemName = produce.getDef(player.getWorld()).getName().toLowerCase();
-				int quantity = Formulae.calcGatheringYield(def.getReqLevel(), player.getSkills().getLevel(Skill.HARVESTING.id()), getShearsTier(toolId));
+				int quantity = Formulae.calcGatheringYield(def.getYieldBaselineLevel(), player.getSkills().getLevel(Skill.HARVESTING.id()), getShearsTier(toolId));
 				// if player did soil (or have an active one) they get small chance for another produce
 				if (DataConversions.random(1, chanceAskSoil * 3) == 1
 					&& evt.get() == HarvestingEvents.SOIL.getID()) {
@@ -622,15 +557,15 @@ public final class Harvesting implements OpLocTrigger {
 
 	private int calculateHerbDropForShearsTier(HerbsProduce prodEnum, int shearsTier) {
 		int fallbackId = ItemId.UNIDENTIFIED_GUAM_LEAF.id();
-		for (ItemLevelXPTrio produce : prodEnum.produceTable) {
-			if (isInShearsRewardTierRange(shearsTier, produce.getLevel())) {
-				fallbackId = produce.getItemId();
+		for (ClippedProduce produce : prodEnum.produceTable) {
+			if (isInShearsRewardTierRange(shearsTier, produce.shearsTier)) {
+				fallbackId = produce.itemId;
 			}
 		}
 		for (int attempts = 0; attempts < 25; attempts++) {
 			int herbId = Formulae.calculateHerbDrop();
-			ItemLevelXPTrio produce = prodEnum.get(herbId);
-			if (produce != null && isInShearsRewardTierRange(shearsTier, produce.getLevel())) {
+			ClippedProduce produce = prodEnum.get(herbId);
+			if (produce != null && isInShearsRewardTierRange(shearsTier, produce.shearsTier)) {
 				return herbId;
 			}
 		}
@@ -648,8 +583,10 @@ public final class Harvesting implements OpLocTrigger {
 			|| obj.getID() == SceneryId.MONEY_PLANT.id()) {
 			return false;
 		}
-		return command.equalsIgnoreCase("harvest") ||
-			command.equalsIgnoreCase("clip") || (command.equals("collect") && obj.getID() == 1238);
+		return (command.equalsIgnoreCase("harvest")
+				&& player.getWorld().getServer().getEntityHandler().getObjectHarvestingDef(obj.getID()) != null)
+			|| (command.equalsIgnoreCase("clip") && HerbsProduce.find(obj.getID()) != null)
+			|| (command.equals("collect") && obj.getID() == 1238);
 	}
 
 	private void maybeAwardMyWorldHarvestingSeed(Player player, GameObject object, int shearsTier) {

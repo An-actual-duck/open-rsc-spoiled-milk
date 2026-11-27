@@ -33,6 +33,17 @@ git push spoiled-milk main
 
 ## External Contributor Collection
 
+Before assigning a first task, verify that the contributor's GitHub account
+can push a topic branch to Spoiled Milk and that the GitHub rules for `main`
+reserve publication for the maintainer account. Give the contributor a
+focused task, a branch-name suggestion and an acceptance check. A small
+documentation change is enough to exercise the first handoff.
+
+Use `./scripts/ai-manager.sh status` to locate an idle slot when the pull
+request arrives. The contributor can set up, checkpoint and open the PR
+while the manager's slots are occupied. Collection needs a clean manager
+checkout at published `main` and a clean review slot.
+
 An external contributor hands off a remote topic branch and exact full commit
 through a pull request. Verify those values, then import—not merge—the commit
 into an idle neutral slot:
@@ -46,7 +57,15 @@ remote branch still equals the supplied 40-character commit, and marks that
 exact checkout READY in the selected slot. Review the pull request and diff and
 run relevant tests in the slot. If it passes, use the ordinary manager merge,
 final-test, publish, and recycle sequence above. If it fails, leave the remote
-branch unchanged and ask the contributor for a new handoff.
+branch unchanged and ask the contributor for a new handoff on the same branch.
+
+When the revised handoff arrives, verify the updated pull request and rerun
+`collect-contributor` with the original review slot, the same branch and the
+new exact commit. Keep the review slot clean while waiting. Collection only
+fast-forwards a READY slot registered by contributor collection, and refuses
+a rewritten history. Review and test the new commit before merging it. If the
+slot predates contributor registration or the branch history was rewritten,
+inspect the preserved work before proceeding.
 
 See [external-contributor.md](external-contributor.md) for the contributor and
 maintainer checklists. Collection never grants release or live-server access.

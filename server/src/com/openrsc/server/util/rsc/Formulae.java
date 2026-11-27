@@ -42,11 +42,11 @@ public final class Formulae {
 		ItemId.MITHRIL_PICKAXE.id(), ItemId.STEEL_PICKAXE.id(), ItemId.IRON_PICKAXE.id(),
 		ItemId.BRONZE_PICKAXE.id(), ItemId.COPPER_PICKAXE.id(), ItemId.TIN_PICKAXE.id()};
 	public static final int[] miningAxeLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1};
+	// Shears ordered by descending tier, ending with tier 1.
 	public static final int[] harvestingShearsIDs = {MyWorldItemId.EXALTED_RUNE_SHEARS, ItemId.RUNE_SHEARS.id(),
 		ItemId.ORICHALCUM_SHEARS.id(), ItemId.ADAMANTITE_SHEARS.id(), ItemId.TITAN_STEEL_SHEARS.id(),
 		ItemId.MITHRIL_SHEARS.id(), ItemId.STEEL_SHEARS.id(), ItemId.IRON_SHEARS.id(),
 		ItemId.BRONZE_SHEARS.id(), ItemId.COPPER_SHEARS.id(), ItemId.SHEARS.id()};
-	public static final int[] harvestingShearsLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1};
 	private static final int[] gemDropIDs = {ItemId.NOTHING.id(), ItemId.UNCUT_SAPPHIRE.id(), ItemId.UNCUT_EMERALD.id(),
 		ItemId.UNCUT_RUBY.id(), ItemId.UNCUT_DIAMOND.id(), ItemId.LOOP_KEY_HALF.id(), ItemId.TOOTH_KEY_HALF.id(), ItemId.NOTHING_REROLL.id()};
 	private static final int[] gemDropWeights = {63, 32, 16, 8, 4, 2, 2, 1}; //128

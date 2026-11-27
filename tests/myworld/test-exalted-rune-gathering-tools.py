@@ -100,27 +100,13 @@ def main() -> int:
         "Exalted Rune shears must be the highest-priority Harvesting tool",
         failures,
     )
-    require(
-        formulae,
-        "public static final int[] harvestingShearsLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1}",
-        "Harvesting tool level ladder must assign Exalted Rune level 90",
-        failures,
-    )
-    shears_tier = method_body(harvesting, "public static int getShearsTier", "public static int getRequiredShearsTierForLevel")
+    shears_tier = method_body(harvesting, "public static int getShearsTier", "public static int getToolForResource")
     require(
         shears_tier,
         "return Formulae.harvestingShearsIDs.length - i;",
         "Harvesting must derive Exalted Rune shears as tier 11 from ordered tool IDs",
         failures,
     )
-    shears_level = method_body(harvesting, "public static int getShearsRequiredLevel", "public static int getShearsTier")
-    require(
-        shears_level,
-        "return Formulae.harvestingShearsLvls[i];",
-        "Harvesting must derive Exalted Rune shears level 90 from the parallel level ladder",
-        failures,
-    )
-
     if "switch (ItemId.getById(shearsId))" in harvesting:
         failures.append("Harvesting shears must not regress to legacy ItemId enum fallthrough")
 

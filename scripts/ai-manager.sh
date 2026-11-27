@@ -19,7 +19,8 @@ Usage:
 
 Rescue is an explicit preservation action for an abandoned slot. Merge accepts
 only a clean, pushed READY handoff. Contributor collection verifies an exact
-remote commit and imports it into an idle slot for review; it does not merge.
+remote commit and checks it out for review, either in an idle slot or by
+fast-forwarding the same contributor branch already registered in that slot.
 None of these commands deletes a worktree.
 USAGE
 }
@@ -166,10 +167,10 @@ manager_rescue() {
 }
 
 manager_collect_contributor() {
-  local slot branch expected_head path published_ref remote_ref remote_head merge_base detached_head
+  local slot branch expected_head path published_ref remote_ref remote_head merge_base current_branch current_head
 
   [[ $# -eq 3 ]] \
-    || ai_fail "collect-contributor requires an idle slot, remote topic branch, and exact 40-character commit."
+    || ai_fail "collect-contributor requires a slot, remote topic branch, and exact 40-character commit."
   slot="$(ai_normalize_slot "$1")"
   branch="$2"
   expected_head="${3,,}"
@@ -197,22 +198,32 @@ manager_collect_contributor() {
   path="$(ai_require_slot "$slot")"
   ai_require_no_git_operation "$path"
   ai_require_clean "$path" "Workspace $slot"
-  [[ "$(ai_current_branch "$path")" == DETACHED ]] \
-    || ai_fail "Workspace $slot is occupied. Choose an idle detached slot."
-  detached_head="$(ai_head "$path")"
-  git -C "$path" merge-base --is-ancestor "$detached_head" "$published_ref" \
-    || ai_fail "Workspace $slot has detached work outside published main. Rescue it before contributor collection."
-  ai_require_idle_slot_state "$slot" "$path" "$published_ref"
-
-  git -C "$ROOT_DIR" show-ref --verify --quiet "refs/heads/$branch" \
-    && ai_fail "Local branch '$branch' already exists. Inspect it before collecting the remote handoff."
-  [[ -z "$(ai_branch_worktree "$branch" || true)" ]] \
-    || ai_fail "Branch '$branch' is already checked out in another worktree."
-
-  git -C "$path" switch -c "$branch" "$remote_ref"
+  current_branch="$(ai_current_branch "$path")"
+  current_head="$(ai_head "$path")"
+  if [[ "$current_branch" == DETACHED ]]; then
+    git -C "$path" merge-base --is-ancestor "$current_head" "$published_ref" \
+      || ai_fail "Workspace $slot has detached work outside published main. Rescue it before contributor collection."
+    ai_require_idle_slot_state "$slot" "$path" "$published_ref"
+    if git -C "$ROOT_DIR" show-ref --verify --quiet "refs/heads/$branch"; then
+      ai_fail "Local branch '$branch' already exists. If it is a collected handoff, use its original review slot."
+    fi
+    git -C "$path" switch --no-overwrite-ignore -c "$branch" "$remote_head"
+  else
+    [[ "$current_branch" == "$branch" ]] \
+      || ai_fail "Workspace $slot is occupied by '$current_branch'. Choose an idle slot or the original review slot."
+    ai_require_slot_state "$slot" "$path"
+    [[ "$AI_SLOT_STATE_PHASE" == READY && "$(ai_state_get "$slot" handoff_source)" == contributor ]] \
+      || ai_fail "Workspace $slot is not registered for external contributor review."
+    git -C "$path" merge-base --is-ancestor "$current_head" "$remote_head" \
+      || ai_fail "The new handoff does not descend from the collected commit. Inspect the contributor's branch history before proceeding."
+    if [[ "$current_head" != "$remote_head" ]]; then
+      git -C "$path" merge --ff-only --no-autostash --no-overwrite-ignore "$remote_head"
+      printf 'Refreshed contributor review from %s. Review and test the new commit.\n' "$current_head"
+    fi
+  fi
   [[ "$(ai_head "$path")" == "$remote_head" ]] \
     || ai_fail "Collected branch does not match the verified contributor commit."
-  ai_write_state "$slot" READY "$path" "$branch" "$remote_head"
+  ai_write_state "$slot" READY "$path" "$branch" "$remote_head" - contributor
   ai_generate_workspace_guide "$slot" "$path" READY "$branch" "$remote_head"
 
   printf 'Collected contributor handoff into %s for read-only review and tests.\n' "$slot"

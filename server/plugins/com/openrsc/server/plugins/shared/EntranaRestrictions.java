@@ -9,6 +9,7 @@ import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.util.rsc.Formulae;
 
 public final class EntranaRestrictions {
 	private EntranaRestrictions() { }
@@ -407,7 +408,7 @@ public final class EntranaRestrictions {
 				// don't allow anything with a ranged level requirement
 				if (def.getRequiredSkillIndex() == Skill.RANGED.id()) return true;
 				// Custom gathering tools are still barred as equipment, even if they have no combat stats.
-				if (isGatheringTool(def)) return true;
+				if (isGatheringTool(def, player.getConfig().WANT_MYWORLD)) return true;
 				// allow anything without melee combat stats and armor, otherwise block
 				return hasCombatStats(def);
 			}
@@ -428,11 +429,13 @@ public final class EntranaRestrictions {
 			|| def.getMagicDefense() != 0;
 	}
 
-	private static boolean isGatheringTool(ItemDefinition def) {
+	private static boolean isGatheringTool(ItemDefinition def, boolean myWorld) {
 		return def.getRequiredSkillIndex() == Skill.WOODCUTTING.id()
 			|| def.getRequiredSkillIndex() == Skill.MINING.id()
 			|| def.getRequiredSkillIndex() == Skill.FISHING.id()
-			|| def.getRequiredSkillIndex() == Skill.HARVESTING.id();
+			|| def.getRequiredSkillIndex() == Skill.HARVESTING.id()
+			|| def.getId() == MyWorldItemId.EXALTED_RUNE_SHEARS
+			|| (myWorld && DataConversions.inArray(Formulae.harvestingShearsIDs, def.getId()));
 	}
 
 	public static boolean playerNotAllowedOnEntrana(Player player) {

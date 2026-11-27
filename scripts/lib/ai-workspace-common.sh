@@ -122,6 +122,7 @@ ai_write_state() {
   local branch="$4"
   local head="$5"
   local remote_policy="${6:--}"
+  local handoff_source="${7:-}"
   local state_path temp_path
 
   mkdir -p "$AI_STATE_DIR"
@@ -134,6 +135,9 @@ ai_write_state() {
     printf 'branch=%s\n' "$branch"
     printf 'head=%s\n' "$head"
     printf 'remote_policy=%s\n' "$remote_policy"
+    if [[ -n "$handoff_source" ]]; then
+      printf 'handoff_source=%s\n' "$handoff_source"
+    fi
     printf 'updated=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
   } > "$temp_path"
   mv "$temp_path" "$state_path"

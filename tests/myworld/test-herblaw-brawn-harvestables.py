@@ -18,17 +18,17 @@ ASSET_ROOT = ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/r
 
 
 BRAWN_HARVESTABLES = {
-	34: (3256, 1, 50, "Fern leaf"),
-	396: (3256, 1, 50, "Fern leaf"),
-	397: (3256, 1, 50, "Fern leaf"),
-	398: (3256, 1, 50, "Fern leaf"),
-	399: (3256, 1, 50, "Fern leaf"),
-	401: (3256, 1, 50, "Fern leaf"),
-	402: (3256, 1, 50, "Fern leaf"),
-	38: (3257, 8, 60, "Mushroom"),
-	205: (3258, 30, 122, "Fungus"),
-	37: (3259, 54, 312, "Red flower"),
-	285: (3260, 70, 768, "Blue flower"),
+	34: (3256, 1, 1, 50, "Fern leaf"),
+	396: (3256, 1, 1, 50, "Fern leaf"),
+	397: (3256, 1, 1, 50, "Fern leaf"),
+	398: (3256, 1, 1, 50, "Fern leaf"),
+	399: (3256, 1, 1, 50, "Fern leaf"),
+	401: (3256, 1, 1, 50, "Fern leaf"),
+	402: (3256, 1, 1, 50, "Fern leaf"),
+	38: (3257, 2, 8, 60, "Mushroom"),
+	205: (3258, 5, 30, 122, "Fungus"),
+	37: (3259, 8, 54, 312, "Red flower"),
+	285: (3260, 10, 70, 768, "Blue flower"),
 }
 
 
@@ -61,7 +61,7 @@ def main() -> None:
 		for node in ET.parse(ITEM_HERB_SECOND).getroot().findall("ItemHerbSecond")
 	}
 
-	for object_id, (item_id, level, xp, item_name) in BRAWN_HARVESTABLES.items():
+	for object_id, (item_id, tier, yield_baseline, xp, item_name) in BRAWN_HARVESTABLES.items():
 		require(object_id < len(object_defs), f"Object {object_id} should exist")
 		obj = object_defs[object_id]
 		require(obj.findtext("command1") == "Harvest", f"Object {object_id} should expose primary Harvest")
@@ -70,7 +70,8 @@ def main() -> None:
 		harvesting_def = harvesting_defs.get(object_id)
 		require(harvesting_def is not None, f"Object {object_id} should have ObjectHarvestingDef")
 		require(int(harvesting_def.findtext("prodId")) == item_id, f"Object {object_id} should produce {item_id}")
-		require(int(harvesting_def.findtext("requiredLvl")) == level, f"Object {object_id} should require Harvesting {level}")
+		require(int(harvesting_def.findtext("minimumShearsTier")) == tier, f"Object {object_id} should require shears tier {tier}")
+		require(int(harvesting_def.findtext("yieldBaselineLevel")) == yield_baseline, f"Object {object_id} should retain yield baseline {yield_baseline}")
 		require(int(harvesting_def.findtext("exp")) == xp, f"Object {object_id} should award {xp} XP")
 
 		item = custom_items.get(item_id)
@@ -99,7 +100,7 @@ def main() -> None:
 		require((ASSET_ROOT / file_name).is_file(), f"Missing imported Brawn ingredient sprite {file_name}")
 
 	harvesting = HARVESTING.read_text(encoding="utf-8")
-	require_text(harvesting, "LIMPWURTROOT(1281, new ItemLevelXPTrio(ItemId.LIMPWURT_ROOT.id(), 38, 144))", "Limpwurt should align to T6 shears")
+	require_text(harvesting, "LIMPWURTROOT(1281, new ClippedProduce(ItemId.LIMPWURT_ROOT.id(), 6, 38, 144))", "Limpwurt should align to T6 shears")
 
 	client_defs = CLIENT_DEFS.read_text(encoding="utf-8")
 	for snippet in (
@@ -115,8 +116,8 @@ def main() -> None:
 	guide = SKILL_GUIDE.read_text(encoding="utf-8")
 	for snippet in (
 		'"fern leaf", "mushroom", "fungus", "limpwurt root", "red flower", "blue flower"',
-		'new SkillMenuItem(3256, "1", "Fern leaf - T1 shears")',
-		'new SkillMenuItem(3260, "70", "Blue flower - T10 shears")',
+		'new SkillMenuItem(3256, "T1", "Fern leaf")',
+		'new SkillMenuItem(3260, "T10", "Blue flower")',
 		'} else if (curTab == 5) {',
 		'} else if (curTab == 6) {',
 	):

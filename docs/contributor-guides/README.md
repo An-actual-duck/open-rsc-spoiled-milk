@@ -19,6 +19,8 @@ people are added to the project.
   submitted without automatically changing the game.
 - [AI-assisted workflow](ai-assisted-workflow.md): rules for contributors using
   AI tools.
+- [Claude contributor onboarding](claude-onboarding.md) gives Claude instructions
+  for guiding a first-time contributor through setup and an exact-commit handoff.
 - [External AI contributor workflow](../workspaces/external-contributor.md):
   beginner-safe setup, checkpoints, rescue, and exact-commit handoff.
 - [AI workspaces](../workspaces/README.md): separate worktree setup for running
