@@ -73,9 +73,11 @@ public final class SkillGuideWindow {
 		int contentHeight = y + height - pad - top;
 		if (contentHeight <= bodyLine) return Action.NONE;
 		int railWidth = Math.max(9, size.pixels(12));
+		int topicIconSize = size.pixels(23);
 		int longestTopic = 0;
 		for (Topic entry : topics) {
-			longestTopic = Math.max(longestTopic, surface.stringWidth(text.labelFont, entry.label));
+			int iconSpace = entry.icon == null ? 0 : topicIconSize + pad;
+			longestTopic = Math.max(longestTopic, surface.stringWidth(text.labelFont, entry.label) + iconSpace);
 		}
 		int topicRail = topics.size() > Math.max(1, contentHeight / tabHeight) ? railWidth : 0;
 		int navWidth = Math.min((width - 3 * pad) * 2 / 5,
@@ -84,7 +86,7 @@ public final class SkillGuideWindow {
 		Rectangle page = new Rectangle(navigation.x + navigation.width + pad, top,
 			width - navWidth - 3 * pad, contentHeight);
 		boolean overTopics = navigation.contains(mouseX, mouseY);
-		drawTopics(surface, navigation, railWidth, tabHeight, text.labelFont, overTopics ? wheel : 0,
+		drawTopics(surface, navigation, railWidth, tabHeight, text.labelFont, topicIconSize, overTopics ? wheel : 0,
 			mouseX, mouseY, click);
 		drawPage(surface, page, railWidth, pad, text.bodyFont, bodyLine, size.pixels(30),
 			page.contains(mouseX, mouseY) ? wheel : 0, mouseX, mouseY, click);
@@ -131,7 +133,7 @@ public final class SkillGuideWindow {
 	}
 
 	private void drawTopics(MudClientGraphics surface, Rectangle bounds, int railWidth, int rowHeight,
-							int font, int wheel, int mouseX, int mouseY, boolean click) {
+							int font, int iconSize, int wheel, int mouseX, int mouseY, boolean click) {
 		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, InterfacePalette.ROW_ALTERNATE);
 		int visible = Math.max(1, bounds.height / rowHeight);
 		int max = Math.max(0, topics.size() - visible);
@@ -143,7 +145,8 @@ public final class SkillGuideWindow {
 			Rectangle button = new Rectangle(bounds.x, bounds.y + row * rowHeight, buttonWidth,
 				Math.min(rowHeight - 1, bounds.height));
 			if (click && index != topic && button.contains(mouseX, mouseY)) selectTopic(index);
-			drawButton(surface, button, topics.get(index).label, font, index == topic, mouseX, mouseY);
+			Topic entry = topics.get(index);
+			drawButton(surface, button, entry.label, font, index == topic, mouseX, mouseY, entry.icon, iconSize);
 		}
 	}
 
@@ -251,12 +254,24 @@ public final class SkillGuideWindow {
 
 	private static void drawButton(MudClientGraphics surface, Rectangle button, String label, int font,
 								   boolean selected, int mouseX, int mouseY) {
+		drawButton(surface, button, label, font, selected, mouseX, mouseY, null, 0);
+	}
+
+	private static void drawButton(MudClientGraphics surface, Rectangle button, String label, int font,
+								   boolean selected, int mouseX, int mouseY, Icon icon, int iconSize) {
 		surface.drawBox(button.x, button.y, button.width - 1, button.height,
 			selected ? InterfacePalette.CONTROL_HOVER : button.contains(mouseX, mouseY) ? InterfacePalette.CONTROL : InterfacePalette.ROW_ALTERNATE);
 		if (selected) {
 			surface.drawLineHoriz(button.x, button.y + button.height - 2, button.width - 1, 0xEACB78);
 		}
-		surface.drawColoredStringCentered(button.x + button.width / 2, fit(surface, label, button.width - 6, font),
+		int labelInset = 0;
+		if (icon != null && button.height >= iconSize && button.width >= iconSize * 3) {
+			int iconPad = (button.height - iconSize) / 2;
+			icon.draw(button.x + iconPad, button.y + iconPad, iconSize);
+			labelInset = iconSize + iconPad * 2;
+		}
+		surface.drawColoredStringCentered(button.x + (button.width + labelInset) / 2,
+			fit(surface, label, button.width - labelInset - 6, font),
 			selected ? 0xFFDC82 : InterfacePalette.TEXT, 0, font,
 			button.y + (button.height + surface.fontHeight(font)) / 2 - 3);
 	}
@@ -268,9 +283,15 @@ public final class SkillGuideWindow {
 	public static final class Topic {
 		final String label;
 		final List<Article> articles;
+		final Icon icon;
 
 		public Topic(String label, List<Article> articles) {
+			this(label, null, articles);
+		}
+
+		public Topic(String label, Icon icon, List<Article> articles) {
 			this.label = label;
+			this.icon = icon;
 			this.articles = articles;
 		}
 	}
@@ -281,7 +302,11 @@ public final class SkillGuideWindow {
 		final Icon icon;
 
 		public Article(String title, List<String> paragraphs) {
-			this(title, paragraphs, "", null);
+			this(title, null, paragraphs);
+		}
+
+		public Article(String title, Icon icon, List<String> paragraphs) {
+			this(title, paragraphs, "", icon);
 		}
 
 		public static Article unlock(String detail, String level, Icon icon) {

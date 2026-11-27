@@ -24,16 +24,6 @@ public final class ClericSpellGuideCatalog {
   /** A guide-only god-line filter; spell metadata and spellbook ordering are unchanged. */
   public static List<Entry> build(
       List<ClericSpellDef> definitions, IntFunction<String> resourceName, String alignment) {
-    return build(definitions, resourceName, alignment, true);
-  }
-
-  static List<Entry> buildDocument(
-      List<ClericSpellDef> definitions, IntFunction<String> resourceName) {
-    return build(definitions, resourceName, "all", false);
-  }
-
-  private static List<Entry> build(
-      List<ClericSpellDef> definitions, IntFunction<String> resourceName, String alignment, boolean paginated) {
     if (definitions == null || definitions.isEmpty()) return Collections.emptyList();
     ArrayList<ClericSpellDef> ordered = new ArrayList<ClericSpellDef>(definitions);
     Collections.sort(
@@ -43,17 +33,12 @@ public final class ClericSpellGuideCatalog {
           return level != 0 ? level : Integer.compare(a.getStableCode(), b.getStableCode());
         });
     ArrayList<Entry> entries = new ArrayList<Entry>();
-    if (paginated && "all".equals(alignment)) addOverview(entries, paginated);
+    if ("all".equals(alignment)) addOverview(entries);
     for (ClericSpellDef d : ordered) {
       if ("all".equals(alignment) || d.getAlignment().equals(alignment))
-        addEntry(entries, format(d, resourceName), paginated);
+        addPages(entries, format(d, resourceName));
     }
     return Collections.unmodifiableList(entries);
-  }
-
-  private static void addEntry(List<Entry> entries, Entry entry, boolean paginated) {
-    if (paginated) addPages(entries, entry);
-    else entries.add(entry);
   }
 
   private static void addPages(List<Entry> entries, Entry entry) {
@@ -91,7 +76,7 @@ public final class ClericSpellGuideCatalog {
                 pages.get(index)));
   }
 
-  private static void addOverview(List<Entry> entries, boolean paginated) {
+  private static void addOverview(List<Entry> entries) {
     DocumentLines tiers = new DocumentLines();
     add(tiers, "Worship unlocks Cleric spells. Holy Power determines their power level.");
     add(tiers, "Hostile spells can affect enemy players in the Wilderness. Party members, clanmates and players on your friends list are excluded. Each target must be legally attackable.");
@@ -99,7 +84,7 @@ public final class ClericSpellGuideCatalog {
     add(tiers, "A spell's tier sets its maximum strength, not its minimum strength.");
     add(tiers, "Tier 1 allows power levels 1-2; Tier 2 allows 1-4; Tier 3 allows 1-6.");
     add(tiers, "Each new spell tier adds two possible power levels. You still need enough Holy Power to reach them.");
-    addEntry(entries, new Entry(-1, "Cleric spells: tiers and power", "", "", "", tiers), paginated);
+    addPages(entries, new Entry(-1, "Cleric spells: tiers and power", "", "", "", tiers));
 
     DocumentLines power = new DocumentLines();
     add(power, "Holy Power combines your current Worship level with your strongest equipped holy staff bonus.");
@@ -107,7 +92,7 @@ public final class ClericSpellGuideCatalog {
     for (int rank = 1; rank <= 6; rank++)
       add(power, "Power " + rank + ": " + ClericBlessingContract.powerThreshold(rank - 1) + " Holy Power");
     add(power, "Tables below list values in power-level order (P1/P2/etc.).");
-    addEntry(entries, new Entry(-2, "Holy Power thresholds", "", "", "", power), paginated);
+    addPages(entries, new Entry(-2, "Holy Power thresholds", "", "", "", power));
 
     DocumentLines lines = new DocumentLines();
     add(lines, "Saradomin, Guthix and Zamorak have distinct god lines.");
@@ -116,7 +101,7 @@ public final class ClericSpellGuideCatalog {
     add(lines, "Unify and Greater Unify use Grace alone. Their teleport distance is fixed and does not scale with Holy Power.");
     add(lines, "Unify follows teleport restrictions: no use at Wilderness level 20 or higher, during a duel, or in other teleport-restricted places. Caster, recipients and landing places must all qualify.");
     add(lines, "Choose a god line to filter its spells, or All for the full guide. Scroll for each spell's targets, sigil cost and effect values.");
-    addEntry(entries, new Entry(-3, "God lines and sigils", "", "", "", lines), paginated);
+    addPages(entries, new Entry(-3, "God lines and sigils", "", "", "", lines));
 
     DocumentLines stacking = new DocumentLines();
     add(stacking, "Only one blessing from each god can be active on you.");
@@ -125,7 +110,7 @@ public final class ClericSpellGuideCatalog {
     add(stacking, "Higher tiers replace lower tiers. A lower tier never replaces a higher tier.");
     add(stacking, "Within the same tier, stronger power replaces weaker power. Equal strength refreshes the duration.");
     add(stacking, "Saradomin, Guthix and Zamorak effects can coexist.");
-    addEntry(entries, new Entry(-4, "Which effects can be active?", "", "", "", stacking), paginated);
+    addPages(entries, new Entry(-4, "Which effects can be active?", "", "", "", stacking));
   }
 
   private static Entry format(ClericSpellDef d, IntFunction<String> names) {
@@ -255,19 +240,17 @@ public final class ClericSpellGuideCatalog {
     if (lines instanceof DocumentLines) {
       DocumentLines document = (DocumentLines) lines;
       document.blocks.add(wrapped);
-      document.paragraphs.add(text);
     }
   }
 
   private static final class DocumentLines extends ArrayList<String> {
     final List<List<String>> blocks = new ArrayList<List<String>>();
-    final List<String> paragraphs = new ArrayList<String>();
   }
 
   public static final class Entry {
     private final int code;
     private final String header, area, mechanics, power;
-    private final List<String> lines, paragraphs;
+    private final List<String> lines;
     private final List<List<String>> blocks;
 
     Entry(
@@ -282,8 +265,7 @@ public final class ClericSpellGuideCatalog {
               ? new ArrayList<List<String>>(((DocumentLines) lines).blocks)
               : Collections.singletonList(lines);
       this.lines = Collections.unmodifiableList(new ArrayList<String>(lines));
-      this.paragraphs = lines instanceof DocumentLines
-          ? Collections.unmodifiableList(((DocumentLines) lines).paragraphs) : this.lines;
+
     }
 
     public int getStableCode() {
@@ -304,10 +286,6 @@ public final class ClericSpellGuideCatalog {
 
     public String getHolyPower() {
       return power;
-    }
-
-    List<String> getParagraphs() {
-      return paragraphs;
     }
 
     public List<String> getLines() {

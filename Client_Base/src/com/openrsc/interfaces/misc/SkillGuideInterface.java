@@ -562,7 +562,7 @@ public final class SkillGuideInterface {
 		String skill = mc.getSkillGuideChosen();
 		if ("Worship".equalsIgnoreCase(skill)) {
 			return new SkillGuideWindow(skill, WorshipGuideTopics.SECTIONS,
-				index -> WorshipGuideTopics.load(index, mc.getClericSpellbookDefinitions(), this::itemName));
+				index -> WorshipGuideTopics.load(index, mc));
 		}
 		List<String> sections = new ArrayList<>(mc.skillGuideChosenTabs);
 		int info = sections.indexOf("Info");
@@ -636,6 +636,7 @@ public final class SkillGuideInterface {
 		List<SkillGuideWindow.Topic> topics = new ArrayList<>();
 		byTopic.forEach((label, articles) -> topics.add(new SkillGuideWindow.Topic(label, articles)));
 		if (isEnchantingGuide(mc.getSkillGuideChosen())) EnchantingGuideTopics.append(sectionName, topics);
+		if ("Blessing".equalsIgnoreCase(mc.getSkillGuideChosen())) topics.add(WorshipEquipmentGuideTopics.blessingGuide());
 		return topics;
 	}
 
@@ -654,12 +655,7 @@ public final class SkillGuideInterface {
 		}
 		SkillGuideWindow.Icon icon = null;
 		if (entry instanceof SkillMenuItem && !isExpositoryTab()) {
-			ItemDef def = EntityHandler.getItemDef(((SkillMenuItem) entry).getItemID());
-			if (def != null) {
-				icon = (x, y, size) -> mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
-					x, y + size / 6, size, size * 2 / 3, def.getPictureMask(), 0,
-					def.getBlueMask(), false, 0, 1);
-			}
+			icon = mc.skillGuideItemIcon(((SkillMenuItem) entry).getItemID());
 		} else if (entry instanceof SkillMenuNPC) {
 			int npcId = ((SkillMenuNPC) entry).getNpcID();
 			NPCDef def = EntityHandler.getNpcDef(npcId);

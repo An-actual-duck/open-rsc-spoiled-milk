@@ -4,13 +4,12 @@ import com.openrsc.client.entityhandling.defs.ClericSpellDef;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.function.IntFunction;
-import orsc.ClericPowerPresentation;
 import orsc.SkillGuideWindow.Article;
+import orsc.SkillGuideWindow.Icon;
 import orsc.SkillGuideWindow.Topic;
+import orsc.mudclient;
 
 /** Worship guide for the scaled interface. Cleric entries use the active server catalog. */
 final class WorshipGuideTopics {
@@ -24,44 +23,44 @@ final class WorshipGuideTopics {
 	private WorshipGuideTopics() {
 	}
 
-	static List<Topic> load(int section, List<ClericSpellDef> spells, IntFunction<String> itemName) {
+	static List<Topic> load(int section, mudclient client) {
 		switch (section) {
-			case 0: return prayers();
+			case 0: return prayers(client);
 			case 1: return devotion();
-			case 2: return WorshipEquipmentGuideTopics.topics();
-			case 3: return cleric(spells, itemName);
+			case 2: return WorshipEquipmentGuideTopics.topics(client);
+			case 3: return cleric(client);
 			default: throw new IllegalArgumentException("Unknown Worship guide section " + section);
 		}
 	}
 
-	private static List<Topic> prayers() {
+	private static List<Topic> prayers(mudclient client) {
 		return Arrays.asList(
-			topic("Saradomin",
-				combatPrayer("Magic Power", "Increases magic damage."),
-				combatPrayer("Melee Protection", "Reduces melee damage taken."),
-				favor("Enchanting"),
-				article("Saving Grace", "Requires the Saradomin mace. "
+			godTopic("Saradomin", client, 385,
+				combatPrayer(client, "Magic Power", "Increases magic damage."),
+				combatPrayer(client, "Melee Protection", "Reduces melee damage taken."),
+				favor(client, "Enchanting"),
+				prayer(client, "Saving Grace", "Requires the Saradomin mace. "
 					+ "A successful roll heals you for the damage dealt, up to your missing Hits. "
 					+ "The chance rises as your Hits fall.", SPECIAL_COST),
-				article("Saradomin's Divine Bolts", BOLT_COST,
+				prayer(client, "Saradomin's Divine Bolts", BOLT_COST,
 					"Revelation raises the minimum damage roll by 1% of maximum per kill of the same NPC type, up to 15%. "
 					+ "Switching enemy type, removing the crossbow, or turning off the prayer resets the bonus.")),
-			topic("Zamorak",
-				combatPrayer("Melee Power", "Increases melee damage."),
-				combatPrayer("Ranged Protection", "Reduces ranged damage taken."),
-				favor("Smithing"),
-				article("Divine Retribution", "Requires the Zamorak mace. Incoming attacks can reflect twice the damage taken. "
+			godTopic("Zamorak", client, 1029,
+				combatPrayer(client, "Melee Power", "Increases melee damage."),
+				combatPrayer(client, "Ranged Protection", "Reduces ranged damage taken."),
+				favor(client, "Smithing"),
+				prayer(client, "Divine Retribution", "Requires the Zamorak mace. Incoming attacks can reflect twice the damage taken. "
 					+ "Bigger hits have a higher chance to trigger it.", SPECIAL_COST),
-				article("Zamorak's Bolts of Wrath", BOLT_COST,
+				prayer(client, "Zamorak's Bolts of Wrath", BOLT_COST,
 					"Critical hits or main hits of at least 70% of maximum can open a bleed. "
 					+ "The wound deals three pulses of 3-5 damage, three ticks apart. Reopening it refreshes your wound.")),
-			topic("Guthix",
-				combatPrayer("Ranged Power", "Increases ranged damage."),
-				combatPrayer("Magic Protection", "Reduces magic damage taken."),
-				favor("Crafting"),
-				article("Corrosive Aura", "Requires the Guthix mace. Enemies that damage you gain 10-50 poison stacks. "
+			godTopic("Guthix", client, 3175,
+				combatPrayer(client, "Ranged Power", "Increases ranged damage."),
+				combatPrayer(client, "Magic Protection", "Reduces magic damage taken."),
+				favor(client, "Crafting"),
+				prayer(client, "Corrosive Aura", "Requires the Guthix mace. Enemies that damage you gain 10-50 poison stacks. "
 					+ "Lower Hits apply more stacks.", SPECIAL_COST),
-				article("Guthix's Thorned Bolts", BOLT_COST,
+				prayer(client, "Guthix's Thorned Bolts", BOLT_COST,
 					"Five main shots against the same enemy, including zeroes, trigger a Briar Seed burst. "
 					+ "Each enemy within one tile can take 0-3 extra damage.")),
 			topic("Mechanics",
@@ -77,14 +76,18 @@ final class WorshipGuideTopics {
 					+ "Switching clears active prayers and unequips gear tied to a different god.")));
 	}
 
-	private static Article combatPrayer(String name, String effect) {
-		return article(name, effect + " The five tiers give 5%, 10%, 15%, 20%, and 25%. "
+	private static Article combatPrayer(mudclient client, String name, String effect) {
+		return prayer(client, name, effect + " The five tiers give 5%, 10%, 15%, 20%, and 25%. "
 			+ "They reserve 3, 6, 15, 29, and 49 points respectively.");
 	}
 
-	private static Article favor(String skill) {
-		return article(skill + " Favor", "Gain 10%, 15%, 20%, 25%, or 30% extra " + skill + " XP by tier. "
+	private static Article favor(mudclient client, String skill) {
+		return prayer(client, skill + " Favor", "Gain 10%, 15%, 20%, 25%, or 30% extra " + skill + " XP by tier. "
 			+ "The tiers reserve 2, 7, 22, 46, and 80 points respectively.");
+	}
+
+	private static Article prayer(mudclient client, String name, String... paragraphs) {
+		return article(name, client.skillGuidePrayerIcon(name), paragraphs);
 	}
 
 	private static List<Topic> devotion() {
@@ -101,8 +104,8 @@ final class WorshipGuideTopics {
 			topic("Benefits",
 				article("More Worship XP", "Positive Devotion adds Worship experience each time you bury bones or scatter ashes. "
 					+ "At 100 Devotion, ordinary bones or ashes give 100 bonus XP. Big bones, bat bones, demon ash, and dragon bones give larger bonuses."),
-				article("Stronger equipment", "After 250 Devotion, aligned knight armor, knight weapons, and blessed wool gain "
-					+ "combat stats and more Prayer points. Each piece can gain up to 10 extra Prayer points at 1,000 Devotion.",
+				article("Stronger equipment", "Higher Devotion improves the defenses of aligned knight armor, the melee power of knight weapons, "
+					+ "and the magic defense of blessed wool. All three also gain Prayer points.",
 					"Higher-tier blessings require more Devotion."),
 				article("Artifacts", "With high Devotion, the god you worship may bestow a unique artifact. "
 					+ "See Equipment > Artifacts for what the items do.")),
@@ -115,21 +118,18 @@ final class WorshipGuideTopics {
 					+ "Hover Worship in Stats to see your active god's Devotion.")));
 	}
 
-	private static List<Topic> cleric(List<ClericSpellDef> spells, IntFunction<String> itemName) {
-		Map<Integer, List<String>> spellsByLevel = new TreeMap<>();
+	private static List<Topic> cleric(mudclient client) {
+		List<ClericSpellDef> spells = new ArrayList<>(client.getClericSpellbookDefinitions());
+		spells.sort(Comparator.comparingInt(ClericSpellDef::getWorshipLevel).thenComparingInt(ClericSpellDef::getStableCode));
+		List<Article> unlocks = new ArrayList<>();
+		unlocks.add(article("Worship level", "Your base Worship level unlocks Cleric spells. The Cleric toolbar shows which sigils each spell needs."));
 		List<Article> descriptions = new ArrayList<>();
 		for (ClericSpellDef spell : spells) {
-			spellsByLevel.computeIfAbsent(spell.getWorshipLevel(), level -> new ArrayList<>()).add(spell.getName());
+			Icon icon = client.skillGuideClericIcon(spell);
+			unlocks.add(Article.unlock(spell.getName(), Integer.toString(spell.getWorshipLevel()), icon));
+			descriptions.add(new Article(spell.getName() + " - Tier " + spell.getSpellTier(), icon,
+				ClericGuideDescriptions.describe(spell)));
 		}
-		for (ClericSpellGuideCatalog.Entry entry : ClericSpellGuideCatalog.buildDocument(spells, itemName)) {
-			List<String> paragraphs = new ArrayList<>();
-			paragraphs.add(entry.getMechanics());
-			paragraphs.addAll(entry.getParagraphs());
-			descriptions.add(new Article(entry.getHeader(), paragraphs));
-		}
-		List<Article> unlocks = new ArrayList<>();
-		unlocks.add(article("Worship level", "Your base Worship level unlocks Cleric spells. Each spell also requires the listed sigils to cast."));
-		spellsByLevel.forEach((level, names) -> unlocks.add(article("Level " + level, String.join(", ", names))));
 		if (spells.isEmpty()) {
 			Article unavailable = article("", "Spell details are available once the Cleric spellbook loads.");
 			unlocks.add(unavailable);
@@ -141,9 +141,10 @@ final class WorshipGuideTopics {
 					+ "Your own spells always exclude you.",
 					"Hostile spells can affect eligible enemy players in the Wilderness. Party members, clanmates, "
 					+ "and players on your friends list are excluded from your area attacks."),
-				article("Holy Power", "Current Worship and your equipped holy staff determine Holy Power. "
-					+ "Tiers 1, 2, and 3 allow up to power levels 2, 4, and 6 respectively.",
-					"Power levels 1 through 6 require " + ClericPowerPresentation.thresholds(6) + " Holy Power in that order."),
+				article("Holy Power and spell tier", "Buffs and debuffs have ranks called power levels. "
+					+ "Holy Power determines the rank you reach, and spell tier sets the highest rank the spell allows.",
+					"Your current Worship and equipped holy staff determine Holy Power. Higher-tier spells can reach stronger ranks. "
+					+ "Descriptions show each spell at its strongest."),
 				article("Casting with sigils", "Blessings use Grace and a god sigil. Curses use Blight and a god sigil. "
 					+ "Unify and Greater Unify use Grace alone and follow normal teleport restrictions. See Blessing for making sigils."),
 				article("Combine effects", "Effects from different gods can coexist. Each recipient can have one blessing and one "
@@ -154,7 +155,15 @@ final class WorshipGuideTopics {
 		return new Topic(label, Arrays.asList(articles));
 	}
 
+	private static Topic godTopic(String god, mudclient client, int symbol, Article... prayers) {
+		return new Topic(god, client.skillGuideItemIcon(symbol), Arrays.asList(prayers));
+	}
+
 	static Article article(String title, String... paragraphs) {
-		return new Article(title, Arrays.asList(paragraphs));
+		return article(title, null, paragraphs);
+	}
+
+	static Article article(String title, Icon icon, String... paragraphs) {
+		return new Article(title, icon, Arrays.asList(paragraphs));
 	}
 }

@@ -1402,6 +1402,7 @@ public final class mudclient implements Runnable {
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final java.util.Map<Integer,Sprite> clericIconSprites = new java.util.HashMap<Integer,Sprite>();
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
+	private final HashMap<String, Sprite> guidePrayerIcons = new HashMap<>();
 	private final Sprite[] summoningIconSprites = new Sprite[SUMMONING_NAMES.length];
 	private final ClientExternalAssetLoader externalAssetLoader = new ClientExternalAssetLoader();
 	private Sprite wristEquipmentSlotSprite;
@@ -18130,6 +18131,25 @@ public final class mudclient implements Runnable {
 		return this.prayerIconSprites[prayerIndex];
 	}
 
+	public SkillGuideWindow.Icon skillGuideItemIcon(int itemId) {
+		ItemDef def = EntityHandler.getItemDef(itemId);
+		return def == null ? null : (x, y, size) ->
+			drawInventoryPreviewIcon(def, false, x, y + size / 6, size, size * 2 / 3);
+	}
+
+	public SkillGuideWindow.Icon skillGuidePrayerIcon(String prayerName) {
+		String assetName = getPrayerIconAssetName(prayerName);
+		Sprite sprite = guidePrayerIcons.computeIfAbsent(assetName,
+			name -> loadExternalPrayerIcon(name, 2, new HashMap<>()));
+		return sprite == null ? null : (x, y, size) -> getSurface().drawSprite(sprite, x, y, size, size, 5924);
+	}
+
+	public SkillGuideWindow.Icon skillGuideClericIcon(ClericSpellDef spell) {
+		Sprite sprite = getClericIconSprite(spell.getStableCode());
+		return sprite == null ? skillGuideItemIcon(spell.getSpellbookIconItemId())
+			: (x, y, size) -> getSurface().drawSprite(sprite, x, y, size, size, 5924);
+	}
+
 	private Sprite getSummoningIconSprite(int summonIndex) {
 		if (summonIndex < 0 || summonIndex >= this.summoningIconSprites.length) {
 			return null;
@@ -27074,55 +27094,40 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-		private void loadExternalPrayerIconSprites() {
-			Arrays.fill(this.prayerIconSprites, null);
-			HashMap<String, Sprite[]> loadedSheets = new HashMap<String, Sprite[]>();
-			int loadedIcons = 0;
-			int prayerCount = Math.min(EntityHandler.prayerCount(), this.prayerIconSprites.length);
+	private void loadExternalPrayerIconSprites() {
+		Arrays.fill(this.prayerIconSprites, null);
+		HashMap<String, Sprite[]> loadedSheets = new HashMap<>();
+		int prayerCount = Math.min(EntityHandler.prayerCount(), this.prayerIconSprites.length);
 		for (int prayerIndex = 0; prayerIndex < prayerCount; prayerIndex++) {
 			PrayerDef prayerDef = EntityHandler.getPrayerDef(prayerIndex);
-			if (prayerDef == null) {
-				continue;
-			}
+			if (prayerDef == null) continue;
 			String assetName = getPrayerIconAssetName(prayerDef.getName());
-				if (assetName.length() == 0) {
-					continue;
-				}
-				if (isSinglePrayerIconAsset(assetName)) {
-					File iconFile = getPrayerIconFile(assetName);
-					if (this.externalAssetLoader.assetFileExists(iconFile)) {
-						Sprite sprite = this.externalAssetLoader.loadExternalPrayerIconFile(iconFile);
-						if (sprite != null) {
-							this.prayerIconSprites[prayerIndex] = sprite;
-							loadedIcons++;
-							continue;
-						}
-					}
-				}
-				int tierIndex = prayerIndex % 5;
-				File tierIconFile = getPrayerTierIconFile(assetName, tierIndex + 1);
-				if (this.externalAssetLoader.assetFileExists(tierIconFile)) {
-					Sprite sprite = this.externalAssetLoader.loadExternalPrayerIconFile(tierIconFile);
-					if (sprite != null) {
-						this.prayerIconSprites[prayerIndex] = sprite;
-						loadedIcons++;
-						continue;
-					}
-				}
-				Sprite[] tierIcons = loadedSheets.get(assetName);
-				if (tierIcons == null) {
-					File iconFile = getPrayerIconFile(assetName);
-					tierIcons = this.externalAssetLoader.assetFileExists(iconFile)
-						? this.externalAssetLoader.loadExternalPrayerIconSheet(iconFile)
-						: new Sprite[0];
-					loadedSheets.put(assetName, tierIcons);
-				}
-				if (tierIndex >= 0 && tierIndex < tierIcons.length && tierIcons[tierIndex] != null) {
-					this.prayerIconSprites[prayerIndex] = tierIcons[tierIndex];
-					loadedIcons++;
-				}
+			this.prayerIconSprites[prayerIndex] = loadExternalPrayerIcon(assetName, prayerIndex % 5, loadedSheets);
 		}
+	}
+
+	private Sprite loadExternalPrayerIcon(String assetName, int tierIndex, Map<String, Sprite[]> loadedSheets) {
+		if (assetName.isEmpty()) return null;
+		if (isSinglePrayerIconAsset(assetName)) {
+			File iconFile = getPrayerIconFile(assetName);
+			if (externalAssetLoader.assetFileExists(iconFile)) {
+				Sprite sprite = externalAssetLoader.loadExternalPrayerIconFile(iconFile);
+				if (sprite != null) return sprite;
+			}
 		}
+		File tierFile = getPrayerTierIconFile(assetName, tierIndex + 1);
+		if (externalAssetLoader.assetFileExists(tierFile)) {
+			Sprite sprite = externalAssetLoader.loadExternalPrayerIconFile(tierFile);
+			if (sprite != null) return sprite;
+		}
+		Sprite[] tierIcons = loadedSheets.computeIfAbsent(assetName, name -> {
+			File iconFile = getPrayerIconFile(name);
+			return externalAssetLoader.assetFileExists(iconFile)
+				? externalAssetLoader.loadExternalPrayerIconSheet(iconFile)
+				: new Sprite[0];
+		});
+		return tierIndex < tierIcons.length ? tierIcons[tierIndex] : null;
+	}
 
 	private boolean isSinglePrayerIconAsset(String assetName) {
 		return "divine-grace".equals(assetName)
