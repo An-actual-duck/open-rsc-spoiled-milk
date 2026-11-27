@@ -570,6 +570,22 @@ public final class SkillGuideInterface {
 		}
 		List<String> sections = new ArrayList<>(mc.skillGuideChosenTabs);
 		int info = sections.indexOf("Info");
+		if (info >= 0) {
+			switch (skill) {
+				case "Hits":
+					sections.set(info, "Other food");
+					break;
+				case "Cooking":
+					sections.set(info, "Other recipes");
+					break;
+				case "Attack":
+				case "Melee":
+					sections.set(info, "Combat");
+					break;
+				default:
+					break;
+			}
+		}
 		if (info < 0 || !hasContextualNotes(skill)) {
 			return new SkillGuideWindow(skill, sections, index -> loadGuideTopics(index, Collections.emptyList()));
 		}
@@ -580,6 +596,11 @@ public final class SkillGuideInterface {
 
 	private static boolean hasContextualNotes(String skill) {
 		switch (skill) {
+			case "Ranged":
+			case "Herblaw":
+			case "Agility":
+			case "Thieving":
+			case "Harvest":
 			case "Magic":
 			case "Woodcutting":
 			case "Fishing":
@@ -617,7 +638,9 @@ public final class SkillGuideInterface {
 
 		populateSkillItems();
 		Map<String, List<SkillGuideWindow.Article>> byTopic = new LinkedHashMap<>();
-		String defaultTopic = isExpositoryTab() ? "Overview" : "Unlocks";
+		String skill = mc.getSkillGuideChosen();
+		String sectionName = mc.skillGuideChosenTabs.get(section);
+		String defaultTopic = SkillGuideTopics.defaultTopic(skill, sectionName, isExpositoryTab());
 		for (SkillMenuEntry entry : skillMenuEntries) {
 			String topic = entry.contextSection == null ? entry.topic : null;
 			if (topic == null) {
@@ -626,13 +649,13 @@ public final class SkillGuideInterface {
 			}
 			byTopic.computeIfAbsent(topic, key -> new ArrayList<>()).add(guideArticle(entry));
 		}
-		String sectionName = mc.skillGuideChosenTabs.get(section);
 		for (SkillMenuEntry note : notes) {
 			if (sectionName.equals(note.contextSection)) {
 				byTopic.computeIfAbsent(note.topic, key -> new ArrayList<>()).add(
 					new SkillGuideWindow.Article("", Collections.singletonList(note.getSkillDetail())));
 			}
 		}
+		SkillGuideTopics.append(mc, skill, sectionName, byTopic);
 		if (byTopic.isEmpty()) {
 			byTopic.put(defaultTopic, Collections.singletonList(new SkillGuideWindow.Article("",
 				Collections.singletonList("No guide entries are available for this section."))));
@@ -671,6 +694,10 @@ public final class SkillGuideInterface {
 						isSummonGuideSideFacingNpc(npcId) ? 3 : 0);
 				};
 			}
+		}
+		if ("Harvest".equals(mc.getSkillGuideChosen()) && curTab < 5
+			&& entry.getSkillDetail().toLowerCase(java.util.Locale.ROOT).contains(" shears")) {
+			return SkillGuideWindow.Article.unlock(entry.getSkillDetail(), "", icon);
 		}
 		return SkillGuideWindow.Article.unlock(entry.getSkillDetail(), level, icon);
 	}
@@ -1150,12 +1177,12 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(453, "64", EntityHandler.getItemDef(453).name));
 				skillMenuEntries.add(new SkillMenuItem(934, "70", EntityHandler.getItemDef(934).name));
 			} else if (curTab == 1) {
-				addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, 3198, "Potion of Brawn",
+				addHerblawPotionFamilyGuide("Brawn", 474, 477, 480, 483, 486, 3198, "Potion of Brawn",
 					new String[] {"fern leaf", "mushroom", "fungus", "limpwurt root", "red flower", "blue flower"});
-				addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, 3201, "Potion of Deftness",
+				addHerblawPotionFamilyGuide("Deftness", 489, 492, 495, 498, 566, 3201, "Potion of Deftness",
 					new String[] {"10 low quality fish oil", "10 fair quality fish oil", "10 good quality fish oil",
 						"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"});
-				addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, 3204, "Potion of Insight",
+				addHerblawPotionFamilyGuide("Insight", 569, 963, 1411, 1414, 1468, 3204, "Potion of Insight",
 					new String[] {"eye of newt", "spider eye", "zombie eye", "bat eye", "baby dragon's eye", "demon eye"});
 				skillMenuEntries.add(new SkillMenuItem(3402, "8", "Weak Antidote - Marrentill & Giant Spider Eggs"));
 				skillMenuEntries.add(new SkillMenuItem(1474, "22", "Antidote - Marrentill & red spiders' eggs"));
@@ -1328,7 +1355,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(241, "1", "Onion - T1 shears"));
 				skillMenuEntries.add(new SkillMenuItem(18, "1", "Cabbage - T1 shears"));
 				skillMenuEntries.add(new SkillMenuItem(218, "8", "Garlic - T2 shears"));
-				skillMenuEntries.add(new SkillMenuItem(675, "15", "Flax - T3 shears"));
+				skillMenuEntries.add(new SkillMenuItem(675, "1", "Flax - Tin shears (T1)"));
 				skillMenuEntries.add(new SkillMenuItem(320, "15", "Tomato - T3 shears"));
 				skillMenuEntries.add(new SkillMenuItem(1353, "22", "Corn - T4 shears"));
 				skillMenuEntries.add(new SkillMenuItem(1569, "1", "Lily's Pumpkin - T1 shears"));
@@ -1941,40 +1968,40 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(itemId, level, detail + " - from level " + level));
 	}
 
-	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id, int tier6Id,
-											 String potionName, String secondary) {
-		addHerblawPotionFamilyGuide(tier1Id, tier2Id, tier3Id, tier4Id, tier5Id, tier6Id, potionName,
-			new String[] {secondary, secondary, secondary, secondary, secondary, secondary});
+	private void addHerblawPotionFamilyGuide(String topic, int tier1Id, int tier2Id, int tier3Id, int tier4Id,
+											 int tier5Id, int tier6Id, String potionName, String[] secondaries) {
+		addGuideRecipe(topic, tier1Id, 3, potionName + " v1 - Guam leaf & " + secondaries[0]);
+		addGuideRecipe(topic, tier2Id, 12, potionName + " v2 - Tarromin & " + secondaries[1]);
+		addGuideRecipe(topic, tier3Id, 30, potionName + " v3 - Ranarr weed & " + secondaries[2]);
+		addGuideRecipe(topic, tier4Id, 50, potionName + " v4 - Avantoe & " + secondaries[3]);
+		addGuideRecipe(topic, tier5Id, 66, potionName + " v5 - Cadantine & " + secondaries[4]);
+		addGuideRecipe(topic, tier6Id, 78, potionName + " v6 - Torstol & " + secondaries[5]);
 	}
 
-	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id, int tier6Id,
-											 String potionName, String[] secondaries) {
-		skillMenuEntries.add(new SkillMenuItem(tier1Id, "3", potionName + " v1 - Guam leaf & " + secondaries[0]));
-		skillMenuEntries.add(new SkillMenuItem(tier2Id, "12", potionName + " v2 - Tarromin & " + secondaries[1]));
-		skillMenuEntries.add(new SkillMenuItem(tier3Id, "30", potionName + " v3 - Ranarr weed & " + secondaries[2]));
-		skillMenuEntries.add(new SkillMenuItem(tier4Id, "50", potionName + " v4 - Avantoe & " + secondaries[3]));
-		skillMenuEntries.add(new SkillMenuItem(tier5Id, "66", potionName + " v5 - Cadantine & " + secondaries[4]));
-		skillMenuEntries.add(new SkillMenuItem(tier6Id, "78", potionName + " v6 - Torstol & " + secondaries[5]));
+	private void addGuideRecipe(String topic, int itemId, int level, String detail) {
+		SkillMenuItem menuItem = new SkillMenuItem(itemId, String.valueOf(level), detail);
+		((SkillMenuEntry) menuItem).topic = topic;
+		skillMenuEntries.add(menuItem);
 	}
 
 	private void addAmmoMouldGuide(String name, int baseLevel, int boltsId, int arrowheadsId, int arrowId, int dartsId, int knivesId, int shurikenId) {
-		skillMenuEntries.add(new SkillMenuItem(boltsId, String.valueOf(baseLevel), name + " bolts - 1 bar makes 5"));
-		skillMenuEntries.add(new SkillMenuItem(arrowheadsId, String.valueOf(baseLevel), name + " arrowheads - 1 bar makes 10"));
-		skillMenuEntries.add(new SkillMenuItem(arrowId, String.valueOf(baseLevel), name + " arrows - headless arrows and arrowheads"));
-		skillMenuEntries.add(new SkillMenuItem(dartsId, String.valueOf(baseLevel + 2), name + " throwing darts - 1 bar makes 7"));
-		skillMenuEntries.add(new SkillMenuItem(knivesId, String.valueOf(baseLevel + 4), name + " throwing knives - 1 bar makes 2"));
-		skillMenuEntries.add(new SkillMenuItem(shurikenId, String.valueOf(baseLevel + 4), name + " shuriken - 1 bar makes 9"));
+		addGuideRecipe("Bolts", boltsId, baseLevel, name + " bolts - 1 bar makes 5");
+		addGuideRecipe("Arrows", arrowheadsId, baseLevel, name + " arrowheads - 1 bar makes 10");
+		addGuideRecipe("Arrows", arrowId, baseLevel, name + " arrows - headless arrows and arrowheads");
+		addGuideRecipe("Thrown weapons", dartsId, baseLevel + 2, name + " throwing darts - 1 bar makes 7");
+		addGuideRecipe("Thrown weapons", knivesId, baseLevel + 4, name + " throwing knives - 1 bar makes 2");
+		addGuideRecipe("Thrown weapons", shurikenId, baseLevel + 4, name + " shuriken - 1 bar makes 9");
 	}
 
 	private void addWoodcraftGuide(String name, int shaftAmount, int shaftLevel, int shortbowId, int shortbowLevel,
 								   int longbowId, int longbowLevel, int crossbowId, int crossbowLevel,
 								   int staffId, int staffLevel, int fishingRodId, int fishingRodLevel) {
-		skillMenuEntries.add(new SkillMenuItem(280, String.valueOf(shaftLevel), name + " arrow shafts - 1 log makes " + shaftAmount));
-		skillMenuEntries.add(new SkillMenuItem(staffId, String.valueOf(staffLevel), name + " staff"));
-		skillMenuEntries.add(new SkillMenuItem(fishingRodId, String.valueOf(fishingRodLevel), EntityHandler.getItemDef(fishingRodId).name));
-		skillMenuEntries.add(new SkillMenuItem(shortbowId, String.valueOf(shortbowLevel), "Unstrung " + name.toLowerCase() + " shortbow"));
-		skillMenuEntries.add(new SkillMenuItem(longbowId, String.valueOf(longbowLevel), "Unstrung " + name.toLowerCase() + " longbow"));
-		skillMenuEntries.add(new SkillMenuItem(crossbowId, String.valueOf(crossbowLevel), name + " crossbow"));
+		addGuideRecipe("Arrow shafts", 280, shaftLevel, name + " arrow shafts - 1 log makes " + shaftAmount);
+		addGuideRecipe("Staves", staffId, staffLevel, name + " staff");
+		addGuideRecipe("Fishing rods", fishingRodId, fishingRodLevel, EntityHandler.getItemDef(fishingRodId).name);
+		addGuideRecipe("Bows", shortbowId, shortbowLevel, "Unstrung " + name.toLowerCase() + " shortbow");
+		addGuideRecipe("Bows", longbowId, longbowLevel, "Unstrung " + name.toLowerCase() + " longbow");
+		addGuideRecipe("Crossbows", crossbowId, crossbowLevel, name + " crossbow");
 	}
 
 	private void populateSmithingGuide() {
