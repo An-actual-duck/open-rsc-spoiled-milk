@@ -16,6 +16,7 @@ final class BlessingGuideTopics {
 
 	// Global logical coordinates and signed levels, matching the Tile HUD.
 	private static final String DIVINE_WELLSPRING = "(253,462,L-1)";
+	private static final String DIVINE_ENTRANCE = "(215,468,L0)";
 	private static final String ICHOR_WELL = "(104,672,L-1)";
 	private static final String ICHOR_ENTRANCE = "(108,681,L0)";
 
@@ -54,7 +55,8 @@ final class BlessingGuideTopics {
 			article("God sigils", "Use an unimbued god sigil on that god's altar. The altar imbues every matching unimbued sigil "
 				+ "of the same god and material in your inventory. Each carving spends 0.05 Devotion with that god."),
 			article("Grace sigils", client, 3300, "Imbue Grace at Divine wellsprings beneath sacred places. "
-				+ "You can find one beneath the Edgeville Monastery at " + DIVINE_WELLSPRING + "."),
+				+ "You can find one beneath the Edgeville Monastery at " + DIVINE_WELLSPRING
+				+ ". Take the surface ladder down at " + DIVINE_ENTRANCE + " and follow the passage."),
 			article("Blight sigils", client, 3427, "Imbue Blight at Ichor wells beneath places of grief and sorrow. "
 				+ "You can find one beneath a graveyard at " + ICHOR_WELL + ". Take the surface ladder down at " + ICHOR_ENTRANCE + "."),
 			article("Dip sigils", "Choose Dip sigils from the shore to imbue the matching Grace or Blight carvings in your inventory. "
