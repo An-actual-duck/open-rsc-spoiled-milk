@@ -258,9 +258,10 @@ the window and control dimensions, and text size sets the fonts and wrapping.
 
 Most sections start with Unlocks. Enchanting → Robes adds Costs, Effects, and
 More info for the rune price per piece, the distinct altar effects, and the
-upgrade rules. Staves and Jewelry show their costs in their own sections, and
-Altars includes how to make runes. Longer explanations wrap and keep their
-paragraph breaks.
+upgrade rules. Staves and Jewelry show their own costs. Jewelry also lists
+ring, bangle, and necklace enchantments by altar and gem tier, and explains why
+amulets became bangles. Altars includes how to make runes. Longer explanations
+wrap and keep their paragraph breaks.
 
 Magic, Woodcutting, Fishing, Crafting, Smithing, Mining, and Summoning place
 their former Info entries beside the relevant unlocks. Smithing gear sections

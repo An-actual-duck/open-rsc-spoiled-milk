@@ -38,10 +38,15 @@ final class EnchantingGuideTopics {
 				break;
 			case "Jewelry":
 				topics.add(jewelryCosts());
+				topics.add(JewelryGuideTopics.rings());
+				topics.add(JewelryGuideTopics.bangles());
+				topics.add(JewelryGuideTopics.necklaces());
 				topics.add(topic("More info",
 					article("Choosing an altar",
 						"Use an unenchanted ring, necklace, or bangle on a rune altar. Your Enchanting level must be high enough for both the gem and the altar.",
-						"The item type, gem, and altar determine the result. Examine an enchanted piece to read its effect.")));
+						"The item type, gem, and altar determine the result. Use the enchantment tabs to compare effects by gem tier."),
+					article("Where are amulets?",
+						"You may be wondering where amulets went. They became bangles so you can wear a ring, a bangle, and a necklace at the same time.")));
 				break;
 			case "Altars":
 				topics.add(topic("More info",

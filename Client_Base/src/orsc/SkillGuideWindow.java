@@ -72,12 +72,17 @@ public final class SkillGuideWindow {
 		int top = tabs.isEmpty() ? y + headerHeight : tabs.get(tabs.size() - 1).y + tabHeight + pad;
 		int contentHeight = y + height - pad - top;
 		if (contentHeight <= bodyLine) return Action.NONE;
-		int navWidth = Math.min((width - 3 * pad) / 3, Math.max(size.pixels(178),
-			surface.stringWidth(text.labelFont, "Other recipes") + 2 * pad));
+		int railWidth = Math.max(9, size.pixels(12));
+		int longestTopic = 0;
+		for (Topic entry : topics) {
+			longestTopic = Math.max(longestTopic, surface.stringWidth(text.labelFont, entry.label));
+		}
+		int topicRail = topics.size() > Math.max(1, contentHeight / tabHeight) ? railWidth : 0;
+		int navWidth = Math.min((width - 3 * pad) * 2 / 5,
+			Math.max(size.pixels(178), longestTopic + 2 * pad + topicRail));
 		Rectangle navigation = new Rectangle(x + pad, top, navWidth, contentHeight);
 		Rectangle page = new Rectangle(navigation.x + navigation.width + pad, top,
 			width - navWidth - 3 * pad, contentHeight);
-		int railWidth = Math.max(9, size.pixels(12));
 		boolean overTopics = navigation.contains(mouseX, mouseY);
 		drawTopics(surface, navigation, railWidth, tabHeight, text.labelFont, overTopics ? wheel : 0,
 			mouseX, mouseY, click);
