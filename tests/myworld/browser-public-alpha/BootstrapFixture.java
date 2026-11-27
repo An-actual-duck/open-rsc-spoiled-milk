@@ -16,6 +16,21 @@ public final class BootstrapFixture {
         if(args.length>0){Properties actual=new Properties();try(java.io.FileReader r=new java.io.FileReader(args[0])){actual.load(r);}BrowserPublicAlpha.validate(actual,true);checks++;}
         Properties p=valid();BrowserPublicAlpha.validate(p,true);checks++;check(BrowserPublicAlpha.assetRoot(p).equals("/app/assets/alpha-test1/"),"versioned app root");
         for(String[] pair:new String[][]{{"browserPublicAlpha","yes"},{"browserPublicOrigin","http://play.rscspoiledmilk.com"},{"browserPublicPreset","other"},{"browserAssetRoot","/app/../../"},{"browserAssetRoot","/app/assets/alpha-test1/evil/"},{"browserWholeRam","false"},{"browserBenchmark","false"},{"browserPrivateLoopbackPort","43649"},{"browserRepeatableFixture","repeatable-v1"},{"browserBaselineReuse","true"},{"browserCloneTemplates","true"},{"browserGeometryTransferReuse","true"},{"browserProfile","true"},{"browserOverlayRectMode","packed"}}){p=valid();p.setProperty("spoiledmilk."+pair[0],pair[1]);try{BrowserPublicAlpha.validate(p,true);throw new AssertionError("Invalid public setting accepted: "+pair[0]);}catch(IllegalArgumentException expected){checks++;}}
+        Properties stream=valid();
+        for(String name:new String[]{"browserWorldStreaming","browserStagedLogin","liveSurfaceHandoff",
+            "persistentMovementPreview","persistentSurfaceCollision","fixedSurfaceDraw","rollingSurfaceWindow",
+            "expandedSurfaceDrawBorder","surfaceSceneryCells","surfaceSceneryDraw","browserSurfaceMeshWorker",
+            "browserStreamingOnly","nativeHdInterface"}) stream.setProperty("spoiledmilk."+name,"true");
+        stream.setProperty("spoiledmilk.browserWholeZone","false");
+        stream.setProperty("spoiledmilk.browserWholeRam","false");
+        stream.setProperty("spoiledmilk.renderSurfaceMode","1920x1080");
+        BrowserPublicAlpha.validate(stream,true);checks++;
+        for(String[] pair:new String[][]{{"browserStreamingOnly","false"},{"browserWorldStreaming","false"},
+            {"nativeHdInterface","false"},{"renderSurfaceMode","960x540"}}){
+            Properties invalid=(Properties)stream.clone();invalid.setProperty("spoiledmilk."+pair[0],pair[1]);
+            try{BrowserPublicAlpha.validate(invalid,true);throw new AssertionError("Invalid streaming UI setting accepted: "+pair[0]);}
+            catch(IllegalArgumentException expected){checks++;}
+        }
         try{BrowserPublicAlpha.validate(valid(),false);throw new AssertionError("public software accepted");}catch(IllegalArgumentException expected){checks++;}
         check(BrowserPublicAlpha.assetRoot(new Properties()).equals("/app/"),"private app root unchanged");
         Properties badPrivate=new Properties();badPrivate.setProperty("spoiledmilk.browserAssetRoot","/app/assets/alpha-test1/");try{BrowserPublicAlpha.assetRoot(badPrivate);throw new AssertionError("private root override accepted");}catch(IllegalArgumentException expected){checks++;}

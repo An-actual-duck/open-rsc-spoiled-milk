@@ -22,6 +22,16 @@ final class BrowserPublicAlpha {
         if(!webgl||!ORIGIN.equals(p.getProperty("spoiledmilk.browserPublicOrigin"))||!PRESET.equals(p.getProperty("spoiledmilk.browserPublicPreset")))throw new IllegalArgumentException("Public alpha origin/preset mismatch");
         assetRoot(p);
         boolean streaming=Boolean.parseBoolean(p.getProperty("spoiledmilk.browserWorldStreaming","false"));
+        String mode=p.getProperty("spoiledmilk.browserStreamingOnly");
+        boolean streamingOnly="true".equals(mode);
+        if(mode!=null&&(!streamingOnly||!streaming))throw new IllegalArgumentException("Invalid public streaming mode");
+        String hdInterface=p.getProperty("spoiledmilk.nativeHdInterface");
+        String resolution=p.getProperty("spoiledmilk.renderSurfaceMode");
+        if(streamingOnly){
+            if(!"true".equals(hdInterface)||!"1920x1080".equals(resolution))throw new IllegalArgumentException("Public streaming requires its fixed HD interface");
+        }else if((hdInterface!=null&&!"false".equals(hdInterface))||resolution!=null){
+            throw new IllegalArgumentException("Public alpha forbids custom interface settings");
+        }
         String[][] required=streaming
             ?new String[][]{{"browserStagedLogin","true"},{"browserWholeZone","false"},{"browserWholeRam","false"},
                 {"liveSurfaceHandoff","true"},{"persistentMovementPreview","true"},{"persistentSurfaceCollision","true"},
@@ -29,7 +39,7 @@ final class BrowserPublicAlpha {
                 {"surfaceSceneryCells","true"},{"surfaceSceneryDraw","true"},{"browserSurfaceMeshWorker","true"}}
             :new String[][]{{"browserBenchmark","true"},{"browserWholeZone","true"},{"browserWholeRam","true"},{"browserStaticSceneReuse","true"},{"browserBatchedModelKernel","true"},{"browserTerrainQueryIndex","true"},{"browserRegionBuild","true"},{"browserCachePolicy","lru"},{"browserUnderlay","initial"},{"browserDepthSource","gpu"},{"browserLoop","modern"},{"browserEarlyFaceCull","true"},{"browserOwnsWallsAndRoofs","true"},{"browserSpriteCache","cached"},{"browserOverlayCoverage","true"}};
         for(String[] pair:required)if(!pair[1].equals(p.getProperty("spoiledmilk."+pair[0])))throw new IllegalArgumentException("Public alpha setting mismatch: "+pair[0]);
-        String[] forbidden={"browserRepeatableFixture","browserPrivateLoopbackPort","browserProfile","browserInputDiagnostics","browserLoadProfile","browserBaselineReuse","browserCloneTemplates","browserGeometryTransferReuse","browserRegionPreparation","browserResidentDescriptorWriting","browserHaloHeightLookup","browserSceneryProjectionWork","browserPrimitiveChunkCoverage","browserOverlayDeltaTransport","browserOverlayJournalObserve","nativeHdInterface"};
+        String[] forbidden={"browserRepeatableFixture","browserPrivateLoopbackPort","browserProfile","browserInputDiagnostics","browserLoadProfile","browserBaselineReuse","browserCloneTemplates","browserGeometryTransferReuse","browserRegionPreparation","browserResidentDescriptorWriting","browserHaloHeightLookup","browserSceneryProjectionWork","browserPrimitiveChunkCoverage","browserOverlayDeltaTransport","browserOverlayJournalObserve"};
         for(String name:forbidden){String value=p.getProperty("spoiledmilk."+name);if(value!=null&&!"false".equals(value))throw new IllegalArgumentException("Public alpha forbids test option: "+name);}
         String rect=p.getProperty("spoiledmilk.browserOverlayRectMode","off");if(!"off".equals(rect))throw new IllegalArgumentException("Public alpha overlay mode");
     }
