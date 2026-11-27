@@ -18,20 +18,32 @@ final class SessionNoticeWindow {
 	private final String cancelLabel;
 	private final int preferredWidth;
 	private final boolean centered;
+	private final boolean welcomeStyle;
 	private final AtomicInteger scrollInput = new AtomicInteger();
 	private final AtomicInteger keyInput = new AtomicInteger();
 	private List<String> rows;
+	private List<String> titleRows;
 	private int wrapWidth, wrapFont = -1;
 	private int firstRow;
 
 	SessionNoticeWindow(String title, String message, String dismissLabel, String cancelLabel, int preferredWidth,
 						boolean centered) {
+		this(title, message, dismissLabel, cancelLabel, preferredWidth, centered, false);
+	}
+
+	static SessionNoticeWindow welcome(String title, String message, String dismissLabel, String cancelLabel) {
+		return new SessionNoticeWindow(title, message, dismissLabel, cancelLabel, 660, true, true);
+	}
+
+	private SessionNoticeWindow(String title, String message, String dismissLabel, String cancelLabel,
+								int preferredWidth, boolean centered, boolean welcomeStyle) {
 		this.title = title;
 		this.message = message;
 		this.dismissLabel = dismissLabel;
 		this.cancelLabel = cancelLabel;
 		this.preferredWidth = preferredWidth;
 		this.centered = centered;
+		this.welcomeStyle = welcomeStyle;
 	}
 
 	void scroll(int amount) {
@@ -61,7 +73,6 @@ final class SessionNoticeWindow {
 		int rowHeight = bodyLine + size.pixels(3);
 		int targetHeader = compactViewport ? Math.min(size.pixels(42), 50) : size.pixels(42);
 		int targetButton = compactViewport ? Math.min(size.pixels(34), 42) : size.pixels(34);
-		int header = Math.max(targetHeader, bodyLine + padding);
 		int buttonHeight = dismissLabel == null ? 0 : Math.max(targetButton, labelLine + padding / 2);
 		int width = Math.min(client.getGameWidth() - 2 * padding, size.pixels(preferredWidth));
 		int contentWidth = width - 2 * padding;
@@ -69,7 +80,12 @@ final class SessionNoticeWindow {
 			wrapWidth = contentWidth;
 			wrapFont = text.bodyFont;
 			rows = wrap(message, contentWidth, part -> surface.literalStringWidth(text.bodyFont, part));
+			if (welcomeStyle) {
+				titleRows = ClericTextLayout.wrap(title, contentWidth, part -> surface.literalStringWidth(text.bodyFont, part));
+			}
 		}
+		int headingHeight = welcomeStyle ? titleRows.size() * bodyLine : bodyLine;
+		int header = Math.max(targetHeader, headingHeight + padding);
 		int gaps = padding * (dismissLabel == null ? 2 : 3);
 		int capacity = Math.max(1, (bottom - header - buttonHeight - gaps - padding) / rowHeight);
 		int visibleRows = Math.min(Math.min(capacity, 15), rows.size());
@@ -93,7 +109,18 @@ final class SessionNoticeWindow {
 		int y = Math.max(0, (bottom - height) / 2);
 		int left = x + padding;
 		int footerY = y + height - buttonHeight - padding;
-		SocialTextPrompt.drawFrame(surface, new Rectangle(x, y, width, height), header, padding, title, text.bodyFont, bodyLine);
+		Rectangle bounds = new Rectangle(x, y, width, height);
+		if (welcomeStyle) {
+			surface.drawBox(x, y, width, height, 0);
+			surface.drawBoxBorder(x, width, y, height, 0xFFFFFF);
+			int titleBaseline = y + (header - headingHeight) / 2 + bodyLine - 3;
+			for (String line : titleRows) {
+				surface.drawColoredStringCentered(x + width / 2, line, 0xFFFF00, 0, text.bodyFont, titleBaseline);
+				titleBaseline += bodyLine;
+			}
+		} else {
+			SocialTextPrompt.drawFrame(surface, bounds, header, padding, title, text.bodyFont, bodyLine);
+		}
 		if (dismissLabel != null) {
 			int actions = cancelLabel == null ? 1 : 2;
 			int minButtonWidth = surface.stringWidth(text.labelFont, dismissLabel) + 2 * padding;
@@ -101,7 +128,9 @@ final class SessionNoticeWindow {
 				surface.stringWidth(text.labelFont, cancelLabel) + 2 * padding);
 			int buttonWidth = Math.min((contentWidth - (actions - 1) * padding) / actions,
 				Math.max(size.pixels(104), minButtonWidth));
-			Rectangle dismiss = new Rectangle(x + width - padding - buttonWidth, footerY, buttonWidth, buttonHeight);
+			int dismissX = welcomeStyle && actions == 1 && maxScroll == 0
+				? x + (width - buttonWidth) / 2 : x + width - padding - buttonWidth;
+			Rectangle dismiss = new Rectangle(dismissX, footerY, buttonWidth, buttonHeight);
 			if (button(client, dismiss, dismissLabel, true, text.labelFont, labelLine)) return Action.DISMISS;
 			if (cancelLabel != null) {
 				Rectangle cancel = new Rectangle(dismiss.x - padding - buttonWidth, footerY, buttonWidth, buttonHeight);
@@ -127,14 +156,23 @@ final class SessionNoticeWindow {
 		for (int row = 0; row < visibleRows; row++) {
 			String line = rows.get(firstRow + row);
 			int textX = centered ? left + (contentWidth - surface.stringWidth(text.bodyFont, line)) / 2 : left;
-			surface.drawString(line, textX, baseline + row * rowHeight, InterfacePalette.TEXT, text.bodyFont);
+			surface.drawString(line, textX, baseline + row * rowHeight,
+				welcomeStyle ? 0xFFFFFF : InterfacePalette.TEXT, text.bodyFont);
 		}
 		return Action.NONE;
 	}
 
-	private static boolean button(mudclient client, Rectangle bounds, String label, boolean enabled, int font, int line) {
+	private boolean button(mudclient client, Rectangle bounds, String label, boolean enabled, int font, int line) {
 		boolean hover = bounds.contains(client.getMouseX(), client.getMouseY());
-		SocialTextPrompt.drawButton(client.getSurface(), bounds, label, enabled, hover, font, line);
+		MudClientGraphics surface = client.getSurface();
+		if (welcomeStyle) {
+			int color = !enabled ? InterfacePalette.DISABLED_TEXT : hover ? 0xFFFF00 : 0xFFFFFF;
+			surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, color);
+			surface.drawColoredStringCentered(bounds.x + bounds.width / 2, label, color, 0, font,
+				bounds.y + (bounds.height + line) / 2 - 3);
+		} else {
+			SocialTextPrompt.drawButton(surface, bounds, label, enabled, hover, font, line);
+		}
 		return enabled && hover && client.getMouseClick() == 1;
 	}
 

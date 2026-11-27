@@ -9970,26 +9970,26 @@ public final class mudclient implements Runnable {
 		boolean includeIp = hasLastLogin && settingsHideIP != null && settingsHideIP != 1;
 		if (welcomeNotice == null || welcomeNoticeIncludesIp != includeIp) {
 			String account = localPlayer.accountName == null ? getUsername() : localPlayer.accountName;
-			StringBuilder body = new StringBuilder("Welcome to ").append(getServerName()).append(", ")
-				.append(account).append('.');
+			String title = "Welcome to " + getServerName() + ", " + account;
+			StringBuilder body = new StringBuilder();
 			if (hasLastLogin) {
-				body.append("%You last logged in ").append(welcomeDayLabel(welcomeLastLoggedInDays));
+				body.append("You last logged in ").append(welcomeDayLabel(welcomeLastLoggedInDays));
 				if (includeIp) body.append(" from ").append(getHostnameFromIP());
-				body.append('.');
+				body.append(".%%");
 			}
 			boolean recovery = welcomeRecoverySetDays > 0;
 			if (recovery) {
-				body.append("%%@lre@Recovery question change pending@whi@%You requested new recovery questions ")
+				body.append("@lre@Recovery question change pending@whi@%You requested new recovery questions ")
 					.append(welcomeDayLabel(14 - welcomeRecoverySetDays)).append(". They will activate in ")
 					.append(welcomeRecoverySetDays).append(welcomeRecoverySetDays == 1 ? " day." : " days.")
 					.append("%If you do not remember making this request, cancel it and change your password immediately.");
 			} else {
 				String[] tip = WELCOME_SECURITY_TIPS[welcomeTipOfDay];
-				body.append("%%@yel@Security tip of the day@whi@%").append(tip[0]).append(' ').append(tip[1]);
+				body.append("Security tip of the day%").append(tip[0]).append(' ').append(tip[1]);
 			}
 			welcomeNoticeIncludesIp = includeIp;
-			welcomeNotice = new SessionNoticeWindow("Welcome", body.toString(), recovery ? "Keep request" : "Continue",
-				recovery ? "Cancel request" : null, 660, true);
+			welcomeNotice = SessionNoticeWindow.welcome(title, body.toString(), recovery ? "Keep request" : "Continue",
+				recovery ? "Cancel request" : null);
 		}
 		SessionNoticeWindow.Action action = welcomeNotice.draw(this, chatLayout.entryTop());
 		if (action == SessionNoticeWindow.Action.SECONDARY) {
