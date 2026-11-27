@@ -30,12 +30,12 @@ import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 import {createBrowserDisplay} from './browser-display.js';
 import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
 const status = document.querySelector('#status');
-const deployment=resolveBrowserDeployment(deploymentConfig,location,window.parent?.browserSessionLoadingMode?.(window)??'chunks');
+const deployment=resolveBrowserDeployment(deploymentConfig,location,window.parent?.browserSessionLoadingMode?.(window)??null);
 const options = deployment.options;
-const privateInterfaceMode = !deployment.publicAlpha && /^http:\/\/127\.0\.0\.1:[0-9]+$/.test(location.origin)
+const interfaceMode = deployment.streamingOnly ? '1080p' : !deployment.publicAlpha && /^http:\/\/127\.0\.0\.1:[0-9]+$/.test(location.origin)
   ? new URLSearchParams(location.search).get('interface') : null;
-const initialDisplay = privateInterfaceMode === '1080p' ? {width: 1920, height: 1080} : {width: 960, height: 540};
-const displayProperties = ['540p', '1080p'].includes(privateInterfaceMode)
+const initialDisplay = interfaceMode === '1080p' ? {width: 1920, height: 1080} : {width: 960, height: 540};
+const displayProperties = ['540p', '1080p'].includes(interfaceMode)
   ? ['spoiledmilk.nativeHdInterface=true', `spoiledmilk.renderSurfaceMode=${initialDisplay.width}x${initialDisplay.height}`] : [];
 function nativeCallPolicy(mode,parameters){
   if(mode!=='webgl'||!parameters.has('benchmark'))return 'async';

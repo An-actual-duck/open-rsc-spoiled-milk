@@ -8,8 +8,9 @@ final class RenderSurfaceSettings {
 	private static final String SURFACE_MODE_PROPERTY = "spoiledmilk.renderSurfaceMode";
 	private static final String SURFACE_MODE_ENV = "SPOILED_MILK_RENDER_SURFACE_MODE";
 	private static final int FULL_HD_HEIGHT = 1080;
+	private static final boolean RELEASE_BUILD = Boolean.getBoolean("spoiledmilk.releaseBuild");
 	private static final boolean NATIVE_HD_INTERFACE_PREVIEW =
-		Boolean.getBoolean("spoiledmilk.nativeHdInterface");
+		RELEASE_BUILD || Boolean.getBoolean("spoiledmilk.nativeHdInterface");
 
 	private static final boolean runtimeSurfaceModeOverride =
 		hasRuntimeSetting(SURFACE_MODE_PROPERTY, SURFACE_MODE_ENV);
@@ -143,7 +144,7 @@ final class RenderSurfaceSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return WIDE;
+				return RELEASE_BUILD ? FULL_HD : WIDE;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');

@@ -1,7 +1,5 @@
 @echo off
 setlocal
-set "WORLD_STREAMING=false"
-if /i "%~1"=="--world-streaming" set "WORLD_STREAMING=true"
 cd /d "%~dp0"
 if exist "%~dp0game-files\Spoiled_Milk_Client.jar" (
   if exist "%~dp0Spoiled_Milk_Client.jar" del /q "%~dp0Spoiled_Milk_Client.jar" >nul 2>nul
@@ -27,7 +25,7 @@ java ^
   -Xms512m ^
   -Xmx2g ^
   -Dspoiledmilk.releaseBuild=true ^
-  -Dspoiledmilk.desktopWorldStreaming=%WORLD_STREAMING% ^
+  -Dspoiledmilk.desktopWorldStreaming=true ^
   -Dsun.java2d.opengl=true ^
   -Dspoiledmilk.directFramebuffer=true ^
   -Dspoiledmilk.openglPresenter=true ^

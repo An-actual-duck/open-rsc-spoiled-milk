@@ -15,17 +15,8 @@ The archive contains one Spoiled Milk folder:
 Extract the entire archive before launching. The README explains these choices.
 The client, map and caches are shared; they are not duplicated by platform.
 
-The desktop World Streaming build adds two named launchers per platform in the
-same archive. The mode is chosen when the client starts, before login.
-
-| System | World Chunks | World Streaming |
-| --- | --- | --- |
-| Windows 64-bit | Play Spoiled Milk - World Chunks.cmd | Play Spoiled Milk - World Streaming.cmd |
-| Linux | play-spoiled-milk-world-chunks.sh | play-spoiled-milk-world-streaming.sh |
-| macOS | Play Spoiled Milk - World Chunks.command | Play Spoiled Milk - World Streaming.command |
-
-The original launch filenames open World Chunks. World Streaming requires a
-server that enables desktop streaming on its native connection.
+Current launchers use World Streaming. The public release uses one launcher per
+platform. Older named launchers delegate to the same launcher after updating.
 
 Normal ai-manager.sh release packaging creates the single-download archive
 alongside the existing versioned Java and Windows archives. Keep those versioned

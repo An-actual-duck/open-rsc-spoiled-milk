@@ -28237,16 +28237,17 @@ public final class mudclient implements Runnable {
 						}
 
 						boolean stagedLoginRequested=BrowserStagedLogin.enabled();
-						if (!stagedLoginRequested && Boolean.getBoolean("spoiledmilk.desktopWorldStreaming")
+						if (!stagedLoginRequested && (Boolean.getBoolean("spoiledmilk.releaseBuild")
+							|| Boolean.getBoolean("spoiledmilk.desktopWorldStreaming"))
 							&& !BrowserStagedLogin.supportDesktopWorldStreaming(this.packetHandler.getClientStream())) {
 							this.closeClientStreamOnly();
-							this.showLoginScreenStatus("World Streaming is unavailable.", "Launch with World Chunks to connect.");
+							this.showLoginScreenStatus("World Streaming is unavailable.", "Check for an update and try again.");
 							return;
 						}
 						if (BrowserWorldStreaming.enabled()
 							&& (!stagedLoginRequested || !BrowserStagedLogin.supportWorldStreaming(this.packetHandler.getClientStream()))) {
 							this.closeClientStreamOnly();
-							this.showLoginScreenStatus("World Streaming is unavailable.", "You can play with World Chunks.");
+							this.showLoginScreenStatus("World Streaming is unavailable.", "Refresh the game and try again.");
 							return;
 						}
 						if(stagedLoginRequested&&!BrowserWorldStreaming.enabled()&&!BrowserStagedLogin.support(this.packetHandler.getClientStream())) {

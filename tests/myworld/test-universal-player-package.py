@@ -121,8 +121,9 @@ class UniversalPackageTest(unittest.TestCase):
                 self.assertEqual(0, result.returncode, result.stderr)
                 self.assertIn(str(install / "game-files"), result.stdout)
                 self.assertIn("-jar Spoiled_Milk_Client.jar", result.stdout)
+                self.assertIn("-Dspoiledmilk.desktopWorldStreaming=true", result.stdout)
 
-    def test_loading_mode_launchers_share_one_payload_and_select_modes(self):
+    def test_older_loading_mode_aliases_delegate_to_one_streaming_payload(self):
         windows = ["Play Spoiled Milk - World Chunks.cmd", "Play Spoiled Milk - World Streaming.cmd"]
         posix = ["play-spoiled-milk-world-chunks.sh", "play-spoiled-milk-world-streaming.sh",
                  "Play Spoiled Milk - World Chunks.command", "Play Spoiled Milk - World Streaming.command"]
@@ -145,13 +146,13 @@ class UniversalPackageTest(unittest.TestCase):
         java = fake_bin / "java"
         java.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
         java.chmod(0o755)
-        for name, mode in zip(posix, ("false", "true", "false", "true")):
+        for name in posix:
             with self.subTest(name=name):
                 result = subprocess.run(
                     ["sh", str(install / name)], cwd=self.root,
                     env={**os.environ, "PATH": str(fake_bin) + os.pathsep + os.environ["PATH"]},
                     check=True, text=True, capture_output=True, timeout=10)
-                self.assertEqual([f"-Dspoiledmilk.desktopWorldStreaming={mode}"],
+                self.assertEqual(["-Dspoiledmilk.desktopWorldStreaming=true"],
                                  [arg for arg in result.stdout.splitlines() if "desktopWorldStreaming" in arg])
 
     def test_rejects_missing_world_loading_launcher(self):
