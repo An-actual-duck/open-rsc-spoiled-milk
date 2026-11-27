@@ -23,10 +23,10 @@ final class MinimapFrameLayout {
 		int limit = floating ? Math.min(gameHeight, anchor) : gameHeight;
 		if (left < chatRight) limit = Math.min(limit, chatEntryTop);
 		bottom = Math.min(top + size.pixels(420), limit - padding);
-		headerHeight = Math.max(size.pixels(38), labelLine + padding);
+		headerHeight = size.pixels(SideToolbarLayout.HEADER_HEIGHT);
 		viewport = new MapViewport(left + padding, top + headerHeight + padding / 2,
 			left + width - padding, bottom - padding, size, text, labelLine);
-		int buttonSize = size.pixels(29);
+		int buttonSize = headerHeight - 2 * size.pixels(2);
 		expand = new Rectangle(left + width - padding - buttonSize, top + (headerHeight - buttonSize) / 2,
 			buttonSize, buttonSize);
 	}

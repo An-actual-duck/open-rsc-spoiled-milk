@@ -295,6 +295,9 @@ public final class NativeHdInterfaceFixture {
 		int anchor = bottomLauncher ? toolbar.top : toolbar.bottom();
 		AbilityPanelLayout panel = new AbilityPanelLayout(width, anchor, bottomLauncher, chatRight, chat.entryTop(),
 			size, text, chat.lineHeight, chat.tabsHeight - size.pixels(8), size.pixels(112));
+		check(panel.headerHeight == toolbar.headerHeight && panel.toggleTop() >= panel.top
+			&& panel.toggleTop() + panel.toggleHeight() <= panel.top + panel.headerHeight,
+			"Ability controls fit the shared compact header");
 		check(panel.onToggle(panel.toggleLeft, panel.toggleTop()), "First visible toggle pixel is clickable");
 		check(!panel.onToggle(panel.toggleLeft, panel.toggleTop() + panel.toggleHeight()), "Toggle stops at its border");
 		for (boolean textMode : new boolean[] {false, true}) {
@@ -327,6 +330,7 @@ public final class NativeHdInterfaceFixture {
 				size, text, clans, chat.lineHeight, chat.tabsHeight - size.pixels(8),
 				label -> label.length() * (text == GameInterfaceSettings.TextSize.EXTRA_LARGE ? 12 : 8));
 			check(panel.left >= 0 && panel.right <= width, "Social panel fits the screen");
+			check(panel.tabLabel(SocialPanelLayout.ONLINE).equals("All Online"), "Online tab uses its shorter label");
 			if (panel.left < chatRight) check(panel.bottom <= chat.entryTop(), "Social panel fits above chat");
 			if (bottomLauncher) check(panel.bottom < anchor, "Social panel fits above the lower toolbar");
 			for (int tab = SocialPanelLayout.FRIENDS; tab <= SocialPanelLayout.ONLINE; tab++) {
@@ -519,7 +523,9 @@ public final class NativeHdInterfaceFixture {
 		check(frame.top == (floating ? frame.padding : toolbar.bottom()), "Map frame follows its existing anchor");
 		check(frame.viewport.top > frame.top + frame.headerHeight, "Map viewport sits below the header");
 		check(frame.contains(frame.expand.x, frame.expand.y), "Fullscreen button fits in the minimap");
-		check(frame.expand.y + frame.expand.height <= frame.viewport.top, "Expand button stays out of click-to-walk");
+		check(frame.headerHeight == toolbar.headerHeight && frame.expand.y >= frame.top
+			&& frame.expand.y + frame.expand.height <= frame.top + frame.headerHeight,
+			"Map expand button fits the shared compact header");
 		check(frame.viewport.bottom > frame.viewport.top && frame.viewport.bottom == frame.bottom - frame.padding,
 			"Map fills the frame down to its bottom padding");
 		check(frame.viewport.contains(frame.viewport.left, frame.viewport.top), "Visible map corner accepts navigation");

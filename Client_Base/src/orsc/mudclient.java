@@ -15017,6 +15017,12 @@ public final class mudclient implements Runnable {
 				color = 0x64444B;
 			}
 			surface.drawBoxAlpha(x, y, layout.cellWidth - 1, layout.cellHeight - 1, color, 204);
+			if (slot % InventoryEquipmentLayout.COLUMNS < InventoryEquipmentLayout.COLUMNS - 1 && slot + 1 < m_cl) {
+				surface.drawLineVert(x + layout.cellWidth - 1, y, 0x000000, layout.cellHeight);
+			}
+			if (slot + InventoryEquipmentLayout.COLUMNS < m_cl) {
+				surface.drawLineHoriz(x, y + layout.cellHeight - 1, layout.cellWidth, 0x000000);
+			}
 			if (occupied) {
 				Item item = getInventoryItem(slot);
 				ItemDef def = item.getNoted() ? ItemDef.asNote(item.getItemDef()) : item.getItemDef();
@@ -16368,9 +16374,10 @@ public final class mudclient implements Runnable {
 		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
 		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
 		drawSidebarTitle(book.title, layout.left, layout.top, width, layout.headerHeight);
+		int toggleFont = sidebarHeaderFont(layout.toggleHeight());
 		drawInterfacePreviewTab(layout.toggleLeft, layout.toggleTop(), layout.right - layout.padding - layout.toggleLeft,
-			layout.toggleHeight(), text ? "Icon view" : "Text view", layout.labelFont,
-			layout.top + (layout.headerHeight + layout.labelHeight) / 2 - 3, false, toggleHovered);
+			layout.toggleHeight(), text ? "Icon view" : "Text view", toggleFont,
+			layout.toggleTop() + (layout.toggleHeight() + surface.fontHeight(toggleFont)) / 2 - 3, false, toggleHovered);
 
 		int bookIndex = book.ordinal();
 		int count = abilityCount(book);
@@ -18200,13 +18207,14 @@ public final class mudclient implements Runnable {
 		surface.drawBoxAlpha(frame.left, frame.top, frame.width, frame.bottom - frame.top, InterfacePalette.PANEL, 244);
 		surface.drawBoxBorder(frame.left, frame.width, frame.top, frame.bottom - frame.top, InterfacePalette.BORDER);
 		drawSidebarTitle("Minimap", frame.left, frame.top, frame.width, frame.headerHeight);
-		int baseline = frame.top + (frame.headerHeight + viewport.labelLine) / 2 - 3;
 		boolean expandHovered = frame.expand.contains(mouseX, mouseY);
 		WorldMapWindow.drawControl(surface, frame.expand, acceptInput && expandHovered, false);
 		if (acceptInput && expandHovered) {
 			String label = "Open world map";
-			int labelX = frame.expand.x - frame.padding - surface.stringWidth(viewport.labelFont, label);
-			surface.drawString(label, labelX, baseline, InterfacePalette.TEXT, viewport.labelFont);
+			int font = sidebarHeaderFont(frame.headerHeight);
+			int baseline = frame.top + (frame.headerHeight + surface.fontHeight(font)) / 2 - 3;
+			int labelX = frame.expand.x - frame.padding - surface.stringWidth(font, label);
+			surface.drawString(label, labelX, baseline, InterfacePalette.TEXT, font);
 		}
 		if (localPlayer == null) return;
 		int tileX = Math.floorDiv(localPlayer.currentX, tileSize);
@@ -24660,15 +24668,20 @@ public final class mudclient implements Runnable {
 
 	private void drawSidebarTitle(String title, int x, int y, int width, int height) {
 		MudClientGraphics surface = getSurface();
-		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
-		int preferredFont = GameInterfaceSettings.textSize().labelFont;
-		int textHeight = Math.min(height - 2, size.pixels(surface.fontHeight(preferredFont)));
-		int font = 7;
-		while (font > 0 && surface.fontHeight(font) > textHeight) font--;
-		int padding = size.pixels(8);
+		int font = sidebarHeaderFont(height);
+		int padding = GameInterfaceSettings.size().pixels(8);
 		surface.drawVerticalGradient(x, y, width, height, 0x961D1C, 0x691513);
 		surface.drawBoxBorder(x, width, y, height, 0xB34A42);
 		surface.drawString(title, x + padding, y + (height + surface.fontHeight(font)) / 2 - 3, 0xFFFFFF, font);
+	}
+
+	private int sidebarHeaderFont(int height) {
+		MudClientGraphics surface = getSurface();
+		int preferredFont = GameInterfaceSettings.textSize().labelFont;
+		int textHeight = Math.min(height - 2, GameInterfaceSettings.size().pixels(surface.fontHeight(preferredFont)));
+		int font = 7;
+		while (font > 0 && surface.fontHeight(font) > textHeight) font--;
+		return font;
 	}
 
 	private boolean handlePreviewToolbar(SideToolbarLayout toolbar) {

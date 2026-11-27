@@ -9,6 +9,7 @@ final class SideToolbarLayout {
 	};
 	static final int BUTTON_COUNT = TABS.length;
 	static final int ICON_SIZE = 32;
+	static final int HEADER_HEIGHT = 23;
 	final int left;
 	final int top;
 	final int buttonSize;
@@ -36,7 +37,7 @@ final class SideToolbarLayout {
 		int baseIcon = bottomLauncher ? ICON_SIZE : 40;
 		buttonSize = Math.min(maxSize, size.pixels(baseButton));
 		iconSize = Math.max(1, Math.min(buttonSize - size.pixels(4), size.pixels(baseIcon)));
-		headerHeight = size.pixels(23);
+		headerHeight = size.pixels(HEADER_HEIGHT);
 		width = buttonSize * BUTTON_COUNT;
 		right = surfaceWidth - size.pixels(3);
 		left = right - width;

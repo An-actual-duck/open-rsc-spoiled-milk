@@ -8,7 +8,7 @@ final class SocialPanelLayout {
 	static final int CLAN = 1;
 	static final int PARTY = 2;
 	static final int ONLINE = 3;
-	private static final String[] LABELS = {"Friends", "Clan", "Party", "Display Online"};
+	private static final String[] LABELS = {"Friends", "Clan", "Party", "All Online"};
 
 	final int left;
 	final int right;

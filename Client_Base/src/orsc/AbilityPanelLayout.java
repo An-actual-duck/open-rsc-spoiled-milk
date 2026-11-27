@@ -21,6 +21,7 @@ final class AbilityPanelLayout {
 	final int toggleLeft;
 	private final int gap;
 	private final int gridLeft;
+	private final int headerInset;
 
 	AbilityPanelLayout(int surfaceWidth, int anchor, boolean bottomLauncher, int chatRight, int chatTop,
 					   GameInterfaceSettings.Size size, GameInterfaceSettings.TextSize text, int lineHeight,
@@ -33,7 +34,8 @@ final class AbilityPanelLayout {
 		this.labelHeight = labelHeight;
 		iconSize = size.pixels(43);
 		scrollWidth = size.pixels(14);
-		headerHeight = Math.max(size.pixels(38), labelHeight + 2 * padding);
+		headerHeight = size.pixels(SideToolbarLayout.HEADER_HEIGHT);
+		headerInset = size.pixels(2);
 		right = surfaceWidth - size.pixels(6);
 		int width = Math.min(surfaceWidth - 2 * padding, Math.max(size.pixels(420), toggleWidth * 3 + 3 * padding));
 		left = right - width;
@@ -58,11 +60,11 @@ final class AbilityPanelLayout {
 	}
 
 	int toggleTop() {
-		return top + gap;
+		return top + headerInset;
 	}
 
 	int toggleHeight() {
-		return headerHeight - 2 * gap;
+		return headerHeight - 2 * headerInset;
 	}
 
 	boolean onToggle(int x, int y) {
