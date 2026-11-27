@@ -19,7 +19,7 @@ final class LeatherGuideTopics {
 		SkillGuideTopics.page(topics, "Making armor",
 			new SkillGuideWindow.Article("From hide to armor", Arrays.asList(
 				"Take raw hides or carapaces to a tanning rack. Use a needle on the treated material with thread in your inventory to open the crafting window. Each piece shows its material cost before you make it.",
-				"Leather armor shares its source creature's defensive strengths and weaknesses. Wearing leather lowers your Magic Power. Examine a piece to check its set trait.")));
+				"Leather armor shares its source creature's defensive strengths and weaknesses. Wearing leather lowers your Magic Power. Open Set bonuses to compare the full sets.")));
 
 		List<SkillGuideWindow.Article> bonuses = new ArrayList<>();
 		bonuses.add(new SkillGuideWindow.Article("Wearing a full set", Collections.singletonList(
