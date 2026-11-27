@@ -428,7 +428,7 @@ final class RendererSettingsPanel {
 	}
 
 	private static void addInterfaceSizingOptions(List<Row> rows) {
-		addRow(rows, "@whi@UI size - @gre@" + GameInterfaceSettings.size().percent + "%", ACTION_INTERFACE_SIZE);
+		addRow(rows, "@whi@UI size - @gre@" + GameInterfaceSettings.sizeLabel(), ACTION_INTERFACE_SIZE);
 		addRow(rows, "@whi@Text size - @gre@" + GameInterfaceSettings.textSize().label, ACTION_INTERFACE_TEXT_SIZE);
 	}
 

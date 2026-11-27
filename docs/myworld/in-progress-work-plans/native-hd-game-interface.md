@@ -167,11 +167,15 @@ interruption behavior.
 
 ## Toolbar preview
 
-The toolbar shares its draw and input bounds. UI size controls the button
-dimensions and spacing. Each button centers the installed icon at its original
-size. The red Satchel caption is part of the installed menu artwork. The
-preview places that caption strip below the toolbar with its original lettering
-and colours. The minimap slot opens the top-right map pane.
+The toolbar draws as a connected strip with one divider between adjacent
+buttons. UI size controls the button and icon dimensions. Sidebar titles such
+as Satchel use white text on a red bar aligned to the panel. The ability books
+and minimap use the same heading style with their existing header controls.
+
+Settings → Graphics → UI size cycles through 1x, 1.5x, and 2x. The 1080p
+interface uses the selected size. Smaller render surfaces fit the larger
+presets at 1.25x and keep the saved preference for 1080p. Text size is a
+separate setting.
 
 ## Minimap and fullscreen world map
 

@@ -9,15 +9,13 @@ final class SideToolbarLayout {
 	};
 	static final int BUTTON_COUNT = TABS.length;
 	static final int ICON_SIZE = 32;
-	static final int BANNER_HEIGHT = 10;
 	final int left;
 	final int top;
 	final int buttonSize;
 	final int iconSize;
-	final int gap;
+	final int headerHeight;
 	final int width;
 	final int right;
-	private final int pitch;
 	private final int surfaceWidth;
 	private final int gameHeight;
 	private final boolean bottomLauncher;
@@ -33,18 +31,18 @@ final class SideToolbarLayout {
 		this.size = size;
 		this.chatRight = chatRight;
 		this.chatEntryTop = chatEntryTop;
-		gap = size.pixels(3);
-		int maxSize = (surfaceWidth - size.pixels(6) - gap * (BUTTON_COUNT - 1)) / BUTTON_COUNT;
-		int baseSize = Math.max(ICON_SIZE + 4, size.pixels(42));
-		buttonSize = Math.min(maxSize, bottomLauncher ? baseSize : (baseSize * 5 + 2) / 4);
-		iconSize = Math.max(1, Math.min(buttonSize - 4, bottomLauncher ? ICON_SIZE : ICON_SIZE * 5 / 4));
-		pitch = buttonSize + gap;
-		width = pitch * BUTTON_COUNT - gap;
+		int maxSize = (surfaceWidth - size.pixels(6)) / BUTTON_COUNT;
+		int baseButton = bottomLauncher ? 42 : 53;
+		int baseIcon = bottomLauncher ? ICON_SIZE : 40;
+		buttonSize = Math.min(maxSize, size.pixels(baseButton));
+		iconSize = Math.max(1, Math.min(buttonSize - size.pixels(4), size.pixels(baseIcon)));
+		headerHeight = size.pixels(23);
+		width = buttonSize * BUTTON_COUNT;
 		right = surfaceWidth - size.pixels(3);
 		left = right - width;
 		int bottom = gameHeight - 10;
 		if (bottomLauncher && left < chatRight) {
-			bottom = Math.min(bottom, chatEntryTop - gap);
+			bottom = Math.min(bottom, chatEntryTop - size.pixels(3));
 		}
 		top = bottomLauncher ? bottom - buttonSize : 3;
 	}
@@ -67,7 +65,7 @@ final class SideToolbarLayout {
 	}
 
 	int leftOf(int index) {
-		return left + index * pitch;
+		return left + index * buttonSize;
 	}
 
 	int bottom() {
@@ -75,7 +73,7 @@ final class SideToolbarLayout {
 	}
 
 	int panelTop() {
-		return bottom() + BANNER_HEIGHT + 1;
+		return bottom() + headerHeight;
 	}
 
 	boolean contains(int x, int y) {
@@ -83,8 +81,6 @@ final class SideToolbarLayout {
 	}
 
 	int buttonAt(int x, int y) {
-		if (!contains(x, y)) return -1;
-		int distance = x - left;
-		return distance % pitch < buttonSize ? distance / pitch : -1;
+		return contains(x, y) ? (x - left) / buttonSize : -1;
 	}
 }

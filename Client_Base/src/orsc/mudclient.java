@@ -14963,7 +14963,7 @@ public final class mudclient implements Runnable {
 	private void drawInventoryEquipmentPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
 		MudClientGraphics surface = getSurface();
 		if (!C_CUSTOM_UI) {
-			drawAuthenticSidebarHeader(GUIPARTS.BAGTAB, Config.INVENTORY_TAB, layout.left + layout.width);
+			drawToolbarPanelTitle("Satchel", layout.left, layout.width);
 		}
 		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom() - layout.top, InterfacePalette.PANEL, 225);
 		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom() - layout.top, InterfacePalette.BORDER);
@@ -15501,6 +15501,7 @@ public final class mudclient implements Runnable {
 		}
 		int tab = panelSocialTab;
 		int width = layout.right - layout.left;
+		if (!C_CUSTOM_UI) drawToolbarPanelTitle("Social", layout.left, width);
 		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
 		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
 		for (int index = SocialPanelLayout.FRIENDS; index <= SocialPanelLayout.ONLINE; index++) {
@@ -15905,7 +15906,7 @@ public final class mudclient implements Runnable {
 			int var3 = this.getSurface().width2 - 199;
 			int var4 = getAuthenticSidebarPanelTop();
 			if (!C_CUSTOM_UI)
-				drawAuthenticSidebarHeader(GUIPARTS.MENUSOCIAL, Config.FRIENDS_TAB, var3 + 196);
+				drawAuthenticSidebarHeader(GUIPARTS.MENUSOCIAL, "Social", var3, 196);
 			if (C_CUSTOM_UI)
 				var4 = maxY - 182;
 			short var5 = 196;
@@ -16324,7 +16325,8 @@ public final class mudclient implements Runnable {
 		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
 		MudClientGraphics surface = getSurface();
 		int width = surface.width2;
-		int anchor = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		int anchor = C_CUSTOM_UI || toolbar == null ? getUITabsY() : toolbar.bottom();
 		int chatRight = chatLayout.left + chatLayout.width;
 		int chatTop = chatLayout.entryTop();
 		if (abilityPanelLayout == null || abilityLayoutWidth != width || abilityLayoutAnchor != anchor
@@ -16364,8 +16366,7 @@ public final class mudclient implements Runnable {
 		int width = layout.right - layout.left;
 		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
 		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
-		surface.drawString(book.title, layout.left + layout.padding,
-			layout.top + (layout.headerHeight + layout.labelHeight) / 2 - 3, 0xFFDC82, layout.labelFont);
+		drawSidebarTitle(book.title, layout.left, layout.top, width, layout.headerHeight);
 		drawInterfacePreviewTab(layout.toggleLeft, layout.toggleTop(), layout.right - layout.padding - layout.toggleLeft,
 			layout.toggleHeight(), text ? "Icon view" : "Text view", layout.labelFont,
 			layout.top + (layout.headerHeight + layout.labelHeight) / 2 - 3, false, toggleHovered);
@@ -16665,7 +16666,7 @@ public final class mudclient implements Runnable {
 			int magicPanelYStart = getAbilitiesPanelTop();
 			int magicPanelHeight = getAbilitiesPanelHeight();
 			if (!C_CUSTOM_UI)
-				drawAuthenticSidebarHeader(GUIPARTS.MENUSPELLS, Config.MAGIC_AND_PRAYER_TAB, magicPanelX + 196);
+				drawAuthenticSidebarHeader(GUIPARTS.MENUSPELLS, "Magic and Prayer", magicPanelX, 196);
 			short magicPanelWidth = 196;
 			int inactiveTabColor = GenUtil.buildColor(160, 160, 160);
 			int activeTabColor = GenUtil.buildColor(220, 220, 220);
@@ -18162,7 +18163,7 @@ public final class mudclient implements Runnable {
 		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
 		if (minimapFrame == null || minimapFrameToolbar != toolbar || minimapFrameText != text) {
 			MudClientGraphics surface = getSurface();
-			int anchor = C_CUSTOM_UI ? toolbar.top : toolbar.panelTop();
+			int anchor = C_CUSTOM_UI ? toolbar.top : toolbar.bottom();
 			minimapFrame = new MinimapFrameLayout(surface.width2, getGameHeight(), anchor, C_CUSTOM_UI,
 				chat.left + chat.width, chat.entryTop(), GameInterfaceSettings.size(), text,
 				surface.fontHeight(text.labelFont));
@@ -18177,12 +18178,9 @@ public final class mudclient implements Runnable {
 		if (frame.bottom <= frame.top || viewport.bottom <= viewport.top) return;
 		MudClientGraphics surface = getSurface();
 		surface.drawBoxAlpha(frame.left, frame.top, frame.width, frame.bottom - frame.top, InterfacePalette.PANEL, 244);
-		surface.drawVerticalGradient(frame.left, frame.top, frame.width, frame.headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
 		surface.drawBoxBorder(frame.left, frame.width, frame.top, frame.bottom - frame.top, InterfacePalette.BORDER);
-		int bodyTop = frame.top + frame.headerHeight;
-		surface.drawLineHoriz(frame.left + 1, bodyTop - 1, frame.width - 2, InterfacePalette.BORDER);
+		drawSidebarTitle("Minimap", frame.left, frame.top, frame.width, frame.headerHeight);
 		int baseline = frame.top + (frame.headerHeight + viewport.labelLine) / 2 - 3;
-		surface.drawString("Minimap", frame.left + frame.padding, baseline, 0xFFDC82, viewport.labelFont);
 		boolean expandHovered = frame.expand.contains(mouseX, mouseY);
 		WorldMapWindow.drawControl(surface, frame.expand, acceptInput && expandHovered, false);
 		if (acceptInput && expandHovered) {
@@ -18299,7 +18297,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawBox(posX - borderSize, posY - borderSize,
 					var4 + (borderSize * 2), var5 + (borderSize * 2), 0);
 			} else {
-				drawAuthenticSidebarHeader(GUIPARTS.MINIMAPTAB, Config.MINIMAP_AND_COMPASS_TAB, posX + MINIMAP_WIDTH);
+				drawAuthenticSidebarHeader(GUIPARTS.MINIMAPTAB, "Minimap", posX, MINIMAP_WIDTH);
 			}
 			this.getSurface().drawBox(posX, posY, var4, var5, 0);
 			this.getSurface().setClip(posX, var4 + posX, posY + var5, posY);
@@ -18834,6 +18832,7 @@ public final class mudclient implements Runnable {
 
 	private void drawSettingsPreview(SettingsPanelLayout layout, boolean acceptInput) {
 		MudClientGraphics surface = getSurface();
+		if (!C_CUSTOM_UI) drawToolbarPanelTitle("Settings", layout.left, layout.right - layout.left);
 		boolean canClick = acceptInput && !settingsTuningDrag.isActive();
 		int hoveredTab = canClick ? layout.tabAt(mouseX, mouseY) : -1;
 		if (hoveredTab >= 0 && mouseButtonClick == 1) {
@@ -19036,7 +19035,7 @@ public final class mudclient implements Runnable {
 		try {
 			int var3 = this.getSurface().width2 - 199;
 			if (!C_CUSTOM_UI)
-				drawAuthenticSidebarHeader(GUIPARTS.SETTINGSTAB, Config.OPTIONS_TAB, var3 + 196);
+				drawAuthenticSidebarHeader(GUIPARTS.SETTINGSTAB, "Settings", var3, 196);
 			int panelTop = getAuthenticSidebarPanelTop();
 			int var4 = panelTop + 25;
 			if (C_CUSTOM_UI)
@@ -20738,7 +20737,7 @@ public final class mudclient implements Runnable {
 
 	private void drawAccomplishmentsPreview(AccomplishmentsLayout layout, boolean acceptInput) {
 		MudClientGraphics surface = getSurface();
-		if (!C_CUSTOM_UI) drawAuthenticSidebarHeader(GUIPARTS.SKILLSTAB, Config.SKILLS_AND_QUESTS_TAB, layout.left + layout.width);
+		if (!C_CUSTOM_UI) drawToolbarPanelTitle("Accomplishments", layout.left, layout.width);
 		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
 		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
 
@@ -20948,7 +20947,7 @@ public final class mudclient implements Runnable {
 			int x = this.surface.width2 - 199;
 			int y = getAuthenticSidebarPanelTop();
 			if (!C_CUSTOM_UI)
-				drawAuthenticSidebarHeader(GUIPARTS.SKILLSTAB, Config.SKILLS_AND_QUESTS_TAB, x + 196);
+				drawAuthenticSidebarHeader(GUIPARTS.SKILLSTAB, "Accomplishments", x, 196);
 			if (C_CUSTOM_UI)
 				y = maxY - 287;
 			short width = 196;
@@ -24580,8 +24579,11 @@ public final class mudclient implements Runnable {
 			surface.drawVerticalGradient(x, toolbar.top, toolbar.buttonSize, toolbar.buttonSize,
 				selected ? InterfacePalette.CONTROL_SELECTED : InterfacePalette.CONTROL,
 				selected ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_LOW);
-			int border = hovered == index ? InterfacePalette.TEXT : selected ? 0xD2B873 : InterfacePalette.BORDER;
-			surface.drawBoxBorder(x, toolbar.buttonSize, toolbar.top, toolbar.buttonSize, border);
+			if (index > 0) surface.drawLineVert(x, toolbar.top, InterfacePalette.SEAM, toolbar.buttonSize);
+			if (selected || hovered == index) {
+				int border = hovered == index ? InterfacePalette.TEXT : 0xD2B873;
+				surface.drawBoxBorder(x + 1, toolbar.buttonSize - 2, toolbar.top + 1, toolbar.buttonSize - 2, border);
+			}
 			AbilityBook book = AbilityBook.forTab(tab);
 			if (book == null) {
 				Sprite icon = sideToolbarArtwork.icon(strip, Config.OPTIONS_TAB - tab);
@@ -24597,11 +24599,12 @@ public final class mudclient implements Runnable {
 				surface.drawLineHoriz(x + 3, toolbar.bottom() - 3, toolbar.buttonSize - 6, 0xD2B873);
 			}
 		}
+		surface.drawBoxBorder(toolbar.left, toolbar.width, toolbar.top, toolbar.buttonSize, InterfacePalette.BORDER);
 		if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
 			String count = inventoryItemCount + "/" + inventoryCapacity;
 			int color = (0x00FFFFFF << (inventoryItemCount / 15 * 8)) & 0x00FFFFFF;
 			int font = hudLabelFont();
-			int inset = Math.max(3, toolbar.gap);
+			int inset = GameInterfaceSettings.size().pixels(3);
 			int width = surface.stringWidth(font, count);
 			while (font > 1 && width > toolbar.buttonSize - 2 * inset) {
 				width = surface.stringWidth(--font, count);
@@ -24618,17 +24621,30 @@ public final class mudclient implements Runnable {
 		getSurface().drawBox(x, getUITabsY(), 32, 32, 0xFF0000);
 	}
 
-	private void drawAuthenticSidebarHeader(GUIPARTS part, int tab, int right) {
-		Sprite source = spriteSelect(part.getDef());
+	private void drawAuthenticSidebarHeader(GUIPARTS part, String label, int left, int width) {
+		if (sideToolbarLayout() == null) {
+			getSurface().drawSprite(spriteSelect(part.getDef()), getSurface().width2 - 248, 3);
+		} else {
+			drawToolbarPanelTitle(label, left, width);
+		}
+	}
+
+	private void drawToolbarPanelTitle(String title, int left, int width) {
 		SideToolbarLayout toolbar = sideToolbarLayout();
-		if (toolbar == null) {
-			getSurface().drawSprite(source, getSurface().width2 - 248, 3);
-			return;
-		}
-		Sprite banner = sideToolbarArtwork.banner(source, Config.OPTIONS_TAB - tab);
-		if (banner != null) {
-			getSurface().drawSprite(banner, right - banner.getWidth(), toolbar.bottom() + 1);
-		}
+		if (toolbar != null) drawSidebarTitle(title, left, toolbar.bottom(), width, toolbar.headerHeight);
+	}
+
+	private void drawSidebarTitle(String title, int x, int y, int width, int height) {
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		int preferredFont = GameInterfaceSettings.textSize().labelFont;
+		int textHeight = Math.min(height - 2, size.pixels(surface.fontHeight(preferredFont)));
+		int font = 7;
+		while (font > 0 && surface.fontHeight(font) > textHeight) font--;
+		int padding = size.pixels(8);
+		surface.drawVerticalGradient(x, y, width, height, 0x961D1C, 0x691513);
+		surface.drawBoxBorder(x, width, y, height, 0xB34A42);
+		surface.drawString(title, x + padding, y + (height + surface.fontHeight(font)) / 2 - 3, 0xFFFFFF, font);
 	}
 
 	private boolean handlePreviewToolbar(SideToolbarLayout toolbar) {

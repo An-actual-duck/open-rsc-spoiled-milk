@@ -14,7 +14,16 @@ public final class GameInterfaceSettings {
 	}
 
 	public static Size size() {
+		return size.fits(RenderSurfaceSettings.getHeight());
+	}
+
+	static Size sizePreference() {
 		return size;
+	}
+
+	static String sizeLabel() {
+		Size fitted = size();
+		return size.label + (fitted == size ? "" : " (fits at " + fitted.label + ")");
 	}
 
 	public static TextSize textSize() {
@@ -22,8 +31,18 @@ public final class GameInterfaceSettings {
 	}
 
 	static void cycleSize() {
-		Size[] choices = Size.values();
-		size = choices[(size.ordinal() + 1) % choices.length];
+		switch (size) {
+			case STANDARD:
+			case LARGE:
+				size = Size.EXTRA_LARGE;
+				break;
+			case EXTRA_LARGE:
+				size = Size.DOUBLE;
+				break;
+			default:
+				size = Size.STANDARD;
+				break;
+		}
 	}
 
 	static void cycleTextSize() {
@@ -52,16 +71,22 @@ public final class GameInterfaceSettings {
 	}
 
 	public enum Size {
-		COMPACT(75), STANDARD(100), LARGE(125), EXTRA_LARGE(150);
+		COMPACT(75, "0.75x"), STANDARD(100, "1x"), LARGE(125, "1.25x"), EXTRA_LARGE(150, "1.5x"), DOUBLE(200, "2x");
 
 		final int percent;
+		final String label;
 
-		Size(int percent) {
+		Size(int percent, String label) {
 			this.percent = percent;
+			this.label = label;
 		}
 
 		public int pixels(int baseline) {
 			return (baseline * percent + 50) / 100;
+		}
+
+		Size fits(int viewportHeight) {
+			return viewportHeight < 1080 && percent > LARGE.percent ? LARGE : this;
 		}
 	}
 

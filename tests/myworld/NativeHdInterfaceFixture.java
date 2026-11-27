@@ -25,37 +25,38 @@ public final class NativeHdInterfaceFixture {
 		verifySessionNoticeWrapping();
 		verifyMinimapLandmarks();
 		for (GameInterfaceSettings.Size size : GameInterfaceSettings.Size.values()) {
+			GameInterfaceSettings.Size fitted = size.fits(540);
 			for (GameInterfaceSettings.TextSize text : GameInterfaceSettings.TextSize.values()) {
 				verifyChatBounds(chat(1920, 1080, size, text), 1920);
-				verifyChatBounds(chat(960, 540, size, text), 960);
-				verifyChatBounds(chat(800, 600, size, text), 800);
+				verifyChatBounds(chat(960, 540, fitted, text), 960);
+				verifyChatBounds(chat(800, 600, fitted, text), 800);
 				verifyInventoryBounds(1920, 1080, size, text, false);
-				verifyInventoryBounds(960, 540, size, text, false);
-				verifyInventoryBounds(960, 540, size, text, true);
+				verifyInventoryBounds(960, 540, fitted, text, false);
+				verifyInventoryBounds(960, 540, fitted, text, true);
 				verifyToolbarBounds(1920, 1080, size, text, false);
-				verifyToolbarBounds(960, 540, size, text, false);
-				verifyToolbarBounds(960, 540, size, text, true);
+				verifyToolbarBounds(960, 540, fitted, text, false);
+				verifyToolbarBounds(960, 540, fitted, text, true);
 				verifyAccomplishmentsBounds(1920, 1080, size, text, false);
-				verifyAccomplishmentsBounds(960, 540, size, text, false);
-				verifyAccomplishmentsBounds(960, 540, size, text, true);
+				verifyAccomplishmentsBounds(960, 540, fitted, text, false);
+				verifyAccomplishmentsBounds(960, 540, fitted, text, true);
 				verifyAbilityBounds(1920, 1080, size, text, false);
-				verifyAbilityBounds(960, 540, size, text, false);
-				verifyAbilityBounds(960, 540, size, text, true);
+				verifyAbilityBounds(960, 540, fitted, text, false);
+				verifyAbilityBounds(960, 540, fitted, text, true);
 				verifySocialBounds(1920, 1080, size, text, false);
-				verifySocialBounds(960, 540, size, text, false);
-				verifySocialBounds(960, 540, size, text, true);
+				verifySocialBounds(960, 540, fitted, text, false);
+				verifySocialBounds(960, 540, fitted, text, true);
 				verifySettingsBounds(1920, 1080, size, text, false);
-				verifySettingsBounds(960, 540, size, text, false);
-				verifySettingsBounds(960, 540, size, text, true);
+				verifySettingsBounds(960, 540, fitted, text, false);
+				verifySettingsBounds(960, 540, fitted, text, true);
 				verifyContextMenu(1920, 1068, size, text);
-				verifyContextMenu(960, 528, size, text);
+				verifyContextMenu(960, 528, fitted, text);
 				verifyMinimapFrame(1920, 1080, size, text, false);
-				verifyMinimapFrame(960, 540, size, text, false);
-				verifyMinimapFrame(960, 540, size, text, true);
+				verifyMinimapFrame(960, 540, fitted, text, false);
+				verifyMinimapFrame(960, 540, fitted, text, true);
 				verifyWorldMapFrame(1920, 1080, size, text);
-				verifyWorldMapFrame(960, 540, size, text);
+				verifyWorldMapFrame(960, 540, fitted, text);
 				verifyBankPinLayout(1920, 1080, size, text);
-				verifyBankPinLayout(960, 540, size, text);
+				verifyBankPinLayout(960, 540, fitted, text);
 			}
 		}
 		System.out.println("PASS native HD interface preview=" + preview);
@@ -119,17 +120,24 @@ public final class NativeHdInterfaceFixture {
 		Properties settings = new Properties();
 		settings.setProperty(RenderSurfaceSettings.SURFACE_MODE_PROPERTY_KEY, "960x540");
 		GameInterfaceSettings.loadFromClientSettings(settings);
-		check(GameInterfaceSettings.size() == GameInterfaceSettings.Size.STANDARD, "Legacy UI size fallback");
+		check(GameInterfaceSettings.sizePreference() == GameInterfaceSettings.Size.STANDARD, "Legacy UI size fallback");
 		check(GameInterfaceSettings.textSize() == GameInterfaceSettings.TextSize.STANDARD, "Legacy font fallback");
 		RenderSurfaceSettings.Mode renderMode = RenderSurfaceSettings.getMode();
 		GameInterfaceSettings.cycleSize();
 		check(GameInterfaceSettings.textSize() == GameInterfaceSettings.TextSize.STANDARD, "UI size preserves text size");
 		GameInterfaceSettings.cycleTextSize();
-		check(GameInterfaceSettings.size() == GameInterfaceSettings.Size.LARGE, "Text size preserves UI size");
+		check(GameInterfaceSettings.sizePreference() == GameInterfaceSettings.Size.EXTRA_LARGE, "Text size preserves UI size");
+		GameInterfaceSettings.cycleSize();
+		check(GameInterfaceSettings.sizePreference() == GameInterfaceSettings.Size.DOUBLE, "2x follows 1.5x");
 		GameInterfaceSettings.saveToClientSettings(settings);
 		GameInterfaceSettings.loadFromClientSettings(new Properties());
 		GameInterfaceSettings.loadFromClientSettings(settings);
-		check(GameInterfaceSettings.size() == GameInterfaceSettings.Size.LARGE, "UI size reload");
+		check(GameInterfaceSettings.sizePreference() == GameInterfaceSettings.Size.DOUBLE, "2x reloads from settings");
+		check(GameInterfaceSettings.Size.DOUBLE.fits(540) == GameInterfaceSettings.Size.LARGE
+			&& GameInterfaceSettings.Size.DOUBLE.fits(1080) == GameInterfaceSettings.Size.DOUBLE,
+			"Large UI preferences fit small surfaces and scale fully at 1080p");
+		GameInterfaceSettings.cycleSize();
+		check(GameInterfaceSettings.sizePreference() == GameInterfaceSettings.Size.STANDARD, "2x cycles back to 1x");
 		check(GameInterfaceSettings.textSize() == GameInterfaceSettings.TextSize.EXTRA_LARGE, "Text size reload");
 		check("960x540".equals(settings.getProperty(RenderSurfaceSettings.SURFACE_MODE_PROPERTY_KEY))
 			&& RenderSurfaceSettings.getMode() == renderMode, "Sizing changes preserve framebuffer settings");
@@ -200,21 +208,21 @@ public final class NativeHdInterfaceFixture {
 			chat.left + chat.width, chat.entryTop());
 		check(toolbar.left >= 0 && toolbar.right < width && toolbar.top >= 0 && toolbar.bottom() < height,
 			"Toolbar fits the viewport");
-		int originalButtonSize = Math.max(SideToolbarLayout.ICON_SIZE + 4, size.pixels(42));
-		check(toolbar.buttonSize == (bottomLauncher ? originalButtonSize : (originalButtonSize * 5 + 2) / 4),
-			"Upper toolbar increases by one quarter at each UI scale");
-		check(toolbar.iconSize == (bottomLauncher ? 32 : 40) && toolbar.buttonSize >= toolbar.iconSize + 4,
-			"Classic artwork fits with padding");
+		int room = (width - size.pixels(6)) / SideToolbarLayout.BUTTON_COUNT;
+		check(toolbar.buttonSize == Math.min(room, size.pixels(bottomLauncher ? 42 : 53)),
+			"Connected buttons scale together and fit the viewport");
+		check(toolbar.iconSize == size.pixels(bottomLauncher ? 32 : 40)
+			&& toolbar.buttonSize >= toolbar.iconSize + size.pixels(4), "Artwork scales inside each button");
 		for (int index = 0; index < SideToolbarLayout.BUTTON_COUNT; index++) {
 			int x = toolbar.leftOf(index);
 			check(toolbar.buttonAt(x, toolbar.top) == index, "Button's visible leading edge " + index);
 			check(toolbar.buttonAt(x + toolbar.buttonSize - 1, toolbar.bottom() - 1) == index,
 				"Button's visible trailing edge " + index);
-			check(toolbar.buttonAt(x + toolbar.buttonSize, toolbar.top) == -1, "Gap after button " + index);
+			int next = index + 1 < SideToolbarLayout.BUTTON_COUNT ? index + 1 : -1;
+			check(toolbar.buttonAt(x + toolbar.buttonSize, toolbar.top) == next, "Adjacent buttons touch");
 		}
-		check(toolbar.buttonAt(toolbar.left, toolbar.bottom()) == -1, "Toolbar stops at its bottom edge");
-		check(toolbar.panelTop() - toolbar.bottom() == SideToolbarLayout.BANNER_HEIGHT + 1,
-			"Original header strip fits between toolbar and sidebar");
+		check(toolbar.buttonAt(toolbar.left, toolbar.bottom()) == -1, "Toolbar stops above sidebar title");
+		check(toolbar.panelTop() - toolbar.bottom() == size.pixels(23), "Sidebar title height scales");
 		if (bottomLauncher && toolbar.left < chat.left + chat.width) {
 			check(toolbar.bottom() < chat.entryTop(), "Lower toolbar fits above chat");
 		}
@@ -284,7 +292,7 @@ public final class NativeHdInterfaceFixture {
 		ChatPanelLayout chat = chat(width, height, size, text);
 		int chatRight = chat.left + chat.width;
 		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, bottomLauncher, size, chatRight, chat.entryTop());
-		int anchor = bottomLauncher ? toolbar.top : toolbar.panelTop();
+		int anchor = bottomLauncher ? toolbar.top : toolbar.bottom();
 		AbilityPanelLayout panel = new AbilityPanelLayout(width, anchor, bottomLauncher, chatRight, chat.entryTop(),
 			size, text, chat.lineHeight, chat.tabsHeight - size.pixels(8), size.pixels(112));
 		check(panel.onToggle(panel.toggleLeft, panel.toggleTop()), "First visible toggle pixel is clickable");
@@ -334,7 +342,7 @@ public final class NativeHdInterfaceFixture {
 			check(panel.tabAt(panel.left, panel.top + panel.tabHeight) == -1, "Social tabs end at the content");
 			int listTop = panel.listTop(SocialPanelLayout.CLAN, true);
 			int rows = panel.visibleRows(SocialPanelLayout.CLAN, listTop);
-			check(rows > 0, "Clan details leave room for members");
+			check(rows > 0, "Clan details leave room for members at " + width + "x" + height + " / " + size + " / " + text + " / bottom=" + bottomLauncher);
 			check(panel.rowAt(SocialPanelLayout.CLAN, panel.bodyLeft(), listTop + (rows - 1) * panel.rowHeight, listTop, 2, 100) == rows + 1,
 				"Social hit testing honors scroll and last full row");
 			check(panel.rowAt(SocialPanelLayout.CLAN, panel.scrollbarLeft(), listTop, listTop, 2, 100) == -1, "Scrollbar excludes row actions");
@@ -501,14 +509,14 @@ public final class NativeHdInterfaceFixture {
 		ChatPanelLayout chat = chat(width, height, size, text);
 		int chatRight = chat.left + chat.width;
 		SideToolbarLayout toolbar = new SideToolbarLayout(width, height - 12, floating, size, chatRight, chat.entryTop());
-		int anchor = floating ? toolbar.top : toolbar.panelTop();
+		int anchor = floating ? toolbar.top : toolbar.bottom();
 		int[] fontHeight = {12, 14, 14, 15, 15, 19, 24, 29};
 		MinimapFrameLayout frame = new MinimapFrameLayout(width, height - 12, anchor, floating, chatRight,
 			chat.entryTop(), size, text, fontHeight[text.labelFont]);
 		check(frame.left >= 0 && frame.left + frame.width < width, "Map frame fits the right edge");
 		check(frame.width >= size.pixels(400), "Map frame is comparable in width to the other sidebar panels");
 		check(frame.viewport.pixelsPerTile == size.pixels(6), "Map zoom follows the UI size");
-		check(frame.top == (floating ? frame.padding : toolbar.panelTop()), "Map frame follows its existing anchor");
+		check(frame.top == (floating ? frame.padding : toolbar.bottom()), "Map frame follows its existing anchor");
 		check(frame.viewport.top > frame.top + frame.headerHeight, "Map viewport sits below the header");
 		check(frame.contains(frame.expand.x, frame.expand.y), "Fullscreen button fits in the minimap");
 		check(frame.expand.y + frame.expand.height <= frame.viewport.top, "Expand button stays out of click-to-walk");
