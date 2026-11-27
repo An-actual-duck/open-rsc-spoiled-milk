@@ -46,7 +46,8 @@ final class AbilityPanelLayout {
 		bottom = top + height;
 		rowHeight = lineHeight + padding;
 		firstRowY = top + headerHeight + padding;
-		int detailHeight = Math.min(Math.max(size.pixels(126), 5 * lineHeight + padding),
+		int fourDetailLines = 4 * lineHeight + labelHeight + padding + 5;
+		int detailHeight = Math.min(Math.max(size.pixels(126), fourDetailLines),
 			(bottom - firstRowY) * 9 / 20);
 		lastRowY = Math.max(firstRowY + Math.max(iconSize + gap, rowHeight), bottom - detailHeight);
 		toggleLeft = right - padding - toggleWidth;

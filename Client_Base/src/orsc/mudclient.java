@@ -81,6 +81,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16564,92 +16565,159 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private static final String ABILITY_COST_LABEL = "Cost:";
+
 	private void drawAbilityDetails(AbilityPanelLayout layout, AbilityBook book, int id, int prayerFree) {
 		MudClientGraphics surface = getSurface();
-		String requirement;
-		String description;
-		StringJoiner costs = new StringJoiner(", ");
+		int x = layout.left + layout.padding;
+		int contentRight = layout.right - layout.padding - layout.scrollWidth;
+		int width = contentRight - x;
+		ToIntFunction<String> measure = text -> surface.stringWidth(layout.bodyFont, text);
+		List<String> lines = new ArrayList<>();
+		List<AbilityCost> costs = new ArrayList<>();
 		int required = abilityRequirement(book, id);
 		switch (book) {
 			case MAGE:
 				SpellDef spell = EntityHandler.getSpellDef(id);
-				requirement = "Magic level " + required;
-				description = getBriefSpellDescription(spell, ElementalSpellDisplayMetadata.resolve(id, spell));
-				for (Entry<Integer, Integer> reagent : spell.getRunesRequired()) {
-					addAbilityCost(costs, reagent.getKey(), reagent.getValue(), null);
+				ElementalSpellDisplayMetadata metadata = ElementalSpellDisplayMetadata.resolve(id, spell);
+				lines.add("Magic level " + required);
+				if (metadata != null) {
+					lines.add("Max hit " + getElementalSpellMaxHit(metadata));
+					lines.addAll(ClericTextLayout.wrap("Applies " + metadata.getEffectName(), width, measure));
+				} else {
+					lines.addAll(ClericTextLayout.wrap(getGeneralSpellDescription(spell), width, measure));
 				}
+				for (Entry<Integer, Integer> reagent : spell.getRunesRequired()) {
+					costs.add(abilityCost(reagent.getKey(), reagent.getValue(), null));
+				}
+				costs.sort(Comparator.comparingInt(cost -> cost.itemId));
 				break;
 			case CLERIC:
 				ClericSpellDef cleric = clericSpellbook.get(id);
-				requirement = "Worship level " + required
-					+ (clericHolyPowerKnown ? "   Holy power: " + playerStatEquipment[7] : "");
-				description = ClericSpellSummary.describe(cleric);
+				String requirement = "Worship level " + required
+					+ (clericHolyPowerKnown ? "   Holy Power " + playerStatEquipment[7] : "");
+				lines.addAll(ClericTextLayout.wrap(requirement, width, measure));
+				lines.addAll(ClericTextLayout.wrap(ClericSpellSummary.describe(cleric), width, measure));
 				for (ClericCostDef cost : cleric.getCosts()) {
-					addAbilityCost(costs, cost.getItemId(), cost.getCount(), false);
+					costs.add(abilityCost(cost.getItemId(), cost.getCount(), false));
 				}
 				break;
 			case PRAYER:
 				PrayerDef prayer = EntityHandler.getPrayerDef(id);
-				requirement = "Reserves " + required + " points. " + prayerFree + "/" + getPrayerAllocationPoints() + " free.";
-				description = prayer.getDescription();
+				String description = prayer.getDescription();
 				String baseCost = "Reserve " + prayer.getPointCost() + " prayer points. ";
-				if (description != null && description.startsWith(baseCost)) {
-					description = description.substring(baseCost.length());
+				if (description != null) {
+					if (description.startsWith(baseCost)) {
+						description = description.substring(baseCost.length());
+					}
+					lines.addAll(ClericTextLayout.wrap(description, width, measure));
 				}
+				String reservation = ABILITY_COST_LABEL + " " + required + " Prayer "
+					+ (required == 1 ? "point" : "points") + " reserved (" + prayerFree + "/" + getPrayerAllocationPoints() + " free)";
+				lines.addAll(ClericTextLayout.wrap(reservation, width, measure));
 				break;
 			case SUMMONING:
-				requirement = "Summoning level " + required;
-				description = SUMMONING_DESCRIPTIONS[id];
+				lines.addAll(ClericTextLayout.wrap("Summoning level " + required, width, measure));
+				lines.addAll(ClericTextLayout.wrap(SUMMONING_DESCRIPTIONS[id], width, measure));
 				for (int item = 0; item < SUMMONING_COST_ITEM_IDS[id].length; item++) {
-					addAbilityCost(costs, SUMMONING_COST_ITEM_IDS[id][item], SUMMONING_COST_AMOUNTS[id][item], false);
+					costs.add(abilityCost(SUMMONING_COST_ITEM_IDS[id][item], SUMMONING_COST_AMOUNTS[id][item], false));
 				}
 				break;
 			default: throw new AssertionError(book);
 		}
-		int x = layout.left + layout.padding;
-		int contentRight = layout.right - layout.padding - layout.scrollWidth;
-		int width = contentRight - x;
+
 		int titleY = layout.lastRowY + layout.labelHeight + layout.padding;
 		int contentTop = titleY + 3;
 		surface.drawLineHoriz(x, layout.lastRowY + 2, layout.right - layout.padding - x, InterfacePalette.BORDER);
 		surface.drawString(abilityName(book, id), x, titleY - 3, 0xFFDC82, layout.labelFont);
 
-		java.util.List<String> lines = new java.util.ArrayList<>();
-		lines.addAll(ClericTextLayout.wrap(requirement, width, text -> surface.stringWidth(layout.bodyFont, text)));
-		if (costs.length() > 0) {
-			lines.addAll(ClericTextLayout.wrap(costs.toString(), width, text -> surface.stringWidth(layout.bodyFont, text)));
-		}
-		if (description != null) {
-			lines.addAll(ClericTextLayout.wrap(description, width, text -> surface.stringWidth(layout.bodyFont, text)));
-		}
-
+		int iconHeight = Math.max(1, layout.lineHeight - 2);
+		int iconWidth = iconHeight * 3 / 2;
+		int gap = Math.max(2, layout.padding / 2);
+		int costStart = lines.size();
+		int totalLines = costStart + positionAbilityCosts(costs, width, iconWidth, gap, measure);
 		int bookIndex = book.ordinal();
 		int height = layout.bottom - contentTop - 2;
 		int visible = Math.max(1, height / layout.lineHeight);
-		int max = Math.max(0, lines.size() - visible);
+		int max = Math.max(0, totalLines - visible);
 		int scroll = Math.max(0, Math.min(max, abilityDetailScroll[bookIndex] + abilityDetailWheel.getAndSet(bookIndex, 0)));
 		abilityDetailScroll[bookIndex] = scroll;
 		surface.setClip(x, contentRight, layout.bottom - 2, contentTop);
 		try {
-			for (int index = scroll; index < Math.min(lines.size(), scroll + visible); index++) {
-				surface.drawString(lines.get(index), x, contentTop + (index - scroll + 1) * layout.lineHeight - 3,
-					0xFFFFFF, layout.bodyFont);
+			for (int index = scroll; index < Math.min(costStart, scroll + visible); index++) {
+				int baseline = contentTop + (index - scroll + 1) * layout.lineHeight - 3;
+				surface.drawString(lines.get(index), x, baseline, 0xFFFFFF, layout.bodyFont);
+			}
+			if (!costs.isEmpty() && costStart >= scroll && costStart < scroll + visible) {
+				int baseline = contentTop + (costStart - scroll + 1) * layout.lineHeight - 3;
+				surface.drawString(ABILITY_COST_LABEL, x, baseline, 0xFFFFFF, layout.bodyFont);
+			}
+			for (AbilityCost cost : costs) {
+				int row = costStart + cost.row - scroll;
+				if (row < 0 || row >= visible) continue;
+				int y = contentTop + row * layout.lineHeight;
+				int baseline = y + layout.lineHeight - 3;
+				int costX = x + cost.offset;
+				if (cost.definition == null) {
+					surface.drawString(cost.fallbackName, costX, baseline, 0xFFFFFF, layout.bodyFont);
+				} else {
+					drawInventoryPreviewIcon(cost.definition, false, costX, y, iconWidth, iconHeight);
+				}
+				surface.drawString(cost.quantity, costX + cost.iconSpace, baseline, cost.color, layout.bodyFont);
 			}
 		} finally {
 			surface.clearClip();
 		}
 		if (max > 0 && height > 0) {
-			int thumb = Math.max(8, height * visible / lines.size());
+			int thumb = Math.min(height, Math.max(8, height * visible / totalLines));
 			int thumbY = contentTop + (height - thumb) * scroll / max;
 			surface.drawBox(contentRight + 2, contentTop, layout.scrollWidth - 3, height, InterfacePalette.SCROLL_TRACK);
 			surface.drawBox(contentRight + 3, thumbY, layout.scrollWidth - 5, thumb, InterfacePalette.SCROLL_THUMB);
 		}
 	}
 
-	private void addAbilityCost(StringJoiner costs, int id, int required, Boolean noted) {
-		int available = getInventoryCount(id, noted);
-		ItemDef item = EntityHandler.getItemDef(id);
-		costs.add(item.getName() + " " + (available >= required ? "@gre@" : "@red@") + available + "/" + required + "@whi@");
+	private static int positionAbilityCosts(List<AbilityCost> costs, int width, int iconWidth, int gap,
+											ToIntFunction<String> measure) {
+		if (costs.isEmpty()) return 0;
+		int row = 0;
+		int offset = measure.applyAsInt(ABILITY_COST_LABEL) + gap;
+		for (AbilityCost cost : costs) {
+			cost.iconSpace = cost.definition == null
+				? measure.applyAsInt(cost.fallbackName) + gap
+				: iconWidth;
+			int pairWidth = cost.iconSpace + measure.applyAsInt(cost.quantity);
+			if (offset > 0 && offset + pairWidth > width) {
+				row++;
+				offset = 0;
+			}
+			cost.row = row;
+			cost.offset = offset;
+			offset += pairWidth + 2 * gap;
+		}
+		return row + 1;
+	}
+
+	private AbilityCost abilityCost(int id, int required, Boolean noted) {
+		return new AbilityCost(id, EntityHandler.getItemDef(id), getInventoryCount(id, noted), required);
+	}
+
+	private static final class AbilityCost {
+		final int itemId;
+		final ItemDef definition;
+		final String fallbackName;
+		final String quantity;
+		final int color;
+		int row;
+		int offset;
+		int iconSpace;
+
+		AbilityCost(int itemId, ItemDef definition, int available, int required) {
+			this.itemId = itemId;
+			this.definition = definition;
+			this.fallbackName = definition == null ? "Item " + itemId : "";
+			this.quantity = available + "/" + required;
+			this.color = available >= required ? 0x00FF00 : 0xFF0000;
+		}
 	}
 
 	// spells menu
@@ -17832,6 +17900,10 @@ public final class mudclient implements Runnable {
 			return "Max hit: " + this.getElementalSpellMaxHit(metadata) + ". Applies "
 				+ metadata.getEffectName() + ".";
 		}
+		return this.shortenTooltipDescription(getGeneralSpellDescription(spellDef));
+	}
+
+	private String getGeneralSpellDescription(SpellDef spellDef) {
 		String name = spellDef.getName().toLowerCase(Locale.ENGLISH);
 		if (name.contains("teleport")) {
 			return "Teleports you after a short charge.";
@@ -17842,7 +17914,7 @@ public final class mudclient implements Runnable {
 		if (name.contains("alchemy")) {
 			return "Turns items into coins.";
 		}
-		return this.shortenTooltipDescription(spellDef.getDescription());
+		return spellDef.getDescription() == null ? "" : spellDef.getDescription();
 	}
 
 	private int getElementalSpellMaxHit(ElementalSpellDisplayMetadata metadata) {
