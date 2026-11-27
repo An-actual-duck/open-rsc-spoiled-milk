@@ -16,8 +16,8 @@ const STREAMING_PROPERTIES=Object.freeze([
   'browserResidentCameraCull','browserKeepRebasedModels','browserSkipEmptyModelRemovals','browserIntegerCameraBounds'
 ].map(name=>'spoiledmilk.'+name+'=true').concat(
   'spoiledmilk.browserWholeZone=false','spoiledmilk.browserWholeRam=false'));
-export function resolveBrowserDeployment(config,location,mode='chunks'){
-  if(mode!=='chunks'&&mode!=='streaming')throw new Error('Unknown world loading mode.');
+export function resolveBrowserDeployment(config,location,mode=null){
+  if(mode!==null&&mode!=='chunks'&&mode!=='streaming')throw new Error('Unknown world loading mode.');
   if(config===null){
     if(location.origin===PUBLIC_ORIGIN)throw new Error('This browser build is not configured for this site. Please refresh or use the downloadable client.');
     const options=new URLSearchParams(location.search);
@@ -26,16 +26,20 @@ export function resolveBrowserDeployment(config,location,mode='chunks'){
     if(mode==='streaming')return {publicAlpha:false,loadingChoices,streaming:true,options:new URLSearchParams(STREAMING_OPTIONS),properties:STREAMING_PROPERTIES,assetRoot:'/app/'};
     return {publicAlpha:false,loadingChoices,streaming:false,options,properties:[],assetRoot:'/app/'};
   }
-  const loadingChoices=config?.worldStreaming===true;
-  const expectedKeys=loadingChoices?[...KEYS,'worldStreaming']:KEYS.slice();
+  const streamingOnly=config?.streamingOnly===true;
+  const streamingAvailable=config?.worldStreaming===true;
+  if(streamingOnly&&!streamingAvailable)throw new Error('Invalid World Streaming deployment.');
+  const loadingChoices=streamingAvailable&&!streamingOnly;
+  const expectedKeys=[...KEYS,...(streamingAvailable?['worldStreaming']:[]),...(streamingOnly?['streamingOnly']:[])];
   if(!config||Object.keys(config).sort().join('|')!==expectedKeys.sort().join('|')||config.schemaVersion!==1||config.origin!==PUBLIC_ORIGIN||config.websocket!==PUBLIC_WEBSOCKET||config.preset!==PUBLIC_PRESET||typeof config.buildId!=='string'||!/^[a-z0-9][a-z0-9-]{6,63}$/.test(config.buildId)||config.assetPrefix!=='/assets/'+config.buildId+'/'||!/^[0-9a-f]{64}$/.test(config.clientJarSha256)||!/^[0-9a-f]{64}$/.test(config.bootstrapJarSha256)||![config.clientJarBytes,config.bootstrapJarBytes].every(n=>Number.isSafeInteger(n)&&n>0&&n<=64*1024*1024))throw new Error('Invalid browser alpha deployment. Please refresh or use the downloadable client.');
   if(location.origin!==PUBLIC_ORIGIN)throw new Error('This browser alpha build must be opened on '+PUBLIC_ORIGIN+'.');
   const query=new URLSearchParams(location.search),view=query.getAll('view');
   if([...query.keys()].some(k=>k!=='view')||view.length>1||view.length===1&&!['fit','embedded'].includes(view[0]))throw new Error('Browser alpha does not accept custom startup options. Open the Play page without a query string.');
   const assetRoot='/app'+config.assetPrefix;
-  const streaming=mode==='streaming';
-  if(streaming&&!loadingChoices)throw new Error('World Streaming is unavailable in this build.');
-  return {publicAlpha:true,loadingChoices,streaming,config:Object.freeze({...config}),options:new URLSearchParams(streaming?STREAMING_OPTIONS:PRESET),assetRoot,websocket:PUBLIC_WEBSOCKET,
+  if(streamingOnly&&mode==='chunks')throw new Error('This browser build uses World Streaming.');
+  const streaming=streamingOnly||mode==='streaming';
+  if(streaming&&!streamingAvailable)throw new Error('World Streaming is unavailable in this build.');
+  return {publicAlpha:true,loadingChoices,streamingOnly,streaming,config:Object.freeze({...config}),options:new URLSearchParams(streaming?STREAMING_OPTIONS:PRESET),assetRoot,websocket:PUBLIC_WEBSOCKET,
     properties:['spoiledmilk.browserPublicAlpha=true','spoiledmilk.browserPublicOrigin='+PUBLIC_ORIGIN,'spoiledmilk.browserPublicPreset='+PUBLIC_PRESET,'spoiledmilk.browserAssetRoot='+assetRoot,...(streaming?STREAMING_PROPERTIES:[])]};
 }
 export function browserCapabilityProblem(win){

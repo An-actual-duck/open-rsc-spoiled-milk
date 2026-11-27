@@ -1,10 +1,14 @@
 package orsc;
 
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Properties;
 
 final class SpellbookLayoutSettings {
 	static final String PROPERTY_KEY = "spellbook_layout";
 	private static volatile Mode mode = Mode.ICONS;
+	private static final Map<AbilityBook, Mode> bookModes = Collections.synchronizedMap(new EnumMap<>(AbilityBook.class));
 
 	private SpellbookLayoutSettings() {
 	}
@@ -27,16 +31,34 @@ final class SpellbookLayoutSettings {
 		return mode;
 	}
 
+	static Mode mode(AbilityBook book) {
+		return bookModes.getOrDefault(book, Mode.ICONS);
+	}
+
+	static void cycleMode(AbilityBook book) {
+		bookModes.put(book, mode(book).next());
+	}
+
+	private static String bookKey(AbilityBook book) {
+		return PROPERTY_KEY + "." + book.name().toLowerCase(java.util.Locale.ROOT);
+	}
+
 	static void loadFromClientSettings(Properties props) {
 		if (props == null) {
 			return;
 		}
 		mode = Mode.from(props.getProperty(PROPERTY_KEY));
+		for (AbilityBook book : AbilityBook.values()) {
+			bookModes.put(book, Mode.from(props.getProperty(bookKey(book))));
+		}
 	}
 
 	static void saveToClientSettings(Properties props) {
 		if (props != null) {
 			props.setProperty(PROPERTY_KEY, mode.id);
+			for (AbilityBook book : AbilityBook.values()) {
+				props.setProperty(bookKey(book), mode(book).id);
+			}
 		}
 	}
 

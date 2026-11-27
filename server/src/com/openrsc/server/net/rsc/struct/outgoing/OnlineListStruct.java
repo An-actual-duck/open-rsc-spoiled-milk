@@ -7,6 +7,7 @@ public class OnlineListStruct extends AbstractStruct<OpcodeOut> {
 
 	public int numberOnline;
 	public int playerCount;
+	public boolean sidebar;
 	public String[] name;
 	public int[] icon;
 	public String[] location;

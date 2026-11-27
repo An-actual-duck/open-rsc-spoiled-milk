@@ -13,6 +13,7 @@ import orsc.mudclient;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.List;
 
 public final class ClanInterface {
 	private mudclient mc;
@@ -30,6 +31,7 @@ public final class ClanInterface {
 	private int selectedClanMate = -1;
 	private int selectedClanInSearch = -1;
 	private ArrayList<ClanResult> readClans;
+	private int searchRevision;
 
 	private boolean visible;
 	private boolean menu_visible = false;
@@ -749,7 +751,7 @@ public final class ClanInterface {
 		clanSetupPanel.setFocus(-1);
 	}
 
-	private void sendCreateClan(String name, String tag) {
+	public void sendCreateClan(String name, String tag) {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(11);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(0);
@@ -769,7 +771,7 @@ public final class ClanInterface {
 		resetAll();
 	}
 
-	private void sendClanAccept() {
+	public void sendClanAccept() {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(11);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(3);
@@ -778,7 +780,7 @@ public final class ClanInterface {
 		resetAll();
 	}
 
-	private void sendClanDecline() {
+	public void sendClanDecline() {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(11);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(4);
@@ -787,7 +789,23 @@ public final class ClanInterface {
 		resetAll();
 	}
 
-	private void sendClanRank(String playerName, int rank) {
+	public void sendClanInvite(String playerName) {
+		sendClanMemberAction(2, playerName);
+	}
+
+	public void sendClanKick(String playerName) {
+		sendClanMemberAction(5, playerName);
+	}
+
+	private void sendClanMemberAction(int action, String playerName) {
+		getClient().packetHandler.getClientStream().newPacket(199);
+		getClient().packetHandler.getClientStream().bufferBits.putByte(11);
+		getClient().packetHandler.getClientStream().bufferBits.putByte(action);
+		getClient().packetHandler.getClientStream().bufferBits.putString(playerName);
+		getClient().packetHandler.getClientStream().finishPacket();
+	}
+
+	public void sendClanRank(String playerName, int rank) {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(11);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(6);
@@ -796,7 +814,7 @@ public final class ClanInterface {
 		getClient().packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendClanSettings(int settingMode, int state) {
+	public void sendClanSettings(int settingMode, int state) {
 		getClient().packetHandler.getClientStream().newPacket(199);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(11);
 		getClient().packetHandler.getClientStream().bufferBits.putByte(7);
@@ -813,6 +831,7 @@ public final class ClanInterface {
 	}
 
 	public void initializeInvite(String byPlayer, String byClan) {
+		if (getClient().openScaledClanInvitation(byPlayer, byClan)) return;
 		invitationBy = "@yel@" + byPlayer + " @whi@has sent you a clan invitation:";
 		invitationByClan = byClan;
 		if (invitationByClan != null) {
@@ -843,13 +862,24 @@ public final class ClanInterface {
 
 	public void resetClans() {
 		readClans.clear();
+		searchRevision++;
 	}
 
 	public void addClan(int clanID, String clanName, String clanTag, int members, int canJoin, int clanPoints, int clanRank) {
 		readClans.add(new ClanResult(clanID, clanName, clanTag, members, canJoin, clanPoints, clanRank));
 	}
 
-	class ClanResult {
+	public int searchRevision() {
+		return searchRevision;
+	}
+
+	public List<ClanResult> searchResults() {
+		ArrayList<ClanResult> results = new ArrayList<>(readClans);
+		results.sort(clanComperator);
+		return results;
+	}
+
+	public static final class ClanResult {
 		private String clanName, clanTag;
 		private int membersTotal, clanPoints, canJoin, clanID, clanRank;
 		private String[] clanSearchSettings = {"@gr2@Anyone can join", "@yel@Invite only", "@red@Closed"};
@@ -864,7 +894,7 @@ public final class ClanInterface {
 			this.clanRank = clanRank;
 		}
 
-		int getClanGlobalRank() {
+		public int getClanGlobalRank() {
 			return clanRank;
 		}
 
@@ -872,7 +902,7 @@ public final class ClanInterface {
 			return clanSearchSettings[i];
 		}
 
-		int getClanPoints() {
+		public int getClanPoints() {
 			return clanPoints;
 		}
 
@@ -896,8 +926,12 @@ public final class ClanInterface {
 			this.clanTag = tag;
 		}
 
-		int getClanMembersTotal() {
+		public int getClanMembersTotal() {
 			return membersTotal;
+		}
+
+		public int getJoinSetting() {
+			return canJoin;
 		}
 	}
 

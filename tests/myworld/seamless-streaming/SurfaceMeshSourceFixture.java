@@ -113,7 +113,10 @@ public final class SurfaceMeshSourceFixture {
 		}
 		System.out.println("PASS signed fixed and compatibility meshes match across byte and primitive worker transports");
 		System.out.println("PASS compatibility-only words match the full reply without the fixed draw mesh");
-		verifyGameplayProduct(world, field.toAtomicActivationInnerWindow(), slice);
+		NativeLayeredTerrainSnapshot gameplayTerrain = field.toAtomicActivationInnerWindow();
+		int[] standard = verifyGameplayProduct(world, gameplayTerrain, slice, true);
+		int[] preview = verifyGameplayProduct(new World(null, null, false), gameplayTerrain, slice, false);
+		verifyMinimapOmission(standard, preview);
 		verifySceneryProduct();
 	}
 
@@ -171,7 +174,8 @@ public final class SurfaceMeshSourceFixture {
 		}
 	}
 
-	private static void verifyGameplayProduct(World world, NativeLayeredTerrainSnapshot terrain, Class<?> slice) throws Exception {
+	private static int[] verifyGameplayProduct(World world, NativeLayeredTerrainSnapshot terrain,
+											   Class<?> slice, boolean includeMinimap) throws Exception {
 		Class<?> incoming = Class.forName(World.class.getName() + "$IncomingSurfaceCollision");
 		Method build = World.class.getDeclaredMethod("prebuildNativeWorldModelProduct", NativeLayeredTerrainSnapshot.class,
 			int.class, int.class, long.class, boolean.class, slice, boolean.class, incoming);
@@ -179,7 +183,7 @@ public final class SurfaceMeshSourceFixture {
 			int.class, int.class, long.class, boolean.class, incoming);
 		build.setAccessible(true);
 		receive.setAccessible(true);
-		World worker = new World(null, null);
+		World worker = new World(null, null, includeMinimap);
 		World.installSurfaceMeshWorker((source, x, z, dx, dz, roofs, sprites, gameplay) -> {
 			try {
 				return worker.buildSurfaceGameplayPacket(source, x, z, roofs);
@@ -209,13 +213,39 @@ public final class SurfaceMeshSourceFixture {
 					meshBytes((Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(primitive)))) {
 				throw new AssertionError("Primitive reply changed collision, minimap, roof or pick geometry");
 			}
-			rejectGameplayWords(Arrays.copyOf(words, words.length - 1), terrain.scopeIdentity(), x, z);
-			rejectGameplayWords(words, terrain.scopeIdentity().replaceFirst(".", "!"), x, z);
-			System.out.println("PASS signed gameplay primitive product matches collision, minimap, roof and pick geometry");
+			if (includeMinimap) {
+				rejectGameplayWords(Arrays.copyOf(words, words.length - 1), terrain.scopeIdentity(), x, z);
+				rejectGameplayWords(words, terrain.scopeIdentity().replaceFirst(".", "!"), x, z);
+				System.out.println("PASS signed gameplay primitive product matches collision, minimap, roof and pick geometry");
+			} else {
+				rejectGameplayWords(words, terrain.scopeIdentity(), x, z);
+			}
+			return words;
 		} finally {
 			World.installSurfaceMeshWorker(null);
 			World.installSurfaceGameplayWordWorker(null);
 		}
+	}
+
+	private static void verifyMinimapOmission(int[] standard, int[] preview) {
+		int meshStart = 5 + standard[1];
+		int localTerrainStart = meshStart + standard[3];
+		int resourceCount = standard[localTerrainStart + 2];
+		int removedWords = resourceCount + 429 * 429;
+		if (resourceCount <= 0 || preview[localTerrainStart + 2] != -1
+			|| standard.length - preview.length != removedWords) {
+			throw new AssertionError("Preview gameplay packet retains the legacy raster or its palette");
+		}
+		int mapStart = localTerrainStart + 4 + 9 * (1 + 4 * 48 * 48) + 2 * 144 * 144;
+		int[] expected = new int[preview.length];
+		System.arraycopy(standard, 0, expected, 0, mapStart);
+		System.arraycopy(standard, mapStart + removedWords, expected, mapStart, expected.length - mapStart);
+		expected[4] -= removedWords;
+		expected[localTerrainStart + 2] = -1;
+		if (!Arrays.equals(expected, preview)) {
+			throw new AssertionError("Minimap omission changed collision, height, roof, wall or draw data");
+		}
+		System.out.println("PASS preview byte and word products omit the minimap while preserving gameplay and geometry");
 	}
 
 	private static void rejectGameplayWords(int[] words, String scope, int x, int z) throws Exception {

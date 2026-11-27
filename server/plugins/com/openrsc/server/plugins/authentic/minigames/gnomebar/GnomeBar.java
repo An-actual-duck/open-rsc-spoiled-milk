@@ -330,9 +330,9 @@ public class GnomeBar implements MiniGameInterface, TalkNpcTrigger, OpInvTrigger
 					"fruit blast",
 					"pineapple punch");
 				if (non_alcoholic == 0) {
-					ActionSender.sendBox(player, "@yel@Fruit blast% %Mix the juice of one lemon, one orange and one pineapple in the shaker% %Pour into glass and top with slices of lemon.", true);
+					ActionSender.sendActivityNotice(player, "Gnome Bar", "@yel@Fruit blast% %Mix the juice of one lemon, one orange and one pineapple in the shaker% %Pour into glass and top with slices of lemon.", true);
 				} else if (non_alcoholic == 1) {
-					ActionSender.sendBox(player, "@yel@Pineapple Punch% %mix the juice of two pineapples with the juice of one lemon and one orange% %pour the mix into a glass and add diced pineapple followed by diced lime% %top drink with one slice of lime", true);
+					ActionSender.sendActivityNotice(player, "Gnome Bar", "@yel@Pineapple Punch% %mix the juice of two pineapples with the juice of one lemon and one orange% %pour the mix into a glass and add diced pineapple followed by diced lime% %top drink with one slice of lime", true);
 				}
 			} else if (menu == 1) {
 				int alcoholic = multi(player,
@@ -342,15 +342,15 @@ public class GnomeBar implements MiniGameInterface, TalkNpcTrigger, OpInvTrigger
 					"blurberry special",
 					"wizard blizzard");
 				if (alcoholic == 0) {
-					ActionSender.sendBox(player, "@yel@Drunk Dragon% %Mix vodka with gin and dwellberry juice% %Pour the mixture into a glass and add a diced pineapple.Next add a generous portion of cream% %Heat the drink briefly in a warm oven.. yum.", true);
+					ActionSender.sendActivityNotice(player, "Gnome Bar", "@yel@Drunk Dragon% %Mix vodka with gin and dwellberry juice% %Pour the mixture into a glass and add a diced pineapple.Next add a generous portion of cream% %Heat the drink briefly in a warm oven.. yum.", true);
 				} else if (alcoholic == 1) {
-					ActionSender.sendBox(player, "@yel@s g g - short green guy% %Mix vodka with the juice of three limes and pour into a glass% %sprinkle equa leaves over the top of the drink% %Finally add a slice of lime to finish the drink", true);
+					ActionSender.sendActivityNotice(player, "Gnome Bar", "@yel@s g g - short green guy% %Mix vodka with the juice of three limes and pour into a glass% %sprinkle equa leaves over the top of the drink% %Finally add a slice of lime to finish the drink", true);
 				} else if (alcoholic == 2) {
-					ActionSender.sendBox(player, "@yel@Choc Saturday% %Mix together whiskey, milk, equa leaves% %Pour mixture into a glass add some chocolate and briefly heat in the oven% %Then add a generous helping of cream% %Finish of the drink with sprinkled chocolate dust", true);
+					ActionSender.sendActivityNotice(player, "Gnome Bar", "@yel@Choc Saturday% %Mix together whiskey, milk, equa leaves% %Pour mixture into a glass add some chocolate and briefly heat in the oven% %Then add a generous helping of cream% %Finish of the drink with sprinkled chocolate dust", true);
 				} else if (alcoholic == 3) {
-					ActionSender.sendBox(player, "@yel@Blurberry Special% %Mix together vodka, gin and brandy% %Add to this the juice of two lemons and one orange and pour into the glass% %next add to the glass orange chunks and then lemon chunks% %Finish of with one lime slice and then add a sprinkling of equa leaves", true);
+					ActionSender.sendActivityNotice(player, "Gnome Bar", "@yel@Blurberry Special% %Mix together vodka, gin and brandy% %Add to this the juice of two lemons and one orange and pour into the glass% %next add to the glass orange chunks and then lemon chunks% %Finish of with one lime slice and then add a sprinkling of equa leaves", true);
 				} else if (alcoholic == 4) {
-					ActionSender.sendBox(player, "@yel@Wizard Blizzard% %thoroughly mix together the juice of one pinapple, one orange, one lemon and one lime% %Add to this two measures of vodka and one measure of gin% %Pour the mixture into a glass, top with pineapple chunks and then add slices of lime", true);
+					ActionSender.sendActivityNotice(player, "Gnome Bar", "@yel@Wizard Blizzard% %thoroughly mix together the juice of one pinapple, one orange, one lemon and one lime% %Add to this two measures of vodka and one measure of gin% %Pour the mixture into a glass, top with pineapple chunks and then add slices of lime", true);
 				}
 			}
 		}

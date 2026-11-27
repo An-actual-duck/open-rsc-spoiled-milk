@@ -8,7 +8,10 @@ import com.openrsc.server.plugins.PriceMismatchException;
 import com.openrsc.server.util.rsc.MathUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 // TODO: This class should use a thread safe container rather than synchronized blocks
 
@@ -17,6 +20,7 @@ public final class Shop {
 	private final boolean general;
 	private final int respawnRate, buyModifier, sellModifier, priceModifier;
 	private final Item[] items;
+	private Map<Integer, String> displayCategories = Collections.emptyMap();
 	private final ArrayList<Item> shopItems = new ArrayList<Item>();
 	private final ArrayList<Player> players = new ArrayList<Player>();
 	public String area = "-null-";
@@ -41,12 +45,23 @@ public final class Shop {
 		this.sellModifier = oldShop.sellModifier;
 		this.priceModifier = oldShop.priceModifier;
 		this.items = oldShop.items;
+		this.displayCategories = oldShop.displayCategories;
 		this.area = name;
 		this.ownerIDs = ids;
 
 		for (Item item : items) {
 			shopItems.add(new Item(item.getCatalogId(), item.getAmount())); // comparing the two later, CAN NOT use the same reference
 		}
+	}
+
+	/** Optional catalog-ID to tab-label mapping. Omitted items remain available in All stock. */
+	public Shop withDisplayCategories(Map<Integer, String> categories) {
+		displayCategories = Collections.unmodifiableMap(new HashMap<>(categories));
+		return this;
+	}
+
+	public String getDisplayCategory(int catalogId) {
+		return displayCategories.getOrDefault(catalogId, "");
 	}
 
 	public boolean addPlayer(Player player) {

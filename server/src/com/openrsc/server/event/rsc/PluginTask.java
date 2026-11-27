@@ -1,10 +1,12 @@
 package com.openrsc.server.event.rsc;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.ScriptContext;
 import com.openrsc.server.model.states.Action;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.plugins.PluginInterruptedException;
+import com.openrsc.server.net.rsc.DialoguePresentation;
 import com.openrsc.server.util.LogUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,6 +36,15 @@ public abstract class PluginTask extends GameTickEvent implements Callable<Integ
 	private volatile Thread pluginThread;
 
 	private final ScriptContext scriptContext;
+	private DialoguePresentation dialoguePresentation;
+
+	public DialoguePresentation getDialoguePresentation() {
+		return dialoguePresentation;
+	}
+
+	public void setDialoguePresentation(DialoguePresentation presentation) {
+		dialoguePresentation = presentation;
+	}
 	private final Object[] data;
 	private final Action action;
 	private PluginTickEvent pluginTickEvent;
@@ -54,12 +65,15 @@ public abstract class PluginTask extends GameTickEvent implements Callable<Integ
 		try {
 			registerPluginThread();
 			final int result = action();
+			QuestCompletionPresentation.finishScript();
 			stop();
 			return result;
 		} catch(final Exception ex) {
 			LOGGER.error("Error while executing PluginTask call()", ex);
 			stop();
 			return 0;
+		} finally {
+			QuestCompletionPresentation.discardScript();
 		}
 	}
 
@@ -81,6 +95,10 @@ public abstract class PluginTask extends GameTickEvent implements Callable<Integ
 
 	@Override
 	public synchronized void stop() {
+		if (dialoguePresentation != null) {
+			dialoguePresentation.close();
+			dialoguePresentation = null;
+		}
 		super.stop();
 		cancel(false);
 		unregisterPluginThread();

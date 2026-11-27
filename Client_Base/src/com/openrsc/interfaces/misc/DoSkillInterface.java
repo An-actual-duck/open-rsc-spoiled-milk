@@ -20,23 +20,23 @@ public final class DoSkillInterface {
 	int width = 430;
 	int height = 320;
 	private ArrayList<DoSkillItem> doSkillItems;
-	private ArrayList<ProductionRecipeView> productionRecipes;
+	final ArrayList<ProductionRecipeView> productionRecipes;
 	private String skillToDo, skillDoing;
-	private String title = "";
+	String title = "";
 	private boolean visible, rightClickMenu = false, productionMode = false;
 	private mudclient mc;
 	private int panelColour, textColour, bordColour;
 	private int x, y, autoHeight;
-	private int selectedRecipeIndex = -1;
-	private int productionQuantity = 1;
-	private int inputItemId = -1;
+	int selectedRecipeIndex = -1;
+	int productionQuantity = 1;
+	int inputItemId = -1;
 	private int productionResourceAmount = 0;
 	private int productionInterfaceId = -1;
-	private boolean productionRememberSupported = false;
-	private boolean productionRememberEnabled = false;
-	private boolean productionKeepOpenSupported = false;
-	private boolean productionKeepOpenEnabled = false;
-	private boolean productionCanGoBack = false;
+	boolean productionRememberSupported = false;
+	boolean productionRememberEnabled = false;
+	boolean productionKeepOpenSupported = false;
+	boolean productionKeepOpenEnabled = false;
+	boolean productionCanGoBack = false;
 	private int[] productionPointCodes = new int[0];
 	private int[] productionPointBalances = new int[0];
 	private static final int PRODUCTION_CONTENT_HEIGHT = 292;
@@ -46,15 +46,18 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_UI_CAN_GO_BACK = 4;
 	private static final int PRODUCTION_UI_KEEP_OPEN_SUPPORTED = 8;
 	private static final int PRODUCTION_UI_KEEP_OPEN_ENABLED = 16;
+	private static final int PRODUCTION_SMITHING = 1;
+	private static final int PRODUCTION_SMELTING = 3;
 	private static final int PRODUCTION_SMITHING_MATERIAL = 4;
 	private static final int PRODUCTION_FURNACE_CATEGORY = 5;
+	private static final int FURNACE_CATEGORY_JEWELRY = 301;
 	private static final int PRODUCTION_FURNACE_MATERIAL = 6;
 	private static final int PRODUCTION_TELEPORT_DESTINATION = 7;
 	private static final int PRODUCTION_RANGERS_REDEMPTION_CATEGORY = 8;
 	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
 	private static final int PRODUCTION_MONSTER_SLAYER_REDEMPTION = 10;
 	private static final int PRODUCTION_MONSTER_SLAYER_SHOP_CATEGORY = 11;
-	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
+	static final int PRODUCTION_ALL_QUANTITY = 1000000;
 	/** The source mark is 59x41; preserve that proportion without clipping it. */
 	private static final int POINT_COIN_WIDTH = 18;
 	private static final int POINT_COIN_HEIGHT = 13;
@@ -63,6 +66,13 @@ public final class DoSkillInterface {
 	private static Sprite slayerPointCoin;
 	private static boolean slayerPointCoinLoadAttempted;
 	private String pointCoinHover = "";
+	private CraftingWindow craftingWindow;
+	private PointShopWindow pointShopWindow;
+	private int craftingProgressItem = -1;
+	private int craftingProgressTotal;
+	private int craftingProgressDone;
+	private long craftingStepStartedNanos;
+	private int craftingStepDurationMillis;
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -101,7 +111,9 @@ public final class DoSkillInterface {
 		autoHeight = y + height;
 
 		if (productionMode) {
-			renderProductionInterface();
+			if (pointShopWindow != null) pointShopWindow.render();
+			else if (craftingWindow != null) craftingWindow.render();
+			else renderProductionInterface();
 			return;
 		}
 
@@ -435,7 +447,9 @@ public final class DoSkillInterface {
 			} else if (isSmithingMaterialPicker()) {
 				drawStringRightAligned("Requires hammer", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isFurnaceCategoryPicker()) {
-				drawStringRightAligned("No required mould", selectedDetailRightX, footerY + 20, 1, textColour);
+				String hint = selected.getItemId() == FURNACE_CATEGORY_JEWELRY
+					? "Requires a jewelry mould" : "No required mould";
+				drawStringRightAligned(hint, selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isFurnaceMaterialPicker()) {
 				drawStringRightAligned("Choose this metal", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isTeleportDestinationPicker()) {
@@ -586,7 +600,7 @@ public final class DoSkillInterface {
 		return productionInterfaceId == PRODUCTION_RANGERS_REDEMPTION;
 	}
 
-	private boolean isMonsterSlayerRedemptionInterface() {
+	boolean isMonsterSlayerRedemptionInterface() {
 		return productionInterfaceId == PRODUCTION_MONSTER_SLAYER_REDEMPTION;
 	}
 
@@ -619,6 +633,8 @@ public final class DoSkillInterface {
 			case 169:
 			case 1955:
 				return "Bars";
+			case FURNACE_CATEGORY_JEWELRY:
+				return "Jewelry";
 			case 283:
 				return "Rings";
 			case 288:
@@ -725,9 +741,9 @@ public final class DoSkillInterface {
 	}
 	private int pointDigitPadding() { return mc.getSurface().stringWidth(1, "0"); }
 
-	private String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
-	private String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
-	private boolean canAffordPointCost(ProductionRecipeView selected) {
+	String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
+	String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
+	boolean canAffordPointCost(ProductionRecipeView selected) {
 		if (!isMonsterSlayerRedemptionInterface()) return (long)selected.getInputAmount() * productionQuantity <= productionResourceAmount;
 		for (int i = 0; i < selected.getPointCostCount(); i++)
 			if (pointBalance(selected.getPointCostCode(i)) < (long)selected.getPointCostAmount(i) * productionQuantity) return false;
@@ -840,7 +856,7 @@ public final class DoSkillInterface {
 		return hoverText;
 	}
 
-	private String ingredientTooltip(int itemId, int fallbackItemId, int owned, long required) {
+	String ingredientTooltip(int itemId, int fallbackItemId, int owned, long required) {
 		String text = EntityHandler.getItemDef(itemId).getName();
 		if (isValidItemId(fallbackItemId)) {
 			text += " or " + EntityHandler.getItemDef(fallbackItemId).getName();
@@ -848,7 +864,7 @@ public final class DoSkillInterface {
 		return text + " - " + owned + "/" + required;
 	}
 
-	private int getDisplayIngredientItemId(int itemId, int fallbackItemId, long required) {
+	int getDisplayIngredientItemId(int itemId, int fallbackItemId, long required) {
 		if (isValidItemId(fallbackItemId)
 			&& mc.getInventoryCount(itemId, false) < required
 			&& mc.getInventoryCount(fallbackItemId, false) >= required) {
@@ -857,7 +873,7 @@ public final class DoSkillInterface {
 		return itemId;
 	}
 
-	private int getOwnedIngredientCount(int itemId, int fallbackItemId) {
+	int getOwnedIngredientCount(int itemId, int fallbackItemId) {
 		int owned = mc.getInventoryCount(itemId, false);
 		if (isValidItemId(fallbackItemId)) {
 			owned = Math.max(owned, mc.getInventoryCount(fallbackItemId, false));
@@ -865,7 +881,7 @@ public final class DoSkillInterface {
 		return owned;
 	}
 
-	private boolean isValidItemId(int itemId) {
+	boolean isValidItemId(int itemId) {
 		return itemId >= 0 && itemId < EntityHandler.itemCount();
 	}
 
@@ -883,7 +899,7 @@ public final class DoSkillInterface {
 		});
 	}
 
-	private void sendProductionStart(int quantity) {
+	void sendProductionStart(int quantity) {
 		ProductionRecipeView selected = getSelectedRecipe();
 		if (selected == null) {
 			return;
@@ -895,33 +911,46 @@ public final class DoSkillInterface {
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendProductionClose() {
+	void sendCancelProductionBatch() {
+		mc.packetHandler.getClientStream().newPacket(199);
+		mc.packetHandler.getClientStream().bufferBits.putByte(6);
+		mc.packetHandler.getClientStream().finishPacket();
+	}
+
+	void sendPointShopTab(int tab) {
+		mc.packetHandler.getClientStream().newPacket(199);
+		mc.packetHandler.getClientStream().bufferBits.putByte(30);
+		mc.packetHandler.getClientStream().bufferBits.putByte(tab);
+		mc.packetHandler.getClientStream().finishPacket();
+	}
+
+	void sendProductionClose() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(20);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendProductionRememberPreference() {
+	void sendProductionRememberPreference() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(24);
 		mc.packetHandler.getClientStream().bufferBits.putByte(productionRememberEnabled ? 1 : 0);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendProductionKeepOpenPreference() {
+	void sendProductionKeepOpenPreference() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(27);
 		mc.packetHandler.getClientStream().bufferBits.putByte(productionKeepOpenEnabled ? 1 : 0);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void sendProductionBack() {
+	void sendProductionBack() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(25);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
-	private ProductionRecipeView getSelectedRecipe() {
+	ProductionRecipeView getSelectedRecipe() {
 		if (selectedRecipeIndex < 0 || selectedRecipeIndex >= productionRecipes.size()) {
 			return null;
 		}
@@ -931,7 +960,15 @@ public final class DoSkillInterface {
 	public void openProductionInterface(int interfaceId, String title, int inputItemId, int resourceAmount, int selectedRecipeId, int quantity,
 		int[] itemIds, int[] requiredLevels, int[] inputAmounts, int[] outputAmounts, int[] flags,
 		int[][] ingredientItemIds, int[][] ingredientFallbackItemIds, int[][] ingredientAmounts, int uiFlags,
-		int[] pointCodes, int[] pointBalances, int[][] pointCostCodes, int[][] pointCostAmounts, int[] stockAmounts) {
+		int[] pointCodes, int[] pointBalances, int[][] pointCostCodes, int[][] pointCostAmounts, int[] stockAmounts, String[] shopTabs, int selectedShopTab) {
+		boolean shopPreview = mc.usesCraftingInterfacePreview() && shopTabs.length > 0;
+		boolean sameTab = shopPreview && pointShopWindow != null && productionInterfaceId == interfaceId
+			&& pointShopWindow.currentTab() == selectedShopTab;
+		ProductionRecipeView previous = getSelectedRecipe();
+		if (sameTab) {
+			if (previous != null) selectedRecipeId = previous.getItemId();
+			quantity = productionQuantity;
+		}
 		this.title = title;
 		this.productionInterfaceId = interfaceId;
 		this.inputItemId = inputItemId;
@@ -961,11 +998,111 @@ public final class DoSkillInterface {
 		if (this.selectedRecipeIndex < 0 && !this.productionRecipes.isEmpty()) {
 			this.selectedRecipeIndex = 0;
 		}
+		if (shopPreview) {
+			if (pointShopWindow == null || !java.util.Arrays.equals(pointShopWindow.tabs(), shopTabs)) {
+				pointShopWindow = new PointShopWindow(mc, this);
+			}
+			pointShopWindow.update(shopTabs, selectedShopTab);
+		} else {
+			pointShopWindow = null;
+		}
+		craftingWindow = mc.usesCraftingInterfacePreview() && interfaceId >= PRODUCTION_SMITHING && interfaceId <= PRODUCTION_SMELTING
+			? new CraftingWindow(mc, this, new CraftingRecipeTabs(productionRecipes, inputItemId)) : null;
 		setVisible(true);
+	}
+
+	public void startCraftingProgress(int itemId, int total) {
+		if (!mc.usesCraftingInterfacePreview() || total <= 0) return;
+		craftingProgressItem = itemId;
+		craftingProgressTotal = total;
+		craftingProgressDone = 0;
+		craftingStepDurationMillis = 0;
+		if (craftingWindow != null && !productionKeepOpenEnabled) closeProductionInterface();
+	}
+
+	public void timeCraftingProgressStep(int durationMillis) {
+		if (hasCraftingProgress() && durationMillis > 0) {
+			craftingStepStartedNanos = System.nanoTime();
+			craftingStepDurationMillis = durationMillis;
+		}
+	}
+
+	public void updateCraftingProgress(int completed) {
+		if (completed <= craftingProgressDone) return;
+		craftingProgressDone = Math.min(craftingProgressTotal, completed);
+		craftingStepDurationMillis = 0;
+	}
+
+	public void clearCraftingProgress() {
+		craftingProgressItem = -1;
+		craftingProgressDone = 0;
+		craftingProgressTotal = 0;
+		craftingStepDurationMillis = 0;
+	}
+
+	public boolean hasCraftingProgress() {
+		return craftingProgressItem >= 0;
+	}
+
+	String craftingProgressName() {
+		return CraftingRecipeTabs.itemName(craftingProgressItem);
+	}
+
+	boolean hasInWindowCraftingProgress() {
+		return visible && craftingWindow != null && productionKeepOpenEnabled;
+	}
+
+	public boolean hasOverheadCraftingProgress(boolean craftingWindowCovered) {
+		return craftingWindowCovered || !hasInWindowCraftingProgress();
+	}
+
+	boolean hasCraftingMaterials(ProductionRecipeView recipe) {
+		if (!recipe.isMaterialsMet()) return false;
+		if (inputItemId == CraftingRecipeTabs.GOLD_BAR) {
+			for (int i = 0; i < recipe.getIngredientCount(); i++) {
+				if (getOwnedIngredientCount(recipe.getIngredientItemId(i), recipe.getIngredientFallbackItemId(i))
+						< recipe.getIngredientAmount(i)) return false;
+			}
+			return true;
+		}
+		if (productionInterfaceId != PRODUCTION_SMITHING || inputItemId != -1 || !recipe.hasIngredientDetails()) return true;
+		return mc.getInventoryCount(recipe.getIngredientItemId(0), false) >= recipe.getIngredientAmount(0);
+	}
+
+	public void drawCraftingProgress(int x, int y, int width, int height, int font) {
+		if (!hasCraftingProgress()) return;
+		mc.getSurface().drawBoxAlpha(x, y, width, height, 0x111923, 225);
+		int usableWidth = width - 2;
+		int finishedWidth = usableWidth * craftingProgressDone / craftingProgressTotal;
+		mc.getSurface().drawBoxAlpha(x + 1, y + 1, finishedWidth, height - 2, 0x366B61, 225);
+		if (craftingStepDurationMillis > 0 && craftingProgressDone < craftingProgressTotal) {
+			double elapsedMillis = (System.nanoTime() - craftingStepStartedNanos) / 1_000_000.0;
+			double step = Math.max(0, Math.min(0.98, elapsedMillis / craftingStepDurationMillis));
+			int stepWidth = usableWidth * (craftingProgressDone + 1) / craftingProgressTotal - finishedWidth;
+			mc.getSurface().drawBoxAlpha(x + 1 + finishedWidth, y + 1, (int) (stepWidth * step), height - 2, 0x438D82, 225);
+		}
+		mc.getSurface().drawBoxBorder(x, width, y, height, 0x728D99);
+		String count = craftingProgressDone + " / " + craftingProgressTotal;
+		drawString(count, x + (width - mc.getSurface().stringWidth(font, count)) / 2,
+			y + (height + mc.getSurface().fontHeight(font)) / 2 - 2, font, 0xFFFFFF);
+	}
+
+	public boolean isPointShopPreviewVisible() {
+		return visible && pointShopWindow != null;
+	}
+
+	public boolean scrollCraftingWindow(int amount) {
+		if (!visible) return false;
+		if (pointShopWindow != null) pointShopWindow.scroll(amount);
+		else if (craftingWindow != null) craftingWindow.scroll(amount);
+		else return false;
+		return true;
 	}
 
 	public void closeProductionInterface() {
 		this.productionMode = false;
+		this.craftingWindow = null;
+		this.pointShopWindow = null;
 		this.productionRecipes.clear();
 		this.selectedRecipeIndex = -1;
 		this.productionQuantity = 1;

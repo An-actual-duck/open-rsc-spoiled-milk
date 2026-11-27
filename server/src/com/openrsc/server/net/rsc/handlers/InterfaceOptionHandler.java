@@ -1,15 +1,18 @@
 package com.openrsc.server.net.rsc.handlers;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.constants.*;
 import com.openrsc.server.constants.custom.*;
 import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.clan.ClanInvite;
 import com.openrsc.server.content.clan.ClanPlayer;
 import com.openrsc.server.content.clan.ClanRank;
+import com.openrsc.server.content.market.AuctionFeedback;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyInvite;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
+import com.openrsc.server.content.production.PointShopTabs;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
 import com.openrsc.server.content.production.ProductionMemory;
@@ -19,6 +22,7 @@ import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.content.cleric.runtime.ClericSupportCasting;
 import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.PluginTickEvent;
+import com.openrsc.server.model.container.BankFilterTabs;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -133,6 +137,33 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 				break;
 			case PRODUCTION_KEEP_OPEN_TOGGLE:
 				handleProductionKeepOpenToggle(player, payload);
+				break;
+			case PRODUCTION_TABS:
+				if (player.isUsingCustomClient()) player.setAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, true);
+				break;
+			case QUEST_COMPLETION_PRESENTATION:
+				if (QuestCompletionPresentation.enabled() && player.isUsingCustomClient()) {
+					player.setAttribute(QuestCompletionPresentation.CLIENT_ATTRIBUTE, true);
+				}
+				break;
+			case BANK_FILTER_TABS:
+				if (player.isUsingCustomClient() && player.getConfig().WANT_CUSTOM_BANKS) {
+					player.setAttribute(BankFilterTabs.CLIENT_ATTRIBUTE, true);
+				}
+				break;
+			case BANK_SAVE_FILTER_TAB:
+				if (player.getAttribute(BankFilterTabs.CLIENT_ATTRIBUTE, false)) {
+					BankFilterTabs.save(player.getCache(), payload.slot, payload.name);
+				}
+				break;
+			case SHOP_TABS:
+				if (player.isUsingCustomClient()) player.setAttribute(PointShopTabs.CLIENT_ATTRIBUTE, true);
+				break;
+			case SHOP_SELECT_TAB:
+				ProductionSession shopSession = player.getAttribute("production_session", null);
+				if (shopSession != null && shopSession.getPointShopTabs() != null && !player.isBusy() && !player.inCombat()) {
+					shopSession.getPointShopTabs().open(player, payload.value);
+				}
 				break;
 			case PRODUCTION_BACK:
 				handleProductionBack(player);
@@ -274,6 +305,10 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 				}
 
 				ProductionMemory.beginStart(player, session, itemId);
+				if (player.getAttribute(ProductionSession.TABS_CLIENT_ATTRIBUTE, false) && (session.isType(ProductionSession.TYPE_CRAFTING)
+						|| session.isType(ProductionSession.TYPE_SMITHING) || session.isType(ProductionSession.TYPE_SMELTING))) {
+					getScriptContext().setProductionProgressItem(itemId);
+				}
 				boolean started;
 				try {
 					started = starter.start(player, session, itemId, quantity);
@@ -296,7 +331,8 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 					return 1;
 				}
 
-				if (started && ProductionMemory.isKeepOpenEnabled(player) && isPointShop(session)) {
+				if (started && isPointShop(session)
+					&& (session.getPointShopTabs() != null || ProductionMemory.isKeepOpenEnabled(player))) {
 					ActionSender.showProductionInterface(player, session);
 				} else if (started && !ProductionMemory.isKeepOpenEnabled(player)) {
 					clearProductionState(player, session);
@@ -556,11 +592,11 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 	private void handleAuction(Player player, OptionsStruct payload) {
 		if (player.isIronMan(IronmanMode.Ironman.id()) || player.isIronMan(IronmanMode.Ultimate.id())
 			|| player.isIronMan(IronmanMode.Hardcore.id()) || player.isIronMan(IronmanMode.Transfer.id())) {
-			player.message("As an Ironman, you cannot use the Auction.");
+			AuctionFeedback.warning(player, "As an Ironman, you cannot use the Auction House.");
 			return;
 		}
 		if (player.getWorld().getServer().getTimeUntilShutdown() > 0) {
-			player.message("Auction house is disabled until server restart!");
+			AuctionFeedback.warning(player, "The Auction House is closed until the server restarts.");
 			return;
 		}
 		/* Set true when auctioneer opens AH window for the player */
@@ -569,7 +605,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		}
 
 		if (player.getTotalLevel() < 100) {
-			ActionSender.sendBox(player,"You must have 100 total skill before using the auction house.", false);
+			AuctionFeedback.warning(player, "You need a total skill level of 100 to use the Auction House.");
 			return;
 		}
 
@@ -605,7 +641,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		int auctionBuyID = payload.id;
 		int amountBuy = payload.amount;
 		if (System.currentTimeMillis() - player.getLastExchangeTime() < 3000) {
-			ActionSender.sendBox(player, "@ora@[Auction House - Warning] % @whi@ You are acting too quickly, please wait 3 seconds.", false);
+			AuctionFeedback.warning(player, "Wait 3 seconds between auction actions.");
 			return;
 		}
 
@@ -617,7 +653,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		int amount = payload.amount;
 		int price = payload.price;
 		if (System.currentTimeMillis() - player.getLastExchangeTime() < 3000) {
-			ActionSender.sendBox(player,"@ora@[Auction House - Warning]@whi@ You are acting too quickly, please wait 3 seconds.", false);
+			AuctionFeedback.warning(player, "Wait 3 seconds between auction actions.");
 			return;
 		}
 		player.getWorld().getMarket().addNewAuctionItemTask(player, catalogID, amount, price);
@@ -626,7 +662,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 	private void auctionCancel(Player player, OptionsStruct payload) {
 		int auctionID = payload.id;
 		if (System.currentTimeMillis() - player.getLastExchangeTime() < 3000) {
-			ActionSender.sendBox(player,"@ora@[Auction House - Warning]@whi@ You are acting too quickly, please wait 3 seconds.", false);
+			AuctionFeedback.warning(player, "Wait 3 seconds between auction actions.");
 			return;
 		}
 		player.getWorld().getMarket().addCancelAuctionItemTask(player, auctionID);
@@ -634,13 +670,13 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 
 	private void auctionRefresh(Player player) {
 		if (System.currentTimeMillis() - player.getAttribute("ah_refresh", (System.currentTimeMillis() - 5000)) < 5000) {
-			ActionSender.sendBox(player,"@ora@[Auction House - Warning]@whi@ You are acting too quickly, please wait 5 seconds.", false);
+			AuctionFeedback.warning(player, "Wait 5 seconds between listing refreshes.");
 			return;
 		}
 
 		player.setAttribute("ah_refresh", System.currentTimeMillis());
 
-		player.message("@gre@[Auction House]@whi@ List has been refreshed!");
+		AuctionFeedback.status(player, "Listings refreshed.");
 		ActionSender.sendOpenAuctionHouse(player);
 	}
 

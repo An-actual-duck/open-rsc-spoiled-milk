@@ -1,5 +1,6 @@
 package com.openrsc.server.net.rsc;
 
+import com.openrsc.server.content.OnlinePlayerList;
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.custom.MyWorldItemId;
@@ -13,6 +14,7 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyManager;
 import com.openrsc.server.content.party.PartyPlayer;
+import com.openrsc.server.content.production.PointShopTabs;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionMemory;
 import com.openrsc.server.content.status.ActiveStatusEntry;
@@ -21,9 +23,11 @@ import com.openrsc.server.content.status.ClericActiveStatusCollector;
 import com.openrsc.server.database.struct.HiscoreEntry;
 import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.custom.HolidayDropEvent;
+import com.openrsc.server.model.MenuOptionListener;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Bank;
+import com.openrsc.server.model.container.BankFilterTabs;
 import com.openrsc.server.model.container.BankPreset;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Inventory;
@@ -261,6 +265,10 @@ public class ActionSender {
 		struct.message = message;
 		OpcodeOut opcode = big ? OpcodeOut.SEND_BOX : OpcodeOut.SEND_BOX2;
 		tryFinalizeAndSendPacket(opcode, struct, player);
+	}
+
+	public static void sendActivityNotice(Player player, String activity, String message, boolean big) {
+		sendBox(player, activity + "%" + message, big);
 	}
 
 	/**
@@ -944,7 +952,7 @@ public class ActionSender {
 			LOGGER.info(server.getConfig().GROUND_ITEM_NAMES + " 89");
 			LOGGER.info(server.getConfig().WANT_NATURE_RUNE_PROTECTION + " 90");
 		}
-		Packet p = prepareServerConfigs(server);
+		Packet p = prepareServerConfigs(server, false, false);
 		// ConnectionAttachment attachment = new ConnectionAttachment();
 		// channel.attr(RSCConnectionHandler.attachment).set(attachment);
 		if (p != null)
@@ -953,12 +961,12 @@ public class ActionSender {
 	}
 
 	static void sendServerConfigs(Player player) {
-		Packet p = prepareServerConfigs(player.getWorld().getServer());
+		Packet p = prepareServerConfigs(player.getWorld().getServer(), DialoguePresentation.enabled(), QuestCompletionPresentation.enabled());
 		if (p != null)
 			player.write(p);
 	}
 
-	private static Packet prepareServerConfigs(Server server) {
+	private static Packet prepareServerConfigs(Server server, boolean dialoguePreview, boolean questPreview) {
 		PayloadCustomGenerator generator = new PayloadCustomGenerator();
 		ServerConfigsStruct struct = new ServerConfigsStruct();
 
@@ -1061,6 +1069,13 @@ public class ActionSender {
 		configs.add((byte) (server.getConfig().WANT_NATURE_RUNE_PROTECTION ? 1 : 0)); // 90
 		configs.add((byte) (server.getConfig().WANT_HISCORES ? 1 : 0)); // 91
 
+		if (dialoguePreview) {
+			configs.add(DialoguePresentation.CONFIG_TAG);
+		}
+		if (questPreview) configs.add(QuestCompletionPresentation.CONFIG_TAG);
+		if (server.getConfig().PLAYER_COMMANDS) configs.add(OnlinePlayerList.SIDEBAR_CAPABILITY);
+		if (server.getConfig().ITEMS_ON_DEATH_MENU) configs.add(
+			com.openrsc.server.net.rsc.handlers.DeathItemsRequestHandler.CAPABILITY);
 		struct.configs = configs;
 		struct.setOpcode(OpcodeOut.SEND_SERVER_CONFIGS);
 		return generator.generate(struct, null);
@@ -1378,6 +1393,10 @@ public class ActionSender {
 		MenuOptionStruct struct = new MenuOptionStruct();
 		int numOptions = options.length;
 		struct.numOptions = numOptions;
+		MenuOptionListener listener = player.getMenuHandler();
+		if (listener != null) {
+			struct.dialogueId = listener.getDialogueId();
+		}
 		struct.optionTexts = new String[numOptions];
 		for (int i = 0; i < numOptions; i++){
 			struct.optionTexts[i] = options[i];
@@ -2131,6 +2150,9 @@ public class ActionSender {
 		struct.catalogIDs = new int[itemsInBank];
 		struct.amount = new int[itemsInBank];
 		struct.includesPinMetadata = includePins;
+		if (player.getAttribute(BankFilterTabs.CLIENT_ATTRIBUTE, false)) {
+			struct.filterTabs = BankFilterTabs.load(player.getCache());
+		}
 		struct.pinned = new boolean[itemsInBank];
 		if (includePins) {
 			for (int i = 0; i < displaySlots.size(); i++) {
@@ -2202,6 +2224,9 @@ public class ActionSender {
 		struct.amount = new int[shopSize];
 		struct.baseAmount = new int[shopSize];
 		struct.price = new int[shopSize];
+		if (player.getAttribute(PointShopTabs.CLIENT_ATTRIBUTE, false)) {
+			struct.displayCategories = new String[shopSize];
+		}
 
 		int idx = 0;
 		for (int i = 0; i < shop.getShopSize(); i++) {
@@ -2210,6 +2235,9 @@ public class ActionSender {
 				continue;
 			struct.catalogIDs[idx] = item.getSafeItemId(player);
 			struct.amount[idx] = item.getAmount();
+			if (struct.displayCategories != null) {
+				struct.displayCategories[idx] = shop.getDisplayCategory(item.getCatalogId());
+			}
 			struct.baseAmount[idx] = shop.getStock(item.getCatalogId());
 			struct.price[idx] = 0; // TODO: get from shop list for early protocols??
 			idx++;
@@ -2336,6 +2364,34 @@ public class ActionSender {
 		struct.interfaceId = 3;
 		struct.timesRepeat = repeatFor;  //where is this called from
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, struct, player);
+	}
+
+	public static void sendProductionProgressStart(Player player, int itemId, int total) {
+		ProgressBarStruct progress = new ProgressBarStruct();
+		progress.interfaceId = 6;
+		progress.itemId = itemId;
+		progress.timesRepeat = total;
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
+	}
+
+	public static void sendProductionProgressUpdate(Player player, int completed) {
+		ProgressBarStruct progress = new ProgressBarStruct();
+		progress.interfaceId = 7;
+		progress.timesRepeat = completed;
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
+	}
+
+	public static void sendProductionProgressEnd(Player player) {
+		ProgressBarStruct progress = new ProgressBarStruct();
+		progress.interfaceId = 8;
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
+	}
+
+	public static void sendProductionProgressStep(Player player, int durationMillis) {
+		ProgressBarStruct progress = new ProgressBarStruct();
+		progress.interfaceId = 9;
+		progress.delay = durationMillis;
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_STATUS_PROGRESS_BAR, progress, player);
 	}
 
 	public static void sendActionProgressBar(Player player, int itemId, int delayTicks) {
@@ -2596,7 +2652,9 @@ public class ActionSender {
 		}
 	}
 
-	public static void sendOnlineList(Player player, ArrayList<Player> players, ArrayList<String> locations, int online, final boolean retroClientListsAll) {
+	public static void sendOnlineList(Player player, ArrayList<Player> players, ArrayList<String> locations,
+									  boolean retroClientListsAll, boolean sidebar) {
+		int online = players.size();
 	    if (!player.isUsingCustomClient()) {
 			if (player.getClientLimitations().supportsMessageBox) {
 				StringBuilder onlinePlayers = new StringBuilder(String.format("@lre@Players online @gre@(%d) %%", online));
@@ -2653,6 +2711,7 @@ public class ActionSender {
 			}
         } else {
 			OnlineListStruct struct = new OnlineListStruct();
+			struct.sidebar = sidebar;
 			struct.numberOnline = online;
 			int count = players.size();
 			struct.playerCount = count;
@@ -2874,7 +2933,7 @@ public class ActionSender {
 		PartyStruct struct = new PartyStruct();
 		struct.actionId = 2;
 		struct.nameInviter = username;
-		struct.partyName = name;
+		struct.partyName = name == null ? "" : name;
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_PARTY, struct, invited);
 	}
 

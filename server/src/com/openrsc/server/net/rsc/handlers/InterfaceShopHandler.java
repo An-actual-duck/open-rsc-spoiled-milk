@@ -73,7 +73,15 @@ public final class InterfaceShopHandler implements PayloadProcessor<ShopStruct, 
 
 		// Sell item
 		else if (packetID == sellItem) {
-			sellShopItem(player, shop, def, catalogID, amount);
+			int notedCount = player.getCarriedItems().getInventory().countId(catalogID, Optional.of(true));
+			boolean noted = notedCount > 0;
+			if (payload.sellAll && noted && notedCount < amount
+				&& !player.getConfig().USES_RETRO_STOCK_SENSITIVITY && player.getClientVersion() > 204) {
+				sellShopItem(player, shop, def, catalogID, notedCount, true);
+				sellShopItem(player, shop, def, catalogID, amount - notedCount, false);
+			} else {
+				sellShopItem(player, shop, def, catalogID, amount, noted);
+			}
 		}
 	}
 
@@ -222,7 +230,7 @@ public final class InterfaceShopHandler implements PayloadProcessor<ShopStruct, 
 		return false;
 	}
 
-	private void sellShopItem(Player player, Shop shop, ItemDefinition def, int catalogID, int amount) {
+	private void sellShopItem(Player player, Shop shop, ItemDefinition def, int catalogID, int amount, boolean noted) {
 		boolean isOpenPk = player.getConfig().WANT_OPENPK_POINTS; // Disable selling to shops if using OpenPk config
 		if ((def.isUntradable() && !player.getWorld().getServer().getConfig().CAN_OFFER_UNTRADEABLES) || !shop.shouldStock(catalogID) || isOpenPk) {
 			player.message("This object can't be sold in shops");
@@ -239,7 +247,7 @@ public final class InterfaceShopHandler implements PayloadProcessor<ShopStruct, 
 
 		amount = Math.min(
 			Math.min(originalAmount,
-			player.getCarriedItems().getInventory().countId(catalogID, Optional.empty())),
+			player.getCarriedItems().getInventory().countId(catalogID, Optional.of(noted))),
 			(Short.MAX_VALUE - Short.MIN_VALUE) - shop.currentStock(new Item(catalogID)));
 
 		if (amount <= 0) {
@@ -252,7 +260,7 @@ public final class InterfaceShopHandler implements PayloadProcessor<ShopStruct, 
 		int sellPrice;
 		int sellAmount = 0;
 		int expectedSell = 0;
-		tempItem.getItemStatus().setNoted(player.getCarriedItems().getInventory().countId(catalogID, Optional.of(true)) > 0);
+		tempItem.getItemStatus().setNoted(noted);
 		if (tempItem.getDef(player.getWorld()).isStackable() || tempItem.getNoted()) {
 			Item toSell = player.getCarriedItems().getInventory().get(
 				player.getCarriedItems().getInventory().getLastIndexById(catalogID, Optional.of(tempItem.getNoted()))

@@ -14,4 +14,5 @@ public class ShopStruct extends AbstractStruct<OpcodeOut> {
 	public int[] amount;
 	public int[] baseAmount;
 	public int[] price;
+	public String[] displayCategories;
 }

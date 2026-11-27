@@ -558,6 +558,8 @@ public class PacketHandler {
 		put(164, "SURFACE_SCENERY_CELL");
 		put(155, "SEND_HISCORES");
 		put(157, "LAYERED_SCENE_CONTEXT");
+		put(167, "QUEST_COMPLETION_PRESENTATION");
+		put(168, "DEATH_ITEMS_PREVIEW");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
 		put(254, "UPDATE_EQUIPMENT");
 		put(255, "UPDATE_EQUIPMENT_SLOT");
@@ -813,7 +815,7 @@ public class PacketHandler {
 			else if (opcode == 132) updateAuctionHouse();
 
 				// Online List
-			else if (opcode == 136) refreshOnlineList();
+			else if (opcode == 136) refreshOnlineList(length);
 
 				// Fishing Trawler
 			else if (opcode == 133) fishingTrawlerUpdate();
@@ -910,7 +912,11 @@ public class PacketHandler {
 			else if (opcode == 158) updateClericSpellbook(length);
 
 				// Set Server Configs
-			else if (opcode == 19) setServerConfiguration();
+			else if (opcode == 19) setServerConfiguration(length);
+
+			else if (opcode == 166) updateDialoguePresentation(length);
+			else if (opcode == 167) showQuestReward(length);
+			else if (opcode == 168) showDeathItems(length);
 
 			else this.handlePacket2(opcode, length);
 
@@ -2242,7 +2248,7 @@ public class PacketHandler {
 			else if (opcode == 104) updateNPCAppearances();
 
 				// Show Options Menu
-			else if (opcode == 245) showOptionsMenu();
+			else if (opcode == 245) showOptionsMenu(length);
 
 				// Load Area
 			else if (opcode == 25) loadArea();
@@ -2297,7 +2303,7 @@ public class PacketHandler {
 			}
 
 			// Show Bank
-			else if (opcode == 42) showBank();
+			else if (opcode == 42) showBank(length);
 
 				// Remove inventory item
 			else if (opcode == 123) removeInventoryItem();
@@ -2413,7 +2419,7 @@ public class PacketHandler {
 			else if (opcode == 203) mc.setShowDialogBank(false);
 
 				// Shop Dialog
-			else if (opcode == 101) showShopDialog();
+			else if (opcode == 101) showShopDialog(length);
 
 			    // OpenPK gp exchange
 			else if (opcode == 144) showPointsToGp();
@@ -2525,6 +2531,22 @@ public class PacketHandler {
 			mc.completeActionProgressBar();
 			return;
 		}
+		if (actionType == 6) {
+			mc.doSkillInterface.startCraftingProgress(packetsIncoming.getShort(), packetsIncoming.getByte() & 0xff);
+			return;
+		}
+		if (actionType == 7) {
+			mc.doSkillInterface.updateCraftingProgress(packetsIncoming.getByte() & 0xff);
+			return;
+		}
+		if (actionType == 8) {
+			mc.doSkillInterface.clearCraftingProgress();
+			return;
+		}
+		if (actionType == 9) {
+			mc.doSkillInterface.timeCraftingProgressStep(packetsIncoming.get32());
+			return;
+		}
 		if (!Config.C_BATCH_PROGRESS_BAR) {
 			mc.hideBatchProgressBar();
 			return;
@@ -2611,12 +2633,17 @@ public class PacketHandler {
 				pointCostCodes[i][j] = packetsIncoming.getByte() & 0xff;
 				pointCostAmounts[i][j] = packetsIncoming.get32();
 			}
-			stockAmounts[i] = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getShort() : -1;
+			int stock = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getShort() : 0xffff;
+			stockAmounts[i] = stock == 0xffff ? -1 : stock;
 		}
+		int tabCount = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getUnsignedByte() : 0;
+		int selectedTab = tabCount > 0 ? packetsIncoming.getUnsignedByte() : 0;
+		String[] shopTabs = new String[tabCount];
+		for (int i = 0; i < tabCount; i++) shopTabs[i] = packetsIncoming.readString();
 		mc.doSkillInterface.openProductionInterface(interfaceId, title, inputItemId, resourceAmount, selectedRecipeId, quantity,
 			itemIds, requiredLevels, inputAmounts, outputAmounts, flags,
 			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts, uiFlags,
-			pointCodes, pointBalances, pointCostCodes, pointCostAmounts, stockAmounts);
+			pointCodes, pointBalances, pointCostCodes, pointCostAmounts, stockAmounts, shopTabs, selectedTab);
 	}
 
 	private void setIronmanOptions() {
@@ -2657,17 +2684,41 @@ public class PacketHandler {
 		}
 	}
 
-	private void refreshOnlineList() {
-		mc.getOnlineList().reset();
-		int onlinePlayerCount = packetsIncoming.getShort();
-		for (int i = 0; i < onlinePlayerCount; i++) {
-			mc.getOnlineList().addOnlineUser(packetsIncoming.readString(), packetsIncoming.get32(), packetsIncoming.readString(), i == (onlinePlayerCount - 1));
+	private void refreshOnlineList(int length) {
+		if (length - packetsIncoming.packetEnd < 2) return;
+		int count = packetsIncoming.getShort();
+		if (count < 0 || count > (length - packetsIncoming.packetEnd) / 6) return;
+		List<OnlinePlayerEntry> players = new ArrayList<>(count);
+		for (int i = 0; i < count; i++) {
+			String name = readOnlineListString(length);
+			if (name == null || length - packetsIncoming.packetEnd < 4) return;
+			int crown = packetsIncoming.get32();
+			String location = readOnlineListString(length);
+			if (location == null) return;
+			players.add(new OnlinePlayerEntry(name, crown, location));
 		}
-		mc.getOnlineList().setVisible(true);
+		if (packetsIncoming.packetEnd == length) {
+			mc.getOnlineList().reset();
+			for (OnlinePlayerEntry player : players) {
+				mc.getOnlineList().addOnlineUser(player.name, player.crown, player.location);
+			}
+			mc.getOnlineList().setVisible(true);
+		} else if (length - packetsIncoming.packetEnd == 1 && packetsIncoming.getUnsignedByte() == 1) {
+			mc.receiveOnlineSidebar(players);
+		}
+	}
+
+	private String readOnlineListString(int length) {
+		for (int i = packetsIncoming.packetEnd; i < length; i++) {
+			if (packetsIncoming.dataBuffer[i] == 10) return packetsIncoming.readString();
+		}
+		return null;
 	}
 
 	private void fishingTrawlerUpdate() {
 		int action = packetsIncoming.getByte();
+		// The custom server prefixes Trawler actions with interface ID 6.
+		if (action == 6) action = packetsIncoming.getByte();
 		switch (action) {
 			case 0:
 				mc.getFishingTrawlerInterface().show();
@@ -2813,6 +2864,10 @@ public class PacketHandler {
 		if (mc.worldEditorInterface != null) {
 			mc.worldEditorInterface.observeGameMessage(message);
 		}
+		if (type == MessageType.GAME && sender == null) {
+			mc.receivePasswordChangeMessage(message);
+			if (mc.getAuctionHouse() != null) mc.getAuctionHouse().showStatus(message);
+		}
 		// Why is clan being sent into former name?
 		mc.showMessage(true, sender, message, type, crown, clan, colour);
 	}
@@ -2957,7 +3012,9 @@ public class PacketHandler {
 		mc.showMessage(false, var13, var14, MessageType.PRIVATE_SEND, 0, var13);
 	}
 
-	private void setServerConfiguration() {
+	private void setServerConfiguration(int length) {
+		mc.onlineSidebarSupported = false;
+		mc.deathItemsSupported = false;
 		Properties props = new Properties();
 		String serverName, serverNameWelcome, welcomeText;
 		int playerLevelLimit, spawnAuctionNpcs, spawnIronManNpcs;
@@ -3165,6 +3222,7 @@ public class PacketHandler {
 			groundItemNames = packetsIncoming.getUnsignedByte(); // 89
 			wantNatureRuneProtection = packetsIncoming.getUnsignedByte(); // 90
 			wantHiscores = packetsIncoming.getUnsignedByte(); // 91
+			requestInterfacePreviews(length);
 		}
 
 		if (Config.DEBUG) {
@@ -4932,12 +4990,110 @@ public class PacketHandler {
 		}
 	}
 
-	private void showOptionsMenu() {
-		mc.setOptionsMenuShow(true);
+	private void showOptionsMenu(int length) {
 		int count = packetsIncoming.getUnsignedByte();
 		mc.setOptionsMenuCount(count);
 		for (int i = 0; count > i; ++i) {
 			mc.setOptionsMenuText(i, packetsIncoming.readString());
+		}
+		int dialogueId = length - packetsIncoming.packetEnd == Integer.BYTES ? packetsIncoming.get32() : 0;
+		mc.showOptionsMenu(dialogueId);
+	}
+
+	private void requestInterfacePreviews(int length) {
+		if (!RenderSurfaceSettings.isInterfacePreviewEnabled() || Config.isAndroid()
+			|| length > packetsIncoming.dataBuffer.length || length - packetsIncoming.packetEnd > 128) return;
+		while (packetsIncoming.packetEnd < length) {
+			int start = packetsIncoming.packetEnd;
+			int end = start;
+			while (end < length && packetsIncoming.dataBuffer[end] != 10) end++;
+			if (end == length) return;
+			String tag = new String(packetsIncoming.dataBuffer, start, end - start, java.nio.charset.StandardCharsets.US_ASCII);
+			packetsIncoming.packetEnd = end + 1;
+			if ("dialogue-presentation/1".equals(tag)) {
+				clientStream.newPacket(157);
+				clientStream.finishPacket();
+			} else if ("online-sidebar/1".equals(tag)) {
+				mc.onlineSidebarSupported = true;
+			} else if ("death-items/1".equals(tag)) {
+				mc.deathItemsSupported = true;
+			} else if ("quest-completion/1".equals(tag)) {
+				clientStream.newPacket(199);
+				clientStream.bufferBits.putByte(33);
+				clientStream.finishPacket();
+			}
+		}
+	}
+
+	private void showDeathItems(int length) {
+		if (!mc.deathItemsSupported || length > packetsIncoming.dataBuffer.length
+			|| length - packetsIncoming.packetEnd < 7) return;
+		int requestId = packetsIncoming.get32();
+		int status = packetsIncoming.getUnsignedByte();
+		int kept = packetsIncoming.getUnsignedByte();
+		int count = packetsIncoming.getUnsignedByte();
+		if (requestId <= 0 || status > 1 || status == 1 && count != 0 || kept > count
+			|| length - packetsIncoming.packetEnd != count * 11) return;
+		java.util.List<DeathItemsWindow.Entry> entries = new java.util.ArrayList<>(count);
+		for (int i = 0; i < count; i++) {
+			int id = packetsIncoming.getShort();
+			int amount = packetsIncoming.get32();
+			int noted = packetsIncoming.getUnsignedByte();
+			int basePrice = packetsIncoming.get32();
+			if (amount <= 0 || noted > 1 || basePrice < 0) return;
+			entries.add(new DeathItemsWindow.Entry(id, noted != 0, basePrice, amount));
+		}
+		mc.receiveDeathItems(requestId, entries, kept, status == 1);
+	}
+
+	private void showQuestReward(int length) {
+		if (!RenderSurfaceSettings.isInterfacePreviewEnabled() || Config.isAndroid() || length > packetsIncoming.dataBuffer.length
+			|| length - packetsIncoming.packetEnd < 3 || packetsIncoming.getUnsignedByte() != 1) return;
+		String quest = readQuestRewardText(length);
+		if (quest == null || quest.isEmpty() || packetsIncoming.packetEnd >= length) return;
+		int count = packetsIncoming.getUnsignedByte();
+		if (count > 120) return;
+		java.util.List<String> rewards = new java.util.ArrayList<>(count);
+		for (int row = 0; row < count; row++) {
+			String reward = readQuestRewardText(length);
+			if (reward == null) return;
+			rewards.add(reward);
+		}
+		if (packetsIncoming.packetEnd == length) mc.showQuestReward(quest, rewards);
+	}
+
+	private String readQuestRewardText(int length) {
+		if (packetsIncoming.packetEnd >= length) return null;
+		int bytes = packetsIncoming.getUnsignedByte();
+		int start = packetsIncoming.packetEnd;
+		if (bytes > 240 || bytes > length - start) return null;
+		packetsIncoming.packetEnd += bytes;
+		return new String(packetsIncoming.dataBuffer, start, bytes, java.nio.charset.StandardCharsets.UTF_8);
+	}
+
+	private void updateDialoguePresentation(int length) {
+		if (!RenderSurfaceSettings.isInterfacePreviewEnabled() || Config.isAndroid() || length < 7
+			|| packetsIncoming.getUnsignedByte() != 1) return;
+
+		int type = packetsIncoming.getUnsignedByte();
+		int id = packetsIncoming.get32();
+		if (id <= 0) return;
+		int remaining = length - packetsIncoming.packetEnd;
+		switch (type) {
+			case 1:
+				if (remaining == 2) mc.openDialoguePresentation(id, packetsIncoming.getShort() & 0xFFFF);
+				break;
+			case 2:
+			case 3:
+				if (remaining <= 2048) {
+					String line = new String(packetsIncoming.dataBuffer, packetsIncoming.packetEnd, remaining,
+						java.nio.charset.StandardCharsets.UTF_8);
+					mc.updateDialogueLine(id, type == 2, line);
+				}
+				break;
+			case 4:
+				if (remaining == 0) mc.closeDialoguePresentation(id);
+				break;
 		}
 	}
 
@@ -5054,9 +5210,8 @@ public class PacketHandler {
 
 	private void showTradeDialog() {
 		int serverIndex = packetsIncoming.getShort();
-		if (mc.getPlayerFromServer(serverIndex) != null) {
-			mc.setTradeRecipientName(mc.getPlayerFromServer(serverIndex).displayName);
-		}
+		ORSCharacter recipient = mc.getPlayerFromServer(serverIndex);
+		mc.setTradeRecipientName(recipient == null ? "" : recipient.displayName);
 
 		mc.setShowDialogTrade(true);
 		mc.setTradeRecipientItemsCount(0);
@@ -5171,7 +5326,8 @@ public class PacketHandler {
 		Discord.setLastUpdate("Questing");
 	}
 
-	private void showBank() {
+	private void showBank(int packetLength) {
+		boolean opening = !mc.isShowDialogBank();
 		mc.setShowDialogBank(true);
 		mc.setNewBankItemCount(packetsIncoming.getShort());
 		mc.setBankItemsMax(packetsIncoming.getShort());
@@ -5185,6 +5341,10 @@ public class PacketHandler {
 			}
 
 		if (Config.S_WANT_CUSTOM_BANKS) {
+			int count = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getUnsignedByte() : 0;
+			String[] filterTabs = new String[count];
+			for (int i = 0; i < count; i++) filterTabs[i] = packetsIncoming.readString();
+			mc.getBank().receiveFilterTabs(filterTabs, opening);
 			mc.getBank().calculateWealth();
 		}
 
@@ -5473,7 +5633,7 @@ public class PacketHandler {
 		mc.setDuelOfferItemsCount(0);
 	}
 
-	private void showShopDialog() {
+	private void showShopDialog(int packetLength) {
 		mc.setShowDialogShop(true);
 		int shopItemCount = packetsIncoming.getUnsignedByte();
 		int shopType = packetsIncoming.getByte();
@@ -5481,8 +5641,11 @@ public class PacketHandler {
 		mc.setShopBuyPriceMod(packetsIncoming.getUnsignedByte());
 		mc.setShopPriceMultiplier(packetsIncoming.getUnsignedByte());
 
-		for (int i = 0; i < 40; ++i) {
+		boolean modernShop = mc.usesCraftingInterfacePreview();
+		int slots = modernShop ? mc.getShopSlotCapacity() : 40;
+		for (int i = 0; i < slots; ++i) {
 			mc.setShopCategoryID(i, -1);
+			mc.setShopItemNoted(i, false);
 		}
 
 		for (int i = 0; shopItemCount > i; ++i) {
@@ -5491,22 +5654,28 @@ public class PacketHandler {
 			mc.setShopItemPrice(i, packetsIncoming.getShort());
 		}
 
-		// Check through player's inventory items if this is a general store.
-		int lastAvailableShopSlotIndex = 39;
+		boolean shopExtension = packetsIncoming.packetEnd < packetLength && packetsIncoming.getUnsignedByte() == 1;
+		String[] categories = new String[shopItemCount];
+		if (shopExtension) {
+			for (int i = 0; i < shopItemCount; i++) categories[i] = packetsIncoming.readString();
+		}
+		// The enlarged grid shows all general-store inventory candidates, even when stock fills the first page.
+		int lastAvailableShopSlotIndex = modernShop ? shopItemCount : slots - 1;
 		for (int inventoryIndex = 0; inventoryIndex < mc.getInventoryItemCount()
-			&& shopItemCount <= lastAvailableShopSlotIndex; ++inventoryIndex) {
+			&& (modernShop ? lastAvailableShopSlotIndex < slots : shopItemCount <= lastAvailableShopSlotIndex); ++inventoryIndex) {
 
-			// Only show player items if they are in a general store, or it's a note in a specialty store.
+			// The scaled catalog combines noted and unnoted inventory behind the stocked item's tile.
+			// The classic catalog uses separate note tiles.
 			if (!(shopType == 1
-				|| (mc.getInventoryItem(inventoryIndex).getNoted() && mc.shopContains(mc.getInventoryItemID(inventoryIndex)))))
+				|| (!modernShop && mc.getInventoryItem(inventoryIndex).getNoted() && mc.shopContains(mc.getInventoryItemID(inventoryIndex)))))
 				continue;
 
 			boolean foundEquivalentShopItem = false;
-			for (int currentShopSlot = 0; currentShopSlot < 40; ++currentShopSlot) {
+			for (int currentShopSlot = 0; currentShopSlot < slots; ++currentShopSlot) {
 
 				// Can only match if category matches and not noted.
 				if (mc.getInventoryItemID(inventoryIndex) == mc.getShopCategoryID(currentShopSlot)
-					&& mc.getInventoryItem(inventoryIndex).getNoted() == mc.getShopItemNoted(currentShopSlot)) {
+					&& (modernShop || mc.getInventoryItem(inventoryIndex).getNoted() == mc.getShopItemNoted(currentShopSlot))) {
 					foundEquivalentShopItem = true;
 					break;
 				}
@@ -5522,11 +5691,13 @@ public class PacketHandler {
 				mc.setShopItemCount(lastAvailableShopSlotIndex, 0);
 				mc.setShopItemPrice(lastAvailableShopSlotIndex, 0);
 				mc.setShopItemNoted(lastAvailableShopSlotIndex, mc.getInventoryItem(inventoryIndex).getNoted());
-				--lastAvailableShopSlotIndex;
+				lastAvailableShopSlotIndex += modernShop ? 1 : -1;
 			}
 		}
 
-		if (mc.getShopSelectedItemIndex() >= 0 && 40 > mc.getShopSelectedItemIndex()
+		if (modernShop) {
+			mc.updateShopPreview(shopType == 1, shopExtension, categories, lastAvailableShopSlotIndex);
+		} else if (mc.getShopSelectedItemIndex() >= 0 && slots > mc.getShopSelectedItemIndex()
 			&& mc.getShopSelectedItemType() != mc.getShopCategoryID(mc.getShopSelectedItemIndex())) {
 			mc.setShopSelectedItemIndex(-1);
 			mc.setShopSelectedItemType(-2);

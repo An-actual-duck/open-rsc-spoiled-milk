@@ -1,9 +1,12 @@
 package com.openrsc.server.net.rsc;
 
+import com.openrsc.server.constants.custom.InterfaceOptions;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.handlers.*;
 import com.openrsc.server.net.rsc.struct.AbstractStruct;
+import com.openrsc.server.net.rsc.struct.incoming.OptionsStruct;
+import com.openrsc.server.plugins.Batch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -85,6 +88,7 @@ public class PayloadProcessorManager {
 	static {
 
 		bind(OpcodeIn.HEARTBEAT, Heartbeat.class);
+		bind(OpcodeIn.DIALOGUE_PRESENTATION_READY, DialoguePresentationReady.class);
 
 		bind(OpcodeIn.WALK_TO_ENTITY, WalkRequest.class);
 		bind(OpcodeIn.WALK_TO_POINT, WalkRequest.class);
@@ -205,6 +209,8 @@ public class PayloadProcessorManager {
 			OpcodeIn.LAYERED_TERRAIN_STAGE_READY,
 			LayeredTerrainStageReadyHandler.class);
 		bind(OpcodeIn.HISCORE_REQUEST, HiscoreRequestHandler.class);
+		bind(OpcodeIn.ONLINE_SIDEBAR_REQUEST, OnlineSidebarRequestHandler.class);
+		bind(OpcodeIn.DEATH_ITEMS_REQUEST, DeathItemsRequestHandler.class);
 	}
 
 	private static void bind(OpcodeIn opcode, Class<?> clazz) {
@@ -237,7 +243,8 @@ public class PayloadProcessorManager {
 				}
 				if (method != null) {
 					checkIfShouldCancelMenu(player, payload.getOpcode());
-					if (player != null && player.hasActiveBatch() && ACTION_OPCODES.contains(payload.getOpcode())) {
+					if (player != null && player.hasActiveBatch() && ACTION_OPCODES.contains(payload.getOpcode())
+							&& !keepsProductionBatchRunning(player.getBatch(), payload)) {
 						player.interruptPlugins();
 					}
 					method.invoke(processor, payload, player); //processor.process(payload, player);
@@ -256,6 +263,13 @@ public class PayloadProcessorManager {
 		return false;
 	}
 
+	private static boolean keepsProductionBatchRunning(Batch batch, AbstractStruct<OpcodeIn> payload) {
+		if (!(payload instanceof OptionsStruct) || batch == null || !batch.isShowingProductionProgress()) return false;
+		InterfaceOptions option = InterfaceOptions.getById(((OptionsStruct) payload).index);
+		return option == InterfaceOptions.PRODUCTION_CLOSE || option == InterfaceOptions.PRODUCTION_START
+			|| option == InterfaceOptions.PRODUCTION_REMEMBER_TOGGLE || option == InterfaceOptions.PRODUCTION_KEEP_OPEN_TOGGLE;
+	}
+
 	public static boolean blockedByAbyssalTrap(OpcodeIn opcode, Player player) {
 		if (!com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(player)) return false;
 		// Retain chat, connection, terrain receipts, and account/UI traffic, not gameplay.
@@ -267,9 +281,10 @@ public class PayloadProcessorManager {
 
 	private static void checkIfShouldCancelMenu(Player player, OpcodeIn opcode) {
 		// most player actions other than choosing a dialogue choice must cancel the menu handler and set them non-busy
-		// HISCORE_REQUEST is exempt: the client fires it automatically while the hiscores view is open
+		// Read-only refresh requests leave the current dialogue open.
 		if (!OpcodeIn.QUESTION_DIALOG_ANSWER.equals(opcode)
 			&& !OpcodeIn.HEARTBEAT.equals(opcode)
+			&& !OpcodeIn.DIALOGUE_PRESENTATION_READY.equals(opcode)
 			&& !OpcodeIn.KNOWN_PLAYERS.equals(opcode)
 			&& !OpcodeIn.LAYERED_TERRAIN_READY.equals(opcode)
 			&& !OpcodeIn.LAYERED_TERRAIN_STAGE_READY.equals(opcode)
@@ -278,7 +293,9 @@ public class PayloadProcessorManager {
 			&& !OpcodeIn.COMBAT_STYLE_CHANGED.equals(opcode)
 			&& !OpcodeIn.GAME_SETTINGS_CHANGED.equals(opcode)
 			&& !OpcodeIn.PRIVACY_SETTINGS_CHANGED.equals(opcode)
-			&& !OpcodeIn.HISCORE_REQUEST.equals(opcode)) {
+			&& !OpcodeIn.HISCORE_REQUEST.equals(opcode)
+			&& !OpcodeIn.ONLINE_SIDEBAR_REQUEST.equals(opcode)
+			&& !OpcodeIn.DEATH_ITEMS_REQUEST.equals(opcode)) {
 
 			player.cancelMenuHandler();
 		}

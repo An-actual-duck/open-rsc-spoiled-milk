@@ -26,6 +26,7 @@ import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.DialoguePresentation;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
 import org.apache.logging.log4j.LogManager;
@@ -164,7 +165,11 @@ public class Functions {
 		final PluginTask pluginTask = PluginTask.getContextPluginTask();
 		if (pluginTask == null)
 			return;
-		// System.out.println("Sleeping on " + Thread.currentThread().getName());
+		// The one-tick gap between repetitions is separate from the production action.
+		if (ticks > 1 && pluginTask.getScriptContext() != null) {
+			Batch batch = pluginTask.getScriptContext().getBatch();
+			if (batch != null) batch.beginProductionStep(ticks);
+		}
 		pluginTask.pause(ticks);
 	}
 
@@ -306,6 +311,7 @@ public class Functions {
 			 */
 			player.getUpdateFlags().setChatMessage(new ChatMessage(player, message, (npc == null ? player : npc)));
 			player.getUpdateFlags().setPluginChatMessage(true);
+			DialoguePresentation.line(player, npc, true, message);
 		}
 		return false;
 	}
@@ -344,7 +350,7 @@ public class Functions {
 			}
 		}
 		//player.face(npc);
-		player.setMenuHandler(new MenuOptionListener(options));
+		player.setMenuHandler(new MenuOptionListener(options, DialoguePresentation.currentId(player)));
 		ActionSender.sendMenu(player, options);
 
 		while (!player.checkUnderAttack()) {
@@ -789,6 +795,7 @@ public class Functions {
 						return;
 					}
 					npc.getUpdateFlags().setChatMessage(new ChatMessage(npc, message, player));
+					DialoguePresentation.line(player, npc, false, message);
 				}
 			}
 

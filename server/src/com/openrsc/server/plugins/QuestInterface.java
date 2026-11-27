@@ -37,4 +37,8 @@ public interface QuestInterface {
 	 * @param player
 	 */
 	void handleReward(Player player);
+
+	default java.util.List<String> getCompletionUnlocks() {
+		return java.util.Collections.emptyList();
+	}
 }

@@ -7,12 +7,16 @@ import com.openrsc.client.entityhandling.defs.NPCDef;
 import com.openrsc.client.entityhandling.defs.SpellDef;
 import orsc.Config;
 import orsc.ClericTextLayout;
+import orsc.SkillGuideWindow;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.two.GraphicsController;
 import orsc.mudclient;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public final class SkillGuideInterface {
@@ -180,11 +184,7 @@ public final class SkillGuideInterface {
 
 	private void drawHiscoreList(int x, int y) {
 		HiscoreData data = mc.getHiscoreData();
-		int skillId = mc.getHiscoreGuideSkillId();
-		if (skillId >= 0 && data.shouldRequest()) {
-			data.markRequested(skillId);
-			mc.sendHiscoreRequest(skillId);
-		}
+		mc.requestHiscoresIfNeeded();
 
 		// Keep the guide list empty so its scrollbar never draws in this mode
 		skillGuide.clearList(skillGuideScroll);
@@ -558,6 +558,148 @@ public final class SkillGuideInterface {
 		mc.getSurface().drawString(text, x + (width / 2) - (mc.getSurface().stringWidth(font, text) / 2), y + height / 2 + 5, textColour, font);
 	}
 
+	public SkillGuideWindow createGuideWindow() {
+		String skill = mc.getSkillGuideChosen();
+		if ("Worship".equalsIgnoreCase(skill)) {
+			return new SkillGuideWindow(skill, WorshipGuideTopics.SECTIONS,
+				index -> WorshipGuideTopics.load(index, mc));
+		}
+		if ("Blessing".equalsIgnoreCase(skill)) {
+			return new SkillGuideWindow(skill, BlessingGuideTopics.SECTIONS,
+				index -> BlessingGuideTopics.load(index, mc));
+		}
+		List<String> sections = new ArrayList<>(mc.skillGuideChosenTabs);
+		int info = sections.indexOf("Info");
+		if (info >= 0) {
+			switch (skill) {
+				case "Hits":
+					sections.set(info, "Other food");
+					break;
+				case "Cooking":
+					sections.set(info, "Other recipes");
+					break;
+				case "Attack":
+				case "Melee":
+					sections.set(info, "Combat");
+					break;
+				default:
+					break;
+			}
+		}
+		if (info < 0 || !hasContextualNotes(skill)) {
+			return new SkillGuideWindow(skill, sections, index -> loadGuideTopics(index, Collections.emptyList()));
+		}
+		sections.remove(info);
+		List<SkillMenuEntry> notes = isEnchantingGuide(skill) ? Collections.emptyList() : loadContextualNotes(info);
+		return new SkillGuideWindow(skill, sections, index -> loadGuideTopics(index < info ? index : index + 1, notes));
+	}
+
+	private static boolean hasContextualNotes(String skill) {
+		switch (skill) {
+			case "Ranged":
+			case "Herblaw":
+			case "Agility":
+			case "Thieving":
+			case "Harvest":
+			case "Magic":
+			case "Woodcutting":
+			case "Fishing":
+			case "Crafting":
+			case "Mining":
+			case "Summoning":
+				return true;
+			default:
+				return isEnchantingGuide(skill);
+		}
+	}
+
+	private static boolean isEnchantingGuide(String skill) {
+		return skill.equalsIgnoreCase("Enchanting") || skill.equalsIgnoreCase("Magecraft")
+			|| skill.equalsIgnoreCase("Runecraft");
+	}
+
+	private List<SkillMenuEntry> loadContextualNotes(int info) {
+		int previousTab = curTab;
+		ArrayList<SkillMenuEntry> previousEntries = skillMenuEntries;
+		curTab = info;
+		skillMenuEntries = new ArrayList<>();
+		try {
+			populateSkillItems();
+			return skillMenuEntries;
+		} finally {
+			curTab = previousTab;
+			skillMenuEntries = previousEntries;
+		}
+	}
+
+	private List<SkillGuideWindow.Topic> loadGuideTopics(int section, List<SkillMenuEntry> notes) {
+		curTab = section;
+
+		populateSkillItems();
+		Map<String, List<SkillGuideWindow.Article>> byTopic = new LinkedHashMap<>();
+		String skill = mc.getSkillGuideChosen();
+		String sectionName = mc.skillGuideChosenTabs.get(section);
+		String defaultTopic = SkillGuideTopics.defaultTopic(skill, sectionName, isExpositoryTab());
+		for (SkillMenuEntry entry : skillMenuEntries) {
+			if ("Summoning".equals(skill) && "Scaling".equals(sectionName)
+				&& entry.getSkillDetail().endsWith("Does not engage in combat")) {
+				continue;
+			}
+			String topic = entry.contextSection == null ? entry.topic : null;
+			if (topic == null) {
+				topic = defaultTopic;
+			}
+			byTopic.computeIfAbsent(topic, key -> new ArrayList<>()).add(guideArticle(entry));
+		}
+		for (SkillMenuEntry note : notes) {
+			if (sectionName.equals(note.contextSection)) {
+				byTopic.computeIfAbsent(note.topic, key -> new ArrayList<>()).add(
+					new SkillGuideWindow.Article("", Collections.singletonList(note.getSkillDetail())));
+			}
+		}
+		SkillGuideTopics.append(mc, skill, sectionName, byTopic);
+		if (byTopic.isEmpty()) {
+			byTopic.put(defaultTopic, Collections.singletonList(new SkillGuideWindow.Article("",
+				Collections.singletonList("No guide entries are available for this section."))));
+		}
+		List<SkillGuideWindow.Topic> topics = new ArrayList<>();
+		byTopic.forEach((label, articles) -> topics.add(new SkillGuideWindow.Topic(label, articles)));
+		if (isEnchantingGuide(mc.getSkillGuideChosen())) EnchantingGuideTopics.append(sectionName, topics);
+		return topics;
+	}
+
+	private String itemName(int itemId) {
+		ItemDef def = EntityHandler.getItemDef(itemId);
+		return def == null ? "item #" + itemId : def.getName();
+	}
+
+	private SkillGuideWindow.Article guideArticle(SkillMenuEntry entry) {
+		String level = entry.getLevelReq();
+		String heading = level.isEmpty() ? "" : "Level " + level;
+		if (entry instanceof MagicSpellMenuItem) {
+			MagicSpellMenuItem spell = (MagicSpellMenuItem) entry;
+			return new SkillGuideWindow.Article(heading + "  " + spell.getFullSpellName(),
+				Collections.singletonList(spell.getTooltip()));
+		}
+		SkillGuideWindow.Icon icon = null;
+		if (entry instanceof SkillMenuItem && !isExpositoryTab()) {
+			icon = mc.skillGuideItemIcon(((SkillMenuItem) entry).getItemID());
+		} else if (entry instanceof SkillMenuNPC) {
+			int npcId = ((SkillMenuNPC) entry).getNpcID();
+			NPCDef def = EntityHandler.getNpcDef(npcId);
+			if (def != null) {
+				icon = (x, y, size) -> {
+					int height = npcId == 114 || npcId == 241 ? size / 2 : size;
+					int width = def.getCamera2() > 0 ? def.getCamera1() * height / def.getCamera2() : height;
+					width = Math.max(1, Math.min(size, width));
+					mc.drawNPCDef(def, x + (size - width) / 2, y + (size - height) / 2, width, height,
+						isSummonGuideSideFacingNpc(npcId) ? 3 : 0);
+				};
+			}
+		}
+		return SkillGuideWindow.Article.unlock(entry.getSkillDetail(), level, icon);
+	}
+
 	public void populateSkillItems() {
 		skillMenuEntries.clear();
 		if (mc.getSkillGuideChosen().equals("Melee") || mc.getSkillGuideChosen().equals("Attack")) {
@@ -836,20 +978,20 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(3251, "80", "Staff of Enlightenment"));
 				addSkillCapeGuide(1382, "Magic");
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(185, "", "Magic Guild can be entered at level 66"));
-				skillMenuEntries.add(new SkillMenuItem(35, "", "Combat spells can be toggled for auto-cast"));
-				skillMenuEntries.add(new SkillMenuItem(36, "", "Heal spells have their own cooldown"));
-				skillMenuEntries.add(new SkillMenuItem(42, "", "Teleport spells charge before moving you"));
-				skillMenuEntries.add(new SkillMenuItem(33, "", "Unsteady lowers average damage for 5 attacks"));
-				skillMenuEntries.add(new SkillMenuItem(32, "", "Dampen lowers max damage for 5 attacks"));
-				skillMenuEntries.add(new SkillMenuItem(34, "", "Slow 1 / Slow 2: delays combat actions by 1 / 2 ticks; fades over time"));
-				skillMenuEntries.add(new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
-				skillMenuEntries.add(new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
-				skillMenuEntries.add(new SkillMenuItem(701, "", "Chaos gauntlets raise mind-rune combat spells to the chaos-rune damage cap"));
-				skillMenuEntries.add(new SkillMenuItem(31, "", "Thunder can Startle: staggers for 1 attack; then 5 unstaggered attacks before reapplication"));
-				skillMenuEntries.add(new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
-				skillMenuEntries.add(new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
-				skillMenuEntries.add(new SkillMenuItem(32, "", "Wood spells can Splinter to hit another eligible enemy"));
+				addContextNote("Equipment", "More info", new SkillMenuItem(185, "", "Magic Guild can be entered at level 66"));
+				addContextNote("Spells", "Casting", new SkillMenuItem(35, "", "Combat spells can be toggled for auto-cast"));
+				addContextNote("Spells", "Casting", new SkillMenuItem(36, "", "Heal spells have their own cooldown"));
+				addContextNote("Spells", "Casting", new SkillMenuItem(42, "", "Teleport spells charge before moving you"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(33, "", "Unsteady lowers average damage for 5 attacks"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(32, "", "Dampen lowers max damage for 5 attacks"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(34, "", "Slow 1 / Slow 2: delays combat actions by 1 / 2 ticks; fades over time"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
+				addContextNote("Equipment", "More info", new SkillMenuItem(701, "", "Chaos gauntlets raise mind-rune combat spells to the chaos-rune damage cap"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(31, "", "Thunder can Startle: staggers for 1 attack; then 5 unstaggered attacks before reapplication"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
+				addContextNote("Spells", "Spell effects", new SkillMenuItem(32, "", "Wood spells can Splinter to hit another eligible enemy"));
 				addPvpGuideInfo();
 			}
 		}
@@ -949,16 +1091,16 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(405, "70", "Rune hatchet"));
 			} else if (curTab == 2) {
 				if (Config.S_WANT_WOODCUTTING_GUILD) {
-					skillMenuEntries.add(new SkillMenuItem(405, "", "Woodcutting Guild can be entered at level 55 after paying 1000 coins"));
+					addContextNote("Trees", "More info", new SkillMenuItem(405, "", "Woodcutting Guild can be entered at level 55 after paying 1000 coins"));
 				}
-				skillMenuEntries.add(new SkillMenuItem(405, "", "Hatchet must be equipped to chop trees"));
-				skillMenuEntries.add(new SkillMenuItem(2707, "", "Resource seeds can appear as side rewards"));
-				skillMenuEntries.add(new SkillMenuItem(2707, "", "Seed focus: No seeds, A few, More, or Even more"));
-				skillMenuEntries.add(new SkillMenuItem(2707, "", "Seeds can roll up to hatchet tier plus 2"));
-				skillMenuEntries.add(new SkillMenuItem(2707, "", "Above-tier seeds roll at reduced weight"));
-				skillMenuEntries.add(new SkillMenuItem(2708, "", "Knowledge and Money seeds scale to your level"));
+				addContextNote("Hatchets", "More info", new SkillMenuItem(405, "", "Hatchet must be equipped to chop trees"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2707, "", "Resource seeds can appear as side rewards"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2707, "", "Seed focus: No seeds, A few, More, or Even more"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2707, "", "Seeds can roll up to hatchet tier plus 2"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2707, "", "Above-tier seeds roll at reduced weight"));
+				addContextNote("Trees", "Seed rewards", new SkillMenuItem(2708, "", "Knowledge and Money seeds scale to your level"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					addSkillCapeGuide(1525, "Woodcutting");
+					addContextNote("Trees", "More info", new SkillMenuItem(1525, "", "Woodcutting cape unlocked at level 99"));
 				}
 			}
 		}
@@ -995,18 +1137,18 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(2689, "62", "Magic Fishing Rod - T9, +40 effective Fishing"));
 				skillMenuEntries.add(new SkillMenuItem(2690, "70", "Blood Fishing Rod - T10, +45 effective Fishing"));
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(379, "", "Fishing Guild can be entered at level 68"));
-				skillMenuEntries.add(new SkillMenuItem(377, "", "Fishing shops sell rods through T6"));
-				skillMenuEntries.add(new SkillMenuItem(2686, "", "Fishing Guild sells rods through T10"));
-				skillMenuEntries.add(new SkillMenuItem(377, "", "Rods catch their tier and 3 tiers below"));
-				skillMenuEntries.add(new SkillMenuItem(793, "", "Side rewards: oyster, seaweed, casket"));
-				skillMenuEntries.add(new SkillMenuItem(1837, "", "Side rewards: leather gloves and boots by rod tier"));
-				skillMenuEntries.add(new SkillMenuItem(793, "", "Loot focus: Just the fish, A little, Plenty, Lots"));
-				skillMenuEntries.add(new SkillMenuItem(1837, "", "Side loot can roll up to rod tier plus 2"));
-				skillMenuEntries.add(new SkillMenuItem(1837, "", "Above-tier side loot rolls at reduced weight"));
-				skillMenuEntries.add(new SkillMenuItem(589, "", "Fishing Contest and Dragon Slayer keep quest exceptions"));
+				addContextNote("Catches", "More info", new SkillMenuItem(379, "", "Fishing Guild can be entered at level 68"));
+				addContextNote("Rods", "More info", new SkillMenuItem(377, "", "Fishing shops sell rods through T6"));
+				addContextNote("Rods", "More info", new SkillMenuItem(2686, "", "Fishing Guild sells rods through T10"));
+				addContextNote("Rods", "More info", new SkillMenuItem(377, "", "Rods catch their tier and 3 tiers below"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(793, "", "Side rewards: oyster, seaweed, casket"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(1837, "", "Side rewards: leather gloves and boots by rod tier"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(793, "", "Loot focus: Just the fish, A little, Plenty, Lots"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(1837, "", "Side loot can roll up to rod tier plus 2"));
+				addContextNote("Catches", "Side rewards", new SkillMenuItem(1837, "", "Above-tier side loot rolls at reduced weight"));
+				addContextNote("Catches", "More info", new SkillMenuItem(589, "", "Fishing Contest and Dragon Slayer keep quest exceptions"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					addSkillCapeGuide(1380, "Fishing");
+					addContextNote("Catches", "More info", new SkillMenuItem(1380, "", "Fishing cape unlocked at level 99"));
 				}
 			}
 		}
@@ -1033,12 +1175,12 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(453, "64", EntityHandler.getItemDef(453).name));
 				skillMenuEntries.add(new SkillMenuItem(934, "70", EntityHandler.getItemDef(934).name));
 			} else if (curTab == 1) {
-				addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, 3198, "Potion of Brawn",
+				addHerblawPotionFamilyGuide("Brawn", 474, 477, 480, 483, 486, 3198, "Potion of Brawn",
 					new String[] {"fern leaf", "mushroom", "fungus", "limpwurt root", "red flower", "blue flower"});
-				addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, 3201, "Potion of Deftness",
+				addHerblawPotionFamilyGuide("Deftness", 489, 492, 495, 498, 566, 3201, "Potion of Deftness",
 					new String[] {"10 low quality fish oil", "10 fair quality fish oil", "10 good quality fish oil",
 						"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"});
-				addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, 3204, "Potion of Insight",
+				addHerblawPotionFamilyGuide("Insight", 569, 963, 1411, 1414, 1468, 3204, "Potion of Insight",
 					new String[] {"eye of newt", "spider eye", "zombie eye", "bat eye", "baby dragon's eye", "demon eye"});
 				skillMenuEntries.add(new SkillMenuItem(3402, "8", "Weak Antidote - Marrentill & Giant Spider Eggs"));
 				skillMenuEntries.add(new SkillMenuItem(1474, "22", "Antidote - Marrentill & red spiders' eggs"));
@@ -1178,9 +1320,7 @@ public final class SkillGuideInterface {
 				}
 			}
 		}
-		if (mc.getSkillGuideChosen().equalsIgnoreCase("Enchanting")
-			|| mc.getSkillGuideChosen().equalsIgnoreCase("Magecraft")
-			|| mc.getSkillGuideChosen().equalsIgnoreCase("Runecraft")) {
+		if (isEnchantingGuide(mc.getSkillGuideChosen())) {
 			if (curTab == 0) {
 				addStaffTierGuide();
 			} else if (curTab == 1) {
@@ -1208,72 +1348,72 @@ public final class SkillGuideInterface {
 		}
 		if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvest")) {
 			if (curTab == 0) {
-				skillMenuEntries.add(new SkillMenuItem(29, "T1", "Grain"));
-				skillMenuEntries.add(new SkillMenuItem(348, "T1", "Potato"));
-				skillMenuEntries.add(new SkillMenuItem(241, "T1", "Onion"));
-				skillMenuEntries.add(new SkillMenuItem(18, "T1", "Cabbage"));
-				skillMenuEntries.add(new SkillMenuItem(675, "T1", "Flax"));
-				skillMenuEntries.add(new SkillMenuItem(218, "T2", "Garlic"));
-				skillMenuEntries.add(new SkillMenuItem(320, "T3", "Tomato"));
-				skillMenuEntries.add(new SkillMenuItem(1353, "T4", "Corn"));
-				skillMenuEntries.add(new SkillMenuItem(1569, "T1", "Lily's Pumpkin"));
-				skillMenuEntries.add(new SkillMenuItem(422, "T1", "Event Pumpkin (bonus XP)"));
-				skillMenuEntries.add(new SkillMenuItem(1352, "T5", "Red Cabbage"));
-				skillMenuEntries.add(new SkillMenuItem(1354, "T7", "White Pumpkin"));
-				skillMenuEntries.add(new SkillMenuItem(1456, "T7", "Sugar Cane"));
+				skillMenuEntries.add(new SkillMenuEntry("", "Shears must be equipped to harvest. You can equip any shears at Harvesting level 1."));
+				addShears(144, 1);
+				addShears(2215, 2);
+				addShears(2216, 3);
+				addShears(2217, 4);
+				addShears(2218, 5);
+				addShears(2219, 6);
+				addShears(2220, 7);
+				addShears(2221, 8);
+				addShears(2222, 9);
+				addShears(2223, 10);
+				addShears(3272, 11);
 			} else if (curTab == 1) {
-				skillMenuEntries.add(new SkillMenuItem(855, "T3", "Lemon Tree"));
-				skillMenuEntries.add(new SkillMenuItem(863, "T4", "Lime Tree"));
-				skillMenuEntries.add(new SkillMenuItem(1348, "T5", "Apple Tree"));
-				skillMenuEntries.add(new SkillMenuItem(249, "T5", "Banana Palm"));
-				skillMenuEntries.add(new SkillMenuItem(143, "T6", "Grape Vine"));
-				skillMenuEntries.add(new SkillMenuItem(857, "T6", "Orange Tree"));
-				skillMenuEntries.add(new SkillMenuItem(861, "T8", "Pineapple Plant"));
-				skillMenuEntries.add(new SkillMenuItem(1349, "T8", "Grapefruit Tree"));
-				skillMenuEntries.add(new SkillMenuItem(1350, "T8", "Papaya Palm"));
-				skillMenuEntries.add(new SkillMenuItem(1351, "T9", "Coconut Palm"));
-				skillMenuEntries.add(new SkillMenuItem(1457, "T10", "Dragonfruit Tree"));
-				skillMenuEntries.add(new SkillMenuItem(1465, "", "Bless/Curse Grapes (level 70)"));
+				addHarvestProduce(29, 1, "Grain");
+				addHarvestProduce(348, 1, "Potato");
+				addHarvestProduce(241, 1, "Onion");
+				addHarvestProduce(18, 1, "Cabbage");
+				addHarvestProduce(675, 1, "Flax");
+				addHarvestProduce(218, 2, "Garlic");
+				addHarvestProduce(320, 3, "Tomato");
+				addHarvestProduce(1353, 4, "Corn");
+				addHarvestProduce(1569, 1, "Lily's Pumpkin");
+				addHarvestProduce(422, 1, "Event Pumpkin (bonus XP)");
+				addHarvestProduce(1352, 5, "Red Cabbage");
+				addHarvestProduce(1354, 7, "White Pumpkin");
+				addHarvestProduce(1456, 7, "Sugar Cane");
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(236, "T2", "Redberry Bush"));
-				skillMenuEntries.add(new SkillMenuItem(55, "T4", "Cadavaberry Bush"));
-				skillMenuEntries.add(new SkillMenuItem(765, "T6", "Dwellberry Bush"));
-				skillMenuEntries.add(new SkillMenuItem(936, "T7", "Jangerberry Bush"));
-				skillMenuEntries.add(new SkillMenuItem(471, "T9", "Whiteberry Bush"));
+				addHarvestProduce(855, 3, "Lemon Tree");
+				addHarvestProduce(863, 4, "Lime Tree");
+				addHarvestProduce(1348, 5, "Apple Tree");
+				addHarvestProduce(249, 5, "Banana Palm");
+				addHarvestProduce(143, 6, "Grape Vine");
+				addHarvestProduce(857, 6, "Orange Tree");
+				addHarvestProduce(861, 8, "Pineapple Plant");
+				addHarvestProduce(1349, 8, "Grapefruit Tree");
+				addHarvestProduce(1350, 8, "Papaya Palm");
+				addHarvestProduce(1351, 9, "Coconut Palm");
+				addHarvestProduce(1457, 10, "Dragonfruit Tree");
+				addHarvestProduce(1465, 10, "Bless or curse grapes");
 			} else if (curTab == 3) {
-				skillMenuEntries.add(new SkillMenuItem(165, "T1", "Guam herb chance"));
-				skillMenuEntries.add(new SkillMenuItem(435, "T2", "Marrentill chance"));
-				skillMenuEntries.add(new SkillMenuItem(436, "T3", "Tarromin chance"));
-				skillMenuEntries.add(new SkillMenuItem(622, "T4", "Sea weed"));
-				skillMenuEntries.add(new SkillMenuItem(437, "T4", "Harralander chance"));
-				skillMenuEntries.add(new SkillMenuItem(438, "T5", "Ranarr Weed chance"));
-				skillMenuEntries.add(new SkillMenuItem(220, "T6", "Limpwurt Root"));
-				skillMenuEntries.add(new SkillMenuItem(439, "T6", "Irit Leaf chance"));
-				skillMenuEntries.add(new SkillMenuItem(440, "T7", "Avantoe chance"));
-				skillMenuEntries.add(new SkillMenuItem(441, "T8", "Kwuarm chance"));
-				skillMenuEntries.add(new SkillMenuItem(469, "T8", "Snape Grass"));
-				skillMenuEntries.add(new SkillMenuItem(442, "T8", "Cadantine chance"));
-				skillMenuEntries.add(new SkillMenuItem(443, "T10", "Dwarf Weed chance"));
-				skillMenuEntries.add(new SkillMenuItem(933, "T10", "Torstol rare chance"));
+				addHarvestProduce(236, 2, "Redberry Bush");
+				addHarvestProduce(55, 4, "Cadavaberry Bush");
+				addHarvestProduce(765, 6, "Dwellberry Bush");
+				addHarvestProduce(936, 7, "Jangerberry Bush");
+				addHarvestProduce(471, 9, "Whiteberry Bush");
 			} else if (curTab == 4) {
-				skillMenuEntries.add(new SkillMenuItem(3256, "T1", "Fern leaf"));
-				skillMenuEntries.add(new SkillMenuItem(3257, "T2", "Mushroom"));
-				skillMenuEntries.add(new SkillMenuItem(3258, "T5", "Fungus"));
-				skillMenuEntries.add(new SkillMenuItem(220, "T6", "Limpwurt Root"));
-				skillMenuEntries.add(new SkillMenuItem(3259, "T8", "Red flower"));
-				skillMenuEntries.add(new SkillMenuItem(3260, "T10", "Blue flower"));
+				addHarvestProduce(165, 1, "Guam leaf (chance)");
+				addHarvestProduce(435, 2, "Marrentill (chance)");
+				addHarvestProduce(436, 3, "Tarromin (chance)");
+				addHarvestProduce(437, 4, "Harralander (chance)");
+				addHarvestProduce(438, 5, "Ranarr Weed (chance)");
+				addHarvestProduce(439, 6, "Irit Leaf (chance)");
+				addHarvestProduce(440, 7, "Avantoe (chance)");
+				addHarvestProduce(441, 8, "Kwuarm (chance)");
+				addHarvestProduce(442, 8, "Cadantine (chance)");
+				addHarvestProduce(443, 10, "Dwarf Weed (chance)");
+				addHarvestProduce(933, 10, "Torstol (rare chance)");
 			} else if (curTab == 5) {
-				skillMenuEntries.add(new SkillMenuItem(144, "T1", "Tin shears"));
-				skillMenuEntries.add(new SkillMenuItem(2215, "T2", "Copper shears"));
-				skillMenuEntries.add(new SkillMenuItem(2216, "T3", "Bronze shears"));
-				skillMenuEntries.add(new SkillMenuItem(2217, "T4", "Iron shears"));
-				skillMenuEntries.add(new SkillMenuItem(2218, "T5", "Steel shears"));
-				skillMenuEntries.add(new SkillMenuItem(2219, "T6", "Mithril shears"));
-				skillMenuEntries.add(new SkillMenuItem(2220, "T7", "Titan steel shears"));
-				skillMenuEntries.add(new SkillMenuItem(2221, "T8", "Adamantite shears"));
-				skillMenuEntries.add(new SkillMenuItem(2222, "T9", "Orichalcum shears"));
-				skillMenuEntries.add(new SkillMenuItem(2223, "T10", "Rune shears"));
-				skillMenuEntries.add(new SkillMenuItem(3272, "T11", "Exalted Rune shears"));
+				addHarvestProduce(3256, 1, "Fern leaf");
+				addHarvestProduce(3257, 2, "Mushroom");
+				addHarvestProduce(622, 4, "Seaweed");
+				addHarvestProduce(3258, 5, "Fungus");
+				addHarvestProduce(220, 6, "Limpwurt Root");
+				addHarvestProduce(469, 8, "Snape grass");
+				addHarvestProduce(3259, 8, "Red flower");
+				addHarvestProduce(3260, 10, "Blue flower");
 			} else if (curTab == 6) {
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1526, "Harvesting");
@@ -1349,35 +1489,35 @@ public final class SkillGuideInterface {
 			addSummonGuide(298, "64", "Astral Wraith - Hits 10 +1/8; dmg 7 +1/14");
 			addSummonGuide(184, "70", "Inner Demon - Hits 18 +1/7; dmg 9 +1/12");
 		} else if (curTab == 2) {
-			addSummonGuide(23, "1", "None - introductory combat summon");
-			addSummonGuide(114, "7", "Mischievous - prevents enemy aggro until you attack");
-			addSummonGuide(838, "12", "Scavenger - collects dropped stackable items");
-			addSummonGuide(8, "14", "Tank - absorbs 60% of incoming damage");
-			addSummonGuide(0, "20", "Divine - grants +10 prayer points");
-			addSummonGuide(43, "26", "Vampirism - heals owner for damage dealt");
-			addSummonGuide(241, "33", "Hoarder - 1 base use; certs matching selected items");
-			addSummonGuide(295, "39", "Relentless - 15% chance for bonus damage");
-			addSummonGuide(296, "45", "Reverent - double XP, +50% Devotion, and full-set healing from auto-offerings");
-			addSummonGuide(53, "51", "Fear - 20% chance to stop enemy attacks");
-			addSummonGuide(748, "55", "Watchful - one enemy; suppresses area attacks");
-			addSummonGuide(13, "58", "Beast of Burden - 1 base use; banks one stack");
-			addSummonGuide(845, "61", "Foundry - each coal costs 5 fire and 1 nature rune");
-			addSummonGuide(298, "64", "Spell Echo - 15% chance for magic bonus damage");
-			addSummonGuide(184, "70", "Hellfire - 10% chance for Hell's Fire damage");
+			addSummonGuide(23, "1", "Broodling Spider - None - introductory combat summon");
+			addSummonGuide(114, "7", "Mischief Imp - Mischievous - prevents enemy aggro until you attack");
+			addSummonGuide(838, "12", "Loot Goblin - Scavenger - collects dropped stackable items");
+			addSummonGuide(8, "14", "Ironhide Bear - Tank - absorbs 60% of incoming damage");
+			addSummonGuide(0, "20", "Sacred Unicorn - Divine - grants +10 prayer points");
+			addSummonGuide(43, "26", "Duskwind Bat - Vampirism - heals owner for damage dealt");
+			addSummonGuide(241, "33", "Pack Rat - Hoarder - 1 base use; certs matching selected items");
+			addSummonGuide(295, "39", "Bound Battleaxe - Relentless - 15% chance for bonus damage");
+			addSummonGuide(296, "45", "Mourning Unicorn - Reverent - double XP, +50% Devotion, and full-set healing from auto-offerings");
+			addSummonGuide(53, "51", "Restless Shade - Fear - 20% chance to stop enemy attacks");
+			addSummonGuide(748, "55", "Guard Dog - Watchful - one enemy; suppresses area attacks");
+			addSummonGuide(13, "58", "Delivery Camel - Beast of Burden - 1 base use; banks one stack");
+			addSummonGuide(845, "61", "Foundry Dragon - Foundry - each coal costs 5 fire and 1 nature rune");
+			addSummonGuide(298, "64", "Astral Wraith - Spell Echo - 15% chance for magic bonus damage");
+			addSummonGuide(184, "70", "Inner Demon - Hellfire - 10% chance for Hell's Fire damage");
 		} else if (curTab == 3) {
-			addSummonGuide(23, "", "Combat summons stay until death or dismissal");
-			addSummonGuide(8, "", "Combat summons absorb only their listed share");
-			addSummonGuide(0, "", "Support summons last 1 minute by default");
-			addSummonGuide(0, "", "They automatically consume life runes to renew; without upkeep they leave");
-			addSummonGuide(0, "", "Each successful upkeep consumption gives 10 base Summoning XP, not per rune");
-			addSummonGuide(0, "", "Commanding an active support summon also earns Summoning XP each minute");
-			addSummonGuide(0, "", "Preserved upkeep runes give no consumption XP; Command XP still progresses");
-			addSummonGuide(0, "", "Support upkeep rises every 3 minutes active");
-			addSummonGuide(0, "", "Upkeep recovers 1 step per minute inactive");
-			addSummonGuide(241, "", "Utility uses are spent only on successful tasks");
-			addSummonGuide(13, "", "Utility Bangels add +1, +2, +3, +5, or +8 uses");
-			addSummonGuide(114, "", "Only one manual summon can be active");
-			addSummonGuide(53, "", "Summoning has a 5 second interruptible charge");
+			addContextNote("Summons", "Combat", new SkillMenuNPC(23, "", "Combat summons stay until death or dismissal"));
+			addContextNote("Summons", "Combat", new SkillMenuNPC(8, "", "Combat summons absorb only their listed share"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Support summons last 1 minute by default"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "They automatically consume life runes to renew; without upkeep they leave"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Each successful upkeep consumption gives 10 base Summoning XP, not per rune"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Commanding an active support summon also earns Summoning XP each minute"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Preserved upkeep runes give no consumption XP; Command XP still progresses"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Support upkeep rises every 3 minutes active"));
+			addContextNote("Summons", "Support upkeep", new SkillMenuNPC(0, "", "Upkeep recovers 1 step per minute inactive"));
+			addContextNote("Summons", "Utility", new SkillMenuNPC(241, "", "Utility uses are spent only on successful tasks"));
+			addContextNote("Summons", "Utility", new SkillMenuNPC(13, "", "Utility Bangels add +1, +2, +3, +5, or +8 uses"));
+			addContextNote("Summons", "Casting", new SkillMenuNPC(114, "", "Only one manual summon can be active"));
+			addContextNote("Summons", "Casting", new SkillMenuNPC(53, "", "Summoning has a 5 second interruptible charge"));
 		}
 	}
 
@@ -1432,11 +1572,11 @@ public final class SkillGuideInterface {
 	}
 
 	private void addPvpGuideInfo() {
-		skillMenuEntries.add(new SkillMenuEntry("", "Player combat is limited to legally attackable targets in the Wilderness"));
-		skillMenuEntries.add(new SkillMenuEntry("", "Player splash requires a player target; NPC attacks never splash players"));
-		skillMenuEntries.add(new SkillMenuEntry("", "Every splash target must qualify separately, including the Wilderness boundary"));
-		skillMenuEntries.add(new SkillMenuEntry("", "Area attacks and curses exclude your party, clanmates and players on your friends list"));
-		skillMenuEntries.add(new SkillMenuEntry("", "Adding a friend protects them from your effects, not you from theirs; direct attacks are separate"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Player combat is limited to legally attackable targets in the Wilderness"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Player splash requires a player target; NPC attacks never splash players"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Every splash target must qualify separately, including the Wilderness boundary"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Area attacks and curses exclude your party, clanmates and players on your friends list"));
+		addContextNote("Spells", "Wilderness", new SkillMenuEntry("", "Adding a friend protects them from your effects, not you from theirs; direct attacks are separate"));
 	}
 
 	private void addRangedBowGuide(String name, int level, int shortbowId, int longbowId) {
@@ -1454,6 +1594,12 @@ public final class SkillGuideInterface {
 
 	private void addSkillCapeGuide(int itemId, String skillName) {
 		skillMenuEntries.add(new SkillMenuItem(itemId, "", skillName + " cape unlocked at level 99"));
+	}
+
+	private void addContextNote(String section, String topic, SkillMenuEntry entry) {
+		entry.contextSection = section;
+		entry.topic = topic;
+		skillMenuEntries.add(entry);
 	}
 
 	private void addThrownGuide(String name, int level, int dartId, int knifeId, int shurikenId) {
@@ -1581,7 +1727,7 @@ public final class SkillGuideInterface {
             skillMenuEntries.add(new SkillMenuItem(3444, "80", "Saradomin crossbow - Ranged; matching god required"));
             skillMenuEntries.add(new SkillMenuItem(3445, "80", "Zamorak crossbow - Ranged; matching god required"));
             skillMenuEntries.add(new SkillMenuItem(3446, "80", "Guthix crossbow - Ranged; matching god required"));
-            skillMenuEntries.add(new SkillMenuEntry("", "Artifacts: 80 Worship and 800 devotion; costs 400 devotion"));
+            skillMenuEntries.add(new SkillMenuEntry("", "High devotion can earn unique artifacts from your god"));
             skillMenuEntries.add(new SkillMenuEntry("", "Crossbows use normal bolts unless their prayer is active"));
             skillMenuEntries.add(new SkillMenuEntry("", "Free bolts override equipped ammo without consuming it"));
 			skillMenuEntries.add(new SkillMenuItem(1218, "", "God gear gives prayer points and empowers god spells"));
@@ -1645,7 +1791,7 @@ public final class SkillGuideInterface {
 
 	private void addClericSpellGuideEntries() {
 		List<ClericSpellGuideCatalog.Entry> entries = ClericSpellGuideCatalog.build(
-			mc.getClericSpellbookDefinitions(),id->{com.openrsc.client.entityhandling.defs.ItemDef item=EntityHandler.getItemDef(id);return item==null?"item #"+id:item.getName();}, clericGuideFilter);
+			mc.getClericSpellbookDefinitions(), this::itemName, clericGuideFilter);
 		for (ClericSpellGuideCatalog.Entry entry : entries) {
 			skillMenuEntries.add(new ClericSpellMenuItem(entry));
 		}
@@ -1686,13 +1832,13 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(2049, "62", "Orichalcum Pickaxe"));
 			skillMenuEntries.add(new SkillMenuItem(1262, "70", "Rune Pickaxe"));
 		} else if (curTab == 2) {
-			skillMenuEntries.add(new SkillMenuItem(1259, "", "Mining Guild can be entered at level 60"));
-			skillMenuEntries.add(new SkillMenuItem(1260, "", "Pickaxe must be equipped to mine rocks"));
-			skillMenuEntries.add(new SkillMenuItem(3178, "", "Geode focus: Just the ore, A few, Plenty, Lots"));
-			skillMenuEntries.add(new SkillMenuItem(3178, "", "Higher geode focus increases rare geode rolls"));
-			skillMenuEntries.add(new SkillMenuItem(1299, "", "Stone comes only from regular rock nodes"));
+			addContextNote("Ores", "More info", new SkillMenuItem(1259, "", "Mining Guild can be entered at level 60"));
+			addContextNote("Pickaxes", "More info", new SkillMenuItem(1260, "", "Pickaxe must be equipped to mine rocks"));
+			addContextNote("Ores", "Geodes", new SkillMenuItem(3178, "", "Geode focus: Just the ore, A few, Plenty, Lots"));
+			addContextNote("Ores", "Geodes", new SkillMenuItem(3178, "", "Higher geode focus increases rare geode rolls"));
+			addContextNote("Ores", "More info", new SkillMenuItem(1299, "", "Stone comes only from regular rock nodes"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				addSkillCapeGuide(1377, "Mining");
+				addContextNote("Ores", "More info", new SkillMenuItem(1377, "", "Mining cape unlocked at level 99"));
 			}
 		}
 	}
@@ -1800,21 +1946,21 @@ public final class SkillGuideInterface {
 			addWoodcraftGuide("Magic", 50, 62, 667, 61, 666, 64, 2175, 65, 1784, 62, 2689, 62);
 			addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70, 2690, 70);
 		} else if (curTab == 6) {
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor has set effects if all five pieces are worn"));
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor mimics the defenses of its creature"));
-			skillMenuEntries.add(new SkillMenuItem(148, "", "Hides and carapaces must be tanned at tanning racks"));
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
-			skillMenuEntries.add(new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor slots lower Magic Power"));
-			skillMenuEntries.add(new SkillMenuItem(1076, "", "Arrowheads moved to Crafting and use molds"));
-			skillMenuEntries.add(new SkillMenuItem(11, "", "Bolts moved to Crafting and use molds"));
-			skillMenuEntries.add(new SkillMenuItem(1013, "", "Dart tips moved to Crafting and use molds"));
-			skillMenuEntries.add(new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
-			skillMenuEntries.add(new SkillMenuItem(3208, "", "Shuriken use Crafting and molds"));
-			skillMenuEntries.add(new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron"));
-			skillMenuEntries.add(new SkillMenuItem(191, "", "Gem-dragon caves below the guild require 70 Crafting; prepare for dangerous combat"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1839, "", "Leather armor has set effects if all five pieces are worn"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1839, "", "Leather armor mimics the defenses of its creature"));
+			addContextNote("Leather", "More info", new SkillMenuItem(148, "", "Hides and carapaces must be tanned at tanning racks"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));
+			addContextNote("Leather", "More info", new SkillMenuItem(1839, "", "Leather armor slots lower Magic Power"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(1076, "", "Arrowheads moved to Crafting and use molds"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(11, "", "Bolts moved to Crafting and use molds"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(1013, "", "Dart tips moved to Crafting and use molds"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
+			addContextNote("Ammo", "Molds", new SkillMenuItem(3208, "", "Shuriken use Crafting and molds"));
+			addContextNote("Materials", "More info", new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron"));
+			addContextNote("Materials", "More info", new SkillMenuItem(191, "", "Gem-dragon caves below the guild require 70 Crafting; prepare for dangerous combat"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				addSkillCapeGuide(1384, "Crafting");
+				addContextNote("Materials", "More info", new SkillMenuItem(1384, "", "Crafting cape unlocked at level 99"));
 			}
 		}
 	}
@@ -1823,40 +1969,53 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(itemId, level, detail + " - from level " + level));
 	}
 
-	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id, int tier6Id,
-											 String potionName, String secondary) {
-		addHerblawPotionFamilyGuide(tier1Id, tier2Id, tier3Id, tier4Id, tier5Id, tier6Id, potionName,
-			new String[] {secondary, secondary, secondary, secondary, secondary, secondary});
+	private void addHerblawPotionFamilyGuide(String topic, int tier1Id, int tier2Id, int tier3Id, int tier4Id,
+											 int tier5Id, int tier6Id, String potionName, String[] secondaries) {
+		addGuideRecipe(topic, tier1Id, 3, potionName + " v1 - Guam leaf & " + secondaries[0]);
+		addGuideRecipe(topic, tier2Id, 12, potionName + " v2 - Tarromin & " + secondaries[1]);
+		addGuideRecipe(topic, tier3Id, 30, potionName + " v3 - Ranarr weed & " + secondaries[2]);
+		addGuideRecipe(topic, tier4Id, 50, potionName + " v4 - Avantoe & " + secondaries[3]);
+		addGuideRecipe(topic, tier5Id, 66, potionName + " v5 - Cadantine & " + secondaries[4]);
+		addGuideRecipe(topic, tier6Id, 78, potionName + " v6 - Torstol & " + secondaries[5]);
 	}
 
-	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id, int tier6Id,
-											 String potionName, String[] secondaries) {
-		skillMenuEntries.add(new SkillMenuItem(tier1Id, "3", potionName + " v1 - Guam leaf & " + secondaries[0]));
-		skillMenuEntries.add(new SkillMenuItem(tier2Id, "12", potionName + " v2 - Tarromin & " + secondaries[1]));
-		skillMenuEntries.add(new SkillMenuItem(tier3Id, "30", potionName + " v3 - Ranarr weed & " + secondaries[2]));
-		skillMenuEntries.add(new SkillMenuItem(tier4Id, "50", potionName + " v4 - Avantoe & " + secondaries[3]));
-		skillMenuEntries.add(new SkillMenuItem(tier5Id, "66", potionName + " v5 - Cadantine & " + secondaries[4]));
-		skillMenuEntries.add(new SkillMenuItem(tier6Id, "78", potionName + " v6 - Torstol & " + secondaries[5]));
+	private void addGuideRecipe(String topic, int itemId, int level, String detail) {
+		SkillMenuItem menuItem = new SkillMenuItem(itemId, String.valueOf(level), detail);
+		((SkillMenuEntry) menuItem).topic = topic;
+		skillMenuEntries.add(menuItem);
 	}
 
 	private void addAmmoMouldGuide(String name, int baseLevel, int boltsId, int arrowheadsId, int arrowId, int dartsId, int knivesId, int shurikenId) {
-		skillMenuEntries.add(new SkillMenuItem(boltsId, String.valueOf(baseLevel), name + " bolts - 1 bar makes 5"));
-		skillMenuEntries.add(new SkillMenuItem(arrowheadsId, String.valueOf(baseLevel), name + " arrowheads - 1 bar makes 10"));
-		skillMenuEntries.add(new SkillMenuItem(arrowId, String.valueOf(baseLevel), name + " arrows - headless arrows and arrowheads"));
-		skillMenuEntries.add(new SkillMenuItem(dartsId, String.valueOf(baseLevel + 2), name + " throwing darts - 1 bar makes 7"));
-		skillMenuEntries.add(new SkillMenuItem(knivesId, String.valueOf(baseLevel + 4), name + " throwing knives - 1 bar makes 2"));
-		skillMenuEntries.add(new SkillMenuItem(shurikenId, String.valueOf(baseLevel + 4), name + " shuriken - 1 bar makes 9"));
+		addGuideRecipe("Bolts", boltsId, baseLevel, name + " bolts - 1 bar makes 5");
+		addGuideRecipe("Arrows", arrowheadsId, baseLevel, name + " arrowheads - 1 bar makes 10");
+		addGuideRecipe("Arrows", arrowId, baseLevel, name + " arrows - headless arrows and arrowheads");
+		addGuideRecipe("Thrown weapons", dartsId, baseLevel + 2, name + " throwing darts - 1 bar makes 7");
+		addGuideRecipe("Thrown weapons", knivesId, baseLevel + 4, name + " throwing knives - 1 bar makes 2");
+		addGuideRecipe("Thrown weapons", shurikenId, baseLevel + 4, name + " shuriken - 1 bar makes 9");
 	}
 
 	private void addWoodcraftGuide(String name, int shaftAmount, int shaftLevel, int shortbowId, int shortbowLevel,
 								   int longbowId, int longbowLevel, int crossbowId, int crossbowLevel,
 								   int staffId, int staffLevel, int fishingRodId, int fishingRodLevel) {
-		skillMenuEntries.add(new SkillMenuItem(280, String.valueOf(shaftLevel), name + " arrow shafts - 1 log makes " + shaftAmount));
-		skillMenuEntries.add(new SkillMenuItem(staffId, String.valueOf(staffLevel), name + " staff"));
-		skillMenuEntries.add(new SkillMenuItem(fishingRodId, String.valueOf(fishingRodLevel), EntityHandler.getItemDef(fishingRodId).name));
-		skillMenuEntries.add(new SkillMenuItem(shortbowId, String.valueOf(shortbowLevel), "Unstrung " + name.toLowerCase() + " shortbow"));
-		skillMenuEntries.add(new SkillMenuItem(longbowId, String.valueOf(longbowLevel), "Unstrung " + name.toLowerCase() + " longbow"));
-		skillMenuEntries.add(new SkillMenuItem(crossbowId, String.valueOf(crossbowLevel), name + " crossbow"));
+		addGuideRecipe("Arrow shafts", 280, shaftLevel, name + " arrow shafts - 1 log makes " + shaftAmount);
+		addGuideRecipe("Staves", staffId, staffLevel, name + " staff");
+		addGuideRecipe("Fishing rods", fishingRodId, fishingRodLevel, EntityHandler.getItemDef(fishingRodId).name);
+		addGuideRecipe("Bows", shortbowId, shortbowLevel, "Unstrung " + name.toLowerCase() + " shortbow");
+		addGuideRecipe("Bows", longbowId, longbowLevel, "Unstrung " + name.toLowerCase() + " longbow");
+		addGuideRecipe("Crossbows", crossbowId, crossbowLevel, name + " crossbow");
+	}
+
+	private static final String[] SHEARS_NAMES = {
+		"Tin Shears", "Copper Shears", "Bronze Shears", "Iron Shears", "Steel Shears", "Mithril Shears",
+		"Titan Steel Shears", "Adamantite Shears", "Orichalcum Shears", "Rune Shears", "Exalted Rune Shears"
+	};
+
+	private void addHarvestProduce(int itemId, int minimumShears, String name) {
+		skillMenuEntries.add(new SkillMenuItem(itemId, "", name + " - " + SHEARS_NAMES[minimumShears - 1]));
+	}
+
+	private void addShears(int itemId, int shearsTier) {
+		skillMenuEntries.add(new SkillMenuItem(itemId, "1", SHEARS_NAMES[shearsTier - 1]));
 	}
 
 	private void populateSmithingGuide() {
@@ -1880,33 +2039,27 @@ public final class SkillGuideInterface {
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1383, "Smithing");
 			}
+			SkillMenuEntry forge = new SkillMenuEntry("",
+				"Dragon and Purified Rune bars require the repaired lava forge after Dwarf Youth Rescue. "
+					+ "Repair costs 100 black dragon scales and 1,000,000 coins.");
+			forge.topic = "Lava forge";
+			skillMenuEntries.add(forge);
 		} else if (curTab == 1) {
 			addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 3181, 2207, -1, 1959, 1960, 1961, 2224, 1962, 1963, 1964);
 			addSmithingTier("Copper", 8, 2006, 2008, 2009, 2010, 2011, 2012, 2047, 2013, 2014, 3182, 2208, 2178, 1965, 1966, 1967, 2225, 1968, 1969, 1970);
-		} else if (curTab == 2) {
 			addSmithingTier("Bronze", 15, 62, 66, 70, 82, 76, 87, 156, 205, 94, 3183, 827, 2180, 108, 1983, 1984, 124, 128, 206, 117);
+			addGuideRecipe("Bronze", 979, 4, "Bronze wire - 1 bronze bar");
 			addSmithingTier("Iron", 22, 28, 1, 71, 83, 77, 12, 1258, 89, 0, 3184, 1088, 2182, 6, 1985, 1986, 3, 2, 9, 8);
-		} else if (curTab == 3) {
 			addSmithingTier("Steel", 30, 63, 67, 72, 84, 78, 88, 1259, 90, 95, 3185, 1089, 2184, 109, 698, 1988, 125, 129, 121, 118);
+			addGuideRecipe("Steel", 419, 34, "Nails - 1 steel bar makes 2");
 			addSmithingTier("Mithril", 38, 64, 68, 73, 85, 79, 203, 1260, 91, 96, 3186, 1090, 2186, 110, 1989, 1990, 126, 130, 122, 119);
-		} else if (curTab == 4) {
 			addSmithingTier("Titan steel", 46, 2017, 2019, 2020, 2021, 2022, 2023, 2048, 2024, 2025, 3187, 2209, 2188, 1971, 1972, 1973, 2226, 1974, 1975, 1976);
 			addSmithingTier("Adamantite", 54, 65, 69, 74, 86, 80, 204, 1261, 92, 97, 3188, 1091, 2190, 111, 1991, 1992, 127, 131, 123, 120);
-		} else if (curTab == 5) {
 			addSmithingTier("Orichalcum", 62, 2028, 2030, 2031, 2032, 2033, 2034, 2049, 2035, 2036, 3189, 2210, 2192, 1977, 1978, 1979, 2227, 1980, 1981, 1982);
 			addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 98, 3190, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);
-		} else if (curTab == 6) {
 			addSmithingTier("Dragon", 80, 1447, -1, 593, -1, 1346, 594, -1, 2752, -1, -1, -1, -1, 1425, -1, -1, 1278, 1426, 1429, 1427);
+			addGuideRecipe("Dragon", 1278, 60, "Dragon square shield - smith the two halves together");
 			addSmithingTier("Exalted Rune", 90, 3262, 3263, 3264, 3265, 3266, 3267, 3268, 3269, 3271, 3270, 3273, -1, 3274, 3275, 3276, 3277, 3278, 3279, 3280);
-			skillMenuEntries.add(new SkillMenuItem(979, "4", "Bronze wire - 1 bronze bar"));
-			skillMenuEntries.add(new SkillMenuItem(419, "34", "Nails - 1 steel bar makes 2"));
-			skillMenuEntries.add(new SkillMenuItem(1278, "60", "Dragon square shield - smith the 2 halves together"));
-		} else if (curTab == 7) {
-			skillMenuEntries.add(new SkillMenuEntry("", "Dragon bars require the repaired lava forge"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Purified Rune Bars require the repaired lava forge"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Repair the forge after Dwarf Youth Rescue"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Repair cost: 100 black dragon scales and 1,000,000 coins"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Dragon and Exalted Rune gear are smithed at normal anvils"));
 		}
 	}
 
@@ -1914,6 +2067,7 @@ public final class SkillGuideInterface {
 								int scimitarId, int twoHandedId, int axeId, int pickaxeId, int battleAxeId,
 								int maceId, int scytheId, int spearId, int boltId, int helmId, int gauntletId, int greavesId,
 								int shieldId, int paladinShieldId, int legsId, int bodyId) {
+		int first = skillMenuEntries.size();
 		addSmithingGuideItem(daggerId, String.valueOf(baseLevel), name + " weapons - 1 to 3 bars");
 		addSmithingGuideItem(axeId, String.valueOf(baseLevel), name + " tools - 1 bar");
 		addSmithingGuideItem(scytheId, String.valueOf(baseLevel), name + " scythe - 3 bars");
@@ -1924,6 +2078,7 @@ public final class SkillGuideInterface {
 		addSmithingGuideItem(paladinShieldId, String.valueOf(baseLevel + 4), name + " paladin shield - 3 bars");
 		addSmithingGuideItem(legsId, String.valueOf(baseLevel + 4), name + " platelegs - 3 bars");
 		addSmithingGuideItem(bodyId, String.valueOf(baseLevel + 6), name + " platebody - 4 bars");
+		for (int i = first; i < skillMenuEntries.size(); i++) skillMenuEntries.get(i).topic = name;
 	}
 
 	private void addSmithingGuideItem(int itemId, String level, String description) {
@@ -1957,7 +2112,9 @@ public final class SkillGuideInterface {
 
 class SkillMenuEntry {
 
-	private String levelReq, skillDetail;
+	private final String levelReq, skillDetail;
+	String topic;
+	String contextSection;
 
 	protected SkillMenuEntry(String levelReq, String skillDetail) {
 		this.levelReq = levelReq;
@@ -1988,14 +2145,13 @@ class SkillMenuItem extends SkillMenuEntry {
 }
 
 class MagicSpellMenuItem extends SkillMenuEntry {
-	private String spellName;
-	private String tooltip;
+	private final String fullSpellName, spellName, tooltip;
 
 	public MagicSpellMenuItem(int spellIndex, SpellDef spell) {
 		super(String.valueOf(spell.getReqLevel()), "");
 		ElementalSpellDisplayMetadata metadata = ElementalSpellDisplayMetadata.resolve(spellIndex, spell);
-		String displayName = metadata == null ? spell.getName() : metadata.getSpellName();
-		this.spellName = formatSpellName(displayName);
+		this.fullSpellName = metadata == null ? spell.getName() : metadata.getSpellName();
+		this.spellName = formatSpellName(fullSpellName);
 		this.tooltip = formatTooltip(spell.getDescription(), metadata);
 	}
 
@@ -2032,6 +2188,10 @@ class MagicSpellMenuItem extends SkillMenuEntry {
 			return "Area dark magic damage";
 		}
 		return description;
+	}
+
+	public String getFullSpellName() {
+		return fullSpellName;
 	}
 
 	public String getSpellName() {

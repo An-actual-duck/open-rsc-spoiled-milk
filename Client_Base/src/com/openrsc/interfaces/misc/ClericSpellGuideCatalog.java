@@ -100,7 +100,7 @@ public final class ClericSpellGuideCatalog {
     add(lines, "God sigils select the line. Grace fuels blessings; Blight fuels curses. They are consumed together when casting.");
     add(lines, "Unify and Greater Unify use Grace alone. Their teleport distance is fixed and does not scale with Holy Power.");
     add(lines, "Unify follows teleport restrictions: no use at Wilderness level 20 or higher, during a duel, or in other teleport-restricted places. Caster, recipients and landing places must all qualify.");
-    add(lines, "Choose a god line above to filter its spells, or All for the full guide. Scroll for each spell's targets, sigil cost and effect values.");
+    add(lines, "Choose a god line to filter its spells, or All for the full guide. Scroll for each spell's targets, sigil cost and effect values.");
     addPages(entries, new Entry(-3, "God lines and sigils", "", "", "", lines));
 
     DocumentLines stacking = new DocumentLines();
@@ -237,7 +237,10 @@ public final class ClericSpellGuideCatalog {
   private static void add(List<String> lines, String text) {
     List<String> wrapped = ClericTextLayout.wrap(text, MAX_LINE_CHARACTERS, String::length);
     lines.addAll(wrapped);
-    if (lines instanceof DocumentLines) ((DocumentLines) lines).blocks.add(wrapped);
+    if (lines instanceof DocumentLines) {
+      DocumentLines document = (DocumentLines) lines;
+      document.blocks.add(wrapped);
+    }
   }
 
   private static final class DocumentLines extends ArrayList<String> {
@@ -262,6 +265,7 @@ public final class ClericSpellGuideCatalog {
               ? new ArrayList<List<String>>(((DocumentLines) lines).blocks)
               : Collections.singletonList(lines);
       this.lines = Collections.unmodifiableList(new ArrayList<String>(lines));
+
     }
 
     public int getStableCode() {

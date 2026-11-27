@@ -4,6 +4,7 @@ import com.openrsc.interfaces.InputListener;
 import com.openrsc.interfaces.MenuAction;
 import com.openrsc.interfaces.NComponent;
 import com.openrsc.interfaces.NRightClickMenu;
+import orsc.OnlinePlayerAction;
 import orsc.graphics.gui.Panel;
 import orsc.mudclient;
 
@@ -84,7 +85,7 @@ public class OnlineListInterface extends NComponent {
 		setVisible(false);
 	}
 
-	public void addOnlineUser(final String user, final int crownID, String location, boolean isLast) {
+	public void addOnlineUser(final String user, final int crownID, String location) {
 		addUser(user, crownID, location);
 	}
 
@@ -153,139 +154,16 @@ public class OnlineListInterface extends NComponent {
 						}
 						NRightClickMenu staffMenu = new NRightClickMenu(OnlineListInterface.this);
 
-						// Moderator menu options
-						if (getClient().getLocalPlayer().isMod()) {
-							staffMenu.createOption("Goto", new MenuAction() {
+						for (OnlinePlayerAction action : OnlinePlayerAction.values()) {
+							if (!action.isAvailable(getClient().getLocalPlayer())) continue;
+							NRightClickMenu menu = action.isStaffAction() ? staffMenu : rightClickMenu;
+							menu.createOption(action.label, new MenuAction() {
 								@Override
 								public void action() {
-									getClient().sendCommandString("goto " + username);
-								}
-							});
-							staffMenu.createOption("Summon Player", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("summon " + username);
-								}
-							});
-							staffMenu.createOption("Return Player", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("return " + username);
-								}
-							});
-							staffMenu.createOption("Inspect inventory", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("inventory " + username);
-								}
-							});
-							staffMenu.createOption("Inspect bank", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("bank " + username);
-								}
-							});
-							staffMenu.createOption("10 minute mute", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("mute " + username + " 10");
-								}
-							});
-							staffMenu.createOption("Permanent mute", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("mute " + username + " -1");
-								}
-							});
-							staffMenu.createOption("Unmute", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("mute " + username + " 0");
-								}
-							});
-							staffMenu.createOption("Kick", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("kick " + username + "");
+									action.execute(getClient(), username);
 								}
 							});
 						}
-
-						// Super Moderator menu options
-						if (getClient().getLocalPlayer().isSuperMod()) {
-							staffMenu.createOption("Jail", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("jail " + username + "");
-								}
-							});
-							staffMenu.createOption("Release", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("release " + username + "");
-								}
-							});
-						}
-
-						// Administrator menu options
-						if (getClient().getLocalPlayer().isOwner() || getClient().getLocalPlayer().isAdmin()) {
-							staffMenu.createOption("10 minute ban", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("ban " + username + " 10");
-								}
-							});
-							staffMenu.createOption("Permanent ban", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("ban " + username + " -1");
-								}
-							});
-							staffMenu.createOption("Demote to player", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("rank " + username + " 10");
-								}
-							});
-							staffMenu.createOption("Promote to mod", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("rank " + username + " 3");
-								}
-							});
-							staffMenu.createOption("Promote to super mod", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("rank " + username + " 2");
-								}
-							});
-							staffMenu.createOption("Promote to admin", new MenuAction() {
-								@Override
-								public void action() {
-									getClient().sendCommandString("rank " + username + " 1");
-								}
-							});
-						}
-
-						// Regular player menu options
-						rightClickMenu.createOption("Add friend", new MenuAction() {
-							@Override
-							public void action() {
-								getClient().addFriend(username);
-							}
-						});
-						rightClickMenu.createOption("Add ignore", new MenuAction() {
-							@Override
-							public void action() {
-								getClient().addIgnore(username);
-							}
-						});
-						rightClickMenu.createOption("Invite to Party", new MenuAction() {
-							@Override
-							public void action() {
-								getClient().addPartyInv(username);
-							}
-						});
 
 						if (getClient().getLocalPlayer().isMod())
 							rightClickMenu.createSubMenuOption("Staff >", null, staffMenu);

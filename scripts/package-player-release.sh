@@ -415,16 +415,7 @@ chmod +x "$JAVA_DIR/play-spoiled-milk.sh"
 chmod +x "$JAVA_PAYLOAD_DIR/update-spoiled-milk.sh"
 
 cp "$PACKAGE_ASSETS/Play Spoiled Milk Windows.cmd" "$WINDOWS_DIR/Play Spoiled Milk.cmd"
-for mode in "World Chunks" "World Streaming"; do
-  launcher="Play Spoiled Milk - $mode.cmd"
-  cp "$PACKAGE_ASSETS/$launcher" "$JAVA_DIR/$launcher"
-  cp "$PACKAGE_ASSETS/$launcher" "$WINDOWS_DIR/$launcher"
-  launcher="Play Spoiled Milk - $mode.command"
-  install -m 755 "$PACKAGE_ASSETS/$launcher" "$JAVA_DIR/$launcher"
-done
-for launcher in play-spoiled-milk-world-chunks.sh play-spoiled-milk-world-streaming.sh; do
-  install -m 755 "$PACKAGE_ASSETS/$launcher" "$JAVA_DIR/$launcher"
-done
+install -m 755 "$PACKAGE_ASSETS/Play Spoiled Milk.command" "$JAVA_DIR/Play Spoiled Milk.command"
 sed "s/@VERSION@/$VERSION/g; s/@PACKAGE_KIND@/windows-x64/g" "$PACKAGE_ASSETS/update-spoiled-milk.ps1" > "$WINDOWS_PAYLOAD_DIR/update-spoiled-milk.ps1"
 cp "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" "$WINDOWS_PAYLOAD_DIR/Update Spoiled Milk.cmd"
 mkdir -p "$WINDOWS_PAYLOAD_DIR/runtime"

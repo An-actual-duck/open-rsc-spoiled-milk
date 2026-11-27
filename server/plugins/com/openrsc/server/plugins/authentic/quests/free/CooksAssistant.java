@@ -33,6 +33,11 @@ public class CooksAssistant implements QuestInterface, TalkNpcTrigger {
 	}
 
 	@Override
+	public java.util.List<String> getCompletionUnlocks() {
+		return java.util.Collections.singletonList("Unlocked the Cook's range");
+	}
+
+	@Override
 	public boolean isMembers() {
 		return false;
 	}

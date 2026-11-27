@@ -96,6 +96,7 @@ public class Clan {
 	}
 
 	public void showClanSetupInterface(boolean inClan) {
+		if (clanInterface.getClient().openScaledClanWindow()) return;
 		clanInterface.setVisible(true);
 		if (!inClan()) {
 			clanInterface.clanSetupPanel.setFocus(clanInterface.clanName_field);

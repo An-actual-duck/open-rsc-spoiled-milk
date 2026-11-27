@@ -1,4 +1,4 @@
-export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = false) {
+export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = false, interfacePreview = false) {
   const worker = new Worker(new URL('./browser-surface-mesh-worker.js', import.meta.url),
     {name: scenery ? 'Spoiled Milk scenery mesher' : 'Spoiled Milk terrain mesher'});
   const stats = {ready: false, completed: 0, gameplay: 0, bytes: 0, inputBytes: 0, busy: 0, refused: 0, error: null};
@@ -43,7 +43,7 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion, scenery = f
     }
   };
   worker.onerror = event => close(event.message || 'Surface mesh worker failed');
-  worker.postMessage({runtime, javaVersion, scenery});
+  worker.postMessage({runtime, javaVersion, scenery, interfacePreview});
 
   return {
     stats,

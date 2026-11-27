@@ -75,7 +75,7 @@ public class Party {
 		return kdRatio;
 	}
 
-	String getPartyRankNames(int i) {
+	public String getPartyRankNames(int i) {
 		return partyByName[i];
 	}
 
@@ -112,6 +112,7 @@ public class Party {
 	}
 
 	public void showPartySetupInterface(boolean inParty) {
+		if (partyInterface.getClient().openScaledPartyWindow()) return;
 		partyInterface.setVisible(true);
 		if (!inParty()) {
 			partyInterface.partySetupPanel.setFocus(partyInterface.partyName_field);
@@ -130,7 +131,7 @@ public class Party {
 		return partyInterface;
 	}
 
-	boolean isPartyLeader() {
+	public boolean isPartyLeader() {
 		return isPartyLeader;
 	}
 
@@ -152,7 +153,7 @@ public class Party {
 		this.partySetting[setting] = state;
 	}
 
-	int getPartySetting(int setting) {
+	public int getPartySetting(int setting) {
 		return partySetting[setting];
 	}
 

@@ -16,10 +16,10 @@ public final class HitSplatCenteringFixture {
     private static void check(boolean value, String why) {
         checks++; if (!value) throw new AssertionError(why);
     }
-    private static Sprite sprite(FloatingHitSplatRenderer renderer, int type, int value, MudClientGraphics surface) throws Exception {
-        Method method = FloatingHitSplatRenderer.class.getDeclaredMethod("sprite", int.class, int.class, MudClientGraphics.class);
+    private static Sprite sprite(FloatingHitSplatRenderer renderer, int type, int value, MudClientGraphics surface, int font) throws Exception {
+        Method method = FloatingHitSplatRenderer.class.getDeclaredMethod("sprite", int.class, int.class, MudClientGraphics.class, int.class);
         method.setAccessible(true);
-        return (Sprite) method.invoke(renderer, type, value, surface);
+        return (Sprite) method.invoke(renderer, type, value, surface, font);
     }
     private static int[] bounds(Sprite sprite) {
         int left = sprite.getWidth(), top = sprite.getHeight(), right = -1, bottom = -1, count = 0;
@@ -51,7 +51,7 @@ public final class HitSplatCenteringFixture {
             reference.drawString(digits, 10, 25, 0xFFFFFF, 0);
             int referenceCount = bounds(new Sprite(reference.pixelData, 100, 40))[4];
             for (int type = 0; type < ORSCharacter.HIT_SPLAT_COUNT; type++) {
-                Sprite result = sprite(background, type, value, surface);
+                Sprite result = sprite(background, type, value, surface, 0);
                 int[] b = bounds(result);
                 check(b[0] == 2 && result.getWidth() - b[2] - 1 == 2, "symmetric visible horizontal padding: " + value);
                 check(b[1] == 2 && result.getHeight() - b[3] - 1 == 2, "symmetric visible vertical padding: " + value);
@@ -59,9 +59,17 @@ public final class HitSplatCenteringFixture {
                 check(result.getHeight() + 2 <= FloatingHitSplatState.ROW_GAP, "glyph background fits existing row spacing");
                 check(result.getPixels()[0] == FloatingHitSplatRenderer.backgroundColor(type), "type color retained");
             }
-            Sprite unchangedText = sprite(text, 0, value, surface), oldText = before(value, surface, false);
+            Sprite unchangedText = sprite(text, 0, value, surface, 0), oldText = before(value, surface, false);
             check(unchangedText.getWidth() == oldText.getWidth() && unchangedText.getHeight() == oldText.getHeight()
                 && Arrays.equals(unchangedText.getPixels(), oldText.getPixels()), "accepted text-only raster unchanged: " + value);
+        }
+        for (FloatingHitSplatRenderer renderer : new FloatingHitSplatRenderer[]{text, background}) {
+            Sprite classic = sprite(renderer, 0, 28, surface, 0);
+            Sprite scaled = sprite(renderer, 0, 28, surface, 6);
+            check(scaled.getHeight() > classic.getHeight() && scaled.getWidth() > classic.getWidth(),
+                "larger UI text repaints the same hit number with native higher-resolution glyphs");
+            check(sprite(renderer, 0, 28, surface, 0) == classic,
+                "switching fonts keeps separate cached sprites");
         }
         System.out.println("PASS hit-number pixel centering / preserved glyphs and text-only appearance: " + checks);
         if (args.length > 1) {
@@ -72,7 +80,7 @@ public final class HitSplatCenteringFixture {
             int[] values = {0, 1, 7, 11, 28, 70, 100, 111, 255};
             for (int i = 0; i < values.length; i++) {
                 int x = 60 + i * 105;
-                Sprite old = before(values[i], surface, true), result = sprite(background, 0, values[i], surface);
+                Sprite old = before(values[i], surface, true), result = sprite(background, 0, values[i], surface, 0);
                 surface.drawSprite(old, x - old.getWidth() / 2, 65);
                 surface.drawSprite(old, x - old.getWidth() * 2, 105, old.getWidth() * 4, old.getHeight() * 4, 5924);
                 surface.drawSprite(result, x - result.getWidth() / 2, 235);

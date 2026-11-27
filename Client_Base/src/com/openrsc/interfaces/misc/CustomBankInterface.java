@@ -7,14 +7,15 @@ import com.openrsc.client.model.Sprite;
 import orsc.Config;
 import orsc.enumerations.InputXAction;
 import orsc.enumerations.MessageType;
+import orsc.InterfacePalette;
 import orsc.graphics.gui.InputXPrompt;
 import orsc.mudclient;
 import orsc.util.BankUtil;
 import orsc.util.GenUtil;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Locale;
 
 import static orsc.Config.*;
 import static orsc.net.Opcodes.Out.ITEM_REMOVE_TO_BANK;
@@ -64,9 +65,12 @@ public final class CustomBankInterface extends BankInterface {
 	private boolean filterPanelDocked;
 	private int inventoryScrollRow;
 	private boolean draggingInventoryScrollbar;
+	private final BankWorkspace workspace;
+	private long contentsRevision;
 
 	public CustomBankInterface(mudclient mc) {
 		super(mc);
+		workspace = new BankWorkspace(this, mc);
 		if (Config.S_WANT_CUSTOM_BANKS) {
 			width = 509;
 			height = 331;
@@ -77,10 +81,7 @@ public final class CustomBankInterface extends BankInterface {
 		}
 	}
 
-	@Override
-	public boolean onRender() {
-		if (!Config.S_WANT_CUSTOM_BANKS) return super.onRender();
-
+	private void positionLegacyBank() {
 		filterPanelDocked = mc.getGameWidth() >= width + FILTER_PANEL_WIDTH + FILTER_PANEL_GAP + 4;
 		if (filterPanelDocked) {
 			filterPanelX = (mc.getGameWidth() - width - FILTER_PANEL_WIDTH - FILTER_PANEL_GAP) / 2;
@@ -92,45 +93,15 @@ public final class CustomBankInterface extends BankInterface {
 		}
 		y = (mc.getGameHeight() - height) / 2 - 3;
 		bank.reposition(bankSearch, filterPanelX + 8, y + 45, FILTER_PANEL_WIDTH - 16, 18);
+		bank.setTextFont(bankSearch, 0);
 		bank.reposition(bankScroll, x + 4, y + 57, width - 5, 137);
 		inventoryScrollRow = BankInventoryViewport.clampScrollRow(
 			inventoryScrollRow, mc.getInventoryCapacity());
+	}
+
+	private boolean drawLegacyBankHeader() {
 		int tapPresetXOffset = x + 380 - presetCount * 17;
 		int tapPresetYOffset = y + 3;
-		fontSizeHeight = mc.getSurface().fontHeight(fontSize);
-
-		if (presetMode) {
-			renderPresetEdit();
-			mc.setMouseClick(0);
-			return true;
-		}
-
-		//Keyboard controls
-		if (mc.controlPressed) {
-			switch (hotkey) {
-				case (int)'1':
-					loadPreset(0);
-					break;
-				case (int)'2':
-					loadPreset(1);
-					break;
-				case 4:
-					if (equipmentMode)
-						sendDepositAllEquipment();
-					else
-						sendDepositAllInventory();
-					break;
-				case -1:
-				default:
-					break;
-			}
-		}
-
-		if (hotkey == 27) bankClose();
-
-		hotkey = -1;
-
-
 		mc.getSurface().drawBox(x, y, width, 21, 192);
 		int colour = 0x989898;
 		mc.getSurface().drawBoxAlpha(x, y + 21, width, 309, colour, 160);
@@ -252,13 +223,11 @@ public final class CustomBankInterface extends BankInterface {
 			return true;
 		}
 
-		//mc.getSurface().drawString("Number in bank in green", x + 7, 34 + y, '\uff00', 1);
-		int boxColour = 0xd0d0d0;
-		int boxColourGreyed = 0x101010;
-		int modeWidth = Config.S_WANT_EQUIPMENT_TAB ? 55 : 75;
-		int modeOffset = x + (Config.S_WANT_EQUIPMENT_TAB ? 162 : 112);
-		int textStart = modeOffset + modeWidth / 2 - 14;
+		return false;
+	}
 
+	private void handleLegacyBankControls(int modeWidth, int modeOffset) {
+		boolean filterPanelVisible = filterPanelDocked || filterDrawerOpen;
 		if (mc.getMouseClick() != 0 || mc.getMouseButtonDownTime() >= 0) {
 			boolean insideBank = mc.getMouseX() >= x && mc.getMouseX() <= x + width
 				&& mc.getMouseY() >= y && mc.getMouseY() <= y + height;
@@ -316,17 +285,182 @@ public final class CustomBankInterface extends BankInterface {
 				}
 			}
 		}
+	}
 
-		ArrayList<BankItem> searchList = filteredBankItems();
+	private void drawLegacyStockTile(BankItem bankItem, ItemDef bankDef, int drawX, int drawY, boolean filtersActive) {
+		int boxColour = 0xd0d0d0;
+		int boxColourGreyed = 0x101010;
+		if (!equipmentMode || (equipmentMode && bankDef != null && bankDef.isWieldable()))
+			mc.getSurface().drawBoxAlpha(drawX, drawY, 49, 34, boxColour, 160);
+		else
+			mc.getSurface().drawBoxAlpha(drawX, drawY, 49, 34, boxColourGreyed, 160);
+
+		mc.getSurface().drawBoxBorder(drawX, 50, drawY, 35, 0);
+		if (bankItem == null) return;
+		if (bankItem.isPinned()) {
+			mc.getSurface().drawBoxBorder(drawX, 50, drawY, 35, 0xFFD24A);
+		}
+
+		/* Drawing Item Sprites */
+
+		// Dragging items
+		if (draggingBankSlot != -1 && !filtersActive) {
+			ItemDef def = bankItems.get(draggingBankSlot).getItem().getItemDef();
+			if (bankItems.get(draggingBankSlot).getItem().getNoted()) {
+				if (S_WANT_CERT_AS_NOTES) {
+					mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.noteDef),
+						mc.getMouseX(), mc.getMouseY(), 48, 32, EntityHandler.noteDef.getPictureMask(), 0,
+						EntityHandler.noteDef.getBlueMask(), false, 0, 1);
+					mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
+						mc.getMouseX() + 7, mc.getMouseY() + 8, 29, 19,
+						def.getPictureMask(), 0,
+						def.getBlueMask(),false, 0, 1);
+				} else {
+					mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.certificateDef),
+						mc.getMouseX(), mc.getMouseY(), 48, 32, EntityHandler.certificateDef.getPictureMask(), 0,
+						EntityHandler.certificateDef.getBlueMask(), false, 0, 1);
+				}
+			} else {
+				mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
+					mc.getMouseX(), mc.getMouseY(), 48, 32, def.getPictureMask(), 0,
+					def.getBlueMask(), false, 0, 1);
+			}
+			drawString(mudclient.formatStackAmount(bankItems.get(draggingBankSlot).getItem().getAmount()), mc.getMouseX(), mc.getMouseY(), 1, 65280);
+		}
+
+		// Noted Items
+		if (bankItem.getItem().getCatalogID() != -1) {
+			ItemDef def = bankItem.getItem().getItemDef();
+			if (draggingBankSlot != bankItem.bankID) {
+				final int itemTint = bankItem.isPlaceholder()
+					? 0x60FFFFFF
+					: (equipmentMode && !def.isWieldable()) ? 0x60FFFFFF : 0xFFFFFFFF;
+				mc.getSurface().drawSpriteClipping(mc.spriteSelect(def), drawX, drawY, 48, 32,
+					def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1, itemTint);
+				if (bankItem.getItem().getNoted()) {
+					if (S_WANT_CERT_AS_NOTES) {
+						mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.noteDef), drawX, drawY, 48, 32,
+							EntityHandler.noteDef.getPictureMask(), 0, EntityHandler.noteDef.getBlueMask(), false, 0, 1, itemTint);
+						mc.getSurface().drawSpriteClipping(mc.spriteSelect(def), drawX + 7,
+							drawY + 8, 29, 19, def.getPictureMask(), 0,
+							def.getBlueMask(), false, 0, 1);
+					} else {
+						mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.certificateDef), drawX, drawY, 48, 32,
+							EntityHandler.certificateDef.getPictureMask(), 0, EntityHandler.certificateDef.getBlueMask(), false, 0, 1, itemTint);
+					}
+				} else {
+					mc.getSurface().drawSpriteClipping(mc.spriteSelect(def), drawX, drawY, 48, 32,
+						def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1, itemTint);
+				}
+
+				// If we hover over the stack, display the full amount
+				if (mc.getMouseX() >= drawX && mc.getMouseX() <=  drawX + 48
+					&& mc.getMouseY() >= drawY && mc.getMouseY() <= drawY + 32) {
+					drawString("" + bankItem.getItem().getAmount(), drawX + 1, drawY + 10, 1, 0x00ff00);
+				} else {
+					drawString(mudclient.formatStackAmount(bankItem.getItem().getAmount()), drawX + 1, drawY + 10, 1,
+						bankItem.isPlaceholder() ? 0xFFD24A : (equipmentMode && !def.isWieldable()) ? 0x404040 : 65280);
+				}
+				if (bankItem.isPinned()) {
+					drawString("P", drawX + 40, drawY + 29, 1, 0xFFD24A);
+				}
+			}
+		}
+
+	}
+
+	@Override
+	public boolean onRender() {
+		if (!Config.S_WANT_CUSTOM_BANKS) return super.onRender();
+
+		BankWorkspaceLayout view = usesWorkspace() ? workspace.begin(S_WANT_BANK_PRESETS, S_WANT_BANK_NOTES) : null;
+		if (view != null) {
+			x = view.bank.x;
+			y = view.bank.y;
+			bank.hide(bankScroll);
+		} else {
+			positionLegacyBank();
+		}
+		fontSizeHeight = mc.getSurface().fontHeight(fontSize);
+
+		if (presetMode) {
+			if (view == null) renderPresetEdit();
+			else renderWorkspacePresets(view);
+			if (mc.inputX_Action == InputXAction.ACT_0) mc.setMouseClick(0);
+			hotkey = -1;
+			return true;
+		}
+
+		if (mc.controlPressed) {
+			switch (hotkey) {
+				case (int)'1':
+					loadPreset(0);
+					break;
+				case (int)'2':
+					loadPreset(1);
+					break;
+				case 4:
+					if (equipmentMode) sendDepositAllEquipment();
+					else sendDepositAllInventory();
+					break;
+				default:
+					break;
+			}
+		}
+		if (hotkey == 27) {
+			bankClose();
+			hotkey = -1;
+			return true;
+		}
+		hotkey = -1;
+
+		int modeWidth = Config.S_WANT_EQUIPMENT_TAB ? 55 : 75;
+		int modeOffset = x + (Config.S_WANT_EQUIPMENT_TAB ? 162 : 112);
+		if (view == null) {
+			if (drawLegacyBankHeader()) return true;
+			handleLegacyBankControls(modeWidth, modeOffset);
+		} else {
+			if (workspaceCanClick() && mc.getMouseClick() == 1 && !view.contains(mc.getMouseX(), mc.getMouseY())) {
+				bankClose();
+				mc.setMouseClick(0);
+				return true;
+			}
+			workspace.drawCatalog();
+			workspace.drawFilters();
+			drawWorkspaceActions(view);
+			if (!mc.isShowDialogBank()) return true;
+		}
+
+		drawStock(view);
+
+		if (view == null) drawLegacyCarriedItems(modeWidth, modeOffset);
+		else {
+			drawWorkspaceCarriedItems(view);
+			int searchX = view.filters.x + view.gap;
+			int searchY = view.filters.y + view.header + view.gap + view.line;
+			mc.getSurface().setClip(searchX + 2, view.filters.x + view.filters.width - view.gap - 2,
+				searchY + view.button - 1, searchY + 1);
+			bank.drawPanel();
+			mc.getSurface().clearClip();
+		}
+
+		drawTransferMenu();
+		return true;
+	}
+
+	private void drawStock(BankWorkspaceLayout view) {
+		ArrayList<BankItem> searchList = view == null ? filteredBankItems() : workspace.stock();
 		boolean filtersActive = filtersActive();
-		if (filtersActive && mc.bankPage != 0) {
+		if (view == null && filtersActive && mc.bankPage != 0) {
 			mc.bankPage = 0;
 		}
 		int bankCount = 0;
 		int bankSlotStart = (mc.bankPage - 1) * 40;
 
 		// Scrollable first page
-		if (mc.bankPage == 0) {
+		if (view != null) {
+			bankSlotStart = workspace.stockStart(searchList.size());
+		} else if (mc.bankPage == 0) {
 			bank.clearList(bankScroll);
 			bank.show(bankScroll);
 			bankCount = (int) ((searchList.size() - 1) / 10.0);
@@ -341,9 +475,16 @@ public final class CustomBankInterface extends BankInterface {
 			bank.hide(bankScroll);
 		}
 
-		// Drawing bank-specific items
-		for (int verticalSlots = 0; verticalSlots < 4; verticalSlots++) {
-			for (int horizonalSlots = 0; horizonalSlots < 10; horizonalSlots++) {
+		int columns = view == null ? 10 : view.stockColumns;
+		int rows = view == null ? 4 : view.stockRows;
+		int tileWidth = view == null ? 49 : view.stockCellWidth;
+		int tileHeight = view == null ? 34 : view.stockCellHeight;
+		int stockX = view == null ? x + 6 : view.stock.x;
+		int stockY = view == null ? y + 57 : view.stock.y;
+		if (draggingBankSlot >= bankItems.size() || filtersActive) draggingBankSlot = -1;
+
+		for (int verticalSlots = 0; verticalSlots < rows; verticalSlots++) {
+			for (int horizonalSlots = 0; horizonalSlots < columns; horizonalSlots++) {
 
 				BankItem bankItem = null;
 				ItemDef bankDef = null;
@@ -353,89 +494,18 @@ public final class CustomBankInterface extends BankInterface {
 				if (bankItem != null)
 					bankDef = bankItem.getItem().getItemDef();
 
-				int drawX = x + 6 + horizonalSlots * 49;
-				int drawY = y + 57 + verticalSlots * 34;
+				int drawX = stockX + horizonalSlots * tileWidth;
+				int drawY = stockY + verticalSlots * tileHeight;
 
-				if (!equipmentMode || (equipmentMode && bankDef != null && bankDef.isWieldable()))
-					mc.getSurface().drawBoxAlpha(drawX, drawY, 49, 34, boxColour, 160);
-				else
-					mc.getSurface().drawBoxAlpha(drawX, drawY, 49, 34, boxColourGreyed, 160);
-
-				mc.getSurface().drawBoxBorder(drawX, 50, drawY, 35, 0);
+				if (view != null) {
+					drawWorkspaceStockTile(view, bankItem, drawX, drawY);
+				} else {
+					drawLegacyStockTile(bankItem, bankDef, drawX, drawY, filtersActive);
+				}
 				if (bankItem != null) {
-					if (bankItem.isPinned()) {
-						mc.getSurface().drawBoxBorder(drawX, 50, drawY, 35, 0xFFD24A);
-					}
-
-					/* Drawing Item Sprites */
-
-					// Dragging items
-					if (draggingBankSlot != -1 && !filtersActive) {
-						ItemDef def = bankItems.get(draggingBankSlot).getItem().getItemDef();
-						if (bankItems.get(draggingBankSlot).getItem().getNoted()) {
-							if (S_WANT_CERT_AS_NOTES) {
-								mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.noteDef),
-									mc.getMouseX(), mc.getMouseY(), 48, 32, EntityHandler.noteDef.getPictureMask(), 0,
-									EntityHandler.noteDef.getBlueMask(), false, 0, 1);
-								mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
-									mc.getMouseX() + 7, mc.getMouseY() + 8, 29, 19,
-									def.getPictureMask(), 0,
-									def.getBlueMask(),false, 0, 1);
-							} else {
-								mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.certificateDef),
-									mc.getMouseX(), mc.getMouseY(), 48, 32, EntityHandler.certificateDef.getPictureMask(), 0,
-									EntityHandler.certificateDef.getBlueMask(), false, 0, 1);
-							}
-						} else {
-							mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
-								mc.getMouseX(), mc.getMouseY(), 48, 32, def.getPictureMask(), 0,
-								def.getBlueMask(), false, 0, 1);
-						}
-						drawString(mudclient.formatStackAmount(bankItems.get(draggingBankSlot).getItem().getAmount()), mc.getMouseX(), mc.getMouseY(), 1, 65280);
-					}
-
-					// Noted Items
-					if (bankItem.getItem().getCatalogID() != -1) {
-						ItemDef def = bankItem.getItem().getItemDef();
-						if (draggingBankSlot != bankItem.bankID) {
-							final int itemTint = bankItem.isPlaceholder()
-								? 0x60FFFFFF
-								: (equipmentMode && !def.isWieldable()) ? 0x60FFFFFF : 0xFFFFFFFF;
-							mc.getSurface().drawSpriteClipping(mc.spriteSelect(def), drawX, drawY, 48, 32,
-								def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1, itemTint);
-							if (bankItem.getItem().getNoted()) {
-								if (S_WANT_CERT_AS_NOTES) {
-									mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.noteDef), drawX, drawY, 48, 32,
-										EntityHandler.noteDef.getPictureMask(), 0, EntityHandler.noteDef.getBlueMask(), false, 0, 1, itemTint);
-									mc.getSurface().drawSpriteClipping(mc.spriteSelect(def), drawX + 7,
-										drawY + 8, 29, 19, def.getPictureMask(), 0,
-										def.getBlueMask(), false, 0, 1);
-								} else {
-									mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.certificateDef), drawX, drawY, 48, 32,
-										EntityHandler.certificateDef.getPictureMask(), 0, EntityHandler.certificateDef.getBlueMask(), false, 0, 1, itemTint);
-								}
-							} else {
-								mc.getSurface().drawSpriteClipping(mc.spriteSelect(def), drawX, drawY, 48, 32,
-									def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1, itemTint);
-							}
-
-							// If we hover over the stack, display the full amount
-							if (mc.getMouseX() >= drawX && mc.getMouseX() <=  drawX + 48
-								&& mc.getMouseY() >= drawY && mc.getMouseY() <= drawY + 32) {
-								drawString("" + bankItem.getItem().getAmount(), drawX + 1, drawY + 10, 1, 0x00ff00);
-							} else {
-								drawString(mudclient.formatStackAmount(bankItem.getItem().getAmount()), drawX + 1, drawY + 10, 1,
-									bankItem.isPlaceholder() ? 0xFFD24A : (equipmentMode && !def.isWieldable()) ? 0x404040 : 65280);
-							}
-							if (bankItem.isPinned()) {
-								drawString("P", drawX + 40, drawY + 29, 1, 0xFFD24A);
-							}
-						}
-					}
-
 					// Organize mode dragging
-					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY
-						&& mc.getMouseY() < drawY + 34 && !rightClickMenu && mc.inputX_Action == InputXAction.ACT_0) {
+					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + tileWidth && mc.getMouseY() > drawY
+						&& mc.getMouseY() < drawY + tileHeight && !rightClickMenu && mc.inputX_Action == InputXAction.ACT_0) {
 						if (mc.getMouseClick() == 1 && mc.controlPressed && !equipmentMode
 							&& !bankItem.isPlaceholder()) {
 							selectedBankSlot = bankItem.bankID;
@@ -469,8 +539,8 @@ public final class CustomBankInterface extends BankInterface {
 					}
 
 					// Right click menu
-					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY
-						&& mc.getMouseY() < drawY + 34
+					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + tileWidth && mc.getMouseY() > drawY
+						&& mc.getMouseY() < drawY + tileHeight
 						&& bankItem.getItem().getCatalogID() != -1 && mc.inputX_Action == InputXAction.ACT_0) {
 						if (mc.getMouseClick() == 2) {
 							selectedBankSlot = bankItem.bankID;
@@ -485,7 +555,7 @@ public final class CustomBankInterface extends BankInterface {
 					}
 
 					// Drawing item name
-					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY && mc.getMouseY() < drawY + 34) {
+					if (view == null && mc.getMouseX() > drawX && mc.getMouseX() < drawX + tileWidth && mc.getMouseY() > drawY && mc.getMouseY() < drawY + tileHeight) {
 						if (bankItems.get(bankItem.bankID).getItem().getCatalogID() != -1) {
 							drawString((bankItem.isPinned() ? "Pinned: " : "")
 								+ bankItems.get(bankItem.bankID).getItem().getItemDef().getName(),
@@ -493,8 +563,8 @@ public final class CustomBankInterface extends BankInterface {
 								bankItem.isPinned() ? 0xFFD24A : 0xFFFFFF);
 						}
 
-					} else if (mc.getMouseX() <= x + 6 || mc.getMouseX() >= x + 496 || mc.getMouseY() <= y + 57 ||
-						(mc.getMouseY() >= y + 193 && mc.getMouseY() <= y + 227) || mc.getMouseY() >= y + 329) {
+					} else if (view == null && (mc.getMouseX() <= x + 6 || mc.getMouseX() >= x + 496 || mc.getMouseY() <= y + 57 ||
+						(mc.getMouseY() >= y + 193 && mc.getMouseY() <= y + 227) || mc.getMouseY() >= y + 329)) {
 						drawString(Integer.toString(bankItems.size()), x + 7, y + 15, 1, 0xFFFFFF);
 						mc.getSurface().drawLineVert(x + 13 + (mc.getSurface().stringWidth(0, "" + bankItems.size())), y + 6, 0xFFFFFF, 10);
 						drawString(Integer.toString(mc.bankItemsMax), x + 17 + (mc.getSurface().stringWidth(0, "" + bankItems.size())), y + 15, 1, 0xFFFFFF);
@@ -504,6 +574,19 @@ public final class CustomBankInterface extends BankInterface {
 				}
 			}
 		}
+		if (view != null) {
+			workspace.drawStockFooter(searchList.size(), mc.bankItemsMax);
+			if (draggingBankSlot >= 0 && mc.getMouseButtonDown() == 1) {
+				workspace.drawItem(bankItems.get(draggingBankSlot).getItem(), mc.getMouseX(), mc.getMouseY(),
+					48, 32, 0xCCFFFFFF);
+			}
+		}
+	}
+
+	private void drawLegacyCarriedItems(int modeWidth, int modeOffset) {
+		int textStart = modeOffset + modeWidth / 2 - 14;
+		int boxColour = 0xd0d0d0;
+		int boxColourGreyed = 0x101010;
 		if (filterPanelDocked) {
 			drawFilterPanel();
 		}
@@ -794,7 +877,9 @@ public final class CustomBankInterface extends BankInterface {
 					x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);
 			}
 		}
+	}
 
+	private void drawTransferMenu() {
 		if (rightClickMenu && mc.inputX_Action == InputXAction.ACT_0) {
 			// Recalcs menu height and width based on fontSize
 			final BankItem selectedBankItem = selectedBankSlot >= 0 && selectedBankSlot < bankItems.size()
@@ -1184,7 +1269,331 @@ public final class CustomBankInterface extends BankInterface {
 				}
 			}
 		}
+	}
+
+	public boolean usesWorkspace() {
+		return S_WANT_CUSTOM_BANKS && mc.usesCraftingInterfacePreview();
+	}
+
+	public void receiveFilterTabs(String[] tabs, boolean opening) {
+		if (!usesWorkspace()) return;
+		workspace.receive(tabs, opening);
+		if (opening) {
+			presetMode = false;
+			resetWorkspaceSelection();
+		}
+	}
+
+	public boolean scrollWorkspace(int amount) {
+		if (!usesWorkspace()) return false;
+		if (!presetMode && !rightClickMenu) workspace.scroll(amount);
 		return true;
+	}
+
+	@Override
+	public void resetBank() {
+		super.resetBank();
+		contentsRevision++;
+		draggingBankSlot = -1;
+		if (selectedInventorySlot == -1 && selectedEquipmentSlot == -1) rightClickMenu = false;
+	}
+
+	@Override
+	public void updateBank(int slot, int itemID, int amount) {
+		super.updateBank(slot, itemID, amount);
+		contentsRevision++;
+		if (amount == 0 && usesWorkspace()) {
+			if (selectedBankSlot >= 0) rightClickMenu = false;
+			selectedBankSlot = -1;
+			draggingBankSlot = -1;
+		}
+	}
+
+	long bankContentsRevision() {
+		return contentsRevision;
+	}
+
+	int getWorkspaceUsedSlots() {
+		return bankItems.size();
+	}
+
+	String workspaceWealth() {
+		return totalWealth + " gp";
+	}
+
+	boolean workspaceCanClick() {
+		return !rightClickMenu && mc.inputX_Action == InputXAction.ACT_0;
+	}
+
+	BankFilterSettings currentBankFilters() {
+		return new BankFilterSettings(bank.getControlText(bankSearch), selectedTags, filterAndMode);
+	}
+
+	void applyBankFilters(BankFilterSettings settings) {
+		bank.setText(bankSearch, settings.query);
+		selectedTags.clear();
+		selectedTags.addAll(settings.tags);
+		filterAndMode = settings.andMode;
+		bank.setFocus(-1);
+		resetWorkspaceSelection();
+	}
+
+	void updateWorkspaceFilters(BankFilterSettings settings) {
+		if (settings == BankFilterSettings.ALL) {
+			applyBankFilters(settings);
+			return;
+		}
+		selectedTags.clear();
+		selectedTags.addAll(settings.tags);
+		filterAndMode = settings.andMode;
+		resetWorkspaceSelection();
+	}
+
+	@Override
+	void bankClose() {
+		if (usesWorkspace()) workspace.rememberActive(currentBankFilters());
+		super.bankClose();
+	}
+
+	private void resetWorkspaceSelection() {
+		selectedBankSlot = selectedInventorySlot = selectedEquipmentSlot = -1;
+		draggingBankSlot = draggingInventoryID = -1;
+		rightClickMenu = false;
+	}
+
+	private void drawWorkspaceStockTile(BankWorkspaceLayout view, BankItem item, int left, int top) {
+		int w = view.stockCellWidth - 2;
+		int h = view.stockCellHeight - 2;
+		boolean hovered = inside(left, top, view.stockCellWidth, view.stockCellHeight);
+		boolean available = item != null && (!equipmentMode || item.getItem().getItemDef().isWieldable());
+		mc.getSurface().drawBoxAlpha(left, top, w, h, hovered && available ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW, 242);
+		mc.getSurface().drawBoxBorder(left, w, top, h, item != null && item.isPinned() ? BankWorkspace.GOLD : BankWorkspace.BORDER);
+		if (item == null || draggingBankSlot == item.bankID) return;
+
+		int iconWidth = Math.min(BankWorkspaceLayout.size(48), w - 4);
+		int iconHeight = Math.min(BankWorkspaceLayout.size(32), h - 4);
+		workspace.drawItem(item.getItem(), left + (w - iconWidth) / 2, top + (h - iconHeight) / 2,
+			iconWidth, iconHeight, available && !item.isPlaceholder() ? 0xFFFFFFFF : 0x60FFFFFF);
+		int amount = item.getItem().getAmount();
+		workspace.draw(mudclient.formatStackAmount(amount), left + 2, top + view.line, view.font,
+			item.isPlaceholder() ? BankWorkspace.GOLD : BankWorkspace.TEXT);
+		if (hovered) {
+			String name = (item.isPinned() ? "Pinned: " : "") + item.getItem().getItemDef().getName();
+			if (amount > 1) name += " (" + amount + ")";
+			drawWorkspaceStockHint(view, name);
+		}
+	}
+
+	private void drawWorkspaceStockHint(BankWorkspaceLayout view, String name) {
+		int top = view.stock.y - view.line - 3;
+		mc.getSurface().drawBoxAlpha(view.stock.x, top, view.stock.width, view.line + 2, InterfacePalette.PANEL, 245);
+		workspace.draw(workspace.fit(name, view.stock.width), view.stock.x, view.stock.y - 5, view.font, BankWorkspace.GOLD);
+	}
+
+	private void drawWorkspaceActions(BankWorkspaceLayout view) {
+		workspace.panel(view.actions, "Bank actions");
+		int left = view.actions.x + view.gap;
+		int width = view.actions.width - 2 * view.gap;
+		int row = view.actionButton + view.actionGap;
+		int top = view.actions.y + view.header + view.gap;
+		int close = view.button + view.gap;
+		if (workspace.button(view.actions.x + view.actions.width - close - view.gap / 2,
+			view.actions.y + view.gap / 3, close, view.button, "X", false, true)) {
+			bankClose();
+			return;
+		}
+		int half = width / 2;
+		if (S_WANT_EQUIPMENT_TAB) {
+			if (workspace.button(left, top, half - 2, view.actionButton, "Inventory", !equipmentMode, true) && equipmentMode) {
+				workspace.resetCarriedScroll();
+				equipmentMode = false;
+				resetWorkspaceSelection();
+			}
+			if (workspace.button(left + half, top, width - half, view.actionButton, "Equipment", equipmentMode, true) && !equipmentMode) {
+				workspace.resetCarriedScroll();
+				equipmentMode = true;
+				swapNoteMode = false;
+				resetWorkspaceSelection();
+			}
+		}
+		top += row;
+		String depositLabel = equipmentMode ? "Deposit all equipment" : "Deposit all inventory";
+		if (workspace.button(left, top, width, view.actionButton, depositLabel, false, true)) {
+			if (equipmentMode) sendDepositAllEquipment();
+			else sendDepositAllInventory();
+		}
+		top += row;
+		if (S_WANT_BANK_PRESETS) {
+			if (workspace.button(left, top, width, view.actionButton, "Inventory presets", false, true)) {
+				presetMode = true;
+				bank.setFocus(-1);
+				resetWorkspaceSelection();
+			}
+			top += row;
+			if (workspace.button(left, top, half - 2, view.actionButton, "Load preset 1", false, true)) loadPreset(0);
+			if (workspace.button(left + half, top, width - half, view.actionButton, "Load preset 2", false, true)) loadPreset(1);
+			top += row;
+		}
+		if (S_WANT_BANK_NOTES) {
+			String note = S_WANT_CERT_AS_NOTES ? "As note" : "As certificate";
+			if (workspace.button(left, top, half - 2, view.actionButton, "As item", !swapNoteMode, true)) swapNoteMode = false;
+			if (workspace.button(left + half, top, width - half, view.actionButton, note, swapNoteMode, !equipmentMode)) swapNoteMode = true;
+			top += row;
+		}
+		workspace.draw("Rearrange", left, top + view.line - 2, view.font, BankWorkspace.MUTED);
+		top += view.line;
+		int third = width / 3;
+		if (workspace.button(left, top, third - 2, view.actionButton, "Off", organizeMode == 0, true)) changeOrganizeMode(0);
+		if (workspace.button(left + third, top, third - 2, view.actionButton, "Swap", organizeMode == 1, true)) changeOrganizeMode(1);
+		if (workspace.button(left + 2 * third, top, width - 2 * third, view.actionButton, "Insert", organizeMode == 2, true)) changeOrganizeMode(2);
+	}
+
+	private void changeOrganizeMode(int mode) {
+		resetWorkspaceSelection();
+		organizeMode = mode;
+	}
+
+	private void drawWorkspaceCarriedItems(BankWorkspaceLayout view) {
+		Rectangle area = view.carried;
+		String title = equipmentMode ? "Worn equipment" : "Carried items";
+		workspace.draw(title, area.x, area.y - 3, view.font, BankWorkspace.MUTED);
+		int columns = Math.max(1, area.width / BankWorkspaceLayout.size(48));
+		int tileWidth = area.width / columns;
+		int gridSpace = area.height - view.actionButton - view.actionGap;
+		int tileHeight = Math.min(Math.max(view.line + 6, gridSpace),
+			Math.max(view.line + 6, BankWorkspaceLayout.size(view.actionButton < view.button ? 30 : 35)));
+		int count = equipmentMode ? Math.min(S_PLAYER_SLOT_COUNT, equipmentViewOrder.length) : mc.getInventoryCapacity();
+		int rows = Math.max(1, gridSpace / tileHeight);
+		int start = workspace.carriedStart(count, columns, rows);
+		for (int i = 0; i < rows * columns && start + i < count; i++) {
+			int slot = start + i;
+			int x = area.x + i % columns * tileWidth;
+			int y = area.y + i / columns * tileHeight;
+			boolean hovered = inside(x, y, tileWidth, tileHeight);
+			mc.getSurface().drawBoxAlpha(x, y, tileWidth - 2, tileHeight - 2, hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW, 245);
+			mc.getSurface().drawBoxBorder(x, tileWidth - 2, y, tileHeight - 2, BankWorkspace.BORDER);
+			if (equipmentMode) {
+				drawWorkspaceEquipmentSlot(view, equipmentViewOrder[slot], x, y, tileWidth, tileHeight, hovered);
+			} else if (slot < mc.getInventoryItemCount() && mc.getInventoryItemID(slot) >= 0) {
+				drawWorkspaceInventorySlot(view, slot, x, y, tileWidth, tileHeight, hovered);
+			}
+		}
+		workspace.carriedPages(count, columns, rows);
+		if (!equipmentMode) drawDraggingInventoryItem();
+		if (mc.getMouseButtonDown() != 1) {
+			draggingInventoryID = -1;
+			draggingBankSlot = -1;
+		}
+	}
+
+	private void drawWorkspaceInventorySlot(BankWorkspaceLayout view, int slot, int x, int y,
+		int width, int height, boolean hovered) {
+		Item item = mc.getInventoryItem(slot);
+		ItemDef def = item.getItemDef();
+		if (draggingInventoryID != slot) workspace.drawItem(item, x + 2, y + 2, width - 5, height - 5, 0xFFFFFFFF);
+		if (def.isStackable() || item.getNoted()) {
+			workspace.draw(mudclient.formatStackAmount(item.getAmount()), x + 3, y + view.line, view.font, BankWorkspace.TEXT);
+		}
+		if (!hovered) return;
+		drawWorkspaceStockHint(view, def.getName());
+		if (!workspaceCanClick()) return;
+		if (mc.getMouseClick() == 2) {
+			selectedInventorySlot = slot;
+			openWorkspaceItemMenu();
+		} else if (mc.getMouseClick() == 1 && (mc.controlPressed || organizeMode == 0)) {
+			selectedInventorySlot = slot;
+			sendDeposit(mc.controlPressed ? Integer.MAX_VALUE : 1);
+		} else if (organizeMode > 0) {
+			if (mc.getMouseClick() == 1 && mc.getMouseButtonDown() == 1) draggingInventoryID = slot;
+			else if (mc.getMouseButtonDown() != 1 && draggingInventoryID >= 0 && draggingInventoryID != slot) {
+				sendInventoryOrganize(draggingInventoryID, slot);
+			}
+		}
+	}
+
+	private void drawWorkspaceEquipmentSlot(BankWorkspaceLayout view, int slot, int x, int y,
+		int width, int height, boolean hovered) {
+		ItemDef def = mc.equippedItems[slot];
+		if (def == null) {
+			Sprite empty = mc.getEquipmentSlotSprite(slot);
+			if (empty != null) mc.getSurface().drawSpriteClipping(empty, x + 2, y + 2, width - 5, height - 5,
+				0, 0, 0, false, 0, 0, 0x80FFFFFF);
+			return;
+		}
+		mc.getSurface().drawSpriteClipping(mc.spriteSelect(def), x + 2, y + 2, width - 5, height - 5,
+			def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1);
+		if (def.isStackable()) {
+			workspace.draw(mudclient.formatStackAmount(mc.equippedItemAmount[slot]), x + 3, y + view.line, view.font, BankWorkspace.TEXT);
+		}
+		if (!hovered) return;
+		drawWorkspaceStockHint(view, def.getName());
+		if (!workspaceCanClick()) return;
+		if (mc.getMouseClick() == 2) {
+			selectedEquipmentSlot = slot;
+			openWorkspaceItemMenu();
+		} else if (mc.getMouseClick() == 1) {
+			mc.packetHandler.getClientStream().newPacket(ITEM_REMOVE_TO_BANK.getOpcode());
+			mc.packetHandler.getClientStream().bufferBits.putByte(slot);
+			mc.packetHandler.getClientStream().finishPacket();
+			mc.setMouseClick(0);
+		}
+	}
+
+	private void openWorkspaceItemMenu() {
+		rightClickMenuX = mc.getMouseX();
+		rightClickMenuY = mc.getMouseY();
+		rightClickMenu = true;
+		mc.setMouseClick(0);
+	}
+
+	private void renderWorkspacePresets(BankWorkspaceLayout view) {
+		workspace.panel(view.bank, "Inventory presets");
+		workspace.panel(view.actions, "Preset actions");
+		int left = view.actions.x + view.gap;
+		int width = view.actions.width - 2 * view.gap;
+		int row = view.button + view.gap;
+		int top = view.actions.y + view.header + view.gap;
+		if (hotkey == 27 || workspace.button(left, top, width, view.button, "Back to bank", false, true)) {
+			presetMode = false;
+			return;
+		}
+		for (int i = 0; i < presetCount; i++) {
+			if (workspace.button(left, top + (i + 1) * row, width, view.button, "Preset " + (i + 1),
+				selectedPresetSlot == i, true)) selectedPresetSlot = i;
+		}
+		Preset preset = presets[selectedPresetSlot];
+		if (preset == null) return;
+		if (workspace.button(left, top + 3 * row, width, view.button, "Load preset", false, true)) {
+			loadPreset(selectedPresetSlot);
+			presetMode = false;
+		}
+		if (workspace.button(left, top + 4 * row, width, view.button, "Save current setup", false, true)) {
+			saveSetup(selectedPresetSlot);
+		}
+		int gridX = view.bank.x + view.gap;
+		int gridY = view.bank.y + view.header + view.gap;
+		int gridWidth = view.bank.width - 2 * view.gap;
+		int tile = Math.min(BankWorkspaceLayout.size(48), Math.max(24, gridWidth / 8));
+		drawPresetItems(view, preset.inventory, "Inventory", gridX, gridY, gridWidth, tile);
+		int gearY = gridY + view.line + view.gap + BankWorkspace.rows(preset.inventory.length, gridWidth / tile) * tile;
+		drawPresetItems(view, preset.equipment, "Equipment", gridX, gearY, gridWidth, tile);
+	}
+
+	private void drawPresetItems(BankWorkspaceLayout view, Item[] items, String title, int x, int y, int width, int cell) {
+		workspace.draw(title, x, y + view.line, view.font, BankWorkspace.MUTED);
+		int columns = width / cell;
+		int gridY = y + view.line + view.gap / 2;
+		for (int i = 0; i < items.length; i++) {
+			int left = x + i % columns * cell;
+			int top = gridY + i / columns * cell;
+			mc.getSurface().drawBoxAlpha(left, top, cell - 2, cell - 2, InterfacePalette.ROW, 242);
+			mc.getSurface().drawBoxBorder(left, cell - 2, top, cell - 2, BankWorkspace.BORDER);
+			if (items[i] != null && items[i].getItemDef() != null) {
+				workspace.drawItem(items[i], left + 2, top + 2, cell - 5, cell - 5, 0xFFFFFFFF);
+				if (items[i].getAmount() > 1) workspace.draw(mudclient.formatStackAmount(items[i].getAmount()),
+					left + 2, top + view.line, view.font, BankWorkspace.TEXT);
+			}
+		}
 	}
 
 	public boolean scrollInventory(int delta) {
@@ -1384,7 +1793,7 @@ public final class CustomBankInterface extends BankInterface {
 		rightClickMenu = false;
 		selectedBankSlot = -1;
 		mc.setMouseClick(0);
-		mc.setMouseButtonDown(0);
+		if (!usesWorkspace()) mc.setMouseButtonDown(0);
 	}
 
 	public void sendDeposit(int i) {
@@ -1403,7 +1812,7 @@ public final class CustomBankInterface extends BankInterface {
 			mc.packetHandler.getClientStream().finishPacket();
 			rightClickMenu = false;
 			mc.setMouseClick(0);
-			mc.setMouseButtonDown(0);
+			if (!usesWorkspace()) mc.setMouseButtonDown(0);
 			if (mc.getInventoryCount(mc.getInventoryItemID(selectedInventorySlot)) < 1) {
 				selectedInventorySlot = -1;
 			}
@@ -1422,7 +1831,7 @@ public final class CustomBankInterface extends BankInterface {
 		mc.packetHandler.getClientStream().finishPacket();
 		rightClickMenu = false;
 		mc.setMouseClick(0);
-		mc.setMouseButtonDown(0);
+		if (!usesWorkspace()) mc.setMouseButtonDown(0);
 		selectedInventorySlot = -1;
 	}
 	private void sendDepositAllEquipment() {
@@ -1430,7 +1839,7 @@ public final class CustomBankInterface extends BankInterface {
 		mc.packetHandler.getClientStream().finishPacket();
 		rightClickMenu = false;
 		mc.setMouseClick(0);
-		mc.setMouseButtonDown(0);
+		if (!usesWorkspace()) mc.setMouseButtonDown(0);
 		selectedEquipmentSlot = -1;
 	}
 	public void sendWithdraw(int i) {
@@ -1440,7 +1849,7 @@ public final class CustomBankInterface extends BankInterface {
 				rightClickMenu = false;
 				selectedBankSlot = -1;
 				mc.setMouseClick(0);
-				mc.setMouseButtonDown(0);
+				if (!usesWorkspace()) mc.setMouseButtonDown(0);
 				return;
 			}
 			mc.packetHandler.getClientStream().newPacket(22);
@@ -1457,7 +1866,7 @@ public final class CustomBankInterface extends BankInterface {
 			rightClickMenu = false;
 			selectedBankSlot = -1;
 			mc.setMouseClick(0);
-			mc.setMouseButtonDown(0);
+			if (!usesWorkspace()) mc.setMouseButtonDown(0);
 		} else {
 			super.sendWithdraw(i);
 		}
@@ -1466,6 +1875,11 @@ public final class CustomBankInterface extends BankInterface {
 
 	public void keyDown(int key) {
 		if (mc.inputX_Action == InputXAction.ACT_0) {
+			if (usesWorkspace() && key == 27) {
+				if (bank.focusOn(bankSearch)) bank.setFocus(-1);
+				else hotkey = 27;
+				return;
+			}
 			if (key == 27 && !bank.focusOn(-1)) {
 				resetVar();
 				return;
@@ -1620,49 +2034,17 @@ public final class CustomBankInterface extends BankInterface {
 	}
 
 	private ArrayList<BankItem> filteredBankItems() {
+		return filterBankItems(currentBankFilters());
+	}
+
+	ArrayList<BankItem> filterBankItems(BankFilterSettings filters) {
 		ArrayList<BankItem> filtered = new ArrayList<>();
-		String search = bank.getControlText(bankSearch).trim().toLowerCase(Locale.ENGLISH);
-		boolean hasSearch = !search.isEmpty();
-		boolean hasTags = !selectedTags.isEmpty();
-
 		for (BankItem item : bankItems) {
-			if (item == null || item.getItem() == null || item.getItem().getItemDef() == null
-				|| item.getItem().getItemDef().getName() == null) {
-				continue;
-			}
-			if (!hasSearch && !hasTags) {
-				filtered.add(item);
-				continue;
-			}
-
-			ItemDef def = item.getItem().getItemDef();
-			boolean searchMatch = hasSearch
-				&& def.getName().toLowerCase(Locale.ENGLISH).contains(search);
-			EnumSet<BankItemTag> itemTags = BankItemTag.classify(def);
-			boolean tagMatch = filterAndMode
-				? itemTags.containsAll(selectedTags)
-				: hasMatchingTag(itemTags);
-
-			boolean matches;
-			if (filterAndMode) {
-				matches = (!hasSearch || searchMatch) && (!hasTags || tagMatch);
-			} else {
-				matches = (hasSearch && searchMatch) || (hasTags && tagMatch);
-			}
-			if (matches) {
+			if (item != null && item.getItem() != null && filters.matches(item.getItem().getItemDef())) {
 				filtered.add(item);
 			}
 		}
 		return filtered;
-	}
-
-	private boolean hasMatchingTag(EnumSet<BankItemTag> itemTags) {
-		for (BankItemTag tag : selectedTags) {
-			if (itemTags.contains(tag)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private boolean filtersActive() {

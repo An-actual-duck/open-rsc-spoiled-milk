@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.custom.quests;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.custom.MyWorldItemId;
@@ -527,16 +528,18 @@ public final class MyWorldQuestShortcuts {
 	}
 
 	private static void completeQuestWithStandardReward(final Player player, final Quest quest, final String completionMessage) {
-		final QuestReward reward = quest.reward();
-		for (XPReward xpReward : reward.getXpRewards()) {
-			incStat(player, xpReward.getSkill().id(), xpReward.getBaseXP(), xpReward.getVarXP());
-		}
-		incQP(player, reward.getQuestPoints(), !player.isUsingClientBeforeQP());
-		player.updateQuestStage(quest.id(), -1);
-		ActionSender.sendStats(player);
-		if (completionMessage != null) {
-			player.message(completionMessage);
-		}
+		QuestCompletionPresentation.award(player, quest.id(), () -> {
+			final QuestReward reward = quest.reward();
+			for (XPReward xpReward : reward.getXpRewards()) {
+				incStat(player, xpReward.getSkill().id(), xpReward.getBaseXP(), xpReward.getVarXP());
+			}
+			incQP(player, reward.getQuestPoints(), !player.isUsingClientBeforeQP());
+			player.updateQuestStage(quest.id(), -1);
+			ActionSender.sendStats(player);
+			if (completionMessage != null) {
+				player.message(completionMessage);
+			}
+		});
 	}
 
 	private static void ensureUtilityItem(final Player player, final int itemId, final int amount) {

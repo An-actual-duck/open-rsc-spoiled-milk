@@ -347,6 +347,9 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					for (int i = 0; i < numOptions; i++){
 						builder.writeString(mo.optionTexts[i]);
 					}
+					if (mo.dialogueId != 0) {
+						builder.writeInt(mo.dialogueId);
+					}
 					break;
 
 				case SEND_ON_TUTORIAL:
@@ -885,6 +888,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 								builder.writeByte((byte) (b.pinned[i] ? 1 : 0));
 							}
 						}
+					if (b.filterTabs != null) {
+						builder.writeByte((byte) b.filterTabs.length);
+						for (String filters : b.filterTabs) builder.writeString(filters);
+					}
 					break;
 
 				case SEND_BANK_UPDATE:
@@ -937,6 +944,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeShort(s.amount[i]);
 						builder.writeShort(s.baseAmount[i]);
 					}
+					if (s.displayCategories != null) {
+						builder.writeByte((byte) 1);
+						for (String category : s.displayCategories) builder.writeString(category);
+					}
 					break;
 
 				case SEND_AUCTION_PROGRESS: // TODO: unused?
@@ -952,7 +963,12 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					if (pb.interfaceId == 4) {
 						builder.writeShort(pb.itemId);
 						builder.writeShort(pb.delay);
-					} else if (pb.interfaceId > 0 && pb.interfaceId != 2 && pb.interfaceId != 5) {
+					} else if (pb.interfaceId == 6) {
+						builder.writeShort(pb.itemId);
+						builder.writeByte((byte) pb.timesRepeat);
+					} else if (pb.interfaceId == 9) {
+						builder.writeInt(pb.delay);
+					} else if (pb.interfaceId == 1 || pb.interfaceId == 3 || pb.interfaceId == 7) {
 						if (pb.interfaceId == 1) {
 							builder.writeShort(pb.delay);
 						}
@@ -1170,6 +1186,11 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 							}
 							builder.writeShort((short) (production.stockAmounts == null ? -1 : production.stockAmounts[i]));
 						}
+						if (production.shopTabLabels != null) {
+							builder.writeByte((byte) production.shopTabLabels.length);
+							builder.writeByte((byte) production.selectedShopTab);
+							for (String label : production.shopTabLabels) builder.writeString(label);
+						}
 					}
 					break;
 
@@ -1255,6 +1276,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeInt(ol.icon[i]);
 						builder.writeString(ol.location[i]);
 					}
+					if (ol.sidebar) builder.writeByte(1);
 					break;
 
 				case SEND_HISCORES:

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ProductionSession {
+	public static final String TABS_CLIENT_ATTRIBUTE = "production_tabs_client";
 	public static final int TYPE_SMITHING = 1;
 	public static final int TYPE_CRAFTING = 2;
 	public static final int TYPE_SMELTING = 3;
@@ -24,6 +25,10 @@ public class ProductionSession {
 	private final List<ProductionRecipe> recipes;
 	private final String memoryKey;
 	private final PointShopDetails pointShopDetails;
+	private PointShopTabs pointShopTabs;
+
+	public void setPointShopTabs(PointShopTabs tabs) { pointShopTabs = tabs; }
+	public PointShopTabs getPointShopTabs() { return pointShopTabs; }
 
 	public ProductionSession(int type, String title, int inputItemId, List<ProductionRecipe> recipes) {
 		this(type, title, inputItemId, 0, recipes);

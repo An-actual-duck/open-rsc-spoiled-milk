@@ -42,7 +42,8 @@ def main() -> None:
     require(text, "GroundItemNameplateKey.from(groundItem)", "ground item nameplate tile grouping key")
     require(text, "new GroundItem(id, x, y, width, height, nameplateItemDef, sprite,\n\t\t\t\t\tthis.groundItemX[groundItemIndex], this.groundItemZ[groundItemIndex])", "nameplates retain ground item tile")
     require(text, "this.count > 1 ? this.name + \" (\" + this.count + \")\" : this.name", "same-name ground item count display")
-    require(text, "createGroundItemNameplateBounds", "ground item nameplate collision bounds")
+    require(text, "maxWidth + 2 * padding, lines.size() * lineHeight + padding",
+            "ground item nameplate collision bounds use the drawn text metrics")
     forbid(text, "Collections.frequency(groundItems", "screen-position frequency name grouping")
     forbid(text, "groundItemRenderTopByTile", "single top ground item per tile collapse")
     require(ground_item, "private int tileX;", "ground item tile x for nameplates")

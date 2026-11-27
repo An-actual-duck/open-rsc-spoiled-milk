@@ -30,8 +30,13 @@ import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 import {createBrowserDisplay} from './browser-display.js';
 import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
 const status = document.querySelector('#status');
-const deployment=resolveBrowserDeployment(deploymentConfig,location,window.parent?.browserSessionLoadingMode?.(window)??'chunks');
+const deployment=resolveBrowserDeployment(deploymentConfig,location,window.parent?.browserSessionLoadingMode?.(window)??null);
 const options = deployment.options;
+const interfaceMode = deployment.streamingOnly ? '1080p' : !deployment.publicAlpha && /^http:\/\/127\.0\.0\.1:[0-9]+$/.test(location.origin)
+  ? new URLSearchParams(location.search).get('interface') : null;
+const initialDisplay = interfaceMode === '1080p' ? {width: 1920, height: 1080} : {width: 960, height: 540};
+const displayProperties = ['540p', '1080p'].includes(interfaceMode)
+  ? ['spoiledmilk.nativeHdInterface=true', `spoiledmilk.renderSurfaceMode=${initialDisplay.width}x${initialDisplay.height}`] : [];
 function nativeCallPolicy(mode,parameters){
   if(mode!=='webgl'||!parameters.has('benchmark'))return 'async';
   const value=parameters.get('nativecalls')||'async';
@@ -42,6 +47,8 @@ const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',option
 const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options,
   deployment.streaming||!deployment.publicAlpha&&window.browserPrivateTestRoute?.surfaceDrawWorker===true);
 const wholeZone=wholeZonePolicy(options.get('mode')||'software',options);
+const compactLocalScenery=options.get('mode')==='webgl'&&!wholeZone.enabled
+  &&(deployment.streaming||!options.has('benchmark'));
 if(deployment.publicAlpha&&wholeZone.liveCells)throw new Error('Live cells are a private renderer path');
 const cloneTemplates=cloneTemplatePolicy(options.get('mode')||'software',options);
 const baselineReuse=baselineReusePolicy(options.get('mode')||'software',options);
@@ -346,7 +353,8 @@ const natives = {
     if (deployment.publicAlpha&&!deployment.streaming || stopped || typeof Worker !== 'function') return false;
     const {createBrowserSurfaceMeshWorker} = await import('./browser-surface-mesh-worker-client.js');
     if (stopped) return false;
-    surfaceMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion);
+    surfaceMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion, false,
+      displayProperties.length !== 0);
     surfaceSceneryMeshWorker = createBrowserSurfaceMeshWorker(window.browserRuntimeVersion, javaVersion, true);
     window.browserProof.surfaceMeshWorker = surfaceMeshWorker.stats;
     window.browserProof.surfaceSceneryMeshWorker = surfaceSceneryMeshWorker.stats;
@@ -428,7 +436,7 @@ try {
     }
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
     const gpuOptions={wholeZone:wholeZone.enabled,liveCells:wholeZone.liveCells,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
-    if(deployment.streaming)gpuOptions.compactScene=true;
+    if(compactLocalScenery)gpuOptions.compactScene=true;
     gpuOptions.measureFrameStages=!deployment.publicAlpha&&window.browserPrivateTestRoute?.frameStages===true;
     gpuOptions.localSpritePlan=renderWorker.enabled
       &&(deployment.streaming||!deployment.publicAlpha&&window.browserPrivateTestRoute?.localSpritePlan===true);
@@ -527,13 +535,14 @@ try {
   startupProgress.update('runtime-start');
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: canonicalRenderProperties(['user.dir=/files', ...deployment.properties, ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, 'spoiledmilk.browserStagedLogin='+stagedLoginEnabled, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
+    javaProperties: canonicalRenderProperties(['user.dir=/files', ...deployment.properties, ...(!deployment.streaming&&compactLocalScenery?['spoiledmilk.browserCompactScenery=true','spoiledmilk.browserCompactVertexBlocks=true']:[]), ...displayProperties, ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, 'spoiledmilk.browserStagedLogin='+stagedLoginEnabled, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
   ensureStarting();
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});
   window.browserProof.displayLayout=displayLayout.stats;
-  displayLayout.attachDesktop(cheerpjCreateDisplay(960,540,display));
+  displayLayout.setSize(initialDisplay.width,initialDisplay.height);
+  displayLayout.attachDesktop(cheerpjCreateDisplay(initialDisplay.width,initialDisplay.height,display));
   if (gpu) { display.append(gpu.canvas);worldCover.attach(); }
   const code = await cheerpjRunMain('orsc.browser.BrowserBootstrap', deployment.assetRoot+'browser-spike.jar:'+deployment.assetRoot+'client.jar', window.browserProof.mode);
   window.browserProof.ended = true; report('Java program stopped (exit ' + code + '); see console for compatibility results');

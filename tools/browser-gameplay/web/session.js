@@ -10,7 +10,7 @@ const loadingChoices = document.querySelector('#loading-choices');
 const playChunks = document.querySelector('#play-chunks'), playStreaming = document.querySelector('#play-streaming');
 const status = document.querySelector('#status'), session = document.querySelector('#session');
 const welcome = document.querySelector('#welcome');
-let frame, startup, loadingMode='chunks', selectedButton=start;
+let frame, startup, loadingMode, selectedButton=start;
 const meter=document.querySelector('#startup-progress'),detail=document.querySelector('#startup-detail');
 function hideProgress(){meter.hidden=true;detail.hidden=true;}
 function renderProgress(value){
@@ -111,7 +111,7 @@ function play(mode, button) {
   // disabling the focused Start button otherwise creates a spurious blur.
   frame.focus({preventScroll: true});
 }
-start.addEventListener('click', () => play('chunks', start));
+start.addEventListener('click', () => play(deployment.streaming ? 'streaming' : 'chunks', start));
 if(deployment.loadingChoices){
   playChunks.addEventListener('click', () => play('chunks', playChunks));
   playStreaming.addEventListener('click', () => play('streaming', playStreaming));

@@ -13,6 +13,7 @@ def verify(web,expected):
  if not re.fullmatch('[0-9a-f]{64}',expected)or sha(manifest)!=expected:raise ValueError('Public release manifest hash mismatch')
  m=json.loads(manifest.read_text());build=m['buildId']
  if 'worldStreaming' in m and m['worldStreaming'] is not True:raise ValueError('Invalid World Streaming release flag')
+ if 'streamingOnly' in m and (m['streamingOnly'] is not True or m.get('worldStreaming') is not True or not re.fullmatch('[0-9a-f]{64}',m.get('installedMapFingerprint',''))):raise ValueError('Invalid streaming-only map binding')
  if not re.fullmatch('[a-zA-Z0-9_-]{1,80}',build):raise ValueError('Unsafe build ID')
  prefix='assets/'+build+'/'
  if m['schemaVersion']!=1 or m['origin']!=ORIGIN or m['websocket']!=WSS or m['preset']!='alpha-v1' or m['assetPrefix']!='/'+prefix or m['sourceAndCookBindingsVerified']is not True:raise ValueError('Public endpoint/source contract mismatch')

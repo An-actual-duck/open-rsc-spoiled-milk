@@ -6,6 +6,7 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinition
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.production.PointShopDetails;
+import com.openrsc.server.content.production.PointShopTabs;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
@@ -19,6 +20,14 @@ import java.util.List;
 /** Graphical, server-authoritative presentation for the six Slayer shops. */
 public final class MonsterSlayerChallengeShops {
 	private static final String[] SHOP_KEYS = {"falador", "port_sarim", "brimhaven", "champions", "heroes", "legends"};
+	private static final String[] SHOP_LABELS = new String[SHOP_KEYS.length];
+
+	static {
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
+			SHOP_LABELS[challenge.getCode()] = challenge.getDisplayName();
+		}
+	}
+
 	private MonsterSlayerChallengeShops() { }
 
 	public static void open(Player player, Npc npc, String shopKey) {
@@ -33,6 +42,7 @@ public final class MonsterSlayerChallengeShops {
 				player.message("Your Monster Slayer record needs staff attention.");
 				return;
 			}
+			if (player.getAttribute(PointShopTabs.CLIENT_ATTRIBUTE, false) && openRewardInterface(player, SHOP_KEYS[0])) return;
 			List<ProductionRecipe> recipes = new ArrayList<ProductionRecipe>();
 			for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values())
 				recipes.add(new ProductionRecipe(challenge.getCode(), 1, 1, 1, true, true));
@@ -79,6 +89,10 @@ public final class MonsterSlayerChallengeShops {
 		if (shop == null || service == null) return false;
 		MonsterSlayerState.Snapshot state = MonsterSlayerState.read(player.getCache(), data);
 		ProductionSession rewardSession = session(player, shop, service, state);
+		if (player.getAttribute(PointShopTabs.CLIENT_ATTRIBUTE, false)) {
+			rewardSession.setPointShopTabs(new PointShopTabs(SHOP_LABELS, shop.getChallenge().getCode(),
+				(buyer, tab) -> openRewardInterface(buyer, SHOP_KEYS[tab])));
+		}
 		player.setAttribute("production_session", rewardSession);
 		player.setAttribute("production_starter", (ProductionStarter) MonsterSlayerChallengeShops::redeemFromInterface);
 		ActionSender.showProductionInterface(player, rewardSession);

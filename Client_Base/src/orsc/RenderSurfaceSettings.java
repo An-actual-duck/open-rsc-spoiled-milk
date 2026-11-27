@@ -7,6 +7,10 @@ final class RenderSurfaceSettings {
 	static final String SURFACE_MODE_PROPERTY_KEY = "render_surface_mode";
 	private static final String SURFACE_MODE_PROPERTY = "spoiledmilk.renderSurfaceMode";
 	private static final String SURFACE_MODE_ENV = "SPOILED_MILK_RENDER_SURFACE_MODE";
+	private static final int FULL_HD_HEIGHT = 1080;
+	private static final boolean RELEASE_BUILD = Boolean.getBoolean("spoiledmilk.releaseBuild");
+	private static final boolean NATIVE_HD_INTERFACE_PREVIEW =
+		RELEASE_BUILD || Boolean.getBoolean("spoiledmilk.nativeHdInterface");
 
 	private static final boolean runtimeSurfaceModeOverride =
 		hasRuntimeSetting(SURFACE_MODE_PROPERTY, SURFACE_MODE_ENV);
@@ -37,6 +41,14 @@ final class RenderSurfaceSettings {
 
 	static String getDebugAspectLabel() {
 		return mode.width * 9 == mode.height * 16 ? "16:9" : "4:3";
+	}
+
+	static boolean usesNativeHdInterface(int height) {
+		return NATIVE_HD_INTERFACE_PREVIEW && height == FULL_HD_HEIGHT;
+	}
+
+	static boolean isInterfacePreviewEnabled() {
+		return NATIVE_HD_INTERFACE_PREVIEW;
 	}
 
 	static Mode cycleMode() {
@@ -79,9 +91,8 @@ final class RenderSurfaceSettings {
 	}
 
 	/**
-	 * CLASSIC, VGA, WIDE_PLUS, HD, and FULL_HD are persisted-setting migration
-	 * aliases. They intentionally remain parseable even though only SVGA and WIDE
-	 * are offered by the current player-facing selector.
+	 * CLASSIC, VGA, WIDE_PLUS, HD, and FULL_HD remain parseable for older settings.
+	 * FULL_HD is also selectable in the high-resolution interface preview.
 	 */
 	enum Mode {
 		CLASSIC("512x346", "@gre@4:3", 512, 346, false, "@gre@4:3"),
@@ -90,7 +101,7 @@ final class RenderSurfaceSettings {
 		WIDE("960x540", "@yel@16:9", 960, 540, true, "@yel@16:9"),
 		WIDE_PLUS("1024x576", "@yel@16:9", 1024, 576, false, "@yel@16:9"),
 		HD("1280x720", "@yel@16:9", 1280, 720, false, "@yel@16:9"),
-		FULL_HD("1920x1080", "@yel@16:9", 1920, 1080, false, "@yel@16:9");
+		FULL_HD("1920x1080", "@yel@1080p", 1920, FULL_HD_HEIGHT, false, "@yel@1080p");
 
 		final String id;
 		final String label;
@@ -113,7 +124,7 @@ final class RenderSurfaceSettings {
 			Mode[] modes = values();
 			for (int step = 1; step <= modes.length; step++) {
 				Mode candidate = modes[(current.ordinal() + step) % modes.length];
-				if (candidate.playerVisible) {
+				if (candidate.playerVisible || candidate == FULL_HD && NATIVE_HD_INTERFACE_PREVIEW) {
 					return candidate;
 				}
 			}
@@ -121,6 +132,9 @@ final class RenderSurfaceSettings {
 		}
 
 		Mode normalizedPlayerMode() {
+			if (this == FULL_HD && NATIVE_HD_INTERFACE_PREVIEW) {
+				return FULL_HD;
+			}
 			return isWideAspect() ? WIDE : SVGA;
 		}
 
@@ -130,7 +144,7 @@ final class RenderSurfaceSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return WIDE;
+				return RELEASE_BUILD ? FULL_HD : WIDE;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');
@@ -148,7 +162,7 @@ final class RenderSurfaceSettings {
 			}
 			if ("1080p".equals(normalized) || "full-hd".equals(normalized) || "fhd".equals(normalized)
 				|| "1920x1080".equals(normalized) || "1920-1080".equals(normalized)) {
-				return WIDE;
+				return FULL_HD.normalizedPlayerMode();
 			}
 
 			for (Mode mode : values()) {

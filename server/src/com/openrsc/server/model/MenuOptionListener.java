@@ -8,12 +8,22 @@ public class MenuOptionListener {
 	 */
 	protected String[] options;
 	private Player owner;
+	private final int dialogueId;
 
 	/**
 	 * Creates a new MenuHandler with the given options
 	 */
 	public MenuOptionListener(final String[] options) {
+		this(options, 0);
+	}
+
+	public MenuOptionListener(final String[] options, int dialogueId) {
 		this.options = options;
+		this.dialogueId = dialogueId;
+	}
+
+	public int getDialogueId() {
+		return dialogueId;
 	}
 
 	/**

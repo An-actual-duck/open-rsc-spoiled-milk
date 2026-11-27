@@ -1,5 +1,6 @@
 package com.openrsc.server.model.container;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.constants.IronmanMode;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.content.LegacyAmuletCompatibility;
@@ -244,7 +245,8 @@ public class Bank {
 	public boolean add(Item itemToAdd) { return add(itemToAdd, true); }
 
 	public boolean add(Item itemToAdd, boolean updateClient) {
-		synchronized(list) {
+		synchronized (list) {
+			final int requestedAmount = itemToAdd.getAmount();
 			// Check bounds of amount
 			if (itemToAdd.getAmount() <= 0) {
 				return false;
@@ -333,6 +335,10 @@ public class Bank {
 						}
 					}
 				}
+			}
+			if (QuestCompletionPresentation.enabled() && player.getBank() == this) {
+				QuestCompletionPresentation.item(player, itemToAdd.getCatalogId(), requestedAmount, itemToAdd.getNoted(),
+					QuestCompletionPresentation.Destination.BANK);
 			}
 			return true;
 		}

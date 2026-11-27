@@ -21,7 +21,11 @@ public class MenuReplyHandler implements PayloadProcessor<MenuOptionStruct, Opco
 				return;
 			}
 			if (option == -1) {
-				menuHandler.handleReply(option, null);
+				if (menuHandler.getDialogueId() != 0) {
+					player.resetMenuHandler();
+				} else {
+					menuHandler.handleReply(option, null);
+				}
 				return;
 			}
 			final String reply = option == 30 ? ""

@@ -1,5 +1,6 @@
 package com.openrsc.server.model.container;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.constants.IronmanMode;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.database.impl.mysql.queries.logging.DeathLog;
@@ -170,6 +171,7 @@ public class Inventory {
 
 	public Boolean add(Item itemToAdd, boolean sendInventory) {
 		synchronized (list) {
+			final int requestedAmount = itemToAdd.getAmount();
 			final int MAXSTACK = !player.getConfig().SHORT_MAX_STACKS ? Integer.MAX_VALUE : (Short.MAX_VALUE - Short.MIN_VALUE);
 
 			// Confirm we aren't attempting to add 0 or less of the item.
@@ -324,6 +326,8 @@ public class Inventory {
 					}
 				}
 			}
+			if (!transactionStaging) QuestCompletionPresentation.item(player, itemToAdd.getCatalogId(), requestedAmount, itemToAdd.getNoted(),
+				QuestCompletionPresentation.Destination.INVENTORY);
 			return true;
 		}
 	}
@@ -693,7 +697,7 @@ public class Inventory {
 		return true;
 	}
 
-	public void dropOnDeath(final Mob mob) {
+	private List<Item> orderedDeathItems() {
 		// deathItemsMap: Compiles a list of Value : Items
 		// Stacks receive a value of -1, as they are always removed.
 		final TreeMap<Integer, ArrayList<Item>> deathItemsMap = new TreeMap<>(Collections.reverseOrder());
@@ -723,12 +727,15 @@ public class Inventory {
 		}
 
 		// Add inventory items and values to deathItemsMap
-		for (final Item item : getItems()) {
-			def = item.getDef(player.getWorld());
-			key = def.isStackable() || item.getNoted() ? -1 : def.getDefaultPrice(); // Stacks are always lost.
-			value = deathItemsMap.getOrDefault(key, new ArrayList<>());
-			value.add(item);
-			deathItemsMap.put(key, value);
+		List<Item> carried = getItems();
+		synchronized (carried) {
+			for (final Item item : carried) {
+				def = item.getDef(player.getWorld());
+				key = def.isStackable() || item.getNoted() ? -1 : def.getDefaultPrice(); // Stacks are always lost.
+				value = deathItemsMap.getOrDefault(key, new ArrayList<>());
+				value.add(item);
+				deathItemsMap.put(key, value);
+			}
 		}
 
 		deathItemsMap.values().forEach((list) -> {
@@ -740,8 +747,10 @@ public class Inventory {
 			});
 			deathItemsList.addAll(list);
 		});
-		deathItemsMap.clear();
+		return deathItemsList;
+	}
 
+	private int keptOnDeathCount(List<Item> deathItemsList) {
 		final ListIterator<Item> iterator = deathItemsList.listIterator();
 
 		// Save three most expensive items by ItemDef default price
@@ -769,6 +778,29 @@ public class Inventory {
 				iterator.previous();
 			}
 		}
+		return iterator.nextIndex();
+	}
+
+	public static final class DeathItems {
+		public final List<Item> items;
+		public final int keptCount;
+
+		private DeathItems(List<Item> items, int keptCount) {
+			this.items = Collections.unmodifiableList(items);
+			this.keptCount = keptCount;
+		}
+	}
+
+	public DeathItems previewOnDeath() {
+		List<Item> items = orderedDeathItems();
+		int keptCount = player.keepsInventoryOnDeath() ? items.size() : keptOnDeathCount(items);
+		items.replaceAll(item -> new Item(item.getCatalogId(), item.getAmount(), item.getNoted()));
+		return new DeathItems(items, keptCount);
+	}
+
+	public void dropOnDeath(final Mob mob) {
+		List<Item> deathItemsList = orderedDeathItems();
+		final ListIterator<Item> iterator = deathItemsList.listIterator(keptOnDeathCount(deathItemsList));
 
 		final DeathLog deathLog = new DeathLog(player, mob, false);
 

@@ -161,7 +161,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     private static final boolean PREUPLOAD_SCENE_MESHES = PREUPLOAD_PREDICTED
         && Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes");
-    private static final boolean COMPACT_SCENERY = (PREUPLOAD_SCENE_MESHES || LIVE_SCENERY_DRAW)
+    private static final boolean COMPACT_SCENERY = !WHOLE_ZONE
         && Boolean.getBoolean("spoiledmilk.browserCompactScenery");
     private static final boolean SLICE_PREUPLOAD = LIVE_SCENERY_DRAW
         || PREUPLOAD_SCENE_MESHES && Boolean.getBoolean("spoiledmilk.browserSlicePreupload");
@@ -728,7 +728,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             WorldChunkBufferKey key = chunkKey(chunk);
             if ((!PREUPLOAD_SCENE_MESHES && !LIVE_SCENERY_DRAW && chunk.getVertexCount() > UPLOAD_VERTICES_PER_FRAME)
                 || chunks.containsKey(key)) continue;
-            long bytes = chunkBytes(chunk);
+            long bytes = legacyChunkBytes(chunk);
             if (stagedBytes + bytes > PREDICTED_BUFFER_BUDGET || !reserveOptionalSpace(active, bytes)) continue;
             if (SLICE_PREUPLOAD && chunk.getVertexCount() > 8192) {
                 advanceStagePack(frame, chunk, key);
@@ -897,7 +897,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                     advancedOptional = true;
                     if (!matchesPack(pendingOptionalDrawPack, key)) {
                         pendingOptionalDrawPack = beginPack(chunk, key);
-                    } else if (reserveOptionalSpace(active, chunkBytes(chunk))) {
+                    } else if (reserveOptionalSpace(active, legacyChunkBytes(chunk))) {
                         cached = advancePack(frame, chunk, pendingOptionalDrawPack, System.nanoTime());
                         if (cached != null) {
                             chunks.put(key, cached);
@@ -910,9 +910,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                     }
                 }
             } else if(cached==null && (fishingPose||uploaded==0||uploaded+chunk.getVertexCount()<=uploadBudget)) {
-                long bytes=chunkBytes(chunk);
-                makeRoom(active,bytes);
-                cached=upload(frame,chunk,packingSettings);chunks.put(key,cached);residentChunkBytes+=cached.bytes;
+                cached=upload(frame,chunk,packingSettings,active);chunks.put(key,cached);residentChunkBytes+=cached.bytes;
                 if (fishingPose) fishingPoseUploads++;
                 else uploaded+=chunk.getVertexCount();
             }
@@ -928,8 +926,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private CachedChunk updateChunk(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,CachedChunk cached,int[] settings,int[] materials,Set<WorldChunkBufferKey> active) {
         int packedIndices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;
         if(cached.compact||cached.vertices!=chunk.getVertexCount()||cached.indices!=packedIndices) {
-            long required=chunkBytes(chunk);makeRoom(active,required);
-            CachedChunk replacement=upload(frame,chunk,settings);
+            CachedChunk replacement=upload(frame,chunk,settings,active);
             // Allocate+validate first. A failed native upload leaves the old cache
             // entry and accounting intact; it can never masquerade as this pose.
             chunks.put(chunkKey(chunk),replacement);
@@ -943,8 +940,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         cached.signature=chunk.getStorageSignature();cached.materialRevision=materialRevision;cached.packedAt=++packingSequence;
         return cached;
     }
-    private static long chunkBytes(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+    private static void validateChunkSize(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
         if(chunk.getVertexCount()>MAX_VERTICES||chunk.getIndexCount()>MAX_VERTICES*3)throw new IllegalStateException("Browser chunk exceeds capacity");
+    }
+    private static long legacyChunkBytes(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+        validateChunkSize(chunk);
         return (long)chunk.getVertexCount()*28*4+(long)Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3*4;
     }
     private mudclient currentClient() {
@@ -1078,12 +1078,27 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             deleted[count++]=entry.getValue().id;residentChunkBytes-=entry.getValue().bytes;iterator.remove();
         }
         if(count>0)chunkBackend.delete(Arrays.copyOf(deleted,count));
-        if(residentChunkBytes+required>CHUNK_BUDGET||chunks.size()>=MAX_CHUNKS*2)throw new IllegalStateException("Active browser scene exceeds resident byte budget");
+        if(residentChunkBytes+required>CHUNK_BUDGET||chunks.size()>=MAX_CHUNKS*2) {
+            throw new IllegalStateException("Active browser scene exceeds resident capacity: "
+                + residentChunkBytes + " resident bytes across " + chunks.size() + " chunks, " + required + " requested bytes");
+        }
     }
     private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,int[] settings) {
+        return upload(frame, chunk, settings, null);
+    }
+
+    // Optional staging reserves the legacy upper bound before packing. Required
+    // draws reserve the actual layout so a compact buffer never counts as legacy.
+    private CachedChunk upload(Renderer3DFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk,
+                               int[] settings, Set<WorldChunkBufferKey> active) {
+        validateChunkSize(chunk);
         BrowserChunkMaterials.Buffers materials=packMaterials(frame,chunk);
         int[] compact = COMPACT_SCENERY && chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS
             ? packing.copyBackendCompactChunkVertices(chunk,frame) : null;
+        if (active != null) {
+            long vertexWords = compact == null ? (long) chunk.getVertexCount() * 28 : compact.length;
+            makeRoom(active, (vertexWords + materials.indices.length) * 4);
+        }
         return uploadPacked(frame, chunk, settings, materials, compact, compact==null?packVertices(frame,chunk):null);
     }
 

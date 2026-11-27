@@ -61,6 +61,7 @@ def main() -> None:
     client_ui = read(
         "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
     )
+    scaled_ui = read("Client_Base/src/orsc/HiscoresWindow.java")
 
     for config_name, config in (
         ("hosted", host_config),
@@ -198,7 +199,7 @@ def main() -> None:
         )
     require(
         mudclient,
-        'setSkillGuideChosen("Overall")',
+        'openSkillGuideFromSidebar(overallHovered ? "Overall" : skillNameLong[hovered], overallHovered);',
         "stats panel must expose the overall hiscores view",
     )
     require(
@@ -206,6 +207,9 @@ def main() -> None:
         'hiscoresView ? "Guide" : "Hiscores"',
         "skill guide must retain its guide/hiscores toggle",
     )
+    require(scaled_ui, "client.requestHiscoresIfNeeded();", "the scaled view must use the shared request gate")
+    require(client_ui, "mc.requestHiscoresIfNeeded();", "the legacy view must use the shared request gate")
+    require(mudclient, "hiscoreData.shouldRequest()", "the shared request gate must respect client retry timing")
 
     print("PASS: in-game hiscore protocol, rankings, and request safety validated")
 

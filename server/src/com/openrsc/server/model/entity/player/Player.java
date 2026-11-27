@@ -1,5 +1,6 @@
 package com.openrsc.server.model.entity.player;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.GameStateUpdater;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.*;
@@ -238,6 +239,8 @@ public final class Player extends Mob {
 	private List<PluginTask> ownedPlugins = Collections.synchronizedList(new ArrayList<>());
 	private long lastExchangeTime = System.currentTimeMillis();
 	private int clientVersion = 0;
+	private volatile boolean dialoguePresentationReady;
+
 	public int preferredIcon = -1;
 	private boolean denyAllLogoutRequests = false;
 	private boolean qolOptOutWarned = false;
@@ -3536,6 +3539,10 @@ public final class Player extends Mob {
 		return false;
 	}
 
+	public boolean keepsInventoryOnDeath() {
+		return keepsInventoryOnDeathFromStaffRole() && !getCache().hasKey("myworld_test_death_drops");
+	}
+
 	private boolean keepsInventoryOnDeathFromStaffRole() {
 		switch (groupID) {
 			case Group.OWNER:
@@ -4489,7 +4496,7 @@ public final class Player extends Mob {
 			getDuel().dropOnDeath();
 			 // disables duel spam in activity feed
 			 // if (player != null) getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(player, String.format("has just won a stake against <strong>%s</strong>", username)));
-		} else if (!keepsInventoryOnDeathFromStaffRole() || getCache().hasKey("myworld_test_death_drops")) {
+		} else if (!keepsInventoryOnDeath()) {
 			getCarriedItems().getInventory().dropOnDeath(mob);
 		}
 
@@ -5096,9 +5103,11 @@ public final class Player extends Mob {
 			return;
 		}
 		if (getQuestStage(questId) != -1) {
-			getWorld().getQuest(questId).handleReward(this);
-			updateQuestStage(questId, -1);
-			ActionSender.sendStats(this);
+			QuestCompletionPresentation.award(this, questId, () -> {
+				getWorld().getQuest(questId).handleReward(this);
+				updateQuestStage(questId, -1);
+				ActionSender.sendStats(this);
+			});
 			getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(this,
 				"has completed the " + getWorld().getQuest(questId).getQuestName()
 					+ " quest and now has " + this.getQuestPoints() + " quest points!"));
@@ -6817,6 +6826,14 @@ public final class Player extends Mob {
 
 	public void setLastExchangeTime() {
 		this.lastExchangeTime = System.currentTimeMillis();
+	}
+
+	public boolean isDialoguePresentationReady() {
+		return dialoguePresentationReady;
+	}
+
+	public void setDialoguePresentationReady() {
+		dialoguePresentationReady = true;
 	}
 
 	public void setClientVersion(int cv) {

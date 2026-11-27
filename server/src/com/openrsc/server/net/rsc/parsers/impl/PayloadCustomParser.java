@@ -272,8 +272,17 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case 155:
 				opcode = OpcodeIn.LAYERED_TERRAIN_STAGE_READY;
 				break;
+			case 157:
+				opcode = OpcodeIn.DIALOGUE_PRESENTATION_READY;
+				break;
 			case 156:
 				opcode = OpcodeIn.HISCORE_REQUEST;
+				break;
+			case 159:
+				opcode = OpcodeIn.ONLINE_SIDEBAR_REQUEST;
+				break;
+			case 160:
+				opcode = OpcodeIn.DEATH_ITEMS_REQUEST;
 				break;
 			case 0:
 				opcode = OpcodeIn.LOGIN;
@@ -383,8 +392,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case BANK_DEPOSIT:
 				return packet.getLength() >= 6;
 			case SHOP_BUY:
-			case SHOP_SELL:
 				return packet.getLength() == 6;
+			case SHOP_SELL:
+				return packet.getLength() == 6 || packet.getLength() == 7;
 			case GROUND_ITEM_USE_ITEM:
 				return packet.getLength() == 8;
 			case ITEM_USE_ITEM:
@@ -462,6 +472,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case GAME_SETTINGS_CHANGED:
 				return packet.getLength() == 2;
 			case PRIVACY_SETTINGS_CHANGED:
+			case DEATH_ITEMS_REQUEST:
 				return packet.getLength() == 4;
 			case PLAYER_ACCEPTED_INIT_TRADE_REQUEST:
 			case PLAYER_ACCEPTED_TRADE:
@@ -469,6 +480,8 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case DUEL_FIRST_ACCEPTED:
 			case DUEL_DECLINED:
 			case DUEL_SECOND_ACCEPTED:
+			case DIALOGUE_PRESENTATION_READY:
+			case ONLINE_SIDEBAR_REQUEST:
 			case HEARTBEAT:
 			case SKIP_TUTORIAL:
 			case ON_BLACK_HOLE:
@@ -651,6 +664,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				s1.catalogID = packet.readShort();
 				s1.stockAmount = packet.readUnsignedShort();
 				s1.amount = packet.readUnsignedShort();
+				s1.sellAll = opcode == OpcodeIn.SHOP_SELL && packet.getReadableBytes() > 0 && packet.readByte() == 1;
 				result = s1;
 				break;
 
@@ -998,6 +1012,17 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 							os.id = packet.readInt();
 							break;
 					case CANCEL_BATCH:
+					case SHOP_SELECT_TAB:
+						os.value = packet.readByte();
+						break;
+					case BANK_SAVE_FILTER_TAB:
+						os.slot = packet.readUnsignedByte();
+						os.name = packet.readString();
+						break;
+					case QUEST_COMPLETION_PRESENTATION:
+					case BANK_FILTER_TABS:
+					case SHOP_TABS:
+					case PRODUCTION_TABS:
 					case PRODUCTION_BACK:
 						//nothing
 						break;
@@ -1170,6 +1195,14 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				result = sl;
 				break;
 
+			case DEATH_ITEMS_REQUEST:
+				DeathItemsRequestStruct preview = new DeathItemsRequestStruct();
+				preview.requestId = packet.readInt();
+				result = preview;
+				break;
+
+			case DIALOGUE_PRESENTATION_READY:
+			case ONLINE_SIDEBAR_REQUEST:
 			case HEARTBEAT:
 			case SKIP_TUTORIAL:
 			case ON_BLACK_HOLE:

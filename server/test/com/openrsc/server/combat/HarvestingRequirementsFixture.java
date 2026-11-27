@@ -11,22 +11,27 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.handlers.GameObjectAction;
 import com.openrsc.server.net.rsc.handlers.ItemEquip;
+import com.openrsc.server.net.rsc.handlers.ItemUseOnItem;
 import com.openrsc.server.net.rsc.handlers.NpcCommand;
 import com.openrsc.server.net.rsc.struct.incoming.EquipStruct;
+import com.openrsc.server.net.rsc.struct.incoming.ItemOnItemStruct;
 import com.openrsc.server.net.rsc.struct.incoming.TargetMobStruct;
 import com.openrsc.server.net.rsc.struct.incoming.TargetObjectStruct;
 import com.openrsc.server.plugins.authentic.defaults.Default;
 import com.openrsc.server.plugins.authentic.misc.Sheep;
+import com.openrsc.server.plugins.custom.myworld.misc.GrapeEmpowerment;
 import com.openrsc.server.plugins.shared.EntranaRestrictions;
 import com.openrsc.server.plugins.custom.skills.harvesting.Harvesting;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
+import com.openrsc.server.plugins.triggers.UseInvTrigger;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -38,6 +43,7 @@ public final class HarvestingRequirementsFixture {
 			harness.server().getConfig().WANT_FATIGUE = false;
 			harness.installPlugin(OpLocTrigger.class, new Harvesting());
 			harness.installPlugin(OpNpcTrigger.class, new Sheep());
+			harness.installPlugin(UseInvTrigger.class, new GrapeEmpowerment());
 			harness.installDefaultPlugin(new Default());
 			Player player = newPlayer(harness, "harvestfix", 441);
 			Item tinShears = addItem(player, ItemId.SHEARS.id());
@@ -113,10 +119,55 @@ public final class HarvestingRequirementsFixture {
 			check(wool > 0 && harvestingXp(shepherd) == wool * 20,
 				"Exalted Rune shears must give wool and 20 internal XP per unit at level 1");
 
+			testGrapes(harness, true);
+			testGrapes(harness, false);
+
 			GameObject table = place(harness, SceneryId.TABLE, 445, 440);
 			expect(click(harness, shepherd, table, OpcodeIn.OBJECT_COMMAND), "Nothing interesting happens");
 		}
-		System.out.println("PASS flax harvesting, Harvest and Clip requirements, and scenery fallback");
+		System.out.println("PASS flax harvesting, Harvest and Clip requirements, grape empowerment, and scenery fallback");
+	}
+
+	private static void testGrapes(CurrentCombatHarness harness, boolean bless) throws Exception {
+		Player player = newPlayer(harness, bless ? "grapebless" : "grapecurse",
+			bless ? 257 : 691, bless ? 460 : 645);
+		ItemId symbolId = bless ? ItemId.HOLY_SYMBOL_OF_SARADOMIN : ItemId.UNHOLY_SYMBOL_OF_ZAMORAK;
+		ItemId robeId = bless ? ItemId.SARADOMIN_WOOL_ROBE_TOP : ItemId.ZAMORAK_WOOL_ROBE_TOP;
+		ItemId result = bless ? ItemId.GRAPES_OF_SARADOMIN : ItemId.GRAPES_OF_ZAMORAK;
+		int shearsId = bless ? ItemId.RUNE_SHEARS.id() : MyWorldItemId.EXALTED_RUNE_SHEARS;
+		Item symbol = addItem(player, symbolId.id());
+		Item grapes = addItem(player, ItemId.GRAPES.id());
+		Item shears = addItem(player, shearsId);
+		player.setPrayerBook(bless ? PrayerCatalog.GodLine.SARADOMIN : PrayerCatalog.GodLine.ZAMORAK);
+		equip(harness, player, addItem(player, robeId.id()));
+		equip(harness, player, addItem(player, ItemId.ORICHALCUM_SHEARS.id()));
+		player.getSkills().setLevel(Skill.PRAYER.id(), 5, false);
+
+		setLevel(player, 70);
+		expect(useItems(harness, player, grapes, symbol),
+			"You need at least Rune shears to " + (bless ? "bless" : "curse") + " the grapes.");
+		check(count(player, ItemId.GRAPES) == 1 && count(player, result) == 0
+			&& player.getLevel(Skill.PRAYER.id()) == 5,
+			"Carrying the right shears must give no grapes and spend no prayer points");
+
+		setLevel(player, 1);
+		equip(harness, player, shears);
+		expect(useItems(harness, player, grapes, symbol), bless ? "You bless the grapes" : "You curse the grapes");
+		check(count(player, ItemId.GRAPES) == 0 && count(player, result) == 1
+			&& player.getLevel(Skill.PRAYER.id()) == 4,
+			"Equipped Rune or Exalted Rune shears must allow grape empowerment");
+	}
+
+	private static List<String> useItems(CurrentCombatHarness harness, Player player, Item first, Item second)
+			throws Exception {
+		List<Packet> outgoing = outgoing(player);
+		int packetStart = outgoing.size();
+		ItemOnItemStruct payload = new ItemOnItemStruct();
+		List<Item> items = player.getCarriedItems().getInventory().getItems();
+		payload.slotIndex1 = items.indexOf(first);
+		payload.slotIndex2 = items.indexOf(second);
+		new ItemUseOnItem().process(payload, player);
+		return advanceAndReadMessages(harness, player, outgoing, packetStart);
 	}
 
 	private static GameObject place(CurrentCombatHarness harness, SceneryId scenery, int x, int y) {
@@ -146,7 +197,11 @@ public final class HarvestingRequirementsFixture {
 	}
 
 	private static Player newPlayer(CurrentCombatHarness harness, String name, int x) throws Exception {
-		Player player = harness.player(name, x, 440);
+		return newPlayer(harness, name, x, 440);
+	}
+
+	private static Player newPlayer(CurrentCombatHarness harness, String name, int x, int y) throws Exception {
+		Player player = harness.player(name, x, y);
 		harness.recordOutgoingPackets(player);
 		player.getSettings().setAppearance(new PlayerAppearance(2, 8, 14, 0, 1, 2));
 		player.getClientLimitations().maxItemId = Integer.MAX_VALUE;
@@ -165,7 +220,7 @@ public final class HarvestingRequirementsFixture {
 		equipPacket(player, item);
 		harness.advanceOneCombatTick();
 		check(player.getCarriedItems().getEquipment().hasEquipped(item.getCatalogId()),
-			"Ordinary inventory equip must work at Harvesting level 1 for " + item.getCatalogId());
+			"Ordinary inventory equip must work for " + item.getCatalogId());
 	}
 
 	private static List<String> shear(CurrentCombatHarness harness, Player player, Npc sheep) throws Exception {
@@ -199,6 +254,11 @@ public final class HarvestingRequirementsFixture {
 		check(player.getWalkToAction() != null && player.getWalkToAction().shouldExecute(),
 			"Click must resolve to a reachable action");
 		harness.server().getGameUpdater().executeWalkToActions(player);
+		return advanceAndReadMessages(harness, player, outgoing, packetStart);
+	}
+
+	private static List<String> advanceAndReadMessages(CurrentCombatHarness harness, Player player, List<Packet> outgoing,
+			int packetStart) throws Exception {
 		for (int tick = 0; tick < 5; tick++) {
 			harness.advanceOneCombatTick();
 		}

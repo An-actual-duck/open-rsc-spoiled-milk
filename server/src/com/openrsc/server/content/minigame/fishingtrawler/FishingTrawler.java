@@ -282,8 +282,8 @@ public class FishingTrawler extends DelayedEvent {
 		if (DataConversions.random(0, 100) >= 75) {
 			setNetBroken(true);
 			for (Player player : players) {
-				ActionSender.sendBox(player,
-					"@red@ The trawler net is damaged% %you cannot catch any fish with a damaged net",
+				ActionSender.sendActivityNotice(player, "Fishing Trawler",
+					"@red@The net is damaged.%@whi@Repair it to catch more fish.",
 					false);
 			}
 		}
@@ -318,15 +318,15 @@ public class FishingTrawler extends DelayedEvent {
 				if (player.getCache().hasKey("fishing_trawler_success")) {
 					successfulTrips += player.getCache().getInt("fishing_trawler_success");
 				}
-				ActionSender.sendBox(player,
-					"@yel@you have trawled a full net% %@yel@It's time to go back in and inspect the catch", false);
+				ActionSender.sendActivityNotice(player, "Fishing Trawler",
+					"Voyage complete. Inspect the catch on shore to collect your share.", false);
 				player.message("murphy turns the boat towards shore");
 				player.setLocation(SPAWN_LAND, true);
 				player.getCache().set("fishing_trawler_reward", rewardForEach);
 				player.getCache().set("fishing_trawler_success", successfulTrips);
-				ActionSender.hideFishingTrawlerInterface(player);
 			}
 		}
+		for (Player player : players) ActionSender.hideFishingTrawlerInterface(player);
 		players.clear();
 		resetGame();
 		this.currentStage = State.CLEANUP;

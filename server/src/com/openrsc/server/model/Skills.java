@@ -1,5 +1,6 @@
 package com.openrsc.server.model;
 
+import com.openrsc.server.net.rsc.QuestCompletionPresentation;
 import com.openrsc.server.constants.HiscoreSkills;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.database.GameDatabaseException;
@@ -394,6 +395,10 @@ public class Skills {
 					LOGGER.catching(e);
 				}
 			}
+		}
+		if (exp > 0 && getMob() instanceof Player) {
+			long received = Integer.toUnsignedLong(exps[skill] - oldExp);
+			if (received <= exp) QuestCompletionPresentation.experience((Player) getMob(), skill, received);
 		}
 		int newLevel = oldLevel;
 		if (oldLevel < getWorld().getServer().getConfig().PLAYER_LEVEL_LIMIT) {

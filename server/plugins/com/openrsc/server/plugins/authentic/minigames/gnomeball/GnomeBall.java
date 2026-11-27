@@ -239,14 +239,11 @@ public class GnomeBall implements MiniGameInterface, UsePlayerTrigger, TakeObjTr
 	}
 
 	private void showScoreWindow(Player player, int goalNum) {
-		String text = "@yel@goal";
-		if (goalNum > 1) {
-			text += (" " + goalNum);
-		}
+		String text = "@yel@Goal " + goalNum + " of 5";
 		if (goalNum == 5) {
-			text += ("% %Well Done% %@red@Agility Bonus");
+			text += "%@whi@Round complete. Agility bonus awarded.";
 		}
-		ActionSender.sendBox(player, text, false);
+		ActionSender.sendActivityNotice(player, "Gnome Ball", text, false);
 	}
 
 	@Override

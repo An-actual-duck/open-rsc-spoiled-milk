@@ -3,6 +3,7 @@ package orsc;
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.EntityHandler.GUIPARTS;
 import com.openrsc.client.entityhandling.EntityHandler.PROJECTILE_TYPES;
+import com.openrsc.client.entityhandling.defs.ClericCostDef;
 import com.openrsc.client.entityhandling.defs.ClericSpellDef;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.defs.ElementalSpellDisplayMetadata;
@@ -80,6 +81,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -100,6 +102,12 @@ public final class mudclient implements Runnable {
 	private static final int GROUND_ITEM_INITIAL_CAPACITY = 5000;
 	private static final int CHARACTER_OVERLAY_INITIAL_CAPACITY = 150;
 	private static final long SCENE_OBJECT_DEBUG_HOVER_THROTTLE_MILLIS = 1000L;
+	private static final GUIPARTS[] YELLOW_CLICK_FRAMES = {
+		GUIPARTS.YELLOWX1, GUIPARTS.YELLOWX2, GUIPARTS.YELLOWX3, GUIPARTS.YELLOWX4
+	};
+	private static final GUIPARTS[] RED_CLICK_FRAMES = {
+		GUIPARTS.REDX1, GUIPARTS.REDX2, GUIPARTS.REDX3, GUIPARTS.REDX4
+	};
 	private static final int GROUND_ITEM_NAMEPLATE_LINE_HEIGHT = 12;
 	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
@@ -496,6 +504,7 @@ public final class mudclient implements Runnable {
 	private int[] characterBubbleX = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int[] characterBubbleY = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private boolean actionProgressActive = false;
+	private boolean craftingTabsRegistered;
 	private int actionProgressItemId = -1;
 	private long actionProgressStartTime = 0L;
 	private long actionProgressDurationMs = 1L;
@@ -509,6 +518,7 @@ public final class mudclient implements Runnable {
 	private long gatheringFocusMenuHideAt = 0L;
 	private int[] characterDialogHalfWidth = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int[] characterDialogHeight = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private String[][] characterDialogRows = new String[CHARACTER_OVERLAY_INITIAL_CAPACITY][];
 	private String[] characterDialogString = new String[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int[] characterDialogX = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int[] characterDialogY = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
@@ -711,6 +721,9 @@ public final class mudclient implements Runnable {
 	public int[] achievementProgress = new int[500];
 	public int showUiTab = 0;
 	public boolean topMouseMenuVisible = false;
+	private volatile ContextMenuLayout contextMenuLayout;
+	private int contextMenuFirstRow;
+	private final java.util.concurrent.atomic.AtomicInteger contextMenuWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private static final LegacySoftwareScalingSettings.SettingsStore LEGACY_SCALING_SETTINGS_STORE =
 		new LegacySoftwareScalingSettings.SettingsStore() {
 			@Override
@@ -834,6 +847,11 @@ public final class mudclient implements Runnable {
 		"What is your favourite movie?"};
 	boolean drawMinimap = false;
 	private boolean minimapPinned = false;
+	private MinimapFrameLayout minimapFrame;
+	private MinimapView minimapView;
+	private volatile WorldMapWindow worldMapWindow;
+	private SideToolbarLayout minimapFrameToolbar;
+	private GameInterfaceSettings.TextSize minimapFrameText;
 	/** A detached non-map side panel, independent of the transient tab state. */
 	private int pinnedSideMenuTab = 0;
 	private boolean showCoordinatesOverlay = true;
@@ -1146,6 +1164,10 @@ public final class mudclient implements Runnable {
 	private int controlPartyPanel;
 	private Panel panelParty;
 	private Panel panelAppearance;
+	private int appearancePanelX;
+	private int appearancePanelY;
+	private int appearancePanelScale;
+	private int appearancePanelType;
 	private final int[] appearanceSpriteControls = new int[12];
 	private int appearanceSpriteControlCount;
 	private Panel panelLogin;
@@ -1160,6 +1182,29 @@ public final class mudclient implements Runnable {
 	private int panelMessageQuest;
 	private int panelMessageClan;
 	private Panel panelMessageTabs;
+	private ChatPanelLayout chatLayout;
+	private InventoryEquipmentLayout inventoryEquipmentLayout;
+	private AccomplishmentsLayout accomplishmentsLayout;
+	private final int[] accomplishmentsScroll = new int[2];
+	private final java.util.concurrent.atomic.AtomicInteger accomplishmentsWheel = new java.util.concurrent.atomic.AtomicInteger();
+	private SideToolbarLayout sideToolbarLayout;
+	private AbilityPanelLayout abilityPanelLayout;
+	private int abilityLayoutWidth;
+	private int abilityLayoutAnchor;
+	private int abilityLayoutChatRight;
+	private int abilityLayoutChatTop;
+	private GameInterfaceSettings.Size abilityLayoutSize;
+	private GameInterfaceSettings.TextSize abilityLayoutText;
+	private boolean abilityLayoutBottom;
+	private final int[][] abilityScroll = new int[AbilityBook.values().length][2];
+	private final int[] abilityFocus = new int[AbilityBook.values().length];
+	private final int[] abilityDetailScroll = new int[AbilityBook.values().length];
+	private final java.util.concurrent.atomic.AtomicIntegerArray abilityDetailWheel =
+		new java.util.concurrent.atomic.AtomicIntegerArray(AbilityBook.values().length);
+	private final java.util.concurrent.atomic.AtomicIntegerArray abilityWheel =
+		new java.util.concurrent.atomic.AtomicIntegerArray(AbilityBook.values().length * 2);
+	private final SideToolbarArtwork sideToolbarArtwork = new SideToolbarArtwork();
+	private boolean chatLayoutDirty;
 	private Panel panelPlayerInfo;
 	private Panel panelQuestInfo;
 	private Panel panelPlayerTaskInfo;
@@ -1178,6 +1223,11 @@ public final class mudclient implements Runnable {
 			}
 		});
 	private final RendererSettingsPanel rendererSettingsPanel = new RendererSettingsPanel();
+	private SettingsPanelLayout settingsPanelLayout;
+	private final int[] settingsScroll = new int[SettingsPanelLayout.TAB_COUNT];
+	private final java.util.concurrent.atomic.AtomicIntegerArray settingsWheel =
+		new java.util.concurrent.atomic.AtomicIntegerArray(SettingsPanelLayout.TAB_COUNT);
+	private final RendererSettingsPanel.TuningDrag settingsTuningDrag = new RendererSettingsPanel.TuningDrag();
 	private final RendererSettingsPanel.Actions rendererSettingsActions = new RendererSettingsPanel.Actions() {
 		@Override
 		public void perform(RendererSettingsPanel.Action action) {
@@ -1192,9 +1242,30 @@ public final class mudclient implements Runnable {
 	private Panel panelSocial;
 	private Panel panelClan;
 	private SocialPopupMode panelSocialPopup_Mode = SocialPopupMode.NONE;
+	private volatile SocialTextPrompt socialTextPrompt;
+	private volatile PartyWindow partyWindow;
+	private volatile PartyWindow partyInvitation;
+	private volatile ClanWindow clanWindow;
+	private volatile ClanWindow clanInvitation;
+	boolean deathItemsSupported;
+	private volatile DeathItemsWindow deathItemsWindow;
+	private volatile ItemQuantityPrompt itemQuantityPrompt;
+	private volatile ReportPlayerWindow reportPlayerWindow;
+	private int deathItemsRequestId;
+	private final java.util.concurrent.atomic.AtomicInteger deathItemsWheel = new java.util.concurrent.atomic.AtomicInteger();
 	private int panelSocialTab = 0;
+	private SocialPanelLayout socialPanelLayout;
+	private static final long ONLINE_SIDEBAR_INTERVAL_NS = 15_000_000_000L;
+	boolean onlineSidebarSupported;
+	private List<OnlinePlayerEntry> onlineSidebarPlayers;
+	private long lastOnlineSidebarRequest;
+	private final int[] socialScroll = new int[SocialPanelLayout.ONLINE + 1];
+	private final java.util.concurrent.atomic.AtomicIntegerArray socialWheel =
+		new java.util.concurrent.atomic.AtomicIntegerArray(SocialPanelLayout.ONLINE + 1);
 	private int socialPartySelectedMember = -1;
 	private PasswordChangeMode panelPasswordChange_Mode = PasswordChangeMode.NONE;
+	private volatile PasswordChangeWindow passwordChangeWindow;
+	private String pendingPasswordChange;
 	private String oldPassword;
 	private String newPassword;
 	private String password = "";
@@ -1243,11 +1314,42 @@ public final class mudclient implements Runnable {
 	private boolean showDialogDuelConfirm = false;
 	private boolean showDialogMessage = false;
 	private boolean showDialogServerMessage = false;
+	private volatile SessionNoticeWindow welcomeNotice;
+	private volatile SessionNoticeWindow serverNotice;
+	private boolean welcomeNoticeIncludesIp;
+	private final SessionNoticeWindow logoutNotice = new SessionNoticeWindow(
+		"Logging out", "Waiting for the server...", null, null, 370, true);
+	private final SessionNoticeWindow reconnectNotice = new SessionNoticeWindow(
+		"Connection lost", "Reconnecting to the server...", null, null, 400, true);
+	private boolean drawingReconnectNotice;
+	private volatile QuestRewardWindow questRewardWindow;
+	private final java.util.ArrayDeque<QuestRewardWindow> pendingQuestRewards = new java.util.ArrayDeque<>();
+	private final java.util.concurrent.atomic.AtomicInteger questRewardWheel = new java.util.concurrent.atomic.AtomicInteger();
+	private volatile boolean questRewardDismiss;
 	private boolean showDialogShop = false;
+	private volatile StandardShopWindow shopPreview;
+	private boolean shopPreviewTradeExtension;
 	private boolean showDialogTrade = false;
 	private boolean showDialogTradeConfirm = false;
-	private boolean optionsMenuShow = false;
+	private volatile boolean optionsMenuShow = false;
+	private DialogueChoicesPanel dialogueChoicesPanel;
+	private final DialogueChoicesPanel.PortraitPainter dialoguePortraits = this::drawDialoguePortrait;
+	private int dialogueId;
+	private int dialogueMenuId;
+	private NPCDef dialogueNpc;
+	private boolean dialoguePlayerSpeaking;
+	private String dialogueLine;
+	private final java.util.concurrent.atomic.AtomicInteger dialogueScroll = new java.util.concurrent.atomic.AtomicInteger();
 	private int showUiWildWarn = 0;
+	private final SessionNoticeWindow wildernessWarning = new SessionNoticeWindow("Wilderness warning",
+		"Other players can attack you in the Wilderness.%The Wilderness level shows how far into the danger zone you are.",
+		"Dismiss", null, 560, false);
+	private final SessionNoticeWindow deathNotice = new SessionNoticeWindow("Oh dear! You are dead...",
+		"Respawning...", null, null, 430, true);
+	private volatile SessionNoticeWindow travelConfirmation;
+	private InputXAction confirmedTravelAction;
+	private volatile ExperienceTrackerWindow experienceTrackerWindow;
+	private final java.util.concurrent.atomic.AtomicBoolean dismissGameplayPrompt = new java.util.concurrent.atomic.AtomicBoolean();
 	private int recentSkill = -1;
 	private String sleepingStatusText = null;
 	private boolean sleepWordDelay = true;
@@ -1301,6 +1403,7 @@ public final class mudclient implements Runnable {
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final java.util.Map<Integer,Sprite> clericIconSprites = new java.util.HashMap<Integer,Sprite>();
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
+	private final HashMap<String, Sprite> guidePrayerIcons = new HashMap<>();
 	private final Sprite[] summoningIconSprites = new Sprite[SUMMONING_NAMES.length];
 	private final ClientExternalAssetLoader externalAssetLoader = new ClientExternalAssetLoader();
 	private Sprite wristEquipmentSlotSprite;
@@ -1372,6 +1475,10 @@ public final class mudclient implements Runnable {
 	private boolean tradeConfirmAccepted = false;
 	private int tradeConfirmItemsCount = 0;
 	private int tradeDoX_Slot;
+	private volatile ContextMenuLayout tradePreviewMenu;
+	private final java.util.concurrent.atomic.AtomicInteger tradePreviewWheel = new java.util.concurrent.atomic.AtomicInteger();
+	private int tradePreviewFirstRow, tradeReviewFirstRow;
+	private TradeQuantityTarget tradePreviewTarget;
 	private int tradeItemCount = 0;
 	private boolean tradeRecipientAccepted = false;
 	private int tradeRecipientConfirmItemsCount = 0;
@@ -1384,6 +1491,14 @@ public final class mudclient implements Runnable {
 	private String welcomeLastLoggedInHost = null;
 	private String welcomeLastLoggedInIp;
 	private int welcomeTipOfDay;
+	private static final String[][] WELCOME_SECURITY_TIPS = {
+		{"Don't tell ANYONE your password or recovery questions!", "Not even people claiming to be Jagex staff."},
+		{"Never enter your password or recovery questions into ANY", "website other than this one - Not even if it looks similar."},
+		{"Don't use RuneScape cheats, helpers, or automaters.", "These programs WILL steal your password."},
+		{"Watch out for fake emails, and fake staff. Real staff", "will NEVER ask you for your password or recovery questions!"},
+		{"Use a password your friends won't guess. Do NOT use your name!", "Choose a unique password which you haven't used anywhere else"},
+		{"If possible only play runescape from your own computer", "Other machines could have been tampered with to steal your pass"}
+	};
 	private int welcomeRecoverySetDays = 0;
 	private boolean welcomeScreenShown = false;
 	//private int welcomeUnreadMessages = 0;
@@ -1397,6 +1512,8 @@ public final class mudclient implements Runnable {
 	private int spellsSubtab = SPELLS_SUBTAB_MAGE;
 	private final ClericSpellbookCatalog clericSpellbook = new ClericSpellbookCatalog();
 	private Panel menuNewUser;
+	private AccountEntryPreview accountEntryPreview;
+	private int accountEntryWelcomeStatus;
 	private int menuNewUserUsername;
 	private int menuNewUserPassword;
 	private int menuNewUserConfirmPassword;
@@ -1427,8 +1544,16 @@ public final class mudclient implements Runnable {
 	private NCustomComponent experienceOverlay;
 	private ProgressBarInterface batchProgressBar;
 	private BankPinInterface bankPinInterface;
+	private volatile BankPinWindow bankPinWindow;
 	private FishingTrawlerInterface fishingTrawlerInterface;
 	private String skillGuideChosen;
+	private static final int COOKS_ASSISTANT_QUEST = 1;
+	private volatile QuestGuideWindow questGuidePreview;
+	private volatile SkillGuideWindow skillGuidePreview;
+	private volatile HiscoresWindow hiscoresPreview;
+	private final java.util.concurrent.atomic.AtomicInteger skillGuideWheel = new java.util.concurrent.atomic.AtomicInteger();
+	private final java.util.concurrent.atomic.AtomicInteger questGuideWheel = new java.util.concurrent.atomic.AtomicInteger();
+	private volatile boolean questGuideDismiss;
 	private String questGuideChosen;
 	private int questGuideProgress;
 	private String questGuideStartWho;
@@ -1484,6 +1609,7 @@ public final class mudclient implements Runnable {
 
 		initConfig();
 		Properties clientSettings = loadClientSettings();
+		GameInterfaceSettings.loadFromClientSettings(clientSettings);
 		SpellbookLayoutSettings.loadFromClientSettings(clientSettings);
 		HitSplatDisplaySettings.loadFromClientSettings(clientSettings);
 		RemasteredSpriteSettings.loadFromClientSettings(clientSettings);
@@ -1523,6 +1649,13 @@ public final class mudclient implements Runnable {
 		Properties props = loadClientSettings();
 		HitSplatDisplaySettings.saveToClientSettings(props);
 		saveClientSettings(props);
+	}
+
+	private void applyGameInterfaceSizing() {
+		Properties props = loadClientSettings();
+		GameInterfaceSettings.saveToClientSettings(props);
+		saveClientSettings(props);
+		chatLayoutDirty = true;
 	}
 
 	private static void saveClientSetting(String key, String value) {
@@ -2445,32 +2578,32 @@ public final class mudclient implements Runnable {
 						String v3 = StringUtil.displayNameToKey(party.username[3]);
 						String v4 = StringUtil.displayNameToKey(party.username[4]);
 						if (dn.equals(StringUtil.displayNameToKey(v0)) && party.partyMembersTotal[0] > 1) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else if (dn.equals(StringUtil.displayNameToKey(v1)) && party.partyMembersTotal[0] > 1) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else if (dn.equals(StringUtil.displayNameToKey(v2)) && party.partyMembersTotal[0] > 2) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else if (dn.equals(StringUtil.displayNameToKey(v3)) && party.partyMembersTotal[0] > 3) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else if (dn.equals(StringUtil.displayNameToKey(v4)) && party.partyMembersTotal[0] > 4) {
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						} else {
 							this.menuCommon.addCharacterItem(player.serverIndex, MenuItemAction.PLAYER_PARTY_INVITE, "Invite to party",
 								"@whi@" + name + level);
-							this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+							this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 								MenuItemAction.REPORT_ABUSE, player.accountName);
 						}
 					} else {
-						this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+						this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 							MenuItemAction.REPORT_ABUSE, player.accountName);
 					}
 				} else {
-					this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + name + level, player.getStaffName(),
+					this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + name + level, player.getStaffName(),
 						MenuItemAction.REPORT_ABUSE, player.accountName);
 				}
 				if (modMenu) {
@@ -3117,99 +3250,102 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void createAppearancePanel(int var1, int type) {
-		// type 1 is for worlds with the 1x XP mode selector
-		// type 2 is for world with classes and global pk mode
-		int factor = type > 0 ? 2 : 1;
-		try {
-			this.panelAppearance = new Panel(this.getSurface(), 100);
-			this.appearanceSpriteControlCount = 0;
-
-			this.panelAppearance.addCenteredText(256, 10, "Please design Your Character", 4, true);
-			short var2 = 140;
-			byte var3 = 34;
-			int var6 = var2 + 116;
-			// divide in 2 if typed (modes)
-			var6 /= factor;
-			int yFromTopDistance = var3 - 10;
-			this.panelAppearance.addCenteredText(var6 - 55, yFromTopDistance + 110, "Front", 3, true);
-			this.panelAppearance.addCenteredText(var6, yFromTopDistance + 110, "Side", 3, true);
-			this.panelAppearance.addCenteredText(var6 + 55, 110 + yFromTopDistance, "Back", 3, true);
-			yFromTopDistance += 145;
-			byte var4 = 54;
-			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Head", 1, true);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Type", 1, true);
-			this.addAppearanceSprite(var6 - var4 - 40, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceHeadMinus = this.panelAppearance.addButton(-40 - var4 + var6, yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(var6 - var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceHeadPlus = this.panelAppearance.addButton(var6 + (40 - var4), yFromTopDistance, 20, 20);
-			this.panelAppearance.addDecoratedBox((var6 + var4), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var6 + var4, yFromTopDistance - 8, "Hair", 1, true);
-			this.panelAppearance.addCenteredText(var4 + var6, 8 + yFromTopDistance, "Color", 1, true);
-			this.addAppearanceSprite(var4 + (var6 - 40), yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceHair1 = this.panelAppearance.addButton(var6 + var4 - 40, yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(40 + var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceHair2 = this.panelAppearance.addButton(40 + var4 + var6, yFromTopDistance, 20, 20);
-			yFromTopDistance += 50;
-			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Body", 1, true);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Type", 1, true);
-			this.addAppearanceSprite(var6 - var4 - 40, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceGender1 = this.panelAppearance.addButton(var6 - 40 - var4, yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(40 - var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceGender2 = this.panelAppearance.addButton(40 + (var6 - var4), yFromTopDistance, 20, 20);
-			this.panelAppearance.addDecoratedBox((var4 + var6), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance - 8, "Top", 1, true);
-			this.panelAppearance.addCenteredText(var4 + var6, 8 + yFromTopDistance, "Color", 1, true);
-			this.addAppearanceSprite(var6 + (var4 - 40), yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceTop1 = this.panelAppearance.addButton(var4 + (var6 - 40), yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(40 + var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceTop2 = this.panelAppearance.addButton(var6 - (-var4 - 40), yFromTopDistance, 20, 20);
-			yFromTopDistance += 50;
-			if (var1 != -24595) {
-				this.renderLoginScreenViewports(-127);
-			}
-
-			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Skin", 1, true);
-			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Color", 1, true);
-			this.addAppearanceSprite(var6 - 40 - var4, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceSkin1 = this.panelAppearance.addButton(var6 - var4 - 40, yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(var6 - var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceSkin2 = this.panelAppearance.addButton(var6 + (40 - var4), yFromTopDistance, 20, 20);
-			this.panelAppearance.addDecoratedBox((var4 + var6), yFromTopDistance, 53, 41);
-			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance - 8, "Bottom", 1, true);
-			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance + 8, "Color", 1, true);
-			this.addAppearanceSprite(var4 - 40 + var6, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
-			this.controlButtonAppearanceBottom1 = this.panelAppearance.addButton(var6 - (40 - var4), yFromTopDistance, 20, 20);
-			this.addAppearanceSprite(var6 + var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
-			this.controlButtonAppearanceBottom2 = this.panelAppearance.addButton(40 + var4 + var6, yFromTopDistance, 20, 20);
-			yFromTopDistance += 82;
-			yFromTopDistance -= 35;
-			this.panelAppearance.addButtonBackground(var6 * factor, yFromTopDistance, 200, 30);
-			this.panelAppearance.addCenteredText(var6 * factor, yFromTopDistance, "Accept", 4, false);
-			this.controlButtonAppearanceAccept = this.panelAppearance.addButton(var6 * factor, yFromTopDistance, 200, 30);
-
-			yFromTopDistance = 50;
-			if (type == 1) {
-				var6 = 372;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "Use the world's " + Config.S_SKILLING_EXP_RATE + "X xp rate", 0, true);
-				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "or keep the original 1X rate.", 0, true);
-				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "This only affects your new character.", 0, true);
-				yFromTopDistance += 13;
-				yFromTopDistance += 60;
-				this.panelAppearance.addDecoratedBox(var6, yFromTopDistance + 21, 215, 60);
-				String[] modes_xp = {
-					"Yes please", "No, original"
-				};
-				this.playerMode2 = this.panelAppearance.addHorizontalList(var6, yFromTopDistance, modes_xp, 1, true);
-			}
-		} catch (RuntimeException var5) {
-			throw GenUtil.makeThrowable(var5, "client.J(" + var1 + ',' + type + ')');
+	private void ensureAppearancePanel(int type) {
+		boolean preview = !isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled();
+		int scale = accountEntryScale();
+		int x = preview ? Math.max(0, (getGameWidth() - 512 * scale) / 2) : 0;
+		int y = preview ? Math.max(0, (getGameHeight() - 346 * scale) / 2) : 0;
+		if (panelAppearance != null && appearancePanelX == x && appearancePanelY == y
+			&& appearancePanelScale == scale && appearancePanelType == type) {
+			return;
 		}
+		int xpMode = panelAppearance != null && appearancePanelType == 1 && type == 1
+			? panelAppearance.getControlClickedListIndex(playerMode2) : 0;
+		appearancePanelX = x;
+		appearancePanelY = y;
+		appearancePanelScale = scale;
+		appearancePanelType = type;
+
+		panelAppearance = new Panel(getSurface(), 100, scale);
+		appearanceSpriteControlCount = 0;
+		int center = appearanceCharacterCenter();
+		addAppearanceLabel(256, 10, "Please design Your Character", 4, true);
+		addAppearanceLabel(center - 55, 134, "Front", 3, true);
+		addAppearanceLabel(center, 134, "Side", 3, true);
+		addAppearanceLabel(center + 55, 134, "Back", 3, true);
+
+		int left = center - 54;
+		int right = center + 54;
+		addAppearanceOption(left, 169, "Head", "Type");
+		controlButtonAppearanceHeadMinus = addAppearanceArrow(left - 40, 169, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceHeadPlus = addAppearanceArrow(left + 40, 169, GUIPARTS.RIGHTARROW);
+		addAppearanceOption(right, 169, "Hair", "Color");
+		controlButtonAppearanceHair1 = addAppearanceArrow(right - 40, 169, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceHair2 = addAppearanceArrow(right + 40, 169, GUIPARTS.RIGHTARROW);
+
+		addAppearanceOption(left, 219, "Body", "Type");
+		controlButtonAppearanceGender1 = addAppearanceArrow(left - 40, 219, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceGender2 = addAppearanceArrow(left + 40, 219, GUIPARTS.RIGHTARROW);
+		addAppearanceOption(right, 219, "Top", "Color");
+		controlButtonAppearanceTop1 = addAppearanceArrow(right - 40, 219, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceTop2 = addAppearanceArrow(right + 40, 219, GUIPARTS.RIGHTARROW);
+
+		addAppearanceOption(left, 269, "Skin", "Color");
+		controlButtonAppearanceSkin1 = addAppearanceArrow(left - 40, 269, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceSkin2 = addAppearanceArrow(left + 40, 269, GUIPARTS.RIGHTARROW);
+		addAppearanceOption(right, 269, "Bottom", "Color");
+		controlButtonAppearanceBottom1 = addAppearanceArrow(right - 40, 269, GUIPARTS.LEFTARROW);
+		controlButtonAppearanceBottom2 = addAppearanceArrow(right + 40, 269, GUIPARTS.RIGHTARROW);
+
+		panelAppearance.addButtonBackground(appearanceX(256), appearanceY(316), 200 * scale, 30 * scale);
+		addAppearanceLabel(256, 316, "Accept", 4, false);
+		controlButtonAppearanceAccept = panelAppearance.addButton(appearanceX(256), appearanceY(316), 200 * scale, 30 * scale);
+
+		if (type == 1) {
+			addAppearanceLabel(372, 50, "Use the world's " + Config.S_SKILLING_EXP_RATE + "X xp rate", 0, true);
+			addAppearanceLabel(372, 63, "or keep the original 1X rate.", 0, true);
+			addAppearanceLabel(372, 76, "This only affects your new character.", 0, true);
+			panelAppearance.addDecoratedBox(appearanceX(372), appearanceY(170), 215 * scale, 60 * scale);
+			String[] modes = {"Yes please", "No, original"};
+			playerMode2 = panelAppearance.addHorizontalList(appearanceX(372), appearanceY(149), modes,
+				appearanceFont(1), true, xpMode);
+		}
+	}
+
+	private int appearanceCharacterCenter() {
+		return appearancePanelType > 0 ? 128 : 256;
+	}
+
+	private int appearanceX(int x) {
+		return appearancePanelX + x * appearancePanelScale;
+	}
+
+	private int appearanceY(int y) {
+		return appearancePanelY + y * appearancePanelScale;
+	}
+
+	private int appearanceFont(int classicFont) {
+		if (appearancePanelScale == 1) return classicFont;
+		if (classicFont == 0) return 5;
+		return classicFont == 1 ? 6 : 7;
+	}
+
+	private void addAppearanceLabel(int x, int y, String label, int font, boolean light) {
+		panelAppearance.addCenteredText(appearanceX(x), appearanceY(y), label, appearanceFont(font), light);
+	}
+
+	private void addAppearanceOption(int x, int y, String firstLine, String secondLine) {
+		panelAppearance.addDecoratedBox(appearanceX(x), appearanceY(y), 53 * appearancePanelScale, 41 * appearancePanelScale);
+		addAppearanceLabel(x, y - 8, firstLine, 1, true);
+		addAppearanceLabel(x, y + 8, secondLine, 1, true);
+	}
+
+	private int addAppearanceArrow(int x, int y, GUIPARTS arrow) {
+		int scaledX = appearanceX(x);
+		int scaledY = appearanceY(y);
+		addAppearanceSprite(scaledX, scaledY, spriteSelect(arrow.getDef()));
+		int size = 20 * appearancePanelScale;
+		return panelAppearance.addButton(scaledX, scaledY, size, size);
 	}
 
 	private void addAppearanceSprite(int x, int y, Sprite sprite) {
@@ -3231,109 +3367,75 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private int accountEntryScale() {
+		return usesNativeHdInterface() ? 2 : 1;
+	}
+
 	private void createLoginPanels(int var1) {
 		try {
 
-			this.panelLoginWelcome = new Panel(this.getSurface(), 50);
-			byte yOffsetWelcome = 40;
-			int yOffsetLogin = 0;
-			if (isAndroid()) {
-				yOffsetWelcome = -125;
-				yOffsetLogin = -200;
-			}
+			boolean preview = !isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled();
+			int scale = accountEntryScale();
+			int centerX = halfGameWidth();
+			int centerY = halfGameHeight();
+			int welcomeHeading = (wantMembers() ? 33 : 23) + (isAndroid() ? -125 : 40);
+			int yOffsetLogin = isAndroid() ? -200 : 0;
 
-			if (!wantMembers()) { // Free version
-				this.panelLoginWelcome.addCenteredText(halfGameWidth(), halfGameHeight() + 23 + yOffsetWelcome, "Welcome to " + getServerNameWelcome(), 4, true);
-				this.panelLoginWelcome.addCenteredText(halfGameWidth(), halfGameHeight() + 38 + yOffsetWelcome, getWelcomeText(), 4, true);
+			AccountEntryLayout welcome = new AccountEntryLayout(getSurface(), 50, centerX, centerY, scale);
+			panelLoginWelcome = welcome.panel;
+			welcome.label(0, welcomeHeading, "Welcome to " + getServerNameWelcome(), 4, true);
+			welcome.label(0, welcomeHeading + 15, getWelcomeText(), 4, true);
+			loginButtonNewUser = welcome.button(-100, welcomeHeading + 50, 120, 35,
+				preview ? "Create Account" : "New User", preview ? 4 : 5);
+			loginButtonExistingUser = welcome.button(100, welcomeHeading + 50, 120, 35,
+				preview ? "Log In" : "Existing User", 5);
+			if (preview) accountEntryWelcomeStatus = welcome.label(0, welcomeHeading + 82, "", 4, true);
 
-				panelLoginWelcome.addButtonBackground(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
-				panelLoginWelcome.addButtonBackground(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
-
-				panelLoginWelcome.addCenteredText(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, "New User", 5, false);
-				panelLoginWelcome.addCenteredText(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, "Existing User", 5, false);
-
-				loginButtonNewUser = panelLoginWelcome.addButton(halfGameWidth() - 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
-				loginButtonExistingUser = panelLoginWelcome.addButton(halfGameWidth() + 100, halfGameHeight() + 73 + yOffsetWelcome, 120, 35);
-			} else { // Members version
-				this.panelLoginWelcome.addCenteredText(halfGameWidth(), halfGameHeight() + 33 + yOffsetWelcome, "Welcome to " + getServerNameWelcome(), 4, true);
-				this.panelLoginWelcome.addCenteredText(halfGameWidth(), halfGameHeight() + 48 + yOffsetWelcome, getWelcomeText(), 4, true);
-
-				panelLoginWelcome.addButtonBackground(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
-				panelLoginWelcome.addButtonBackground(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
-
-				panelLoginWelcome.addCenteredText(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, "New User", 5, false);
-				panelLoginWelcome.addCenteredText(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, "Existing User", 5, false);
-
-				loginButtonNewUser = panelLoginWelcome.addButton(halfGameWidth() - 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
-				loginButtonExistingUser = panelLoginWelcome.addButton(halfGameWidth() + 100, halfGameHeight() + 83 + yOffsetWelcome, 120, 35);
-			}
-
-			this.panelLogin = new Panel(this.getSurface(), 50);
-			short androidHeightOffset = isAndroid() ? (short) 30 : 230;
-			this.controlLoginStatus1 = this.panelLogin.addCenteredText(halfGameWidth(), halfGameHeight() + 35 + yOffsetLogin, "", 4, true);
-			this.controlLoginStatus2 = this.panelLogin.addCenteredText(halfGameWidth(), halfGameHeight() + 55 + yOffsetLogin,
-				"Please enter your username and password", 4, true);
-			int var6 = androidHeightOffset + 28;
-			this.panelLogin.addButtonBackground(halfGameWidth() - 116, halfGameHeight() + 91 + yOffsetLogin, 200, 40);
-			this.panelLogin.addCenteredText(halfGameWidth() - 116, halfGameHeight() + 81 + yOffsetLogin, "Username:", 4, false);
-			this.controlLoginUser = this.panelLogin.addCenteredTextEntry(halfGameWidth() - 116, halfGameHeight() + 98 + yOffsetLogin, 200, 320, 40, 4, false, false);
+			AccountEntryLayout login = new AccountEntryLayout(getSurface(), 50, centerX, centerY, scale);
+			panelLogin = login.panel;
+			controlLoginStatus1 = login.label(0, 35 + yOffsetLogin, "", 4, true);
+			controlLoginStatus2 = login.label(0, 55 + yOffsetLogin, "Please enter your username and password", 4, true);
+			login.background(-116, 91 + yOffsetLogin, 200, 40);
+			login.label(-116, 81 + yOffsetLogin, "Username:", 4, false);
+			controlLoginUser = login.entry(-116, 98 + yOffsetLogin, 200, 40, 320, 4, false);
 
 			if (var1 != 3845) {
 				this.drawNPC(51, 106, -15, -96, 26, 108, 22, -63);
 			}
 
-			this.panelLogin.addButtonBackground(halfGameWidth() - 46, halfGameHeight() + 138 + yOffsetLogin, 200, 40);
-			this.panelLogin.addCenteredText(halfGameWidth() - 46, halfGameHeight() + 128 + yOffsetLogin, "Password:", 4, false);
-			this.controlLoginPass = this.panelLogin.addCenteredTextEntry(halfGameWidth() - 46, halfGameHeight() + 146 + yOffsetLogin, 200, 20, 40, 4, true, false);
+			login.background(-46, 138 + yOffsetLogin, 200, 40);
+			login.label(-46, 128 + yOffsetLogin, "Password:", 4, false);
+			controlLoginPass = login.entry(-46, 146 + yOffsetLogin, 200, 40, 20, 4, true);
 
 			if (Remember()) {
 				String cred = ClientPort.loadCredentials();
 				if (cred.length() > 0) {
 					String[] split = cred.split(",");
 					if (split.length == 2) {
-						String user = split[0];
-						String pass = split[1];
-						this.panelLogin.setText(this.controlLoginUser, user);
-						this.panelLogin.setText(this.controlLoginPass, pass);
+						panelLogin.setText(controlLoginUser, split[0]);
+						panelLogin.setText(controlLoginPass, split[1]);
 					}
 				}
 			}
 
-			this.panelLogin.addButtonBackground(halfGameWidth() + 154, halfGameHeight() + 83 + yOffsetLogin, 120, 25);
-			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 83 + yOffsetLogin, "Ok", 4, false);
-			this.m_be = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 83 + yOffsetLogin, 120, 25);
-			this.panelLogin.addButtonBackground(halfGameWidth() + 154, halfGameHeight() + 113 + yOffsetLogin, 120, 25);
-			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 113 + yOffsetLogin, "Cancel", 4, false);
-			this.m_Xi = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 113 + yOffsetLogin, 120, 25);
-			this.panelLogin.setFocus(this.controlLoginUser);
-			this.panelLogin.addButtonBackground(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, 120, 25);
-			this.panelLogin.addCenteredText(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, "Forgot password", 4, false);
-			this.lostPasswordButtonIdx = this.panelLogin.addButton(halfGameWidth() + 154, halfGameHeight() + 143 + yOffsetLogin, 120, 25);
-
-			//int offRememb = -1;
-			//int offHide = -1;
-			/*int width = 120;
-			if (S_WANT_HIDE_IP && (Remember())) {
-				offRememb = 124;
-				offHide = 186;
-				width = 60;
-			} else if (S_WANT_HIDE_IP) {
-				offHide = 154;
-			} else if (Remember()) {
-				offRememb = 154;
-			}*/
+			m_be = login.button(154, 83 + yOffsetLogin, 120, 25, "Ok", 4);
+			m_Xi = login.button(154, 113 + yOffsetLogin, 120, 25, "Cancel", 4);
+			panelLogin.setFocus(controlLoginUser);
+			lostPasswordButtonIdx = login.button(154, 143 + yOffsetLogin, preview ? 150 : 120, 25,
+				preview ? "I forgot my password" : "Forgot password", 4);
 
 			if (S_WANT_HIDE_IP) {
-				this.settingsHideIP = ClientPort.loadHideIp();
-				String text = (this.settingsHideIP != 1) ? "Hide IP" : "Show IP";
-				this.panelLogin.addButtonBackground(halfGameWidth() + 24, halfGameHeight() + 91 + yOffsetLogin, 60, 40);
-				this.panelLogin.addCenteredText(halfGameWidth() + 24, halfGameHeight() + 91 + yOffsetLogin, text, 3, false);
-				this.hideIpButtonIdx = this.panelLogin.addButton(halfGameWidth() + 24, halfGameHeight() + 91 + yOffsetLogin, 60, 40);
+				settingsHideIP = ClientPort.loadHideIp();
+				String text = settingsHideIP != 1 ? "Hide IP" : "Show IP";
+				hideIpButtonIdx = login.button(24, 91 + yOffsetLogin, 60, 40, text, 3);
 			}
 			if (Remember()) {
-				this.panelLogin.addButtonBackground(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, 60, 40);
-				this.panelLogin.addCenteredText(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, "Save", 3, false);
-				this.rememberButtonIdx = this.panelLogin.addButton(halfGameWidth() - 186, halfGameHeight() + 138 + yOffsetLogin, 60, 40);
+				rememberButtonIdx = login.button(-186, 138 + yOffsetLogin, 60, 40, "Save", 3);
+			}
+
+			if (preview) {
+				accountEntryPreview = new AccountEntryPreview(getSurface(), centerX, centerY, scale);
+				return;
 			}
 
 			/* Registration setup */
@@ -3576,6 +3678,7 @@ public final class mudclient implements Runnable {
 
 				int var4;
 				int var5;
+				String socialHint = null;
 				if (this.getVisibleSideMenuTab() == Config.FRIENDS_TAB) {
 					String var9 = null;
 					if (this.panelSocialTab == 0 && this.m_wk != -1) {
@@ -3608,9 +3711,7 @@ public final class mudclient implements Runnable {
 						}
 					}
 
-					if (var9 != null) {
-						this.getSurface().drawString(var9, 6, 14, 0xFFFF00, 1);
-					}
+					socialHint = var9;
 				}
 
 				var3 = this.menuCommon.getItemCount(-27153);
@@ -3644,9 +3745,7 @@ public final class mudclient implements Runnable {
 						var11 = var11 + "@whi@ / " + (var3 - 1) + " more options";
 					}
 
-					if (null != var11) {
-						this.getSurface().drawString(var11, 6, 14, 0xFFFF00, 1);
-					}
+					drawTopMouseHint(var11 == null ? socialHint : var11);
 
 					if (!this.optionMouseButtonOne && this.mouseButtonClick == 1
 						|| this.optionMouseButtonOne && this.mouseButtonClick == 1 && var3 == 1) {
@@ -3662,34 +3761,74 @@ public final class mudclient implements Runnable {
 						this.mouseButtonClick = 0;
 					} else if (!this.optionMouseButtonOne && this.mouseButtonClick == 2
 						|| this.optionMouseButtonOne && this.mouseButtonClick == 1) {
-						int menuWidth = this.menuCommon.getWidth();
-						int var7 = this.menuCommon.getHeight();
-						this.menuX = this.mouseX - menuWidth / 2;
-						this.topMouseMenuVisible = true;
-						this.menuY = this.mouseY - 7;
-						if (this.menuX < 0) {
-							this.menuX = 0;
-						}
-
-						if (this.menuY < 0) {
-							this.menuY = 0;
-						}
-
-						this.mouseButtonClick = 0;
-						if (this.menuY + var7 > getGameHeight() - 19) {
-							this.menuY = getGameHeight() - 19 - var7;
-						}
-
-						if (menuWidth + this.menuX > getGameWidth() - 2) {
-							this.menuX = getGameWidth() - 2 - menuWidth;
-						}
+						openTopMouseMenu(var3);
 					}
+				} else {
+					drawTopMouseHint(socialHint);
 				}
 
 			}
 		} catch (RuntimeException var8) {
 			throw GenUtil.makeThrowable(var8, "client.H(" + var1 + ')');
 		}
+	}
+
+	private void drawTopMouseHint(String hint) {
+		if (hint == null) return;
+		MudClientGraphics surface = getSurface();
+		int font = hudLabelFont();
+		int x = chatLayout == null ? 6 : hudPixels(5);
+		int baseline = chatLayout == null ? 14 : hudPixels(3) + surface.fontHeight(font) - 3;
+		if (chatLayout != null) {
+			int width = getGameWidth() / 2 - GameInterfaceSettings.size().pixels(190) - x;
+			hint = ContextMenuLayout.fitLabel(hint, width, label -> surface.stringWidth(font, label));
+		}
+		surface.drawString(hint, x, baseline, 0xFFFF00, font);
+	}
+
+	private int xpFocusTop() {
+		return chatLayout == null ? COMBAT_XP_ALLOCATION_Y
+			: hudPixels(5) + getSurface().fontHeight(hudLabelFont());
+	}
+
+	private void openTopMouseMenu(int itemCount) {
+		topMouseMenuVisible = true;
+		mouseButtonClick = 0;
+		if (chatLayout == null) {
+			contextMenuLayout = null;
+			int width = menuCommon.getWidth();
+			int height = menuCommon.getHeight();
+			menuX = Math.min(Math.max(0, mouseX - width / 2), getGameWidth() - 2 - width);
+			menuY = Math.min(Math.max(0, mouseY - 7), getGameHeight() - 19 - height);
+			return;
+		}
+
+		String[] labels = new String[itemCount];
+		for (int item = 0; item < itemCount; item++) {
+			String actor = menuCommon.getItemActor(item);
+			String label = String.valueOf(menuCommon.getItemLabel(item));
+			labels[item] = actor == null || actor.isEmpty() ? label : label + " " + actor;
+		}
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		ContextMenuLayout layout = new ContextMenuLayout(getGameWidth(), getGameHeight(), mouseX, mouseY,
+			GameInterfaceSettings.size(), text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+			menuCommon.getTitle(), labels, label -> surface.stringWidth(text.bodyFont, label),
+			label -> surface.stringWidth(text.labelFont, label));
+		menuX = layout.left;
+		menuY = layout.top;
+		contextMenuFirstRow = 0;
+		contextMenuWheel.set(0);
+		contextMenuLayout = layout;
+	}
+
+	public boolean hasContextMenuInput() {
+		return contextMenuLayout != null && topMouseMenuVisible;
+	}
+
+	private void closeTopMouseMenu() {
+		topMouseMenuVisible = false;
+		contextMenuLayout = null;
 	}
 
 	public final RSModel createWallObjectModel(int x, int y, int type, int dir, int index) {
@@ -7261,68 +7400,31 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void drawAppearancePanelCharacterSprites(int var1, int type) {
-		// see createAppearancePanel for type
-		int factor = type > 0 ? 2 : 1;
-		try {
+	private void drawAppearancePanelCharacterSprites() {
+		ensureAppearancePanel(Config.S_CHARACTER_CREATION_MODE);
+		getSurface().interlace = false;
+		getSurface().blackScreen(true);
+		getSurface().captureRenderer2DUiBaseFrame();
+		getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
+		panelAppearance.drawPanel();
 
-			this.getSurface().interlace = false;
-			this.getSurface().blackScreen(true);
-			this.getSurface().captureRenderer2DUiBaseFrame();
-			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
-			this.panelAppearance.drawPanel();
-			short var2 = 140;
-			int var5 = var2 + 116;
-
-			var5 /= factor;
-
-			byte var3 = 50;
-			int y = var3 - 25;
-
-			// pants
-			this.getSurface().spriteClip3(var5 - 87, this.getPlayerClothingColors()[this.characterBottomColour],
-				spriteSelect(EntityHandler.getAnimationDef(this.character2Colour), 0), y, 102, (byte) 105, 64);
-
-			// body
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(appearanceBodyGender), 0), var5 - 32 - 55, y, 64,
-				102, this.getPlayerClothingColors()[this.characterTopColour], this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0, 1);
-
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(appearanceHeadType), 0),
-				var5 - 32 - 55, y, 64, 102, this.getPlayerHairColors()[this.appearanceHairColour],
-				this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0, var1 + 13760);
-
-			this.getSurface().spriteClip3(var5 - 32, this.getPlayerClothingColors()[this.characterBottomColour],
-				spriteSelect(EntityHandler.getAnimationDef(character2Colour), 6), y, 102, (byte) 105, 64);
-
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(this.appearanceBodyGender), 6), var5 - 32, y,
-				64, 102, this.getPlayerClothingColors()[this.characterTopColour], this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0,
-				1);
-
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(this.appearanceHeadType), 6),
-				var5 - 32, y, 64, 102, this.getPlayerHairColors()[this.appearanceHairColour], this.getPlayerSkinColors()[this.appearanceSkinColour],
-				0, false, 0, 1);
-
-			this.getSurface().spriteClip3(var5 + 55 - 32, this.getPlayerClothingColors()[this.characterBottomColour],
-				spriteSelect(EntityHandler.getAnimationDef(this.character2Colour), 12), y, 102, (byte) 110, 64);
-
-			this.getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(this.appearanceBodyGender), 12),
-				55 + (var5 - 32), y, 64, 102, this.getPlayerClothingColors()[this.characterTopColour],
-				this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0, var1 + 13760);
-
-			this.getSurface().drawSpriteClipping(
-				spriteSelect(EntityHandler.getAnimationDef(this.appearanceHeadType), 12), var5 + 55 - 32, y, 64, 102,
-				this.getPlayerHairColors()[this.appearanceHairColour], this.getPlayerSkinColors()[this.appearanceSkinColour], 0, false, 0, 1);
-			this.getSurface().drawSprite(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, this.getGameHeight());
-			// this.getSurface().draw(this.graphics, this.screenOffsetX, 256,
-			// this.screenOffsetY);
-			clientPort.draw();
-			if (var1 != -13759) {
-				this.drawCharacterOverlay();
-			}
-
-		} catch (RuntimeException var4) {
-			throw GenUtil.makeThrowable(var4, "client.GD(" + var1 + ',' + type + ')');
+		int center = appearanceCharacterCenter();
+		int y = appearanceY(25);
+		int width = 64 * appearancePanelScale;
+		int height = 102 * appearancePanelScale;
+		int skin = getPlayerSkinColors()[appearanceSkinColour];
+		for (int view = 0; view < 3; view++) {
+			int frame = view * 6;
+			int x = appearanceX(center + (view - 1) * 55 - 32);
+			getSurface().spriteClip3(x, getPlayerClothingColors()[characterBottomColour],
+				spriteSelect(EntityHandler.getAnimationDef(character2Colour), frame), y, height, (byte) 105, width);
+			getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(appearanceBodyGender), frame),
+				x, y, width, height, getPlayerClothingColors()[characterTopColour], skin, 0, false, 0, 1);
+			getSurface().drawSpriteClipping(spriteSelect(EntityHandler.getAnimationDef(appearanceHeadType), frame),
+				x, y, width, height, getPlayerHairColors()[appearanceHairColour], skin, 0, false, 0, 1);
 		}
+		getSurface().drawSprite(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, getGameHeight());
+		clientPort.draw();
 	}
 
 	public Sprite spriteSelect(ItemDef item) {
@@ -7362,10 +7464,64 @@ public final class mudclient implements Runnable {
 		return spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.EQUIPSLOT_HELM.id() + clientSlot));
 	}
 
+
+	private int addCharacterSpeech(String message, int x, int baseline) {
+		ensureCharacterDialogCapacity(characterDialogCount + 1);
+		int index = characterDialogCount++;
+		int font = hudLabelFont();
+		int width = getSurface().stringWidth(font, message);
+		int lineHeight = getSurface().fontHeight(font);
+		int wrapWidth = chatLayout == null ? 300 : Math.min(getGameWidth() / 2, hudPixels(240));
+		String[] rows = null;
+		int extraHeight = width / wrapWidth * lineHeight;
+		if (chatLayout != null) {
+			extraHeight = 0;
+			if (width > wrapWidth) {
+				rows = ClericTextLayout.wrap(message, wrapWidth, line -> getSurface().stringWidth(font, line)).toArray(new String[0]);
+				extraHeight = Math.max(0, rows.length - 1) * lineHeight;
+				baseline -= extraHeight;
+			}
+		}
+		characterDialogHalfWidth[index] = Math.min(width, wrapWidth) / 2;
+		characterDialogHeight[index] = extraHeight;
+		characterDialogX[index] = x;
+		characterDialogY[index] = baseline;
+		characterDialogString[index] = message;
+		characterDialogRows[index] = rows;
+		return baseline - lineHeight;
+	}
+
+	private int drawPlayerNametag(ORSCharacter player, int center, int headY) {
+		if (!S_SHOW_FLOATING_NAMETAGS || !C_NAME_CLAN_TAG_OVERLAY || (!C_CUSTOM_UI && showUiTab != 0)) return headY;
+		MudClientGraphics surface = getSurface();
+		int font = chatLayout == null ? 0 : hudLabelFont();
+		int line = surface.fontHeight(font);
+		int clanY = headY - hudPixels(5);
+		int nameY = chatLayout == null ? headY - 14 : clanY - line;
+		int top = headY;
+		Renderer2DFrame.Phase previousPhase = surface.getRenderer2DPhase();
+		surface.setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		try {
+			if (player.displayName != null) {
+				String name = player.getStaffName();
+				surface.drawShadowText(name, center - surface.stringWidth(font, name) / 2, nameY, 0xFFFF00, font, false);
+				top = nameY - line;
+			}
+			if (player.clanTag != null) {
+				surface.drawColoredStringCentered(center, "< " + player.clanTag + " >", 0x7CADDA, 0, font, clanY);
+				top = Math.min(top, clanY - line);
+			}
+		} finally {
+			surface.setRenderer2DPhase(previousPhase);
+		}
+		return chatLayout == null ? headY : top;
+	}
+
 	private void drawCharacterOverlay() {
 		try {
+			int font = hudLabelFont();
+			int minLineHeight = getSurface().fontHeight(font);
 			for (int i = 0; this.characterDialogCount > i; ++i) {
-				int minLineHeight = this.getSurface().fontHeight(1);
 				int x = this.characterDialogX[i];
 				int y = this.characterDialogY[i];
 				int halfWidth = this.characterDialogHalfWidth[i];
@@ -7387,8 +7543,19 @@ public final class mudclient implements Runnable {
 				}
 
 				this.characterDialogY[i] = y;
-				this.getSurface().drawWrappedCenteredString(this.characterDialogString[i], x, y, 300, 1, 0xFFFF00,
-					false);
+				if (chatLayout == null) {
+					getSurface().drawWrappedCenteredString(characterDialogString[i], x, y, 300, font, 0xFFFF00, false);
+				} else {
+					String[] rows = characterDialogRows[i];
+					if (rows == null) {
+						getSurface().drawColoredStringCentered(x, characterDialogString[i], 0xFFFF00, 0, font, y);
+					} else {
+						for (String row : rows) {
+							getSurface().drawColoredStringCentered(x, row, 0xFFFF00, 0, font, y);
+							y += minLineHeight;
+						}
+					}
+				}
 			}
 
 
@@ -7416,12 +7583,14 @@ public final class mudclient implements Runnable {
 				}
 			}
 
-			for (int i = 0; i < this.characterHealthCount; ++i) {
-				int x = this.characterHealthX[i];
-				int y = this.characterHealthY[i];
-				int percent = this.characterHealthBar[i];
-				this.getSurface().drawBoxAlpha(x - 15, y - 3, percent, 5, 0x00FF00, 192);
-				this.getSurface().drawBoxAlpha(percent - 15 + x, y - 3, 30 - percent, 5, 0xFF0000, 192);
+			int barWidth = hudPixels(30);
+			int barHeight = hudPixels(5);
+			for (int i = 0; i < characterHealthCount; ++i) {
+				int left = characterHealthX[i] - barWidth / 2;
+				int top = characterHealthY[i] - hudPixels(3);
+				int fill = Math.max(0, Math.min(barWidth, characterHealthBar[i] * barWidth / 30));
+				getSurface().drawBoxAlpha(left, top, fill, barHeight, 0x00FF00, 192);
+				getSurface().drawBoxAlpha(left + fill, top, barWidth - fill, barHeight, 0xFF0000, 192);
 			}
 
 			floatingHitSplatRenderer.draw(this.getSurface());
@@ -7454,6 +7623,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawChatMessageTabs(int var1) {
+		if (chatLayout != null) {
+			drawScaledChatTabs(var1 == 5);
+			return;
+		}
 		try {
 			this.getSurface().drawSpriteClipping(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, getGameHeight(), getGameWidth(), 10, 0, 0, 0, false, 0, 1);
 			if (S_WANT_CLANS) {
@@ -7523,7 +7696,172 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void drawDialogCombatStyle() {
+	private void drawScaledChatTabs(boolean drawLabels) {
+		MudClientGraphics surface = getSurface();
+		for (int tab = 0; tab < ChatPanelLayout.TAB_COUNT; tab++) {
+			int left = chatLayout.tabBoundary(tab);
+			int width = chatLayout.tabBoundary(tab + 1) - left;
+			boolean selected = messageTabSelected == MessageTab.lookup(tab) && (tab != 4 || S_WANT_CLANS);
+			surface.drawVerticalGradient(left, chatLayout.tabsTop(), width, chatLayout.tabsHeight,
+				selected ? InterfacePalette.CONTROL_SELECTED : InterfacePalette.HEADER_LIGHT,
+				selected ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_LOW);
+			surface.drawBoxBorder(left, width, chatLayout.tabsTop(), chatLayout.tabsHeight, InterfacePalette.SEAM);
+			surface.drawLineHoriz(left + 1, chatLayout.tabsTop() + 1, width - 2, selected ? 0xD2B873 : InterfacePalette.BORDER);
+			if (drawLabels) {
+				int color = selected ? 0xFFDC82 : 0xFFFFFF;
+				if (chatLayoutTabActivity(tab) % 30 > 15) {
+					color = 0xFF8580;
+				}
+				String label = tab == 4 && !S_WANT_CLANS ? reportEntryLabel() : CHAT_TAB_LABELS[tab];
+				surface.drawColoredStringCentered(left + width / 2, label, color, 0,
+					chatLayout.labelFont, chatLayout.tabsTop() + chatLayout.labelBaseline);
+			}
+		}
+	}
+
+	private static final String[] CHAT_TAB_LABELS = {"All", "Local", "Game", "Private", "Clan"};
+
+	private void handleScaledChatTabSelection() {
+		if (hasContextMenuInput()) return;
+		int tabIndex = chatLayout.tabAt(mouseX, mouseY);
+		if (tabIndex < 0) {
+			return;
+		}
+		if (lastMouseButtonDown == 1) {
+			MessageTab tab = MessageTab.lookup(tabIndex);
+			if (tab == MessageTab.CLAN && !S_WANT_CLANS) {
+				openReportPlayer("");
+			} else {
+				messageTabSelected = tab;
+				int control = chatHistoryControl(tab);
+				if (control >= 0) {
+					panelMessageTabs.controlScrollAmount[control] = 999999;
+				}
+			}
+		}
+		currentMouseButtonDown = 0;
+		lastMouseButtonDown = 0;
+	}
+
+	private int chatHistoryControl(MessageTab tab) {
+		switch (tab) {
+			case CHAT: return panelMessageChat;
+			case QUEST: return panelMessageQuest;
+			case PRIVATE: return panelMessagePrivate;
+			case CLAN: return panelMessageClan;
+			default: return -1;
+		}
+	}
+
+	private int chatLayoutTabActivity(int tab) {
+		switch (tab) {
+			case 0: return messageTabActivity_Game;
+			case 1: return messageTabActivity_Chat;
+			case 2: return messageTabActivity_Quest;
+			case 3: return messageTabActivity_Private;
+			case 4: return S_WANT_CLANS ? messageTabActivity_Clan : 0;
+			default: return 0;
+		}
+	}
+
+	private void drawScaledChatBackdrop() {
+		boolean historyOpen = isScaledChatHistoryVisible();
+		int top = historyOpen ? chatLayout.historyTop() : chatLayout.entryTop();
+		int height = chatLayout.tabsTop() - top;
+		getSurface().drawBoxAlpha(chatLayout.left, top, chatLayout.width, height, InterfacePalette.PANEL, 205);
+		getSurface().drawBoxBorder(chatLayout.left, chatLayout.width, top, height, InterfacePalette.BORDER);
+		if (historyOpen) {
+			getSurface().drawLineHoriz(chatLayout.left + 1, chatLayout.entryTop(), chatLayout.width - 2, InterfacePalette.BORDER);
+		}
+	}
+
+	private boolean isScaledChatHistoryVisible() {
+		if (messageTabSelected != MessageTab.ALL) {
+			return true;
+		}
+		for (int row = 0; row < messagesArray.length; row++) {
+			if (MessageHistory.messageHistoryTimeout[row] > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private int recentChatBaseline(int row) {
+		if (chatLayout != null) {
+			return chatLayout.recentBaseline(row);
+		}
+		int bottom = getGameHeight();
+		if (isAndroid() && osConfig.F_SHOWING_KEYBOARD) {
+			bottom = (int) (bottom / 2.5) + 8;
+		}
+		return bottom - row * 12 - 18;
+	}
+
+	private boolean isOverRecentChatRow(int row, String message) {
+		if (chatLayout == null) {
+			int baseline = getGameHeight() - row * 12 - 18;
+			return mouseX > 7 && mouseX < getSurface().stringWidth(1, message) + 7
+				&& mouseY > baseline - 12 && mouseY < baseline;
+		}
+		int baseline = recentChatBaseline(row);
+		int textLeft = chatLayout.left + chatLayout.textInset;
+		return chatLayout.containsHistory(mouseX, mouseY) && mouseX >= textLeft
+			&& mouseX < textLeft + getSurface().stringWidth(chatLayout.bodyFont, message)
+			&& mouseY >= baseline - chatLayout.lineHeight && mouseY <= baseline;
+	}
+
+	private void drawRecentChat() {
+		if (chatLayout != null) {
+			getSurface().setClip(chatLayout.left + 1, chatLayout.left + chatLayout.width - 1, chatLayout.entryTop(), chatLayout.historyTop() + 1);
+		}
+		try {
+			int font = chatLayout == null ? 1 : chatLayout.bodyFont;
+			int x = chatLayout == null ? 7 : chatLayout.left + chatLayout.textInset;
+			for (int row = 0; row < messagesArray.length; row++) {
+				if (MessageHistory.messageHistoryTimeout[row] > 0) {
+					String message = MessageHistory.messageHistoryColor[row]
+						+ StringUtil.formatMessage(MessageHistory.messageHistoryMessage[row],
+							MessageHistory.messageHistorySender[row], MessageHistory.messageHistoryType[row],
+							MessageHistory.messageHistoryColor[row]);
+					getSurface().drawColoredString(x, recentChatBaseline(row), message, font, 0xFFFF00,
+						MessageHistory.messageHistoryCrownID[row]);
+				}
+			}
+		} finally {
+			if (chatLayout != null) {
+				getSurface().clearClip();
+			}
+		}
+	}
+
+	private void drawChatControls() {
+		MiscFunctions.textListEntryHeightMod = chatLayout == null ? 2 : 0;
+		if (chatLayout != null) {
+			getSurface().setClip(chatLayout.left + 1, chatLayout.left + chatLayout.width - 1, chatLayout.tabsTop(), chatLayout.historyTop() + 1);
+		}
+		try {
+			panelMessageTabs.drawPanel();
+		} finally {
+			MiscFunctions.textListEntryHeightMod = 0;
+			if (chatLayout != null) {
+				getSurface().clearClip();
+			}
+		}
+	}
+
+	private void drawDialogCombatStyle(boolean acceptScaledInput) {
+		if (chatLayout != null) {
+			boolean hits = shouldDrawHitsXpFocusMenu();
+			int selected = GameplayHud.drawFocus(this, COMBAT_XP_ALLOCATION_X, xpFocusTop(),
+				hits ? getHitsXpFocusLabels() : getGatheringFocusLabels(), hits ? hitsXpFocus : combatStyle,
+				acceptScaledInput && !hasContextMenuInput() && inputX_Action == InputXAction.ACT_0);
+			if (selected >= 0) {
+				mouseButtonClick = 0;
+				selectXpFocus(hits, selected);
+			}
+			return;
+		}
 		try {
 
 			int sx = COMBAT_XP_ALLOCATION_X;
@@ -7534,23 +7872,13 @@ public final class mudclient implements Runnable {
 			} else {
 				width = 175;
 			}
-			if (this.mouseButtonClick != 0) {
+			if (this.mouseButtonClick != 0 && !hasContextMenuInput()) {
 				for (int row = 1; row < 5; ++row) {
 					if (row > 0 && sx < this.mouseX && this.mouseX < width + sx && this.mouseY > row * 20 + sy
 						&& row * 20 + sy + 20 > this.mouseY) {
 						this.mouseButtonClick = 0;
 						boolean hitsXpFocusMenu = shouldDrawHitsXpFocusMenu();
-						int selectedStyle = row - 1;
-						if (hitsXpFocusMenu) {
-							this.hitsXpFocus = selectedStyle;
-						} else {
-							this.combatStyle = selectedStyle;
-							this.proposedStyle = this.combatStyle;
-						}
-						this.packetHandler.getClientStream().newPacket(29);
-						this.packetHandler.getClientStream().bufferBits.putByte(hitsXpFocusMenu ? selectedStyle + 4 : selectedStyle);
-						this.packetHandler.getClientStream().finishPacket();
-						this.extendGatheringFocusMenuLinger();
+						selectXpFocus(hitsXpFocusMenu, row - 1);
 						break;
 					}
 				}
@@ -7579,6 +7907,19 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "client.TB(" + "dummy" + ')');
 		}
+	}
+
+	private void selectXpFocus(boolean hitsXpFocusMenu, int selectedStyle) {
+		if (hitsXpFocusMenu) {
+			hitsXpFocus = selectedStyle;
+		} else {
+			combatStyle = selectedStyle;
+			proposedStyle = selectedStyle;
+		}
+		packetHandler.getClientStream().newPacket(29);
+		packetHandler.getClientStream().bufferBits.putByte(hitsXpFocusMenu ? selectedStyle + 4 : selectedStyle);
+		packetHandler.getClientStream().finishPacket();
+		extendGatheringFocusMenuLinger();
 	}
 
 	private void drawDialogDuel() {
@@ -7741,6 +8082,7 @@ public final class mudclient implements Runnable {
 
 					if (this.mouseButtonClick == 2) {
 						if (mouseX_Local > 216 && mouseY_Local > 30 && mouseX_Local < 462 && mouseY_Local < 235) {
+							contextMenuLayout = null;
 							int w = this.menuCommon.getWidth();
 							int h = this.menuCommon.getHeight();
 							this.menuX = this.mouseX - w / 2;
@@ -8253,6 +8595,11 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawDialogLogout() {
+		if (usesSessionNotices()) {
+			logoutNotice.draw(this, chatLayout.entryTop());
+			mouseButtonClick = 0;
+			return;
+		}
 		try {
 
 			this.getSurface().drawBox((getGameWidth() - 260) / 2, (getGameHeight() - 60) / 2, 260, 60, 0);
@@ -8364,7 +8711,118 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private boolean usesDialogueChoicesPanel() {
+		return chatLayout != null && optionsMenuCount > 0;
+	}
+
+	boolean hasDialogueChoiceInput() {
+		return optionsMenuShow && usesDialogueChoicesPanel();
+	}
+
+	private DialogueChoicesPanel dialoguePanel() {
+		if (chatLayout == null || (!hasDialogueChoiceInput() && dialogueLine == null)) return null;
+		if (dialogueChoicesPanel == null) {
+			GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+			GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+			MudClientGraphics surface = getSurface();
+			boolean hasChoices = hasDialogueChoiceInput();
+			boolean showLine = dialogueLine != null && (!hasChoices || dialogueMenuId == dialogueId);
+			String speaker = null;
+			if (showLine) {
+				speaker = dialoguePlayerSpeaking
+					? (localPlayer != null && localPlayer.displayName != null ? localPlayer.displayName : "You")
+					: (dialogueNpc != null ? dialogueNpc.getName() : "NPC");
+			}
+			dialogueChoicesPanel = new DialogueChoicesPanel(getGameWidth(), chatLayout.historyTop() - size.pixels(8),
+				size, text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+				S_WANT_KEYBOARD_SHORTCUTS > 1, optionsMenuText, hasChoices ? optionsMenuCount : 0,
+				value -> surface.stringWidth(text.bodyFont, value), speaker, showLine ? dialogueLine : null);
+		}
+		return dialogueChoicesPanel;
+	}
+
+	private void handleDialogueChoicesInput() {
+		DialogueChoicesPanel panel = dialoguePanel();
+		panel.scrollRows(dialogueScroll.getAndSet(0));
+		if (mouseButtonClick != 0) {
+			int choice = panel.activate(mouseX, mouseY);
+			if (choice >= DialogueChoicesPanel.CANCEL) {
+				submitDialogueChoice(choice);
+			}
+			mouseButtonClick = 0;
+		}
+	}
+
+	private synchronized void submitDialogueChoice(int choice) {
+		if (!optionsMenuShow) {
+			return;
+		}
+		packetHandler.getClientStream().newPacket(116);
+		packetHandler.getClientStream().bufferBits.putByte(choice);
+		packetHandler.getClientStream().finishPacket();
+		if (choice == DialogueChoicesPanel.CANCEL && dialogueId != 0 && dialogueMenuId == dialogueId) {
+			clearDialogueLine();
+		}
+		setOptionsMenuShow(false);
+		mouseButtonClick = 0;
+	}
+
+	void showQuestReward(String quest, java.util.List<String> rewards) {
+		QuestRewardWindow window = new QuestRewardWindow(quest, rewards);
+		if (questRewardWindow == null) questRewardWindow = window;
+		else pendingQuestRewards.addLast(window);
+	}
+
+	public boolean hasQuestRewardInput() {
+		return questRewardWindow != null && chatLayout != null && !optionsMenuShow
+			&& inputX_Action == InputXAction.ACT_0 && !showDialogMessage && !showDialogServerMessage && showUiWildWarn != 1;
+	}
+
+	private void drawQuestRewardWindow() {
+		QuestRewardWindow window = questRewardWindow;
+		if (window == null) return;
+		if (questRewardDismiss || window.draw(this, chatLayout.entryTop(), questRewardWheel.getAndSet(0))) {
+			questRewardDismiss = false;
+			questRewardWheel.set(0);
+			questRewardWindow = pendingQuestRewards.pollFirst();
+		}
+		mouseButtonClick = 0;
+	}
+
 	private void drawDialogServerMessage(byte var1) {
+		if (usesSessionNotices()) {
+			if (serverNotice == null) {
+				String title = "Server notice";
+				String body = serverMessage;
+				int headerEnd = serverMessage.indexOf('%');
+				if (headerEnd > 0) {
+					String header = serverMessage.substring(0, headerEnd);
+					switch (header) {
+						case "Auction House":
+						case "Auction collections":
+						case "Fishing Trawler":
+						case "Gnome Ball":
+						case "Combat Odyssey":
+						case "Gnome Restaurant":
+						case "Gnome Bar":
+						case "Dwarf Rescue":
+						case "A Lumbridge Carol":
+							title = header;
+							body = serverMessage.substring(headerEnd + 1);
+							break;
+						default:
+							break;
+					}
+				}
+				serverNotice = new SessionNoticeWindow(title, body, "Close", null,
+					serverMessageBoxTop ? 680 : 500, !serverMessageBoxTop);
+			}
+			if (serverNotice.draw(this, chatLayout.entryTop()) == SessionNoticeWindow.Action.DISMISS) {
+				setShowDialogServerMessage(false);
+			}
+			mouseButtonClick = 0;
+			return;
+		}
 		try {
 
 			short var2 = 400;
@@ -8412,6 +8870,11 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawDialogShop() {
+		if (usesCraftingInterfacePreview() && shopPreview != null) {
+			shopPreview.render();
+			if (shopPreviewInputAvailable()) mouseButtonClick = 0;
+			return;
+		}
 		try {
 
 			if (this.mouseButtonClick != 0 && this.inputX_Action == InputXAction.ACT_0) {
@@ -8723,7 +9186,316 @@ public final class mudclient implements Runnable {
 		return false;
 	}
 
+	private boolean usesTradePreview() {
+		return chatLayout != null && (showDialogTrade || showDialogTradeConfirm);
+	}
+
+	private TradeWindowLayout tradeWindowLayout(boolean review) {
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		return new TradeWindowLayout(getGameWidth(), chatLayout.entryTop(), inventoryCapacity, review,
+			Math.max(tradeConfirmItemsCount, tradeRecipientConfirmItemsCount), GameInterfaceSettings.size(), text, getSurface().fontHeight(text.labelFont), getSurface().fontHeight(text.bodyFont));
+	}
+
+	private void drawTradePreview() {
+		TradeWindowLayout layout = tradeWindowLayout(false);
+		int offered = layout.give.slotAt(mouseX, mouseY);
+		int carried = layout.inventory.slotAt(mouseX, mouseY);
+		int received = layout.receive.slotAt(mouseX, mouseY);
+		handleTradePreviewInput(layout, offered, carried);
+		if (!showDialogTrade) return;
+
+		drawTradeFrame(layout, tradeRecipientName.isEmpty() ? "Trade" : "Trade with " + tradeRecipientName);
+		drawTradeGrid(layout, layout.give, trade, tradeItemCount, offered, "Your offer");
+		drawTradeGrid(layout, layout.receive, tradeRecipient, tradeRecipientItemsCount, received, "Their offer");
+		drawTradeGrid(layout, layout.inventory, inventory, inventoryItemCount, carried, "Inventory");
+		String status = tradeAccepted ? "Waiting for the other player" : tradeRecipientAccepted ? "The other player has accepted" : "";
+		drawTradeText(status, layout.firstColumn, layout.statusY, layout.window.width - 2 * layout.padding,
+			layout.labelFont, 0xFFDC82);
+		Item hovered = carried >= 0 && carried < inventoryItemCount ? inventory[carried]
+			: offered >= 0 && offered < tradeItemCount ? trade[offered]
+			: received >= 0 && received < tradeRecipientItemsCount ? tradeRecipient[received] : null;
+		if (hovered != null && hovered.getItemDef() != null) {
+			drawTradeText(tradeItemName(hovered) + "  " + hovered.getItemDef().getDescription(), layout.firstColumn,
+				layout.detailY, layout.window.width - 2 * layout.padding, layout.labelFont, InterfacePalette.TEXT);
+		}
+		drawTradeButton(layout.accept, tradeAccepted ? "Accepted" : "Accept", layout.bodyFont, !tradeAccepted);
+		drawTradeButton(layout.decline, "Decline", layout.bodyFont, true);
+		if (tradePreviewMenu != null) renderScaledContextMenu(tradePreviewMenu, tradePreviewFirstRow);
+	}
+
+	private void handleTradePreviewInput(TradeWindowLayout layout, int offered, int carried) {
+		if (inputX_Action != InputXAction.ACT_0) {
+			mouseButtonItemCountIncrement = 0;
+			return;
+		}
+		ContextMenuLayout menu = tradePreviewMenu;
+		if (menu != null) {
+			tradePreviewFirstRow = menu.clampScroll(tradePreviewFirstRow + tradePreviewWheel.getAndSet(0));
+			if (menu.viewportWidth != getGameWidth() || menu.viewportHeight != getGameHeight()) {
+				tradePreviewMenu = null;
+			} else if (mouseButtonClick == 1 && menu.overScrollbar(mouseX, mouseY)) {
+				tradePreviewFirstRow = menu.scrollFor(mouseY);
+			} else if (mouseButtonClick != 0) {
+				int row = menu.itemAt(mouseX, mouseY, tradePreviewFirstRow);
+				tradePreviewMenu = null;
+				if (mouseButtonClick == 1 && row >= 0) selectTradePreviewQuantity(row);
+			} else if (!menu.keepsOpenAt(mouseX, mouseY)) {
+				tradePreviewMenu = null;
+			}
+			mouseButtonClick = 0;
+			mouseButtonItemCountIncrement = 0;
+			return;
+		}
+
+		boolean inInventory = carried >= 0 && carried < inventoryItemCount;
+		boolean inOffer = offered >= 0 && offered < tradeItemCount;
+		if (mouseButtonClick != 0 && !layout.window.contains(mouseX, mouseY)) {
+			declineTradePreview();
+		} else if (mouseButtonClick == 2) {
+			if (inInventory || inOffer) openTradePreviewMenu(inInventory ? inventory[carried] : trade[offered], inInventory);
+		} else if (mouseButtonClick == 1 && layout.decline.contains(mouseX, mouseY)) {
+			declineTradePreview();
+		} else if (mouseButtonClick == 1 && !tradeAccepted && layout.accept.contains(mouseX, mouseY)) {
+			tradeAccepted = true;
+			sendTradePreviewPacket(55);
+		} else if (mouseButtonClick == 1 || mouseButtonItemCountIncrement > 0) {
+			mouseButtonItemCountIncrement = Math.max(1, mouseButtonItemCountIncrement);
+			if (inInventory && inventory[carried].getItemDef() != null) tradeOffer(-1, carried);
+			else if (inOffer && trade[offered].getItemDef() != null) tradeRemove(-1, (byte) 124, offered);
+		}
+		mouseButtonClick = 0;
+		mouseButtonItemCountIncrement = 0;
+	}
+
+	private void openTradePreviewMenu(Item item, boolean offer) {
+		if (item.getItemDef() == null) return;
+		String action = offer ? "Offer " : "Remove ";
+		String[] labels = {action + "1", action + "5", action + "10", action + "All", action + "X"};
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		tradePreviewTarget = new TradeQuantityTarget(item.getItemDef().id, item.getNoted(), offer);
+		tradePreviewFirstRow = 0;
+		tradePreviewWheel.set(0);
+		tradePreviewMenu = new ContextMenuLayout(getGameWidth(), getGameHeight(), mouseX, mouseY,
+			GameInterfaceSettings.size(), text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+			tradeItemName(item), labels, label -> surface.stringWidth(text.bodyFont, label),
+			label -> surface.stringWidth(text.labelFont, label));
+	}
+
+	private void selectTradePreviewQuantity(int row) {
+		if (row == 4) {
+			TradeQuantityTarget target = tradePreviewTarget;
+			showItemModX(target.offer ? InputXPrompt.tradeOfferX : InputXPrompt.tradeRemoveX,
+				target.offer ? InputXAction.TRADE_OFFER : InputXAction.TRADE_REMOVE, true);
+		} else {
+			int[] quantities = {1, 5, 10, Integer.MAX_VALUE};
+			applyTradePreviewQuantity(quantities[row]);
+		}
+	}
+
+	private void applyTradePreviewQuantity(int quantity) {
+		TradeQuantityTarget target = tradePreviewTarget;
+		tradePreviewTarget = null;
+		if (target == null || !showDialogTrade || quantity <= 0) return;
+		Item[] items = target.offer ? inventory : trade;
+		int count = target.offer ? inventoryItemCount : tradeItemCount;
+		for (int slot = 0; slot < count; slot++) {
+			Item item = items[slot];
+			if (item.getItemDef() == null || item.getItemDef().id != target.id || item.getNoted() != target.noted) continue;
+			if (target.offer) tradeOffer(quantity, slot);
+			else tradeRemove(quantity, (byte) 124, slot);
+			return;
+		}
+	}
+
+	private boolean isTradePreviewQuantityPrompt() {
+		return tradePreviewTarget != null && (inputX_Action == InputXAction.TRADE_OFFER || inputX_Action == InputXAction.TRADE_REMOVE);
+	}
+
+	private void drawTradePreviewQuantityPrompt() {
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		MudClientGraphics surface = getSurface();
+		if (!inputTextCurrent.isEmpty()) inputTextCurrent = inputTextCurrent.replaceAll("[^0-9]", "");
+		int padding = size.pixels(14);
+		int row = Math.max(size.pixels(38), surface.fontHeight(text.bodyFont) + 8);
+		int width = Math.min(getGameWidth() - 2 * padding, size.pixels(330));
+		int height = 4 * padding + 3 * row;
+		Rectangle box = new Rectangle((getGameWidth() - width) / 2, (getCraftingPanelBottom() - height) / 2, width, height);
+		int buttonY = box.y + height - padding - row;
+		int buttonWidth = (width - 3 * padding) / 2;
+		Rectangle accept = new Rectangle(box.x + padding, buttonY, buttonWidth, row);
+		Rectangle cancel = new Rectangle(box.x + 2 * padding + buttonWidth, buttonY, buttonWidth, row);
+		boolean submit = !inputTextFinal.isEmpty() || (mouseButtonClick == 1 && accept.contains(mouseX, mouseY));
+		boolean dismiss = mouseButtonClick == 1 && (cancel.contains(mouseX, mouseY) || !box.contains(mouseX, mouseY));
+		mouseButtonClick = 0;
+		if (submit || dismiss) {
+			if (submit) {
+				String digits = inputTextFinal.isEmpty() ? inputTextCurrent : inputTextFinal;
+				long amount = 0;
+				for (int i = 0; i < digits.length(); i++) {
+					char digit = digits.charAt(i);
+					if (digit >= '0' && digit <= '9') amount = Math.min(Integer.MAX_VALUE, amount * 10 + digit - '0');
+				}
+				applyTradePreviewQuantity((int) amount);
+			} else tradePreviewTarget = null;
+			inputX_Action = InputXAction.ACT_0;
+			inputTextCurrent = inputTextFinal = "";
+			return;
+		}
+		surface.drawBox(box.x, box.y, width, height, InterfacePalette.PANEL);
+		surface.drawBoxBorder(box.x, width, box.y, height, InterfacePalette.SCROLL_THUMB);
+		drawTradeText(tradePreviewTarget.offer ? "Amount to offer" : "Amount to remove", box.x + padding,
+			tradeTextBaseline(box.y + padding, row, text.labelFont), width - 2 * padding, text.labelFont, 0xFFDC82);
+		int inputY = box.y + row + 2 * padding;
+		surface.drawBox(box.x + padding, inputY, width - 2 * padding, row, InterfacePalette.ROW);
+		surface.drawBoxBorder(box.x + padding, width - 2 * padding, inputY, row, InterfacePalette.BORDER);
+		drawTradeText(inputTextCurrent + "*", box.x + padding + 6, tradeTextBaseline(inputY, row, text.bodyFont),
+			width - 2 * padding - 12, text.bodyFont, 0xFFFFFF);
+		drawTradeButton(accept, "OK", text.bodyFont, true);
+		drawTradeButton(cancel, "Cancel", text.bodyFont, true);
+	}
+
+	private void drawTradeReviewPreview() {
+		TradeWindowLayout layout = tradeWindowLayout(true);
+		int maxScroll = Math.max(0, Math.max(tradeConfirmItemsCount, tradeRecipientConfirmItemsCount) - layout.reviewRows);
+		tradeReviewFirstRow = Math.max(0, Math.min(maxScroll, tradeReviewFirstRow + tradePreviewWheel.getAndSet(0)));
+		if (mouseButtonClick == 1) {
+			if (!layout.window.contains(mouseX, mouseY) || layout.decline.contains(mouseX, mouseY)) {
+				declineTradePreview();
+			} else if (!tradeConfirmAccepted && layout.accept.contains(mouseX, mouseY)) {
+				tradeConfirmAccepted = true;
+				sendTradePreviewPacket(104);
+			} else if (maxScroll > 0 && layout.reviewUp.contains(mouseX, mouseY)) {
+				tradeReviewFirstRow = Math.max(0, tradeReviewFirstRow - 1);
+			} else if (maxScroll > 0 && layout.reviewDown.contains(mouseX, mouseY)) {
+				tradeReviewFirstRow = Math.min(maxScroll, tradeReviewFirstRow + 1);
+			}
+		}
+		mouseButtonClick = 0;
+		if (!showDialogTradeConfirm) return;
+
+		drawTradeFrame(layout, "Confirm trade with " + tradeRecipientConfirmName);
+		drawTradeReviewColumn(layout, layout.firstColumn, "You give", tradeConfirm, tradeConfirmItemsCount);
+		drawTradeReviewColumn(layout, layout.secondColumn, "You receive", tradeRecipientConfirm, tradeRecipientConfirmItemsCount);
+		if (maxScroll > 0) {
+			int end = tradeReviewFirstRow + layout.reviewRows;
+			drawTradeText((tradeReviewFirstRow + 1) + "-" + end + " / " + (layout.reviewRows + maxScroll),
+				layout.secondColumn + layout.columnWidth / 2, tradeTextBaseline(layout.reviewUp.y, layout.labelHeight, layout.labelFont),
+				layout.reviewUp.x - layout.secondColumn - layout.columnWidth / 2 - 3, layout.labelFont, InterfacePalette.MUTED_TEXT);
+			drawTradeButton(layout.reviewUp, "^", layout.labelFont, tradeReviewFirstRow > 0);
+			drawTradeButton(layout.reviewDown, "v", layout.labelFont, tradeReviewFirstRow < maxScroll);
+		}
+		drawTradeText(tradeConfirmAccepted ? "Waiting for the other player" : "Check both offers. A completed trade cannot be reversed.",
+			layout.firstColumn, layout.statusY, layout.window.width - 2 * layout.padding, layout.labelFont, 0xFFDC82);
+		drawTradeButton(layout.accept, tradeConfirmAccepted ? "Confirmed" : "Confirm", layout.bodyFont, !tradeConfirmAccepted);
+		drawTradeButton(layout.decline, "Decline", layout.bodyFont, true);
+	}
+
+	private void declineTradePreview() {
+		setShowDialogTrade(false);
+		setShowDialogTradeConfirm(false);
+		sendTradePreviewPacket(230);
+	}
+
+	private void sendTradePreviewPacket(int opcode) {
+		packetHandler.getClientStream().newPacket(opcode);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	private void drawTradeFrame(TradeWindowLayout layout, String title) {
+		Rectangle bounds = layout.window;
+		MudClientGraphics surface = getSurface();
+		surface.drawBoxAlpha(bounds.x, bounds.y, bounds.width, bounds.height, InterfacePalette.PANEL, 246);
+		surface.drawVerticalGradient(bounds.x, bounds.y, bounds.width, layout.headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, InterfacePalette.BORDER);
+		drawTradeText(title, layout.firstColumn, tradeTextBaseline(bounds.y, layout.headerHeight, layout.bodyFont),
+			bounds.width - 2 * layout.padding, layout.bodyFont, 0xFFDC82);
+	}
+
+	private void drawTradeGrid(TradeWindowLayout layout, TradeWindowLayout.Grid grid, Item[] items, int count, int hover, String title) {
+		drawTradeText(title, grid.x, tradeTextBaseline(grid.y - layout.labelHeight, layout.labelHeight, layout.labelFont),
+			grid.columns * grid.cellWidth, layout.labelFont, InterfacePalette.TEXT);
+		MudClientGraphics surface = getSurface();
+		for (int slot = 0; slot < grid.capacity; slot++) {
+			int x = grid.x(slot), y = grid.y(slot);
+			surface.drawBox(x, y, grid.cellWidth - 1, grid.cellHeight - 1, hover == slot ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW);
+			surface.drawBoxBorder(x, grid.cellWidth - 1, y, grid.cellHeight - 1, InterfacePalette.CONTROL_DISABLED);
+			if (slot >= count || items[slot].getItemDef() == null) continue;
+			Item item = items[slot];
+			int iconHeight = grid.cellHeight - 4;
+			int iconWidth = Math.min(grid.cellWidth - 4, 3 * iconHeight / 2);
+			drawInventoryPreviewIcon(item.getItemDef(), item.getNoted(), x + (grid.cellWidth - iconWidth) / 2,
+				y + 2, iconWidth, iconHeight);
+			if (item.getNoted() || item.getItemDef().isStackable()) {
+				drawInventoryPreviewCount(item.getAmount(), x + 3, y + 1, grid.cellWidth - 6, grid.cellHeight, layout.labelFont);
+			}
+		}
+	}
+
+	private void drawTradeReviewColumn(TradeWindowLayout layout, int x, String title, Item[] items, int count) {
+		int headerTop = layout.reviewTop - layout.labelHeight;
+		drawTradeText(title, x, tradeTextBaseline(headerTop, layout.labelHeight, layout.labelFont),
+			layout.columnWidth, layout.labelFont, InterfacePalette.TEXT);
+		if (count == 0) {
+			drawTradeText("Nothing", x, tradeTextBaseline(layout.reviewTop, layout.lineHeight, layout.bodyFont),
+				layout.columnWidth, layout.bodyFont, InterfacePalette.MUTED_TEXT);
+			return;
+		}
+		for (int row = 0; row < layout.reviewRows && tradeReviewFirstRow + row < count; row++) {
+			Item item = items[tradeReviewFirstRow + row];
+			if (item.getItemDef() == null) continue;
+			int y = layout.reviewTop + row * layout.lineHeight;
+			getSurface().drawBox(x, y, layout.columnWidth, layout.lineHeight - 1, InterfacePalette.ROW);
+			String amount = item.getNoted() || item.getItemDef().isStackable()
+				? Integer.toString(item.getAmount()) : "";
+			int amountWidth = getSurface().stringWidth(layout.labelFont, amount);
+			int baseline = tradeTextBaseline(y, layout.lineHeight, layout.labelFont);
+			drawTradeText(tradeItemName(item), x + 5, baseline, layout.columnWidth - amountWidth - 15, layout.labelFont, 0xFFFFFF);
+			getSurface().drawString(amount, x + layout.columnWidth - 5 - amountWidth, baseline, 0xFFDC82, layout.labelFont);
+		}
+	}
+
+	private String tradeItemName(Item item) {
+		return item.getItemDef().getName() + (item.getNoted() ? " (Noted)" : "");
+	}
+
+	private void drawTradeButton(Rectangle bounds, String label, int font, boolean enabled) {
+		MudClientGraphics surface = getSurface();
+		boolean hover = enabled && bounds.contains(mouseX, mouseY);
+		surface.drawBox(bounds.x, bounds.y, bounds.width, bounds.height, hover ? InterfacePalette.CONTROL_HOVER : InterfacePalette.HEADER_DARK);
+		surface.drawBoxBorder(bounds.x, bounds.width, bounds.y, bounds.height, enabled ? InterfacePalette.BORDER : InterfacePalette.CONTROL_DISABLED);
+		surface.drawColoredStringCentered(bounds.x + bounds.width / 2, label,
+			enabled ? 0xFFFFFF : InterfacePalette.MUTED_TEXT, 0, font, tradeTextBaseline(bounds.y, bounds.height, font));
+	}
+
+	private int tradeTextBaseline(int y, int height, int font) {
+		return y + (height + getSurface().fontHeight(font)) / 2 - 3;
+	}
+
+	private void drawTradeText(String text, int x, int y, int width, int font, int color) {
+		MudClientGraphics surface = getSurface();
+		if (width <= 0) return;
+		String label = ContextMenuLayout.fitLabel(text, width, value -> surface.stringWidth(font, value));
+		surface.drawString(label, x, y, color, font);
+	}
+
+	private static final class TradeQuantityTarget {
+		final int id;
+		final boolean noted, offer;
+
+		TradeQuantityTarget(int id, boolean noted, boolean offer) {
+			this.id = id;
+			this.noted = noted;
+			this.offer = offer;
+		}
+	}
+
 	private void drawDialogTrade() {
+		if (usesTradePreview()) {
+			drawTradePreview();
+			return;
+		}
 		try {
 
 			int clickOp = -1;
@@ -8773,6 +9545,7 @@ public final class mudclient implements Runnable {
 
 						if (this.mouseButtonClick == 2) {
 							if (mouseLX > 216 && mouseLY > 30 && mouseLX < 462 && mouseLY < 235) {
+								contextMenuLayout = null;
 								int w = this.menuCommon.getWidth();
 								int h = this.menuCommon.getHeight();
 								this.menuY = this.mouseY - 7;
@@ -9172,7 +9945,73 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private boolean usesSessionNotices() {
+		return chatLayout != null && !isAndroid();
+	}
+
+	public boolean hasSessionNoticeInput() {
+		return usesSessionNotices() && currentViewMode == GameMode.GAME && !isSleeping
+			&& (logoutTimeout > 0 || showDialogMessage || showDialogServerMessage);
+	}
+
+	private SessionNoticeWindow activeSessionNotice() {
+		if (logoutTimeout > 0) return null;
+		return showDialogMessage ? welcomeNotice : serverNotice;
+	}
+
+	public boolean handleSessionNoticeKey(int code) {
+		if (!hasSessionNoticeInput()) return false;
+		SessionNoticeWindow notice = activeSessionNotice();
+		if (notice != null) notice.keyPressed(code);
+		return true;
+	}
+
+	private void drawWelcomeNotice() {
+		boolean hasLastLogin = welcomeLastLoggedInIp != null && !"0.0.0.0".equalsIgnoreCase(welcomeLastLoggedInIp);
+		boolean includeIp = hasLastLogin && settingsHideIP != null && settingsHideIP != 1;
+		if (welcomeNotice == null || welcomeNoticeIncludesIp != includeIp) {
+			String account = localPlayer.accountName == null ? getUsername() : localPlayer.accountName;
+			String title = "Welcome to " + getServerName() + ", " + account;
+			StringBuilder body = new StringBuilder();
+			if (hasLastLogin) {
+				body.append("You last logged in ").append(welcomeDayLabel(welcomeLastLoggedInDays));
+				if (includeIp) body.append(" from ").append(getHostnameFromIP());
+				body.append(".%%");
+			}
+			boolean recovery = welcomeRecoverySetDays > 0;
+			if (recovery) {
+				body.append("@lre@Recovery question change pending@whi@%You requested new recovery questions ")
+					.append(welcomeDayLabel(14 - welcomeRecoverySetDays)).append(". They will activate in ")
+					.append(welcomeRecoverySetDays).append(welcomeRecoverySetDays == 1 ? " day." : " days.")
+					.append("%If you do not remember making this request, cancel it and change your password immediately.");
+			} else {
+				String[] tip = WELCOME_SECURITY_TIPS[welcomeTipOfDay];
+				body.append("Security tip of the day%").append(tip[0]).append(' ').append(tip[1]);
+			}
+			welcomeNoticeIncludesIp = includeIp;
+			welcomeNotice = SessionNoticeWindow.welcome(title, body.toString(), recovery ? "Keep request" : "Continue",
+				recovery ? "Cancel request" : null);
+		}
+		SessionNoticeWindow.Action action = welcomeNotice.draw(this, chatLayout.entryTop());
+		if (action == SessionNoticeWindow.Action.SECONDARY) {
+			packetHandler.getClientStream().newPacket(196);
+			packetHandler.getClientStream().finishPacket();
+		}
+		if (action != SessionNoticeWindow.Action.NONE) setShowDialogMessage(false);
+		mouseButtonClick = 0;
+	}
+
+	private static String welcomeDayLabel(int days) {
+		if (days == 0) return "earlier today";
+		if (days == 1) return "yesterday";
+		return days + " days ago";
+	}
+
 	private void drawDialogWelcome(int var1) {
+		if (usesSessionNotices()) {
+			drawWelcomeNotice();
+			return;
+		}
 		try {
 
 			//int var2 = 65;
@@ -9263,45 +10102,8 @@ public final class mudclient implements Runnable {
 				var3 += 7;
 				this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Security tip of the day", 0xFF0000, 0, 1, var3);
 				var3 += 15;
-				if (this.welcomeTipOfDay == 0) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Don't tell ANYONE your password or recovery questions!", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Not even people claiming to be Jagex staff.", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 1) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Never enter your password or recovery questions into ANY", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "website other than this one - Not even if it looks similar.", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 2) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Don't use RuneScape cheats, helpers, or automaters.", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "These programs WILL steal your password.", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 3) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Watch out for fake emails, and fake staff. Real staff", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "will NEVER ask you for your password or recovery questions!", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 4) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Use a password your friends won't guess. Do NOT use your name!", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Choose a unique password which you haven't used anywhere else", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-				}
-
-				if (this.welcomeTipOfDay == 5) {
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "If possible only play runescape from your own computer", 0xFFFFFF, 0, 1, var3);
-					var3 += 15;
-					this.getSurface().drawColoredStringCentered(welcomeWindowX + 256 - 56, "Other machines could have been tampered with to steal your pass", 0xFFFFFF, 0, 1, var3);
+				for (String line : WELCOME_SECURITY_TIPS[welcomeTipOfDay]) {
+					this.getSurface().drawColoredStringCentered(welcomeWindowX + 200, line, 0xFFFFFF, 0, 1, var3);
 					var3 += 15;
 				}
 
@@ -9353,6 +10155,86 @@ public final class mudclient implements Runnable {
 		return welcomeLastLoggedInIp;
 	}
 
+	void drawWildernessHudSkull(int x, int y, int size) {
+		getSurface().drawSpriteClipping(spriteSelect(GUIPARTS.SKULL.getDef()), x, y, size, size, 0, 0, 0, false, 0, 0);
+	}
+
+	public boolean hasGameplayPromptInput() {
+		if (chatLayout == null || currentViewMode != GameMode.GAME) return false;
+		if (deathScreenTimeout > 0) return true;
+		if (logoutTimeout != 0 || showDialogMessage || showDialogServerMessage || isSleeping
+			|| showAppearanceChange || showSetRecoveryQuestion || showSetContactDetails) return false;
+		if (showUiWildWarn == 1) return true;
+		return (travelConfirmation != null || experienceTrackerWindow != null)
+			&& !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput()
+			&& !hasReportPlayerInput() && !hasPasswordChangeInput()
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& !isShowDialogBank() && !showDialogShop;
+	}
+
+	public boolean handleGameplayPromptKey(int code) {
+		if (!hasGameplayPromptInput()) return false;
+		if (deathScreenTimeout == 0 && (code == java.awt.event.KeyEvent.VK_ESCAPE
+			|| showUiWildWarn == 1 && code == java.awt.event.KeyEvent.VK_ENTER)) dismissGameplayPrompt.set(true);
+		return true;
+	}
+
+	private void drawGameplayPrompt() {
+		boolean dismiss = dismissGameplayPrompt.getAndSet(false);
+		int bottom = chatLayout.entryTop();
+		if (showUiWildWarn == 1) {
+			if (dismiss || wildernessWarning.draw(this, bottom) == SessionNoticeWindow.Action.DISMISS) showUiWildWarn = 2;
+		} else if (travelConfirmation != null) {
+			SessionNoticeWindow.Action result = dismiss ? SessionNoticeWindow.Action.SECONDARY : travelConfirmation.draw(this, bottom);
+			if (result != SessionNoticeWindow.Action.NONE) {
+				InputXAction action = confirmedTravelAction;
+				travelConfirmation = null;
+				confirmedTravelAction = null;
+				if (result == SessionNoticeWindow.Action.DISMISS
+					&& (action == InputXAction.SKIP_TUTORIAL && insideTutorial
+						|| action == InputXAction.EXIT_BLACK_HOLE && insideBlackHole)) sendTravelConfirmation(action);
+			}
+		} else if (experienceTrackerWindow != null) {
+			if (dismiss ? experienceTrackerWindow.dismiss() : experienceTrackerWindow.draw(this, bottom)) {
+				experienceTrackerWindow = null;
+			}
+		}
+		mouseButtonClick = 0;
+	}
+
+	private void openTravelConfirmation(InputXAction action) {
+		boolean skip = action == InputXAction.SKIP_TUTORIAL;
+		String[] prompt = skip ? InputXPrompt.promptSkipTutorial : InputXPrompt.promptExitBlackHole;
+		if (chatLayout == null) {
+			showItemModX(prompt, action, false);
+			return;
+		}
+		closeTopMouseMenu();
+		confirmedTravelAction = action;
+		String title = skip ? "Skip the tutorial" : "Leave the Black Hole";
+		String message = skip ? "Skip the tutorial and travel to Lumbridge?"
+			: "Leave the Black Hole and return to the Dwarven Mines?";
+		travelConfirmation = new SessionNoticeWindow(title, message,
+			skip ? "Skip tutorial" : "Leave", "Cancel", 520, false);
+		mouseButtonClick = 0;
+	}
+
+	private void sendTravelConfirmation(InputXAction action) {
+		packetHandler.getClientStream().newPacket(action == InputXAction.SKIP_TUTORIAL ? 84 : 86);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	private void resetGameplayPrompts() {
+		closeWorldMap();
+		bankPinWindow = null;
+		travelConfirmation = null;
+		confirmedTravelAction = null;
+		experienceTrackerWindow = null;
+		dismissGameplayPrompt.set(false);
+	}
+
 	private void drawDialogWildWarn(int var1) {
 		try {
 
@@ -9392,6 +10274,69 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "client.FA(" + var1 + ')');
 		}
+	}
+
+	private void openPasswordChange() {
+		if (chatLayout == null || isAndroid()) {
+			panelPasswordChange_Mode = PasswordChangeMode.OLD_PASSWORD;
+			inputTextCurrent = "";
+			inputTextFinal = "";
+			if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+			return;
+		}
+		closeTopMouseMenu();
+		panelPasswordChange_Mode = PasswordChangeMode.NONE;
+		passwordChangeWindow = new PasswordChangeWindow(getUsername(), pendingPasswordChange != null);
+		mouseButtonClick = 0;
+	}
+
+	public boolean hasPasswordChangeInput() {
+		return passwordChangeWindow != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput() && !hasReportPlayerInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& !isShowDialogBank() && !showDialogShop
+			&& !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails;
+	}
+
+	public boolean handlePasswordChangeKey(char key, int code, boolean shortcut, boolean shift) {
+		PasswordChangeWindow window = passwordChangeWindow;
+		if (window == null || !hasPasswordChangeInput()) return false;
+		window.keyPressed(key, code, shortcut, shift);
+		return true;
+	}
+
+	private void drawPasswordChangeWindow() {
+		PasswordChangeWindow window = passwordChangeWindow;
+		if (window == null) return;
+		PasswordChangeWindow.Submission result = window.draw(this, chatLayout.entryTop());
+		mouseButtonClick = 0;
+		if (result == PasswordChangeWindow.CLOSE) {
+			passwordChangeWindow = null;
+		} else if (result != null) {
+			pendingPasswordChange = result.newPassword;
+			sendPassChange(result.currentPassword, result.newPassword);
+		}
+	}
+
+	void receivePasswordChangeMessage(String message) {
+		if (pendingPasswordChange == null) return;
+		// Existing servers acknowledge changes through their own game messages.
+		PasswordChangeWindow.Reply reply = PasswordChangeWindow.Reply.fromMessage(message);
+		if (reply == null) return;
+		if (reply == PasswordChangeWindow.Reply.CHANGED) password = pendingPasswordChange;
+		pendingPasswordChange = null;
+		PasswordChangeWindow window = passwordChangeWindow;
+		if (window != null) window.receive(reply);
+	}
+
+	private void resetPasswordChange() {
+		PasswordChangeWindow window = passwordChangeWindow;
+		passwordChangeWindow = null;
+		if (window != null) window.clearFields();
+		pendingPasswordChange = null;
 	}
 
 	private void drawDialogueChangePassword() {
@@ -9520,6 +10465,22 @@ public final class mudclient implements Runnable {
 
 	private void drawGame(int var1) {
 		try {
+			if (worldMapWindow != null && (logoutTimeout != 0 || deathScreenTimeout != 0 || showAppearanceChange
+				|| showSetRecoveryQuestion || showSetContactDetails || isSleeping || chatLayout == null)) {
+				closeWorldMap();
+			}
+			if (settingsTuningDrag.isActive()) {
+				if (getVisibleSideMenuTab() == Config.OPTIONS_TAB && settingTab == SettingsPanelLayout.GRAPHICS) {
+					settingsTuningDrag.move(mouseX);
+					if (getMouseButtonDown() != 1) settingsTuningDrag.finish(rendererSettingsActions);
+				} else {
+					settingsTuningDrag.finish(rendererSettingsActions);
+				}
+			}
+			if (chatLayoutDirty) {
+				dialogueChoicesPanel = null;
+				repositionChat(!authenticSettings && C_CUSTOM_UI);
+			}
 			this.getSurface().beginRenderer2DFrame();
 			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
 
@@ -9530,14 +10491,19 @@ public final class mudclient implements Runnable {
 			if (var1 == 13) {
 				if (this.deathScreenTimeout != 0) {
 					this.getSurface().fade2black(16316665);
-					this.getSurface().drawColoredStringCentered(this.halfGameWidth(), "Oh dear! You are dead...",
-						0xFF0000, 0, 7, this.halfGameHeight());
+					if (chatLayout != null) {
+						deathNotice.draw(this, chatLayout.entryTop());
+						mouseButtonClick = 0;
+					} else {
+						this.getSurface().drawColoredStringCentered(this.halfGameWidth(), "Oh dear! You are dead...",
+							0xFF0000, 0, 7, this.halfGameHeight());
+					}
 					this.drawChatMessageTabs(var1 - 8);
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
 					clientPort.draw();
 				} else if (this.showAppearanceChange) {
-					this.drawAppearancePanelCharacterSprites(-13759, Config.S_CHARACTER_CREATION_MODE);
+					this.drawAppearancePanelCharacterSprites();
 				} else if (this.showSetRecoveryQuestion) {
 					this.method_182();
 				} else if (this.showSetContactDetails) {
@@ -9587,6 +10553,10 @@ public final class mudclient implements Runnable {
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
 					clientPort.draw();
+					} else if (worldMapWindow != null && (layeredSceneActivationPending || !world.playerAlive)) {
+						getSurface().captureRenderer2DUiBaseFrame();
+						drawWorldMap(worldMapWindow);
+						clientPort.draw();
 					} else if (this.layeredSceneActivationPending
 							&& this.shouldRetainLastPresentedFrame()) {
 						clientPort.draw();
@@ -10138,87 +11108,27 @@ public final class mudclient implements Runnable {
 
 					this.drawCharacterOverlay();
 
-					if (this.mouseClickXStep > 0) {
-						switch ((24 - this.mouseClickXStep) / 6) {
-							case 0:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.YELLOWX1.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 1:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.YELLOWX2.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 2:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.YELLOWX3.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 3:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.YELLOWX4.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-						}
-					} else if (this.mouseClickXStep < 0) {
-						switch ((this.mouseClickXStep + 24) / 6) {
-							case 0:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.REDX1.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 1:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.REDX2.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 2:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.REDX3.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-							case 3:
-								this.getSurface().drawSprite(spriteSelect(GUIPARTS.REDX4.getDef()),
-									this.mouseWalkX - 8, this.mouseWalkY - 8);
-								break;
-						}
-						//this.getSurface().drawSprite(spriteSelect(18 + mudclient.spriteMedia + (this.mouseClickXStep + 24) / 6),
-						//	this.mouseWalkX - 8, this.mouseWalkY - 8);
+					drawWorldClickIndicator();
+
+					if (systemUpdate != 0) {
+						int x = chatLayout == null ? 256 : chatLayout.left + chatLayout.width / 2;
+						int y = chatLayout == null ? getGameHeight() - 7 : chatLayout.historyTop() - hudPixels(6);
+						getSurface().drawColoredStringCentered(x,
+							"Automatic server restart in: " + formatMinutesCountdown(systemUpdate / 50), 0xFFFF00, 0, hudLabelFont(), y);
 					}
 
-					if (this.systemUpdate != 0) {
-						centerX = this.systemUpdate / 50;
-						centerZ = centerX / 60;
-						centerX %= 60;
-						if (centerX < 10) {
-							this.getSurface().drawColoredStringCentered(256,
-								"Automatic server restart in: " + centerZ + ":0" + centerX, 0xFFFF00, 0, 1,
-								this.getGameHeight() - 7);
+					if (S_WANT_EXPERIENCE_ELIXIRS && elixirTimer != 0) {
+						String label = "EXP Elixir: " + formatMinutesCountdown(elixirTimer / 50);
+						if (chatLayout == null) {
+							getSurface().drawColoredStringCentered(getGameWidth() - 53, label, 0x9139e7, 0,
+								inWild ? 0 : 1, getGameHeight() - (inWild ? 62 : 7));
 						} else {
-							this.getSurface().drawColoredStringCentered(256,
-								"Automatic server restart in: " + centerZ + ":" + centerX, 0xFFFF00, 0, 1,
-								this.getGameHeight() - 7);
-						}
-					}
-
-					if (S_WANT_EXPERIENCE_ELIXIRS && this.elixirTimer != 0) {
-						centerX = this.elixirTimer / 50;
-						centerZ = centerX / 60;
-						centerX %= 60;
-						if (inWild) {
-							if (centerX < 10) {
-								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 53,
-									"EXP Elixir: " + centerZ + ":0" + centerX, 0x9139e7, 0, 0,
-									this.getGameHeight() - 62);
-							} else {
-								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 53,
-									"EXP Elixir: " + centerZ + ":" + centerX, 0x9139e7, 0, 0,
-									this.getGameHeight() - 62);
-							}
-						} else if (!inWild) {
-							if (centerX < 10) {
-								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 53,
-									"EXP Elixir: " + centerZ + ":0" + centerX, 0x9139e7, 0, 1,
-									this.getGameHeight() - 7);
-							} else {
-								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 53,
-									"EXP Elixir: " + centerZ + ":" + centerX, 0x9139e7, 0, 1,
-									this.getGameHeight() - 7);
-							}
+							int font = hudLabelFont();
+							SideToolbarLayout toolbar = sideToolbarLayout();
+							int bottom = C_CUSTOM_UI && toolbar != null ? toolbar.top : chatLayout.entryTop();
+							int y = Math.min(bottom, chatLayout.entryTop()) - hudPixels(getLocalPlayerWildernessDepth() > 0 ? 39 : 6);
+							int x = getGameWidth() - hudPixels(5) - getSurface().stringWidth(font, label);
+							getSurface().drawString(label, x, y, 0x9139e7, font);
 						}
 					}
 					if (C_KILL_FEED) {
@@ -10256,11 +11166,17 @@ public final class mudclient implements Runnable {
 						if (centerX > 0) {
 							inWild = true;
 							centerZ = centerX / 6 + 1;
-							this.getSurface().drawSprite(spriteSelect(GUIPARTS.SKULL.getDef()), this.getGameWidth() - 59, this.getGameHeight() - 56);
-							this.getSurface().drawColoredStringCentered(this.getGameWidth() - 47, "Wilderness", 0xFFFF00, 0, 1,
-								this.getGameHeight() - 20);
-							this.getSurface().drawColoredStringCentered(this.getGameWidth() - 47, "Level: " + centerZ, 0xFFFF00, 0, 1,
-								this.getGameHeight() - 7);
+							if (chatLayout != null) {
+								SideToolbarLayout toolbar = sideToolbarLayout();
+								int bottom = C_CUSTOM_UI && toolbar != null ? toolbar.top : chatLayout.entryTop();
+								GameplayHud.drawWilderness(this, Math.min(bottom, chatLayout.entryTop()), centerZ);
+							} else {
+								this.getSurface().drawSprite(spriteSelect(GUIPARTS.SKULL.getDef()), this.getGameWidth() - 59, this.getGameHeight() - 56);
+								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 47, "Wilderness", 0xFFFF00, 0, 1,
+									this.getGameHeight() - 20);
+								this.getSurface().drawColoredStringCentered(this.getGameWidth() - 47, "Level: " + centerZ, 0xFFFF00, 0, 1,
+									this.getGameHeight() - 7);
+							}
 							if (this.showUiWildWarn == 0) {
 								this.showUiWildWarn = 2;
 							}
@@ -10275,31 +11191,33 @@ public final class mudclient implements Runnable {
 					int i2 = 75;
 					int index;
 					int var12;
-					this.drawActivePotionEffectsHud();
+					int effectsBottom = drawActivePotionEffectsHud();
 					if (S_SIDE_MENU_TOGGLE && C_SIDE_MENU_OVERLAY) {
 						this.drawPlayerStatusHud();
-						int i = 130;
+						int hudFont = hudLabelFont();
+						int readoutLine = getSurface().fontHeight(hudFont);
+						int i = chatLayout == null ? 130 : Math.max(hudPixels(130), effectsBottom + readoutLine);
 						//this.getSurface().drawString("FPS: @gre@(@whi@" + FPS + "@gre@)", 7, i, 0xffffff, 1);
 						//i += 14;
 						if (C_TOTAL_NPC_KC) {
 							this.getSurface().drawString(
-								"Kills: " + getStatKills2() + "@whi@", 7, i, 0xffffff, 1);
-							i += 14;
+								"Kills: " + getStatKills2() + "@whi@", 7, i, 0xffffff, hudFont);
+							i += readoutLine;
 						}
 						if (C_RECENT_NPC_KC) {
 							if (getLastNpcKilledId() != -1) {
 								this.getSurface().drawString(
-									"Last NPC Kills: " + getStatKills3() + "@whi@", 7, i, 0xffffff, 1);
+									"Last NPC Kills: " + getStatKills3() + "@whi@", 7, i, 0xffffff, hudFont);
 							} else {
 								this.getSurface().drawString(
-									"Last NPC Kills: None@whi@", 7, i, 0xffffff, 1);
+									"Last NPC Kills: None@whi@", 7, i, 0xffffff, hudFont);
 							}
-							i += 14;
+							i += readoutLine;
 						}
 						if (Config.S_WANT_FATIGUE) {
-							i += 14;
+							i += readoutLine;
 							this.getSurface().drawString(
-								"Fatigue: " + this.statFatigue + "%", 7, i, 0xffffff, 1);
+								"Fatigue: " + this.statFatigue + "%", 7, i, 0xffffff, hudFont);
 						}
 						if (Config.DEBUG) {
 							i += 14;
@@ -10455,74 +11373,51 @@ public final class mudclient implements Runnable {
 						}
                         this.getSurface().captureRenderer2DUiBaseFrame();
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
+					if (worldMapWindow == null) {
+						if (chatLayout != null) {
+							drawScaledChatBackdrop();
+						}
 						if (this.messageTabSelected == MessageTab.ALL) {
-							for (centerX = 0; centerX < messagesArray.length; ++centerX) {
-							if (MessageHistory.messageHistoryTimeout[centerX] > 0) {
-								String var17 = MessageHistory.messageHistoryColor[centerX]
-									+ StringUtil.formatMessage(MessageHistory.messageHistoryMessage[centerX],
-									MessageHistory.messageHistorySender[centerX],
-									MessageHistory.messageHistoryType[centerX], MessageHistory.messageHistoryColor[centerX]);
-								double boost = this.getGameHeight();
-								if (isAndroid() && osConfig.F_SHOWING_KEYBOARD)
-									boost = (boost / 2.5) + 8;
-								this.getSurface().drawColoredString(7, (int) boost - centerX * 12 - 18, var17,
-									1, 0xFFFF00, MessageHistory.messageHistoryCrownID[centerX]);
+							drawRecentChat();
+						}
+
+
+						boolean LAST_FRAME_SHOWING_KEYBOARD = osConfig.F_SHOWING_KEYBOARD;
+						this.panelMessageTabs.hide(this.panelMessageChat);
+						this.panelMessageTabs.hide(this.panelMessageQuest);
+						this.panelMessageTabs.hide(this.panelMessagePrivate);
+						this.panelMessageTabs.hide(this.panelMessageClan);
+						if (this.messageTabSelected == MessageTab.CHAT) {
+							this.panelMessageTabs.show(this.panelMessageChat);
+						} else if (this.messageTabSelected == MessageTab.QUEST) {
+							this.panelMessageTabs.show(this.panelMessageQuest);
+						} else if (this.messageTabSelected == MessageTab.PRIVATE) {
+							this.panelMessageTabs.show(this.panelMessagePrivate);
+						} else if (this.messageTabSelected == MessageTab.CLAN) {
+							this.panelMessageTabs.show(this.panelMessageClan);
+						}
+
+						drawChatControls();
+
+						SideToolbarLayout toolbar = sideToolbarLayout();
+						if (toolbar != null) {
+							drawSideToolbar(toolbar);
+						} else {
+							if (C_CUSTOM_UI) {
+								drawLegacySideToolbarSelection();
 							}
+							getSurface().a(spriteSelect(GUIPARTS.MENUBAR.getDef()), 0, getSurface().width2 - 200, 128, getUITabsY());
 						}
+						this.drawUi(0);
+						this.getSurface().loggedIn = false;
+						this.drawChatMessageTabs(var1 - 8);
+						ContextMenuLayout menu = contextMenuLayout;
+						if (menu != null && topMouseMenuVisible) renderScaledContextMenu(menu);
 					}
-
-
-					boolean LAST_FRAME_SHOWING_KEYBOARD = osConfig.F_SHOWING_KEYBOARD;
-					this.panelMessageTabs.hide(this.panelMessageChat);
-					this.panelMessageTabs.hide(this.panelMessageQuest);
-					this.panelMessageTabs.hide(this.panelMessagePrivate);
-					this.panelMessageTabs.hide(this.panelMessageClan);
-					if (this.messageTabSelected == MessageTab.CHAT) {
-						this.panelMessageTabs.show(this.panelMessageChat);
-					} else if (this.messageTabSelected == MessageTab.QUEST) {
-						this.panelMessageTabs.show(this.panelMessageQuest);
-					} else if (this.messageTabSelected == MessageTab.PRIVATE) {
-						this.panelMessageTabs.show(this.panelMessagePrivate);
-					} else if (this.messageTabSelected == MessageTab.CLAN) {
-						this.panelMessageTabs.show(this.panelMessageClan);
+					WorldMapWindow map = worldMapWindow;
+					if (map != null) {
+						drawWorldMap(map);
 					}
-
-					MiscFunctions.textListEntryHeightMod = 2;
-					this.panelMessageTabs.drawPanel();
-					MiscFunctions.textListEntryHeightMod = 0;
-
-					//redstones below (temporary, can be done better with proper tab sprites for ui)
-					if (C_CUSTOM_UI) {
-						int maxY = getUITabsY();
-						int x = this.getSurface().width2 - 199 - 1;
-						int visibleSideMenuTab = this.getVisibleSideMenuTab();
-						if (visibleSideMenuTab == Config.OPTIONS_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
-						x += 33;
-						if (visibleSideMenuTab == Config.FRIENDS_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
-						x += 33;
-						if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
-						x += 33;
-						if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
-						x += 33;
-						x += 33;
-						if (visibleSideMenuTab == Config.INVENTORY_TAB) {
-							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
-						}
-					}
-					//redstones above
-
-					this.getSurface().a(spriteSelect(GUIPARTS.MENUBAR.getDef()), 0, this.getSurface().width2 - 200, 128, getUITabsY());
-					this.drawUi(0);
-					this.getSurface().loggedIn = false;
-					this.drawChatMessageTabs(var1 - 8);
 					if (TRACE_BROWSER_FRAME_STAGES) browserUiDrawMs = (System.nanoTime() - browserUiStart) / 1_000_000f;
 					RenderTelemetry.recordClientDrawPreparation(beforeSceneNanos, residentObjectsNanos,
 						worldOverlayNanos, RenderTelemetry.elapsedSince(uiOverlayStart));
@@ -10536,7 +11431,25 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void drawWorldClickIndicator() {
+		if (mouseClickXStep == 0) return;
+		GUIPARTS[] frames = mouseClickXStep > 0 ? YELLOW_CLICK_FRAMES : RED_CLICK_FRAMES;
+		int frame = (24 - Math.abs(mouseClickXStep)) / 6;
+		if (frame < 0 || frame >= frames.length) return;
+		Sprite sprite = spriteSelect(frames[frame].getDef());
+		if (chatLayout == null) {
+			getSurface().drawSprite(sprite, mouseWalkX - 8, mouseWalkY - 8);
+		} else {
+			int size = hudPixels(16);
+			getSurface().drawSprite(sprite, mouseWalkX - size / 2, mouseWalkY - size / 2, size, size, 5924);
+		}
+	}
+
 	private void drawInputX() {
+		if (isTradePreviewQuantityPrompt()) {
+			drawTradePreviewQuantityPrompt();
+			return;
+		}
 		try {
 			if (this.inputTextFinal.length() <= 0 && !this.inputX_OK) {
 				if (this.inputX_Action.requiresNumeric()) {
@@ -10746,12 +11659,8 @@ public final class mudclient implements Runnable {
 					} catch (NumberFormatException var11) {
 						System.out.println("Stake remove X number format exception: " + var11);
 					}
-				} else if (this.inputX_Action == InputXAction.SKIP_TUTORIAL) {
-					this.packetHandler.getClientStream().newPacket(84);
-					this.packetHandler.getClientStream().finishPacket();
-				} else if (this.inputX_Action == InputXAction.EXIT_BLACK_HOLE) {
-					this.packetHandler.getClientStream().newPacket(86);
-					this.packetHandler.getClientStream().finishPacket();
+				} else if (this.inputX_Action == InputXAction.SKIP_TUTORIAL || this.inputX_Action == InputXAction.EXIT_BLACK_HOLE) {
+					sendTravelConfirmation(inputX_Action);
 				} else if (this.inputX_Action == InputXAction.POINTS_TO_GP) {
 					try {
 						if (str.length() > 10) {
@@ -10936,10 +11845,7 @@ public final class mudclient implements Runnable {
 						if (intOverflowCheck < Integer.MAX_VALUE) {
 							var4 = Integer.parseInt(str);
 						}
-						this.packetHandler.getClientStream().newPacket(246);
-						this.packetHandler.getClientStream().bufferBits.putShort(dropInventorySlot);
-						this.packetHandler.getClientStream().bufferBits.putInt(var4);
-						this.packetHandler.getClientStream().finishPacket();
+						sendInventoryDrop(dropInventorySlot, var4);
 						dropInventorySlot = -1;
 					} catch (NumberFormatException var13) {
 						System.out.println("Drop X number format exception: " + var13);
@@ -10972,11 +11878,7 @@ public final class mudclient implements Runnable {
 					this.packetHandler.getClientStream().bufferBits.putString(str);
 					this.packetHandler.getClientStream().finishPacket();
 				} else if (this.inputX_Action == InputXAction.KICK_PARTY_PLAYER) {
-					this.packetHandler.getClientStream().newPacket(199);
-					this.packetHandler.getClientStream().bufferBits.putByte(12);
-					this.packetHandler.getClientStream().bufferBits.putByte(5);
-					this.packetHandler.getClientStream().bufferBits.putString(partyKickPlayer);
-					this.packetHandler.getClientStream().finishPacket();
+					party.getPartyInterface().sendPartyKick(partyKickPlayer);
 				} else if (this.inputX_Action == InputXAction.PARTY_DELEGATE_LEADERSHIP) {
 					this.packetHandler.getClientStream().newPacket(199);
 					this.packetHandler.getClientStream().bufferBits.putByte(12);
@@ -11066,6 +11968,14 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawGroundItemNames() {
+		if (groundItems.isEmpty()) return;
+		MudClientGraphics surface = getSurface();
+		int font = chatLayout == null ? 0 : hudLabelFont();
+		int lineHeight = chatLayout == null ? GROUND_ITEM_NAMEPLATE_LINE_HEIGHT
+			: Math.max(hudPixels(GROUND_ITEM_NAMEPLATE_LINE_HEIGHT), surface.fontHeight(font) + 2);
+		int ascent = chatLayout == null ? 10 : surface.fontHeight(font);
+		int padding = hudPixels(2);
+		int verticalGap = hudPixels(GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING);
 		LinkedHashMap<GroundItemNameplateKey, GroundItemNameplateGroup> groups =
 			new LinkedHashMap<GroundItemNameplateKey, GroundItemNameplateGroup>();
 		for (GroundItem groundItem : groundItems) {
@@ -11086,7 +11996,7 @@ public final class mudclient implements Runnable {
 		Collections.sort(sortedGroups, new Comparator<GroundItemNameplateGroup>() {
 			@Override
 			public int compare(GroundItemNameplateGroup left, GroundItemNameplateGroup right) {
-				int yCompare = left.getBaseY() - right.getBaseY();
+				int yCompare = Integer.compare(left.getTopItemY(), right.getTopItemY());
 				if (yCompare != 0) {
 					return yCompare;
 				}
@@ -11100,40 +12010,33 @@ public final class mudclient implements Runnable {
 			if (lines.isEmpty()) {
 				continue;
 			}
-			int maxWidth = getGroundItemNameplateMaxWidth(lines);
+			int maxWidth = getGroundItemNameplateMaxWidth(lines, font);
 			int anchorX = group.getAnchorX();
-			int topY = group.getBaseY() - (lines.size() - 1) * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
-			Rectangle bounds = createGroundItemNameplateBounds(anchorX, topY, maxWidth, lines.size());
+			int topY = group.getTopItemY() - verticalGap - (lines.size() - 1) * lineHeight;
+			Rectangle bounds = new Rectangle(anchorX - maxWidth / 2 - padding, topY - ascent,
+				maxWidth + 2 * padding, lines.size() * lineHeight + padding);
 			while (intersectsAnyGroundItemNameplate(bounds, occupiedNameplateBounds)) {
-				topY -= GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
-				bounds.y -= GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
+				topY -= lineHeight;
+				bounds.y -= lineHeight;
 			}
 			occupiedNameplateBounds.add(bounds);
 
 			for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
 				String itemName = lines.get(lineIndex).getDisplayText();
-				int displayWidth = getSurface().stringWidth(0, itemName);
+				int displayWidth = surface.stringWidth(font, itemName);
 				int x = anchorX - displayWidth / 2;
-				int y = topY + lineIndex * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
-				getSurface().drawShadowText(itemName, x, y, 0xFFFFFF, 0, false);
+				int y = topY + lineIndex * lineHeight;
+				surface.drawShadowText(itemName, x, y, 0xFFFFFF, font, false);
 			}
 		}
 	}
 
-	private int getGroundItemNameplateMaxWidth(ArrayList<GroundItemNameplateLine> lines) {
+	private int getGroundItemNameplateMaxWidth(ArrayList<GroundItemNameplateLine> lines, int font) {
 		int maxWidth = 0;
 		for (GroundItemNameplateLine line : lines) {
-			maxWidth = Math.max(maxWidth, getSurface().stringWidth(0, line.getDisplayText()));
+			maxWidth = Math.max(maxWidth, getSurface().stringWidth(font, line.getDisplayText()));
 		}
 		return maxWidth;
-	}
-
-	private Rectangle createGroundItemNameplateBounds(int anchorX, int topY, int maxWidth, int lineCount) {
-		return new Rectangle(
-			anchorX - maxWidth / 2 - 2,
-			topY - 10,
-			maxWidth + 4,
-			lineCount * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT + 2);
 	}
 
 	private boolean intersectsAnyGroundItemNameplate(Rectangle candidate, ArrayList<Rectangle> occupiedBounds) {
@@ -11213,8 +12116,8 @@ public final class mudclient implements Runnable {
 			return (this.minCenterX + this.maxCenterX) / 2;
 		}
 
-		int getBaseY() {
-			return this.minY == Integer.MAX_VALUE ? 0 : this.minY - GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING;
+		int getTopItemY() {
+			return this.minY;
 		}
 
 		ArrayList<GroundItemNameplateLine> getSortedLines() {
@@ -11483,12 +12386,14 @@ public final class mudclient implements Runnable {
 				this.panelLoginWelcome.drawPanel();
 			}
 			if (this.loginScreenNumber == 1) {
-				menuNewUser.drawPanel();
+				if (accountEntryPreview == null) menuNewUser.drawPanel();
+				else accountEntryPreview.drawRegistration();
 			}
 			if (this.loginScreenNumber == 2) {
 				String var4 = this.panelLogin.getControlText(this.controlLoginStatus1);
 				if (null != var4 && var4.length() > 0) {
-					this.getSurface().drawBoxAlpha(0, halfGameHeight() + 18, this.getGameWidth(), 30, 0, 100);
+					int scale = accountEntryScale();
+					this.getSurface().drawBoxAlpha(0, halfGameHeight() + 18 * scale, this.getGameWidth(), 30 * scale, 0, 100);
 				}
 
 				this.panelLogin.drawPanel();
@@ -11497,7 +12402,8 @@ public final class mudclient implements Runnable {
 				panelLoginOptions.drawPanel();
 			}
 			if (this.loginScreenNumber == 4) {
-				this.panelRecovery.drawPanel();
+				if (accountEntryPreview == null) panelRecovery.drawPanel();
+				else accountEntryPreview.drawRecovery();
 			}
 
 			this.getSurface().drawSpriteClipping(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, getGameHeight(), getGameWidth(), 10, 0, 0, 0, false, 0, 1);
@@ -11512,6 +12418,11 @@ public final class mudclient implements Runnable {
 
 	private void drawMenu() {
 		try {
+			ContextMenuLayout layout = contextMenuLayout;
+			if (layout != null) {
+				handleScaledContextMenu(layout);
+				return;
+			}
 
 			if (this.mouseButtonClick == 0) {
 				int width = this.menuCommon.getWidth();
@@ -11537,6 +12448,62 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "client.DB(" + "dummy" + ')');
 		}
+	}
+
+	private void handleScaledContextMenu(ContextMenuLayout layout) {
+		contextMenuFirstRow = layout.clampScroll(contextMenuFirstRow + contextMenuWheel.getAndSet(0));
+		if (layout.viewportWidth != getGameWidth() || layout.viewportHeight != getGameHeight()) {
+			closeTopMouseMenu();
+			mouseButtonClick = 0;
+			return;
+		}
+		if (mouseButtonClick == 1 && layout.overScrollbar(mouseX, mouseY)) {
+			contextMenuFirstRow = layout.scrollFor(mouseY);
+			mouseButtonClick = 0;
+		} else if (mouseButtonClick != 0) {
+			int selected = layout.itemAt(mouseX, mouseY, contextMenuFirstRow);
+			closeTopMouseMenu();
+			if (selected >= 0) handleMenuItemClicked(false, selected);
+			mouseButtonClick = 0;
+		} else if (!layout.keepsOpenAt(mouseX, mouseY)) {
+			closeTopMouseMenu();
+		}
+	}
+
+	private void renderScaledContextMenu(ContextMenuLayout layout) {
+		renderScaledContextMenu(layout, contextMenuFirstRow);
+	}
+
+	private void renderScaledContextMenu(ContextMenuLayout layout, int firstRow) {
+		int hovered = layout.itemAt(mouseX, mouseY, firstRow);
+		MudClientGraphics surface = getSurface();
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.height, InterfacePalette.PANEL, 244);
+		if (layout.title != null) {
+			surface.drawVerticalGradient(layout.left, layout.top, layout.width, layout.headerHeight, InterfacePalette.HEADER_LIGHT, InterfacePalette.HEADER_DARK);
+			surface.drawString(layout.title, layout.left + layout.padding,
+				layout.top + (layout.headerHeight + layout.titleLine) / 2 - 3, 0xFFDC82, layout.titleFont);
+			surface.drawLineHoriz(layout.left + 1, layout.rowsTop() - 1, layout.width - 2, InterfacePalette.BORDER);
+		}
+		int rowWidth = Math.min(layout.width - 2, layout.scrollbarLeft() - layout.left - 1);
+		for (int row = 0; row < layout.visibleRows; row++) {
+			int action = firstRow + row;
+			int y = layout.rowTop(row);
+			if (action == hovered) {
+				surface.drawBox(layout.left + 1, y, rowWidth, layout.rowHeight, InterfacePalette.CONTROL_HOVER);
+			}
+			surface.drawString(layout.label(action), layout.left + layout.padding,
+				y + (layout.rowHeight + layout.bodyLine) / 2 - 3, action == hovered ? 0xFFDC82 : 0xFFFFFF, layout.bodyFont);
+		}
+		if (layout.maxScroll() > 0) {
+			int body = layout.rowsHeight();
+			int thumb = Math.max(layout.padding, body * layout.visibleRows / (layout.visibleRows + layout.maxScroll()));
+			int y = layout.rowsTop() + (body - thumb) * firstRow / layout.maxScroll();
+			int x = layout.scrollbarLeft();
+			int width = layout.left + layout.width - x;
+			surface.drawBox(x, layout.rowsTop(), width - 1, body, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(x + 2, y, width - 4, thumb, InterfacePalette.SCROLL_THUMB);
+		}
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.height, InterfacePalette.BORDER);
 	}
 
 	private boolean drawMenuMessage(String otherAccountName, int var2, String otherDisplayName) {
@@ -11588,7 +12555,7 @@ public final class mudclient implements Runnable {
 					}
 				}
 
-				this.menuCommon.addItem_With2Strings("Report abuse", "@whi@" + otherDisplayName, otherDisplayName,
+				this.menuCommon.addItem_With2Strings(reportEntryLabel(), "@whi@" + otherDisplayName, otherDisplayName,
 					MenuItemAction.REPORT_ABUSE, otherAccountName);
 				return true;
 			}
@@ -12053,19 +13020,10 @@ public final class mudclient implements Runnable {
 			drawCombatEffectOverlay(npc, x, y, width1, height);
 			drawClericCurseOverlay(npc, x, y, width1, height);
 
+			int hitSplatAnchor = y;
 			if (npc.messageTimeout > 0) {
-				ensureCharacterDialogCapacity(this.characterDialogCount + 1);
-				this.characterDialogHalfWidth[this.characterDialogCount] = this.getSurface().stringWidth(1, npc.message)
-					/ 2;
-				if (this.characterDialogHalfWidth[this.characterDialogCount] > 150) {
-					this.characterDialogHalfWidth[this.characterDialogCount] = 150;
-				}
-
-				this.characterDialogHeight[this.characterDialogCount] = this.getSurface().stringWidth(1, npc.message)
-					/ 300 * this.getSurface().fontHeight(1);
-				this.characterDialogX[this.characterDialogCount] = width1 / 2 + x;
-				this.characterDialogY[this.characterDialogCount] = y;
-				this.characterDialogString[this.characterDialogCount++] = npc.message;
+				int speechTop = addCharacterSpeech(npc.message, x + width1 / 2, y - (chatLayout == null ? 0 : hudPixels(7)));
+				if (chatLayout != null) hitSplatAnchor = speechTop;
 			}
 
 			int skullX = topPixelSkew + x + width1 / 2;
@@ -12093,7 +13051,7 @@ public final class mudclient implements Runnable {
 			if (!hideSummonDuringArrival) {
 				floatingHitSplatRenderer.collect(npc,
 					width1 / 2 + x + getCombatScreenOffset(npc.direction, overlayMovement, 20),
-					y, FloatingHitSplatState.now(), this.getSurface());
+					hitSplatAnchor, FloatingHitSplatState.now(), getSurface(), chatLayout == null ? 0 : hudLabelFont());
 			}
 
 			/*if (npc.bubbleItem == 221) {
@@ -12382,36 +13340,13 @@ public final class mudclient implements Runnable {
 					}
 				}
 
+				int overheadY = drawPlayerNametag(player, x + width / 2 + 1, y);
+				int hitSplatAnchor = overheadY;
 				if (player.messageTimeout > 0) {
-					ensureCharacterDialogCapacity(this.characterDialogCount + 1);
-					this.characterDialogHalfWidth[this.characterDialogCount] = this.getSurface().stringWidth(1,
-						player.message) / 2;
-					if (this.characterDialogHalfWidth[this.characterDialogCount] > 150) {
-						this.characterDialogHalfWidth[this.characterDialogCount] = 150;
-					}
-
-					this.characterDialogHeight[this.characterDialogCount] = this.getSurface().stringWidth(1,
-						player.message) / 300 * this.getSurface().fontHeight(1);
-					this.characterDialogX[this.characterDialogCount] = width / 2 + x;
-					this.characterDialogY[this.characterDialogCount] = y;
-					this.characterDialogString[this.characterDialogCount++] = player.message;
+					int speechTop = addCharacterSpeech(player.message, x + width / 2,
+						overheadY - (chatLayout == null ? 0 : hudPixels(7)));
+					if (chatLayout != null) hitSplatAnchor = speechTop;
 				}
-
-					if (S_SHOW_FLOATING_NAMETAGS) {
-						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
-						try {
-							if ((C_NAME_CLAN_TAG_OVERLAY && this.showUiTab == 0 && !C_CUSTOM_UI) || (C_CUSTOM_UI && C_NAME_CLAN_TAG_OVERLAY)) {
-								if (player.displayName != null)
-									this.getSurface().drawShadowText(player.getStaffName(), (width - this.getSurface().stringWidth(0, player.getStaffName())) / 2 + x + 1, y - 14, 0xffff00, 0, false);
-							}
-							if ((C_NAME_CLAN_TAG_OVERLAY && this.showUiTab == 0 && !C_CUSTOM_UI) || (C_CUSTOM_UI && C_NAME_CLAN_TAG_OVERLAY)) {
-								if (player.clanTag != null)
-									this.getSurface().drawColoredString((width - this.getSurface().stringWidth(0, "< " + player.clanTag + " >")) / 2 + x + 1, y - 5, "< " + player.clanTag + " >", 0, 0x7CADDA, 0);
-							}
-						} finally {
-							this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
-						}
-					}
 
 				if (player.bubbleTimeout > 0) {
 					ensureCharacterBubbleCapacity(this.characterBubbleCount + 1);
@@ -12420,8 +13355,16 @@ public final class mudclient implements Runnable {
 					this.characterBubbleScale[this.characterBubbleCount] = overlayMovement;
 					this.characterBubbleID[this.characterBubbleCount++] = player.bubbleItem;
 				}
-				if (player == this.localPlayer && this.actionProgressActive) {
-					drawActionProgressBar(x + width / 2, y, overlayMovement);
+				if (player == this.localPlayer) {
+					int progressTop = hitSplatAnchor;
+					if (doSkillInterface != null && doSkillInterface.hasCraftingProgress()) {
+						if (doSkillInterface.hasOverheadCraftingProgress(combatTimeout != 0)) {
+							progressTop = drawOverheadCraftingProgress(x + width / 2, y, overlayMovement, hitSplatAnchor);
+						}
+					} else if (actionProgressActive) {
+						progressTop = drawActionProgressBar(x + width / 2, y, overlayMovement, hitSplatAnchor);
+					}
+					if (chatLayout != null) hitSplatAnchor = progressTop;
 				}
 				drawCombatEffectOverlay(player, x, y, width, height);
 				drawClericBuffOverlay(player, x, y, width, height);
@@ -12430,7 +13373,7 @@ public final class mudclient implements Runnable {
 					if (player.combatTimeout > 0) {
 						int var14 = x + getCombatScreenOffset(player.direction, overlayMovement, 20);
 
-						int healthStep = player.healthCurrent * 30 / player.healthMax;
+						int healthStep = player.healthCurrent * 30 / Math.max(1, player.healthMax);
 						ensureCharacterHealthCapacity(this.characterHealthCount + 1);
 						this.characterHealthX[this.characterHealthCount] = width / 2 + var14;
 						this.characterHealthY[this.characterHealthCount] = y;
@@ -12439,7 +13382,7 @@ public final class mudclient implements Runnable {
 				}
 				floatingHitSplatRenderer.collect(player,
 					width / 2 + x + getCombatScreenOffset(player.direction, overlayMovement, 20),
-					y, FloatingHitSplatState.now(), this.getSurface());
+					hitSplatAnchor, FloatingHitSplatState.now(), getSurface(), chatLayout == null ? 0 : hudLabelFont());
 
 				if (player.skullVisible == 1 && player.bubbleTimeout == 0) {
 					int skullX = topPixelSkew + x + width / 2 + getCombatScreenOffset(player.direction, overlayMovement, 20);
@@ -12469,6 +13412,59 @@ public final class mudclient implements Runnable {
 			throw GenUtil.makeThrowable(var27, "client.OB(" + topPixelSkew + ',' + width + ',' + var3 + ','
 				+ overlayMovement + ',' + x + ',' + y + ',' + height + ',' + index + ')');
 		}
+	}
+
+	private String reportEntryLabel() {
+		return chatLayout != null && !isAndroid() ? ReportPlayerWindow.TITLE : "Report Abuse";
+	}
+
+	private void openReportPlayer(String target) {
+		if (chatLayout == null || isAndroid()) {
+			inputTextFinal = "";
+			inputTextCurrent = target;
+			reportAbuse_State = 1;
+			return;
+		}
+		String muteLabel = m_Ce >= 2 || m_Oj >= 7 ? "Mute player" : m_Oj >= 5 ? "Suggest mute" : null;
+		closeTopMouseMenu();
+		reportPlayerWindow = new ReportPlayerWindow(target, muteLabel);
+		mouseButtonClick = 0;
+	}
+
+	public boolean hasReportPlayerInput() {
+		return reportPlayerWindow != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& !isShowDialogBank() && !showDialogShop
+			&& !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails;
+	}
+
+	public boolean handleReportPlayerKey(char key, int code, boolean shortcut) {
+		ReportPlayerWindow window = reportPlayerWindow;
+		if (window == null || !hasReportPlayerInput()) return false;
+		window.keyPressed(key, code, shortcut);
+		return true;
+	}
+
+	private void drawReportPlayerWindow() {
+		ReportPlayerWindow window = reportPlayerWindow;
+		if (window == null) return;
+		ReportPlayerWindow.Submission result = window.draw(this, chatLayout.entryTop());
+		mouseButtonClick = 0;
+		if (result == null) return;
+		reportPlayerWindow = null;
+		if (result != ReportPlayerWindow.CANCEL) sendPlayerReport(result.target, result.reason, result.mute);
+	}
+
+	private void sendPlayerReport(String target, int reason, boolean mute) {
+		packetHandler.getClientStream().newPacket(Opcodes.Out.REPORT_ABUSE.getOpcode());
+		packetHandler.getClientStream().bufferBits.putString(target);
+		packetHandler.getClientStream().bufferBits.putByte(reason);
+		packetHandler.getClientStream().bufferBits.putByte(mute ? 1 : 0);
+		packetHandler.getClientStream().finishPacket();
 	}
 
 	private void drawPopupReport(boolean var1) {
@@ -12739,7 +13735,33 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void drawReconnectNotice() {
+		if (!usesSessionNotices()) {
+			drawTextBox("Attempting to re-establish", (byte) -64, "Connection lost! Please wait...");
+			return;
+		}
+		drawingReconnectNotice = true;
+		try {
+			MudClientGraphics surface = getSurface();
+			surface.beginRenderer2DFrame();
+			surface.blackScreen(true);
+			surface.setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
+			reconnectNotice.draw(this, getGameHeight());
+			clientPort.draw();
+		} finally {
+			drawingReconnectNotice = false;
+		}
+	}
+
+	public boolean isDrawingReconnectNotice() {
+		return drawingReconnectNotice;
+	}
+
 	private void drawTradeConfirmDialog(int var1) {
+		if (usesTradePreview()) {
+			drawTradeReviewPreview();
+			return;
+		}
 		try {
 
 			byte var2 = 22;
@@ -12855,6 +13877,10 @@ public final class mudclient implements Runnable {
 		if (!S_EXPERIENCE_COUNTER_TOGGLE) return;
 		if (selectedSkill >= 0) {
 			skill = selectedSkill;
+		}
+		if (chatLayout != null) {
+			drawScaledExperienceCounter(skill);
+			return;
 		}
 		int textColor = getExperienceCounterColor();
 		long totalXp = 0;
@@ -12984,6 +14010,47 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void drawScaledExperienceCounter(int skill) {
+		boolean total = C_EXPERIENCE_COUNTER_MODE == 1 || skill < 0 || skill >= skillCount;
+		long xp = 0;
+		int level = 0;
+		if (total) {
+			for (int value : playerExperience) xp += Integer.toUnsignedLong(value);
+		} else {
+			xp = Integer.toUnsignedLong(playerExperience[skill]);
+			level = playerStatBase[skill];
+		}
+		String label = total ? "Total XP  " + xp : skillNames[skill] + "  Lv " + level + "  /  " + xp + " XP";
+		java.awt.Rectangle bounds = GameplayHud.experienceBounds(this, label);
+		boolean hover = !hasBankPinInput() && !hasSessionNoticeInput() && !hasGameplayPromptInput() && !hasContextMenuInput()
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput() && !hasItemQuantityInput()
+			&& !hasPasswordChangeInput() && !hasReportPlayerInput() && !optionsMenuShow
+			&& inputX_Action == InputXAction.ACT_0 && !isShowDialogBank() && !showDialogShop
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& bounds.contains(mouseX, mouseY);
+		if (hover && mouseButtonClick == 1) {
+			experienceTrackerWindow = new ExperienceTrackerWindow();
+			mouseButtonClick = 0;
+		}
+		boolean hasNext = !total && level > 0 && level < S_PLAYER_LEVEL_LIMIT && level <= experienceArray.length;
+		long next = hasNext ? Integer.toUnsignedLong(experienceArray[level - 1]) : xp;
+		long previous = hasNext && level > 1 ? Integer.toUnsignedLong(experienceArray[level - 2]) : 0;
+		double progress = hasNext && next > previous ? Math.max(0, Math.min(1, (double) (xp - previous) / (next - previous))) : -1;
+		String[] details = null;
+		if (hover && C_EXPERIENCE_CONFIG_SUBMENU) {
+			long gained = Math.max(0, total ? playerXpGainedTotal : playerStatXpGained[skill]);
+			long start = total ? totalXpGainedStartTime : xpGainedStartTime[skill];
+			long elapsed = System.currentTimeMillis() - start;
+			long perHour = start > 0 && elapsed > 0 ? Math.round(gained * (3600000.0 / elapsed)) : 0;
+			String gainedLabel = "Gained " + gained + " XP";
+			String rateLabel = perHour + " XP/hr";
+			details = hasNext ? new String[]{"Next level at " + next + " XP", Math.max(0, next - xp) + " XP to next level",
+				gainedLabel, rateLabel} : new String[]{gainedLabel, rateLabel};
+		}
+		GameplayHud.drawExperience(this, bounds, label, getExperienceCounterColor(), progress, hover, details);
+	}
+
 	private void drawExperienceConfig() {
 		if (!S_EXPERIENCE_COUNTER_TOGGLE) return;
 		experienceConfigInterface.onRender(this.getSurface());
@@ -12991,6 +14058,22 @@ public final class mudclient implements Runnable {
 
 	private void drawUi(int var1) {
 		try {
+			if (hasBankPinInput()) {
+				drawBankPinWindow();
+				return;
+			}
+			if (!craftingTabsRegistered && usesCraftingInterfacePreview()) {
+				packetHandler.getClientStream().newPacket(199);
+				packetHandler.getClientStream().bufferBits.putByte(28);
+				packetHandler.getClientStream().finishPacket();
+				packetHandler.getClientStream().newPacket(199);
+				packetHandler.getClientStream().bufferBits.putByte(29);
+				packetHandler.getClientStream().finishPacket();
+				packetHandler.getClientStream().newPacket(199);
+				packetHandler.getClientStream().bufferBits.putByte(31);
+				packetHandler.getClientStream().finishPacket();
+				craftingTabsRegistered = true;
+			}
 
 			boolean var2 = false;
 
@@ -13007,10 +14090,29 @@ public final class mudclient implements Runnable {
 			} else if (this.showDialogMessage) {
 				this.drawDialogWelcome(var1 - 4853);
 				this.setInitLoginCleared(false);
-			} else if (this.showDialogServerMessage && !C_CUSTOM_UI) {
+			} else if (this.showDialogServerMessage && (usesSessionNotices() || !C_CUSTOM_UI || shopPreviewOpen()
+				|| isShowDialogBank() && bank.usesWorkspace())) {
 				this.drawDialogServerMessage((byte) -115);
+			} else if (hasQuestRewardInput()) {
+				drawQuestRewardWindow();
+			} else if (hasQuestGuidePreviewInput()) {
+				drawQuestGuidePreview();
+			} else if (hasSkillGuidePreviewInput()) {
+				drawSkillGuide();
+			} else if (hasSocialPromptInput()) {
+				drawSocialPrompt();
+			} else if (hasDeathItemsInput()) {
+				drawDeathItemsWindow();
+			} else if (hasItemQuantityInput()) {
+				drawItemQuantityPrompt();
+			} else if (hasReportPlayerInput()) {
+				drawReportPlayerWindow();
+			} else if (hasPasswordChangeInput()) {
+				drawPasswordChangeWindow();
+			} else if (hasGameplayPromptInput()) {
+				drawGameplayPrompt();
 			} else if (this.showUiWildWarn != 1) {
-				if (this.isShowDialogBank() && this.combatTimeout == 0 && !C_CUSTOM_UI) {
+				if (this.isShowDialogBank() && this.combatTimeout == 0 && (!C_CUSTOM_UI || bank.usesWorkspace())) {
 					this.drawDialogBank();
 				} else if (auctionHouse.isVisible() && combatTimeout == 0) {
 					auctionHouse.onRender(getSurface());
@@ -13022,7 +14124,7 @@ public final class mudclient implements Runnable {
 					clan.getClanInterface().onRender(getSurface());
 				} else if (party.getPartyInterface().isVisible()) {
 					party.getPartyInterface().onRender(getSurface());
-				} else if (this.showDialogShop && this.combatTimeout == 0 && !C_CUSTOM_UI) {
+				} else if (this.showDialogShop && this.combatTimeout == 0 && (!C_CUSTOM_UI || shopPreview != null)) {
 					this.drawDialogShop();
 				} else if (S_WANT_SKILL_MENUS && skillGuideInterface.isVisible() && !C_CUSTOM_UI) {
 					this.drawSkillGuide();
@@ -13076,7 +14178,10 @@ public final class mudclient implements Runnable {
 				this.drawDialogWildWarn(120);
 			}
 
-			if (this.inputX_Action != InputXAction.ACT_0) {
+			if (hasContextMenuInput() && (!var2 || optionsMenuShow || inputX_Action != InputXAction.ACT_0)) {
+				closeTopMouseMenu();
+			}
+			if (this.inputX_Action != InputXAction.ACT_0 && !hasGameplayPromptInput()) {
 				this.drawInputX();
 			}
 			if (var2) {
@@ -13090,12 +14195,15 @@ public final class mudclient implements Runnable {
 						var3 += 20;
 						this.getSurface().drawColoredStringCentered(256, var11 + "*", 0xFFFFFF, 0, 4, var3);
 					}*/
-				if (this.optionsMenuShow) {
+				boolean dialogueOwnsInput = optionsMenuShow && usesDialogueChoicesPanel();
+				if (dialogueOwnsInput) {
+					handleDialogueChoicesInput();
+				} else if (this.optionsMenuShow) {
 					this.drawDialogOptionsMenu(-312);
 				}
 
 				if (shouldDrawHitsXpFocusMenu() || shouldDrawGatheringFocusMenu()) {
-					this.drawDialogCombatStyle();
+					this.drawDialogCombatStyle(!dialogueOwnsInput);
 				}
 
 				boolean clickedTab = this.handleTabUIClick();
@@ -13142,7 +14250,8 @@ public final class mudclient implements Runnable {
 					}
 				}
 
-				boolean mustDrawMenu = !this.optionsMenuShow && !this.topMouseMenuVisible;
+				if (interfaceOpen && hasContextMenuInput()) closeTopMouseMenu();
+				boolean mustDrawMenu = !dialogueOwnsInput && !this.optionsMenuShow && !this.topMouseMenuVisible;
 				if (mustDrawMenu) {
 					this.menuCommon.recalculateSize(0);
 				}
@@ -13155,44 +14264,69 @@ public final class mudclient implements Runnable {
 					this.drawUiTab0(var1 ^ 2);
 				}
 
-				if (visibleSideMenuTab == Config.INVENTORY_TAB) {
+				if (visibleSideMenuTab == Config.INVENTORY_TAB && (!interfaceOpen || chatLayout == null)) {
 					long panelStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
 					this.drawUiTab1(-15252, acceptTabInput);
 					if (TRACE_BROWSER_FRAME_STAGES) browserInventoryDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
-				if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
+				if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT && sideToolbarLayout() == null) {
 					this.getSurface().drawShadowText(this.inventoryItemCount + "/" + this.inventoryCapacity, this.getGameWidth() - 19, getUITabsY() + 14, (0x00FFFFFF << (int) Math.floor((this.inventoryItemCount / 15)) * 8) & 0x00FFFFFF, 1, true);
 				}
 
 				if (this.shouldDrawMinimapPanel()) {
 					long panelStart = TRACE_BROWSER_FRAME_STAGES ? System.nanoTime() : 0L;
-					this.drawUiTabMinimap(mustDrawMenu, (byte) 125);
+					MinimapFrameLayout frame = minimapFrameLayout();
+					if (frame == null) {
+						this.drawUiTabMinimap(mustDrawMenu, (byte) 125);
+					} else if (!interfaceOpen && !onlineList.isVisible() && inputX_Action == InputXAction.ACT_0) {
+						drawMinimapFrame(frame, mustDrawMenu);
+					}
 					if (TRACE_BROWSER_FRAME_STAGES) browserMinimapDrawMs = (System.nanoTime() - panelStart) / 1_000_000f;
 				}
 
-				if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) {
+				if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB
+					&& (!interfaceOpen || accomplishmentsLayout() == null)) {
 					this.drawUiTabPlayerInfo(acceptTabInput, var1 ^ 0);
 				}
 
-				if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) {
+				AbilityBook abilityBook = chatLayout == null ? null : AbilityBook.forTab(visibleSideMenuTab);
+				if (abilityBook != null) {
+					if (!interfaceOpen) drawAbilityBook(abilityBook, acceptTabInput);
+				} else if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) {
 					this.drawUiTabMagic(acceptTabInput, (byte) -74);
 				}
 
 				if (visibleSideMenuTab == Config.FRIENDS_TAB) {
-					this.drawUiTab5(acceptTabInput, false);
+					SocialPanelLayout social = socialPanelLayout();
+					if (social == null) {
+						this.drawUiTab5(acceptTabInput, false);
+					} else if (!interfaceOpen && !onlineList.isVisible() && inputX_Action == InputXAction.ACT_0) {
+						drawSocialPreview(social, acceptTabInput);
+					} else {
+						m_wk = -1;
+					}
 				}
 
 				if (visibleSideMenuTab == Config.OPTIONS_TAB) {
-					this.drawUiTabOptions(15, acceptTabInput);
+					SettingsPanelLayout settings = settingsPanelLayout();
+					if (settings == null) {
+						this.drawUiTabOptions(15, acceptTabInput);
+					} else if (!interfaceOpen && !onlineList.isVisible() && inputX_Action == InputXAction.ACT_0) {
+						drawSettingsPreview(settings, acceptTabInput);
+					}
 				}
 
-				if (!this.topMouseMenuVisible && !this.optionsMenuShow) {
+				if (!dialogueOwnsInput && !this.topMouseMenuVisible && !this.optionsMenuShow) {
 					this.createTopMouseMenu(-128);
 				}
 
-				if (this.topMouseMenuVisible && !this.optionsMenuShow) {
+				if (!dialogueOwnsInput && this.topMouseMenuVisible && !this.optionsMenuShow) {
 					this.drawMenu();
+				}
+				DialogueChoicesPanel dialogue = dialoguePanel();
+				if (dialogue != null) {
+					dialogue.draw(getSurface(), mouseX, mouseY, dialoguePortraits);
 				}
 			}
 			this.mouseButtonClick = 0;
@@ -13280,6 +14414,9 @@ public final class mudclient implements Runnable {
 		return true;
 	}
 	private boolean isMouseOverMessageUi(int x,int y){
+		if (chatLayout != null) {
+			return chatLayout.contains(x, y, isScaledChatHistoryVisible());
+		}
 		int panelTop=this.messageTabSelected==MessageTab.ALL
 			?getGameHeight()-10:getGameHeight()-65;
 		return x>=0&&x<getGameWidth()
@@ -13405,9 +14542,7 @@ public final class mudclient implements Runnable {
 						String msg = StringUtil.formatMessage(
 							MessageHistory.messageHistoryMessage[i], MessageHistory.messageHistorySender[i],
 							MessageHistory.messageHistoryType[i], MessageHistory.messageHistoryColor[i]);
-						if (this.mouseX > 7 && this.mouseX < this.getSurface().stringWidth(1, msg) + 7
-							&& this.mouseY > -(i * 12) - 30 + this.getGameHeight()
-							&& this.getGameHeight() - i * 12 - 18 > this.mouseY
+						if (isOverRecentChatRow(i, msg)
 							&& (this.mouseButtonClick == 2
 							|| this.optionMouseButtonOne && this.mouseButtonClick == 1)
 							&& this.drawMenuMessage(MessageHistory.messageHistoryClan[i], 127,
@@ -13421,6 +14556,9 @@ public final class mudclient implements Runnable {
 			this.menuVisible = false;
 
 			this.sceneInstanceStore.clearFrameMarks();
+			if (chatLayout != null && isMouseOverMessageUi(mouseX, mouseY)) {
+				return;
+			}
 
 			int var2 = -1;
 			int var3 = this.scene.b(0);
@@ -13800,8 +14938,313 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private InventoryEquipmentLayout inventoryEquipmentLayout() {
+		if (chatLayout == null || getSurface() == null) return null;
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		int width = getSurface().width2;
+		int launcherY = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatEntryTop = chatLayout.entryTop();
+		if (inventoryEquipmentLayout == null || !inventoryEquipmentLayout.matches(width, launcherY, C_CUSTOM_UI,
+			chatRight, chatEntryTop, size, text, S_WANT_EQUIPMENT_TAB)) {
+			MudClientGraphics surface = getSurface();
+			int statWidth = 0;
+			if (S_WANT_EQUIPMENT_TAB) {
+				for (String label : equipmentStatNames) {
+					statWidth = Math.max(statWidth, surface.stringWidth(text.bodyFont, label + ": 9999"));
+				}
+			}
+			inventoryEquipmentLayout = new InventoryEquipmentLayout(width, getGameHeight(), launcherY, C_CUSTOM_UI,
+				chatRight, chatEntryTop, size, text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+				2 * statWidth + size.pixels(18), m_cl, S_WANT_EQUIPMENT_TAB);
+		}
+		return inventoryEquipmentLayout;
+	}
+
+	private void drawInventoryEquipmentPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		if (!C_CUSTOM_UI) {
+			drawToolbarPanelTitle("Satchel", layout.left, layout.width);
+		}
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom() - layout.top, InterfacePalette.PANEL, 225);
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom() - layout.top, InterfacePalette.BORDER);
+		if (tabEquipmentIndex == InventoryEquipmentLayout.EQUIPMENT && S_WANT_EQUIPMENT_TAB) {
+			drawEquipmentPreview(layout, acceptInput);
+		} else {
+			drawInventoryPreview(layout, acceptInput);
+		}
+		if (S_WANT_EQUIPMENT_TAB) {
+			int hoveredTab = acceptInput ? layout.tabAt(mouseX, mouseY) : -1;
+			int half = layout.width / 2;
+			drawInventoryPreviewTab(layout, layout.left, half, InventoryEquipmentLayout.EQUIPMENT, "Equipment", hoveredTab);
+			drawInventoryPreviewTab(layout, layout.left + half, layout.width - half, InventoryEquipmentLayout.INVENTORY, "Inventory", hoveredTab);
+			if (hoveredTab >= 0 && mouseButtonClick == 1) {
+				tabEquipmentIndex = hoveredTab;
+				mouseButtonClick = 0;
+			}
+		}
+	}
+
+	private void drawInventoryPreviewTab(InventoryEquipmentLayout layout, int x, int width, int tab, String label, int hoveredTab) {
+		drawInterfacePreviewTab(x, layout.tabsTop, width, layout.tabsHeight, label, layout.labelFont,
+			layout.tabBaseline, tabEquipmentIndex == tab, hoveredTab == tab);
+	}
+
+	private void drawInterfacePreviewTab(int x, int y, int width, int height, String label, int font,
+										 int baseline, boolean active, boolean hovered) {
+		MudClientGraphics surface = getSurface();
+		surface.drawVerticalGradient(x, y, width, height,
+			active ? InterfacePalette.CONTROL_SELECTED : hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.CONTROL,
+			active ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_LOW);
+		surface.drawBoxBorder(x, width, y, height, InterfacePalette.SEAM);
+		surface.drawLineHoriz(x + 1, y + 1, width - 2, active ? 0xD2B873 : InterfacePalette.BORDER);
+		surface.drawColoredStringCentered(x + width / 2, label, active ? 0xFFDC82 : 0xFFFFFF, 0, font, baseline);
+	}
+
+	private void drawInventoryPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int hovered = acceptInput ? layout.inventorySlotAt(mouseX, mouseY) : -1;
+		int iconHeight = Math.max(1, Math.min(layout.cellHeight - 3, (layout.cellWidth - 4) * 2 / 3));
+		int iconWidth = iconHeight * 3 / 2;
+		int countInset = Math.max(2, layout.padding / 2);
+		for (int slot = 0; slot < m_cl; slot++) {
+			int x = layout.cellX(slot);
+			int y = layout.cellY(slot);
+			boolean unlocked = slot < inventoryCapacity;
+			boolean occupied = unlocked && slot < inventoryItemCount;
+			int color = !unlocked ? InterfacePalette.INSET : occupied ? InterfacePalette.ROW : InterfacePalette.ROW_ALTERNATE;
+			if (occupied && !S_WANT_EQUIPMENT_TAB && getInventoryItemEquippedID(slot) == 1) {
+				color = 0x64444B;
+			}
+			surface.drawBoxAlpha(x, y, layout.cellWidth - 1, layout.cellHeight - 1, color, 204);
+			if (slot % InventoryEquipmentLayout.COLUMNS < InventoryEquipmentLayout.COLUMNS - 1 && slot + 1 < m_cl) {
+				surface.drawLineVert(x + layout.cellWidth - 1, y, 0x000000, layout.cellHeight);
+			}
+			if (slot + InventoryEquipmentLayout.COLUMNS < m_cl) {
+				surface.drawLineHoriz(x, y + layout.cellHeight - 1, layout.cellWidth, 0x000000);
+			}
+			if (occupied) {
+				Item item = getInventoryItem(slot);
+				ItemDef def = item.getNoted() ? ItemDef.asNote(item.getItemDef()) : item.getItemDef();
+				drawInventoryPreviewIcon(def, item.getNoted(),
+					x + (layout.cellWidth - iconWidth) / 2, y + (layout.cellHeight - iconHeight) / 2,
+					iconWidth, iconHeight);
+				if (def.isStackable()) {
+					drawInventoryPreviewCount(getInventoryItemSize(slot), x + countInset, y, layout.cellWidth - 2 * countInset,
+						layout.cellHeight, layout.bodyFont);
+				}
+			}
+			if (slot == hovered && occupied) {
+				surface.drawBoxBorder(x, layout.cellWidth, y, layout.cellHeight, 0xD2B873);
+			}
+		}
+		if (hovered >= 0 && hovered < inventoryCapacity && hovered < inventoryItemCount) {
+			addInventorySlotMenu(hovered);
+		}
+	}
+
+	void drawInventoryPreviewIcon(ItemDef def, boolean noted, int x, int y, int width, int height) {
+		if (noted) {
+			ItemDef paper = S_WANT_CERT_AS_NOTES ? EntityHandler.noteDef : EntityHandler.certificateDef;
+			getSurface().drawSpriteClipping(spriteSelect(paper), x, y, width, height,
+				paper.getPictureMask(), 0, paper.getBlueMask(), false, 0, 1);
+			if (!S_WANT_CERT_AS_NOTES) return;
+			x += width * 7 / 48;
+			y += height / 8;
+			width = width * 33 / 48;
+			height = height * 23 / 32;
+		}
+		getSurface().drawSpriteClipping(spriteSelect(def), x, y, width, height,
+			def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1);
+	}
+
+	private void drawInventoryPreviewCount(int amount, int x, int y, int width, int height, int font) {
+		MudClientGraphics surface = getSurface();
+		String label = Integer.toString(amount);
+		if (surface.stringWidth(font, label) > width && amount >= 1000) {
+			label = amount >= 1_000_000_000 ? amount / 1_000_000_000 + "B"
+				: amount >= 1_000_000 ? amount / 1_000_000 + "M" : amount / 1000 + "K";
+		}
+		int baseline = y + Math.min(height - 2, surface.fontHeight(font) - 3);
+		surface.drawShadowText(label, x, baseline, 0xFFDC82, font, false);
+	}
+
+	private void drawEquipmentPreview(InventoryEquipmentLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int slotCount = Math.min(S_PLAYER_SLOT_COUNT, equipIconXLocations.length);
+		int hovered = acceptInput
+			? layout.equipmentSlotAt(equipIconXLocations, equipIconYLocations, slotCount, mouseX, mouseY)
+			: -1;
+		int slotWidth = layout.equipmentPixels(EquipmentSlotHoverTarget.SLOT_WIDTH);
+		int slotHeight = layout.equipmentPixels(EquipmentSlotHoverTarget.SLOT_HEIGHT);
+		if (slotWidth > 0 && slotHeight > 0) {
+			for (int slot = 0; slot < slotCount; slot++) {
+				int x = layout.equipmentLeft + layout.equipmentPixels(equipIconXLocations[slot]);
+				int y = layout.equipmentTop + layout.equipmentPixels(equipIconYLocations[slot]);
+				ItemDef item = equippedItems[slot];
+				Sprite tile = item == null ? getEquipmentSlotSprite(slot) : spriteSelect(GUIPARTS.EQUIPSLOT_HIGHLIGHT.getDef());
+				surface.drawSpriteClipping(tile, x, y, slotWidth, slotHeight, 0, 0, 0, false, 0, 1,
+					item == null ? 0xA0FFFFFF : 0xD0FFFFFF);
+				if (item != null) {
+					drawInventoryPreviewIcon(item, false, x, y, slotWidth, slotHeight);
+					if (item.isStackable()) {
+						drawInventoryPreviewCount(equippedItemAmount[slot], x + 2, y, slotWidth - 4, slotHeight, layout.bodyFont);
+					}
+				}
+				if (slot == hovered && item != null) {
+					surface.drawBoxBorder(x, slotWidth, y, slotHeight, 0xD2B873);
+				}
+			}
+		}
+
+		surface.drawLineHoriz(layout.left + layout.padding, layout.statsTop - layout.padding / 2,
+			layout.width - 2 * layout.padding, InterfacePalette.BORDER);
+		for (int row = 0; row < 4; row++) {
+			int baseline = layout.statsTop + (row + 1) * layout.statRowHeight - 3;
+			drawEquipmentStatusValue(row == 3 ? 4 : row, layout.left + 2 * layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
+			drawEquipmentStatusValue(row == 0 ? 3 : row + 4, layout.left + layout.width / 2 + layout.padding,
+				baseline, 0xFFFFFF, layout.bodyFont);
+		}
+
+		if (S_ITEMS_ON_DEATH_MENU) {
+			Sprite icon = spriteSelect(GUIPARTS.KEPT_ON_DEATH.getDef());
+			int x = layout.left + 2 * layout.padding;
+			int y = layout.equipmentTop;
+			int width = layout.equipmentPixels(40);
+			int height = layout.equipmentPixels(25);
+			if (width > 0 && height > 0) {
+				surface.drawSpriteClipping(icon, x, y, width, height, 0, 0, 0, false, 0, 1);
+				if (acceptInput && mouseButtonClick == 1 && mouseX >= x && mouseX < x + width
+					&& mouseY >= y && mouseY < y + height) {
+					if (!C_CUSTOM_UI) showUiTab = 0;
+					openItemsOnDeath();
+					mouseButtonClick = 0;
+				}
+			}
+		}
+
+		if (hovered >= 0 && equippedItems[hovered] != null) {
+			if (mouseButtonClick == 1) {
+				sendUnequipFromEquipment(hovered);
+				mouseButtonClick = 0;
+			} else if (mouseButtonClick == 2) {
+				addEquipmentSlotMenu(hovered);
+			} else {
+				menuCommon.addCharacterItem(hovered, MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT,
+					"Unequip", "@lre@" + equippedItems[hovered].getName());
+			}
+		}
+	}
+
+	private void sendUnequipFromEquipment(int slot) {
+		packetHandler.getClientStream().newPacket(Opcodes.Out.ITEM_UNEQUIP_FROM_EQUIPMENT.getOpcode());
+		packetHandler.getClientStream().bufferBits.putByte(slot);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	private void addInventorySlotMenu(int slot) {
+		int id = getInventoryItemID(slot);
+		Item item = getInventoryItem(slot);
+		ItemDef def = item.getItemDef();
+		int vId = id;
+		if (item.getNoted()) {
+			vId = (vId + 1) * -1;
+		}
+		if (this.ratNoteSelectionActive) {
+			this.menuCommon.addItem(0, "Turn into certs", 0, 0,
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(),
+				slot, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
+		} else if (this.camelBankSelectionActive) {
+			this.menuCommon.addItem(0, "Send to bank", 0, 0,
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(),
+				slot, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
+		} else if (this.selectedSpell >= 0) {
+			SpellDef spellDef = EntityHandler.getSpellDef(selectedSpell);
+
+			// Ugly checks for curse and enfeeble so you can cast on talismans
+			if (spellDef.getSpellType() == 3
+				|| (S_WANT_RUNECRAFT && (this.selectedSpell == 9 || this.selectedSpell == 44))) {
+				//Add Nature Rune alchemy protection if we're on a non-authentic client.
+				if (!authenticSettings && C_WANT_NATURE_RUNE_PROTECTION && (this.selectedSpell == 10 || this.selectedSpell == 28) && EntityHandler.getItemDef(id).getName().equals("Nature-Rune")) {
+					return;
+				}
+				this.menuCommon.addCharacterItem_WithID(slot,
+					"@lre@" + EntityHandler.getItemDef(id).getName(),
+					MenuItemAction.ITEM_CAST_SPELL,
+					"Cast " + EntityHandler.getSpellDef(selectedSpell).getName() + " on",
+					this.selectedSpell);
+			}
+		} else if (this.selectedItemInventoryIndex < 0) {
+			if (getInventoryItemEquippedID(slot) == 1 && !S_WANT_EQUIPMENT_TAB) {
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_UNEQUIP_FROM_INVENTORY, "Remove",
+					"@lre@" + EntityHandler.getItemDef(id).getName());
+			} else if (InventoryEquipMenuPolicy.canOfferEquip(def, item.getNoted())) {
+				String equipCommand = InventoryEquipMenuPolicy.actionLabel(def);
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_EQUIP_FROM_INVENTORY, equipCommand,
+					"@lre@" + def.getName());
+			}
+
+			if (def.getCommand() != null
+				&& !item.getNoted()) {
+				for (int p = def.getCommand().length - 1; p >= 0; p--) {
+					this.menuCommon.addItem(0, EntityHandler.getItemDef(id).getCommand()[p], p, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), slot, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
+				}
+			}
+
+			if (S_WANT_DROP_X && def.getCommand() != null
+				&& def.getCommand()[0].equalsIgnoreCase("bury")
+				&& !item.getNoted()) {
+				this.menuCommon.addItem(0, "Bury All", 0, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), slot, null, MenuItemAction.ITEM_COMMAND_ALL, 0, null, null);
+			}
+
+			if (!hasInventoryUseCommand(def.getCommand())) {
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_USE, "Use",
+					"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+			}
+			this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_DROP, "Drop",
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+			if (S_WANT_DROP_X) {
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_DROP_X, "Drop X",
+					"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+				this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_DROP_ALL, "Drop All",
+					"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+			}
+			this.menuCommon.addCharacterItem(vId, MenuItemAction.ITEM_EXAMINE, "Examine",
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName()
+					+ (localPlayer.isDev() ? " @or1@(" + id + ")" : ""));
+		} else {
+			this.menuCommon.addCharacterItem_WithID(slot,
+				"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(), MenuItemAction.ITEM_USE_ITEM,
+				"Use " + this.m_ig + " with", this.selectedItemInventoryIndex);
+		}
+	}
+
+	private void addEquipmentSlotMenu(int slot) {
+		this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT, "Remove",
+			"@lre@" + equippedItems[slot].getName());
+		if (equippedItems[slot].getCommand() != null)
+			for (int p = 0; p < equippedItems[slot].getCommand().length; p++) {
+				this.menuCommon.addItem(0, equippedItems[slot].getCommand()[p], p, 0, "@lre@" + equippedItems[slot].getName(), slot, null, MenuItemAction.ITEM_COMMAND_EQUIPTAB, 0, null, null);
+			}
+		if (!hasInventoryUseCommand(equippedItems[slot].getCommand())) {
+			this.menuCommon.addCharacterItem(slot, MenuItemAction.ITEM_USE_EQUIPTAB, "Use",
+				"@lre@" + equippedItems[slot].getName());
+		}
+		this.menuCommon.addCharacterItem(equippedItems[slot].id, MenuItemAction.ITEM_DROP_EQUIPTAB, "Drop",
+			"@lre@" + equippedItems[slot].getName());
+		this.menuCommon.addCharacterItem(equippedItems[slot].id, MenuItemAction.ITEM_EXAMINE, "Examine",
+			"@lre@" + equippedItems[slot].getName()
+				+ (localPlayer.isDev() ? " @or1@(" + equippedItems[slot].id + ")" : ""));
+	}
+
 	// inventory right click menu definitions
 	private void drawUiTab1(int var1, boolean var2) {
+		InventoryEquipmentLayout preview = inventoryEquipmentLayout();
+		if (preview != null) {
+			drawInventoryEquipmentPreview(preview, var2);
+			return;
+		}
 
 		int maxY = getUITabsY();
 
@@ -13885,80 +15328,7 @@ public final class mudclient implements Runnable {
 					if (var3 >= 0 && var4 >= 0 && var3 < 248 && inventoryGridHeight > var4) {
 						var5 = var4 / INVENTORY_SLOT_HEIGHT * INVENTORY_COLUMNS + var3 / INVENTORY_SLOT_WIDTH;
 						if (var5 < this.inventoryCapacity && this.inventoryItemCount > var5) {
-							id = getInventoryItemID(var5);
-							Item item = getInventoryItem(var5);
-							ItemDef def = item.getItemDef();
-							int vId = id;
-							if (item.getNoted()) {
-								vId = (vId + 1) * -1;
-							}
-							if (this.ratNoteSelectionActive) {
-								this.menuCommon.addItem(0, "Turn into certs", 0, 0,
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(),
-									var5, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
-							} else if (this.camelBankSelectionActive) {
-								this.menuCommon.addItem(0, "Send to bank", 0, 0,
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(),
-									var5, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
-							} else if (this.selectedSpell >= 0) {
-								SpellDef spellDef = EntityHandler.getSpellDef(selectedSpell);
-
-								// Ugly checks for curse and enfeeble so you can cast on talismans
-								if (spellDef.getSpellType() == 3
-									|| (S_WANT_RUNECRAFT && (this.selectedSpell == 9 || this.selectedSpell == 44))) {
-									//Add Nature Rune alchemy protection if we're on a non-authentic client.
-									if (!authenticSettings && C_WANT_NATURE_RUNE_PROTECTION && (this.selectedSpell == 10 || this.selectedSpell == 28) && EntityHandler.getItemDef(id).getName().equals("Nature-Rune")) {
-										return;
-									}
-									this.menuCommon.addCharacterItem_WithID(var5,
-										"@lre@" + EntityHandler.getItemDef(id).getName(),
-										MenuItemAction.ITEM_CAST_SPELL,
-										"Cast " + EntityHandler.getSpellDef(selectedSpell).getName() + " on",
-										this.selectedSpell);
-								}
-							} else if (this.selectedItemInventoryIndex < 0) {
-								if (getInventoryItemEquippedID(var5) == 1 && !S_WANT_EQUIPMENT_TAB) {
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_UNEQUIP_FROM_INVENTORY, "Remove",
-										"@lre@" + EntityHandler.getItemDef(id).getName());
-								} else if (InventoryEquipMenuPolicy.canOfferEquip(def, item.getNoted())) {
-									String equipCommand = InventoryEquipMenuPolicy.actionLabel(def);
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_EQUIP_FROM_INVENTORY, equipCommand,
-										"@lre@" + def.getName());
-								}
-
-								if (def.getCommand() != null
-									&& !item.getNoted()) {
-									for (int p = def.getCommand().length - 1; p >= 0; p--) {
-										this.menuCommon.addItem(0, EntityHandler.getItemDef(id).getCommand()[p], p, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), var5, null, MenuItemAction.ITEM_COMMAND, 0, null, null);
-									}
-								}
-
-								if (S_WANT_DROP_X && def.getCommand() != null
-									&& def.getCommand()[0].equalsIgnoreCase("bury")
-									&& !item.getNoted()) {
-									this.menuCommon.addItem(0, "Bury All", 0, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), var5, null, MenuItemAction.ITEM_COMMAND_ALL, 0, null, null);
-								}
-
-								if (!hasInventoryUseCommand(def.getCommand())) {
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_USE, "Use",
-										"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
-								}
-								this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_DROP, "Drop",
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
-								if (S_WANT_DROP_X) {
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_DROP_X, "Drop X",
-										"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
-									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_DROP_ALL, "Drop All",
-										"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
-								}
-								this.menuCommon.addCharacterItem(vId, MenuItemAction.ITEM_EXAMINE, "Examine",
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName()
-										+ (localPlayer.isDev() ? " @or1@(" + id + ")" : ""));
-							} else {
-								this.menuCommon.addCharacterItem_WithID(var5,
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName(), MenuItemAction.ITEM_USE_ITEM,
-									"Use " + this.m_ig + " with", this.selectedItemInventoryIndex);
-							}
+							addInventorySlotMenu(var5);
 						}
 					}
 
@@ -14051,28 +15421,10 @@ public final class mudclient implements Runnable {
 								//Send a packet to the server to unequip the item.
 								if (equippedItems[j] != null) {
 									if (this.mouseButtonClick == 1 && !this.topMouseMenuVisible) {//unequip from equip menu
-										this.packetHandler.getClientStream().newPacket(Opcodes.Out.ITEM_UNEQUIP_FROM_EQUIPMENT.getOpcode());
-										this.packetHandler.getClientStream().bufferBits.putByte(j);
-										this.packetHandler.getClientStream().finishPacket();
+										sendUnequipFromEquipment(j);
 										break;
 									} else {
-										this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT, "Remove",
-											"@lre@" + equippedItems[j].getName());
-										if (equippedItems[j].getCommand() != null)
-											for (int p = 0; p < equippedItems[j].getCommand().length; p++) {
-												this.menuCommon.addItem(0, equippedItems[j].getCommand()[p], p, 0, "@lre@" + equippedItems[j].getName(), j, null, MenuItemAction.ITEM_COMMAND_EQUIPTAB, 0, null, null);
-											}
-										//this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_COMMAND_EQUIPTAB, equippedItems[j].getCommand(),
-										//	"@lre@" + equippedItems[j].getName());
-										if (!hasInventoryUseCommand(equippedItems[j].getCommand())) {
-											this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_USE_EQUIPTAB, "Use",
-												"@lre@" + equippedItems[j].getName());
-										}
-										this.menuCommon.addCharacterItem(equippedItems[j].id, MenuItemAction.ITEM_DROP_EQUIPTAB, "Drop",
-											"@lre@" + equippedItems[j].getName());
-										this.menuCommon.addCharacterItem(equippedItems[j].id, MenuItemAction.ITEM_EXAMINE, "Examine",
-											"@lre@" + equippedItems[j].getName()
-												+ (localPlayer.isDev() ? " @or1@(" + equippedItems[j].id + ")" : ""));
+										addEquipmentSlotMenu(j);
 										break;
 									}
 
@@ -14087,7 +15439,7 @@ public final class mudclient implements Runnable {
 							&& yOffset + 10 < this.mouseY && this.mouseY < yOffset + 35) {
 							if (!C_CUSTOM_UI)
 								this.showUiTab = 0;
-							lostOnDeathInterface.setVisible(true);
+							openItemsOnDeath();
 						}
 					}
 				}
@@ -14129,6 +15481,430 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private SocialPanelLayout socialPanelLayout() {
+		if (chatLayout == null) return null;
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		int anchor = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatTop = chatLayout.entryTop();
+		if (socialPanelLayout == null || !socialPanelLayout.matches(surface.width2, anchor, C_CUSTOM_UI,
+			chatRight, chatTop, size, text, S_WANT_CLANS)) {
+			socialPanelLayout = new SocialPanelLayout(surface.width2, anchor, C_CUSTOM_UI, chatRight, chatTop,
+				size, text, S_WANT_CLANS, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+				label -> surface.stringWidth(text.labelFont, label));
+		}
+		return socialPanelLayout;
+	}
+
+	private void drawSocialPreview(SocialPanelLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		m_wk = -1;
+		if (!S_WANT_CLANS && panelSocialTab == SocialPanelLayout.CLAN) panelSocialTab = SocialPanelLayout.FRIENDS;
+		int hoveredTab = acceptInput ? layout.tabAt(mouseX, mouseY) : -1;
+		if (hoveredTab >= 0 && mouseButtonClick == 1) {
+			panelSocialTab = hoveredTab;
+			mouseButtonClick = 0;
+		}
+		int tab = panelSocialTab;
+		int width = layout.right - layout.left;
+		if (!C_CUSTOM_UI) drawToolbarPanelTitle("Social", layout.left, width);
+		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
+		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
+		for (int index = SocialPanelLayout.FRIENDS; index <= SocialPanelLayout.ONLINE; index++) {
+			if (layout.tabWidth(index) > 0) {
+				drawInterfacePreviewTab(layout.tabLeft(index), layout.top, layout.tabWidth(index), layout.tabHeight,
+					layout.tabLabel(index), layout.labelFont, layout.top + (layout.tabHeight + layout.labelLine) / 2 - 3,
+					index == tab, index == hoveredTab);
+			}
+		}
+
+		switch (tab) {
+			case SocialPanelLayout.FRIENDS:
+				drawSocialText(layout, "Select an online friend to message.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
+				drawSocialMembers(layout, tab, SocialLists.friendListCount, acceptInput);
+				drawSocialAction(layout, 0, 1, "Add Friend", acceptInput, this::openAddFriendPrompt);
+				break;
+			case SocialPanelLayout.CLAN:
+				drawSocialClan(layout, acceptInput);
+				break;
+			case SocialPanelLayout.PARTY:
+				drawSocialParty(layout, acceptInput);
+				break;
+			case SocialPanelLayout.ONLINE:
+				drawOnlinePlayers(layout, acceptInput);
+				break;
+		}
+		if (acceptInput && layout.contains(mouseX, mouseY) && mouseButtonClick == 1) mouseButtonClick = 0;
+	}
+
+	private void drawOnlinePlayers(SocialPanelLayout layout, boolean acceptInput) {
+		if (!S_WANT_PLAYER_COMMANDS || insideTutorial) {
+			drawSocialText(layout, "The online player list is unavailable here.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
+			return;
+		}
+		if (!onlineSidebarSupported) {
+			drawSocialText(layout, "Open the online list from Settings on this server.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
+			return;
+		}
+		long now = System.nanoTime();
+		if (lastOnlineSidebarRequest == 0 || now - lastOnlineSidebarRequest >= ONLINE_SIDEBAR_INTERVAL_NS) {
+			lastOnlineSidebarRequest = now;
+			packetHandler.getClientStream().newPacket(Opcodes.Out.ONLINE_SIDEBAR_REQUEST.getOpcode());
+			packetHandler.getClientStream().finishPacket();
+		}
+		if (onlineSidebarPlayers == null) {
+			drawSocialText(layout, "Loading online players...", layout.contentTop(), InterfacePalette.MUTED_TEXT);
+			return;
+		}
+		int count = onlineSidebarPlayers.size();
+		drawSocialText(layout, count == 0 ? "No players are visible." : "Online players (" + count + ")",
+			layout.contentTop(), InterfacePalette.MUTED_TEXT);
+		if (count > 0) drawSocialMembers(layout, SocialPanelLayout.ONLINE, count, acceptInput);
+	}
+
+	void receiveOnlineSidebar(List<OnlinePlayerEntry> players) {
+		if (!onlineSidebarSupported) return;
+		players.sort(Comparator.comparing(entry -> entry.name, String.CASE_INSENSITIVE_ORDER));
+		int scroll = socialScroll[SocialPanelLayout.ONLINE];
+		if (onlineSidebarPlayers != null && scroll > 0 && scroll < onlineSidebarPlayers.size()) {
+			String first = onlineSidebarPlayers.get(scroll).name;
+			for (int index = 0; index < players.size(); index++) {
+				if (players.get(index).name.equals(first)) {
+					socialScroll[SocialPanelLayout.ONLINE] = index;
+					break;
+				}
+			}
+		}
+		onlineSidebarPlayers = players;
+	}
+
+	private void addOnlinePlayerActions(String username) {
+		for (OnlinePlayerAction action : OnlinePlayerAction.values()) {
+			if (action.isAvailable(localPlayer)) {
+				menuCommon.addItem(0, action.label, action.ordinal(), 0, "@whi@" + username, 0, null,
+					MenuItemAction.ONLINE_PLAYER_ACTION, 0, null, username);
+			}
+		}
+	}
+
+	private void drawSocialText(SocialPanelLayout layout, String value, int top, int color) {
+		getSurface().drawWrappedCenteredString(value, layout.left + (layout.right - layout.left) / 2,
+			top + layout.bodyLine - 3, layout.bodyRight() - layout.bodyLeft(), layout.bodyFont, color, false);
+	}
+
+	private void drawSocialClan(SocialPanelLayout layout, boolean acceptInput) {
+		if (clan.inClan()) {
+			drawSocialName(layout, "Clan: " + clan.getClanName(), layout.bodyLeft(), layout.contentTop() + layout.bodyLine - 3,
+				layout.bodyRight(), 0xFFDC82);
+			drawSocialName(layout, "Tag: " + clan.getClanTag(), layout.bodyLeft(), layout.contentTop() + 2 * layout.bodyLine - 3,
+				layout.bodyRight(), InterfacePalette.MUTED_TEXT);
+			drawSocialName(layout, "Leader: " + clan.getClanLeaderUsername(), layout.bodyLeft(),
+				layout.contentTop() + 3 * layout.bodyLine - 3, layout.bodyRight(), InterfacePalette.MUTED_TEXT);
+			drawSocialMembers(layout, SocialPanelLayout.CLAN, SocialLists.clanListCount, acceptInput);
+			drawSocialAction(layout, 0, 2, "Leave Clan", acceptInput,
+				() -> openClanConfirmation(ClanWindow.Confirmation.LEAVE, null));
+			drawSocialAction(layout, 1, 2, "Manage Clan", acceptInput, this::openScaledClanWindow);
+		} else {
+			drawSocialText(layout, "You are not currently in a clan.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
+			drawSocialAction(layout, 0, 2, "Find a Clan", acceptInput, this::openScaledClanSearch);
+			drawSocialAction(layout, 1, 2, "Create Clan", acceptInput, this::openScaledClanWindow);
+		}
+	}
+
+	private void drawSocialParty(SocialPanelLayout layout, boolean acceptInput) {
+		if (!party.inParty()) {
+			drawSocialText(layout, "Create a party to invite up to four other players.", layout.contentTop(), InterfacePalette.MUTED_TEXT);
+			drawSocialAction(layout, 0, 1, "Create Party", acceptInput, () -> party.showPartySetupInterface(false));
+			return;
+		}
+		drawSocialMembers(layout, SocialPanelLayout.PARTY, Math.min(5, SocialLists.partyListCount), acceptInput);
+		drawSocialAction(layout, 0, 3, "Invite", acceptInput, this::openPartyInvitePrompt);
+		drawSocialAction(layout, 1, 3, "Manage", acceptInput, () -> party.showPartySetupInterface(true));
+		drawSocialAction(layout, 2, 3, "Leave", acceptInput, () -> party.getPartyInterface().sendPartyLeave());
+	}
+
+	private void drawSocialAction(SocialPanelLayout layout, int index, int count, String label,
+								  boolean acceptInput, Runnable action) {
+		int left = layout.actionLeft(index, count);
+		int right = layout.actionLeft(index + 1, count) - layout.padding;
+		int top = layout.actionTop();
+		boolean hover = acceptInput && mouseX >= left && mouseX < right && mouseY >= top && mouseY < top + layout.actionHeight;
+		drawInterfacePreviewTab(left, top, right - left, layout.actionHeight, label, layout.labelFont,
+			top + (layout.actionHeight + layout.labelLine) / 2 - 3, false, hover);
+		if (hover && mouseButtonClick == 1) {
+			mouseButtonClick = 0;
+			action.run();
+		}
+	}
+
+	private void drawSocialMembers(SocialPanelLayout layout, int tab, int count, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int top = layout.listTop(tab, clan.inClan());
+		int visible = layout.visibleRows(tab, top);
+		int maxScroll = Math.max(0, count - visible);
+		int scroll = Math.max(0, Math.min(maxScroll, socialScroll[tab] + socialWheel.getAndSet(tab, 0)));
+		int listHeight = layout.listBottom(tab) - top;
+		if (maxScroll > 0 && visible > 0) {
+			if (acceptInput && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
+				&& layout.isOverList(tab, mouseX, mouseY, top)) {
+				scroll = (mouseY - top) * maxScroll / Math.max(1, listHeight - 1);
+				mouseButtonClick = 0;
+			}
+			int thumb = Math.min(listHeight, Math.max(layout.padding, listHeight * visible / count));
+			int thumbTop = top + (listHeight - thumb) * scroll / maxScroll;
+			surface.drawBox(layout.scrollbarLeft() + 1, top, layout.scrollWidth - 2, listHeight, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbTop, layout.scrollWidth - 4, thumb, InterfacePalette.SCROLL_THUMB);
+		}
+		socialScroll[tab] = scroll;
+		if (count == 0 && tab == SocialPanelLayout.FRIENDS) {
+			drawSocialText(layout, "Your friends list is empty.", top, InterfacePalette.MUTED_TEXT);
+		}
+		int hovered = acceptInput ? layout.rowAt(tab, mouseX, mouseY, top, scroll, count) : -1;
+		int removeLeft = layout.scrollbarLeft() - surface.stringWidth(layout.bodyFont, "Remove") - 2 * layout.padding;
+		for (int index = scroll; index < Math.min(count, scroll + visible); index++) {
+			int y = top + (index - scroll) * layout.rowHeight;
+			int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
+			surface.drawBoxAlpha(layout.bodyLeft(), y, layout.scrollbarLeft() - layout.bodyLeft(),
+				layout.rowHeight - 1, index == hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW, 192);
+			int nameX = layout.bodyLeft() + layout.padding;
+			if (tab == SocialPanelLayout.FRIENDS) {
+				int status = SocialLists.friendListOnlineStatus[index];
+				int color = (status & 2) != 0 ? 0x69E875 : (status & 4) != 0 ? 0xFFDC82 : 0xFF8585;
+				drawSocialName(layout, SocialLists.friendList[index], nameX, baseline, removeLeft - layout.padding, color);
+				boolean remove = index == hovered && mouseX >= removeLeft;
+				if (remove) surface.drawBoxAlpha(removeLeft, y, layout.scrollbarLeft() - removeLeft,
+					layout.rowHeight - 1, InterfacePalette.CONTROL, 210);
+				surface.drawString("Remove", removeLeft + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
+			} else if (tab == SocialPanelLayout.CLAN) {
+				drawSocialName(layout, clan.username[index], nameX, baseline, layout.scrollbarLeft() - layout.padding,
+					clan.onlineClanMember[index] != 0 ? 0x69E875 : InterfacePalette.MUTED_TEXT);
+			} else if (tab == SocialPanelLayout.PARTY) {
+				drawSocialPartyMember(layout, index, nameX, y, baseline);
+			} else {
+				OnlinePlayerEntry player = onlineSidebarPlayers.get(index);
+				int available = layout.scrollbarLeft() - layout.padding - nameX - (player.crown > 0 ? 22 : 0);
+				String name = ContextMenuLayout.fitLabel(player.name, available, value -> surface.stringWidth(layout.bodyFont, value));
+				surface.drawColoredString(nameX, baseline, name, layout.bodyFont, 0xFFFFFF, player.crown);
+			}
+		}
+		if (hovered < 0) return;
+		if (tab == SocialPanelLayout.FRIENDS) {
+			boolean remove = mouseX >= removeLeft;
+			m_wk = remove ? -(hovered + 2) : hovered;
+			if (mouseButtonClick == 1) {
+				String name = SocialLists.friendList[hovered];
+				if (remove) {
+					removeFriend(name, (byte) 69);
+					m_wk = -1;
+				} else if ((SocialLists.friendListOnlineStatus[hovered] & 4) != 0) {
+					openFriendMessagePrompt(name);
+				}
+			}
+		} else if (mouseButtonClick == 2) {
+			if (tab == SocialPanelLayout.CLAN) addClanMemberActions(clan.username[hovered]);
+			else if (tab == SocialPanelLayout.PARTY) addPartyMemberActions(party.username[hovered]);
+			else addOnlinePlayerActions(onlineSidebarPlayers.get(hovered).name);
+		}
+	}
+
+	private void drawSocialName(SocialPanelLayout layout, String value, int x, int baseline, int right, int color) {
+		if (value == null) return;
+		MudClientGraphics surface = getSurface();
+		int available = right - x;
+		if (surface.stringWidth(layout.bodyFont, value) > available) {
+			int end = value.length();
+			int ellipsis = surface.stringWidth(layout.bodyFont, "...");
+			while (end > 0 && surface.stringWidth(layout.bodyFont, value.substring(0, end)) + ellipsis > available) end--;
+			value = value.substring(0, end) + "...";
+		}
+		surface.drawString(value, x, baseline, color, layout.bodyFont);
+	}
+
+	private void drawSocialPartyMember(SocialPanelLayout layout, int index, int x, int y, int baseline) {
+		MudClientGraphics surface = getSurface();
+		int right = layout.scrollbarLeft() - layout.padding;
+		int barWidth = (right - x) / 4;
+		String level = "Lvl " + party.cbLvl[index];
+		int levelX = right - barWidth - layout.padding - surface.stringWidth(layout.bodyFont, level);
+		String name = party.username[index] == null ? "Unknown" : party.username[index];
+		drawSocialName(layout, name, x, baseline, levelX - layout.padding,
+			party.onlinePartyMember[index] != 0 ? 0x69E875 : 0xFF8585);
+		surface.drawString(level, levelX, baseline, InterfacePalette.MUTED_TEXT, layout.bodyFont);
+		int maxHits = Math.max(1, party.maxHp[index]);
+		int hits = Math.max(0, Math.min(maxHits, party.curHp[index]));
+		int barHeight = Math.max(3, layout.padding / 2);
+		int barY = y + (layout.rowHeight - barHeight) / 2;
+		surface.drawBox(right - barWidth, barY, barWidth, barHeight, 0xAA3030);
+		surface.drawBox(right - barWidth, barY, hits * barWidth / maxHits, barHeight, 0x50C96A);
+	}
+
+	private void openAddFriendPrompt() {
+		if (openScaledSocialPrompt(SocialTextPrompt.Action.ADD_FRIEND, null)) return;
+		inputTextFinal = "";
+		inputTextCurrent = "";
+		panelSocialPopup_Mode = SocialPopupMode.ADD_FRIEND;
+		if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+	}
+
+	private void openFriendMessagePrompt(String name) {
+		if (openScaledSocialPrompt(SocialTextPrompt.Action.PRIVATE_MESSAGE, name)) return;
+		panelSocialPopup_Mode = SocialPopupMode.MESSAGE_FRIEND;
+		chatMessageTarget = name;
+		chatMessageInputCommit = "";
+		chatMessageInput = "";
+		if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) clientPort.drawKeyboard();
+	}
+
+	public void openPartyInvitePrompt() {
+		if (openScaledSocialPrompt(SocialTextPrompt.Action.PARTY_INVITE, null)) return;
+		showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
+	}
+
+	void openClanInvitePrompt() {
+		if (!clan.inClan() || !clan.isAllowed(1)) return;
+		openScaledSocialPrompt(SocialTextPrompt.Action.CLAN_INVITE, null);
+	}
+
+	public boolean openScaledClanWindow() {
+		if (!S_WANT_CLANS || chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		clanWindow = new ClanWindow(clan.inClan() ? ClanWindow.View.MEMBERS : ClanWindow.View.CREATE);
+		return true;
+	}
+
+	private boolean openScaledClanSearch() {
+		if (!S_WANT_CLANS || chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		clanWindow = new ClanWindow(ClanWindow.View.SEARCH);
+		clan.getClanInterface().sendClanSearch();
+		return true;
+	}
+
+	public boolean openScaledClanInvitation(String inviter, String clanName) {
+		if (!S_WANT_CLANS || chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		clanInvitation = new ClanWindow(inviter, clanName);
+		return true;
+	}
+
+	private boolean openClanConfirmation(ClanWindow.Confirmation action, String target) {
+		if (!S_WANT_CLANS || chatLayout == null || isAndroid() || !clan.inClan()) return false;
+		closeTopMouseMenu();
+		ClanWindow window = new ClanWindow(ClanWindow.View.MEMBERS);
+		window.confirm(action, target);
+		clanWindow = window;
+		return true;
+	}
+
+	public boolean openScaledPartyWindow() {
+		if (chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		partyWindow = new PartyWindow(party.inParty() ? PartyWindow.View.MANAGE : PartyWindow.View.CREATE);
+		return true;
+	}
+
+	public boolean openScaledPartyInvitation(String inviter, String partyName) {
+		if (chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		partyInvitation = new PartyWindow(inviter, partyName);
+		return true;
+	}
+
+	private boolean openScaledSocialPrompt(SocialTextPrompt.Action action, String recipient) {
+		if (chatLayout == null || isAndroid()) return false;
+		closeTopMouseMenu();
+		socialTextPrompt = new SocialTextPrompt(action, recipient);
+		return true;
+	}
+
+	public boolean hasSocialPromptInput() {
+		return (partyInvitation != null || socialTextPrompt != null || partyWindow != null
+			|| clanInvitation != null || clanWindow != null)
+			&& chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank() && !showDialogShop
+			&& !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails;
+	}
+
+	public boolean handleSocialPromptKey(char key, int code, boolean shortcut) {
+		if (!hasSocialPromptInput()) return false;
+		ClanWindow invitationToClan = clanInvitation;
+		ClanWindow clanSetup = clanWindow;
+		PartyWindow invitation = partyInvitation;
+		SocialTextPrompt prompt = socialTextPrompt;
+		PartyWindow window = partyWindow;
+		if (invitationToClan != null) invitationToClan.keyPressed(key, code, shortcut);
+		else if (invitation != null) invitation.keyPressed(code);
+		else if (prompt != null) prompt.keyPressed(key, code, shortcut);
+		else if (clanSetup != null) clanSetup.keyPressed(key, code, shortcut);
+		else if (window != null) window.keyPressed(code);
+		return true;
+	}
+
+	private void drawSocialPrompt() {
+		int bottom = chatLayout.entryTop();
+		if (clanInvitation != null) {
+			if (clanInvitation.draw(this, bottom)) clanInvitation = null;
+		} else if (partyInvitation != null) {
+			if (partyInvitation.draw(this, bottom)) partyInvitation = null;
+		} else if (socialTextPrompt != null) {
+			drawSocialTextPrompt(bottom);
+		} else if (clanWindow != null) {
+			if (clanWindow.draw(this, bottom)) clanWindow = null;
+		} else if (partyWindow != null && partyWindow.draw(this, bottom)) {
+			partyWindow = null;
+		}
+		mouseButtonClick = 0;
+	}
+
+	private void drawSocialTextPrompt(int bottom) {
+		SocialTextPrompt prompt = socialTextPrompt;
+		SocialTextPrompt.Result result = prompt.draw(this, bottom);
+		if (result == SocialTextPrompt.Result.OPEN) return;
+		socialTextPrompt = null;
+		if (result == SocialTextPrompt.Result.SUBMIT) {
+			switch (prompt.action) {
+				case ADD_FRIEND: addFriend(prompt.value().trim()); break;
+				case PRIVATE_MESSAGE: putStringPair(prompt.recipient, prompt.value()); break;
+				case CLAN_INVITE:
+					if (clan.inClan() && clan.isAllowed(1)) clan.getClanInterface().sendClanInvite(prompt.value().trim());
+					break;
+				case PARTY_INVITE: addPartyInv(prompt.value().trim()); break;
+			}
+		}
+	}
+
+	private void addPartyMemberActions(String name) {
+		if (name == null || StringUtil.displayNameToKey(name).equals(StringUtil.displayNameToKey(localPlayer.accountName))) return;
+		if (party.isAllowed(0)) {
+			menuCommon.addItem_With2Strings("Kick user", "@whi@" + name, name, MenuItemAction.PARTY_MENU_KICK, name);
+		}
+		menuCommon.addItem_With2Strings("Message", "@whi@" + name, name, MenuItemAction.CHAT_MESSAGE, name);
+	}
+
+	private void addClanMemberActions(String name) {
+		if (name == null) return;
+		String key = StringUtil.displayNameToKey(name);
+		if (key.equals(StringUtil.displayNameToKey(localPlayer.accountName))) return;
+		if ((clan.isClanLeader() || clan.isAllowed(0))
+			&& !key.equals(StringUtil.displayNameToKey(clan.getClanLeaderUsername()))) {
+			menuCommon.addItem_With2Strings("Kick user", "@whi@" + name, name, MenuItemAction.CLAN_MENU_KICK, name);
+		}
+		for (int index = 0; index < SocialLists.friendListCount; index++) {
+			if (key.equals(StringUtil.displayNameToKey(SocialLists.friendList[index]))) {
+				if ((SocialLists.friendListOnlineStatus[index] & 4) != 0) {
+					menuCommon.addItem_With2Strings("Message", "@whi@" + name, name, MenuItemAction.CHAT_MESSAGE, name);
+				}
+				return;
+			}
+		}
+		menuCommon.addItem_With2Strings("Add friend", "@whi@" + name, name, MenuItemAction.CHAT_ADD_FRIEND, name);
+	}
+
 	// social tab
 	private void drawUiTab5(boolean var1, boolean var2) {
 
@@ -14136,9 +15912,9 @@ public final class mudclient implements Runnable {
 
 		try {
 			int var3 = this.getSurface().width2 - 199;
-			int var4 = 36;
+			int var4 = getAuthenticSidebarPanelTop();
 			if (!C_CUSTOM_UI)
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.MENUSOCIAL.getDef()), var3 - 49, 3);
+				drawAuthenticSidebarHeader(GUIPARTS.MENUSOCIAL, "Social", var3, 196);
 			if (C_CUSTOM_UI)
 				var4 = maxY - 182;
 			short var5 = 196;
@@ -14306,10 +16082,12 @@ public final class mudclient implements Runnable {
 						&& this.mouseY < var6 + var4 + 12) {
 						buttonColorA = 0x263751;
 						if (getMouseClick() == 1) {
-							clan.showClanSetupInterface(clan.inClan());
-							clan.getClanInterface().clanActivePanel = 3;
-							clan.getClanInterface().resetAll();
-							clan.getClanInterface().sendClanSearch();
+							if (!openScaledClanSearch()) {
+								clan.showClanSetupInterface(clan.inClan());
+								clan.getClanInterface().clanActivePanel = 3;
+								clan.getClanInterface().resetAll();
+								clan.getClanInterface().sendClanSearch();
+							}
 							if (!C_CUSTOM_UI)
 								this.showUiTab = 0;
 							setMouseClick(0);
@@ -14377,13 +16155,13 @@ public final class mudclient implements Runnable {
 			 */
 
 			if (var1) {
-				int var15 = this.mouseY - 36;
+				int var15 = this.mouseY - getAuthenticSidebarPanelTop();
 				if (C_CUSTOM_UI)
 					var15 = this.mouseY - var4;
 				var3 = 199 + this.mouseX - this.getSurface().width2;
 				// handle Friends tab
 				if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 26) {
-					this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
+					this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
 					if (var15 <= 24 && this.mouseButtonClick == 1) {
 						if (S_WANT_CLANS) {
@@ -14406,7 +16184,7 @@ public final class mudclient implements Runnable {
 				// handle clan tab
 				if (S_WANT_CLANS) {
 					if (var3 >= 65 && var15 >= 0 && var3 < 132 && var15 < 26) {
-						this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
+						this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 						if (var15 <= 24 && this.mouseButtonClick == 1) {
 							if (var3 > 65 && var3 < 132 && (this.panelSocialTab == 2 || this.panelSocialTab == 0)) {
@@ -14422,7 +16200,7 @@ public final class mudclient implements Runnable {
 					if (C_CUSTOM_UI)
 						this.panelSocial.handleMouse(this.getMouseX(), this.getMouseY(), this.getMouseButtonDown(), this.getLastMouseDown());
 					else
-						this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
+						this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 							this.currentMouseButtonDown, this.lastMouseButtonDown);
 					if (this.mouseButtonClick == 1 && this.panelSocialTab == 0) {
 						index = this.panelSocial.getControlSelectedListIndex(this.controlSocialPanel);
@@ -14430,25 +16208,14 @@ public final class mudclient implements Runnable {
 							if (this.mouseX > minWidth) { // Remove Friend
 								this.removeFriend(SocialLists.friendList[index], (byte) 69);
 							} else if ((SocialLists.friendListOnlineStatus[index] & 4) != 0) { // Message Friend
-								this.panelSocialPopup_Mode = SocialPopupMode.MESSAGE_FRIEND;
-								this.chatMessageTarget = SocialLists.friendList[index];
-								this.chatMessageInputCommit = "";
-								this.chatMessageInput = "";
-								if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) {
-									clientPort.drawKeyboard();
-								}
+								openFriendMessagePrompt(SocialLists.friendList[index]);
 							}
 						}
 					}
 
 					// add friend
 					if (var15 > 166 && this.mouseButtonClick == 1 && this.panelSocialTab == 0) {
-						this.inputTextFinal = "";
-						this.inputTextCurrent = "";
-						this.panelSocialPopup_Mode = SocialPopupMode.ADD_FRIEND;
-						if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) {
-							clientPort.drawKeyboard();
-						}
+						openAddFriendPrompt();
 					}
 
 					this.mouseButtonClick = 0;
@@ -14458,58 +16225,18 @@ public final class mudclient implements Runnable {
 				else if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 225 && this.panelSocialTab == 2) {
 					if (this.mouseButtonClick == 2 && this.socialPartySelectedMember >= 0
 						&& this.socialPartySelectedMember < SocialLists.partyListCount) {
-						final String memberName = this.party.username[this.socialPartySelectedMember];
-						if (memberName != null && !StringUtil.displayNameToKey(memberName)
-							.equals(StringUtil.displayNameToKey(this.localPlayer.accountName))) {
-							if (this.party.isAllowed(0)) {
-								this.menuCommon.addItem_With2Strings("Kick user", "@whi@" + memberName, memberName,
-									MenuItemAction.PARTY_MENU_KICK, memberName);
-							}
-							this.menuCommon.addItem_With2Strings("Message", "@whi@" + memberName, memberName,
-								MenuItemAction.CHAT_MESSAGE, memberName);
-						}
+						addPartyMemberActions(party.username[socialPartySelectedMember]);
 					}
 				}
 
 				// clan interactions
 				else if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 295 && this.panelSocialTab == 1 && S_WANT_CLANS) {
-					this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
+					this.panelClan.handleMouse(var3 - 199 + this.getSurface().width2, var15 + getAuthenticSidebarPanelTop(),
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					if (this.mouseButtonClick >= 1 && this.panelSocialTab == 1) {
+					if (this.mouseButtonClick == 2) {
 						index = this.panelClan.getControlSelectedListIndex(this.controlClanPanel);
 						if (index >= 0 && this.mouseX < maxWidth) {
-							if (mouseButtonClick == 2) {
-								if (StringUtil.displayNameToKey(clan.username[index]).equals(StringUtil.displayNameToKey(this.localPlayer.accountName))) {
-									return;
-								}
-								if (clan.isClanLeader() || clan.isAllowed(0)) { // Kick From Clan
-									this.menuCommon.addItem_With2Strings("Kick user",
-										"@whi@" + clan.username[index], clan.username[index],
-										MenuItemAction.CLAN_MENU_KICK, clan.username[index]);
-								}
-								boolean isOnFriendList = false;
-								boolean isOnline = false;
-
-								for (int i = 0; i < SocialLists.friendListCount; ++i) {
-									if (StringUtil.displayNameToKey(clan.username[index]).equals(StringUtil.displayNameToKey(SocialLists.friendList[i]))) {
-										isOnFriendList = true;
-										if ((4 & SocialLists.friendListOnlineStatus[i]) != 0) {
-											isOnline = true;
-										}
-										break;
-									}
-								}
-								if (isOnFriendList) {
-									if (isOnline) {
-										this.menuCommon.addItem_With2Strings("Message", "@whi@" + clan.username[index], clan.username[index],
-											MenuItemAction.CHAT_MESSAGE, clan.username[index]);
-									}
-								} else {
-									this.menuCommon.addItem_With2Strings("Add friend", "@whi@" + clan.username[index], clan.username[index],
-										MenuItemAction.CHAT_ADD_FRIEND, clan.username[index]);
-
-								}
-							}
+							addClanMemberActions(clan.username[index]);
 						}
 					}
 				}
@@ -14568,7 +16295,7 @@ public final class mudclient implements Runnable {
 
 		final int buttonY = panelY + panelHeight - 40;
 		this.drawPartySocialButton(panelX + 4, buttonY, 58, "Invite", acceptInput, () -> {
-			this.showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
+			this.openPartyInvitePrompt();
 			if (!C_CUSTOM_UI) {
 				this.showUiTab = 0;
 			}
@@ -14597,6 +16324,402 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private boolean slotUsesAbilityPreview(int tab) {
+		return chatLayout != null && AbilityBook.forTab(tab) != null;
+	}
+
+	private AbilityPanelLayout abilityPanelLayout() {
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		MudClientGraphics surface = getSurface();
+		int width = surface.width2;
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		int anchor = C_CUSTOM_UI || toolbar == null ? getUITabsY() : toolbar.bottom();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatTop = chatLayout.entryTop();
+		if (abilityPanelLayout == null || abilityLayoutWidth != width || abilityLayoutAnchor != anchor
+			|| abilityLayoutChatRight != chatRight || abilityLayoutChatTop != chatTop
+			|| abilityLayoutSize != size || abilityLayoutText != text || abilityLayoutBottom != C_CUSTOM_UI) {
+			int toggleWidth = Math.max(surface.stringWidth(text.labelFont, "Text view"),
+				surface.stringWidth(text.labelFont, "Icon view")) + 2 * size.pixels(10);
+			abilityPanelLayout = new AbilityPanelLayout(width, anchor, C_CUSTOM_UI, chatRight, chatTop, size,
+				text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont), toggleWidth);
+			abilityLayoutWidth = width;
+			abilityLayoutAnchor = anchor;
+			abilityLayoutChatRight = chatRight;
+			abilityLayoutChatTop = chatTop;
+			abilityLayoutSize = size;
+			abilityLayoutText = text;
+			abilityLayoutBottom = C_CUSTOM_UI;
+		}
+		return abilityPanelLayout;
+	}
+
+	private static int abilityWheelIndex(AbilityBook book, SpellbookLayoutSettings.Mode mode) {
+		return book.ordinal() * 2 + mode.ordinal();
+	}
+
+	private void drawAbilityBook(AbilityBook book, boolean acceptsInput) {
+		AbilityPanelLayout layout = abilityPanelLayout();
+		MudClientGraphics surface = getSurface();
+		boolean toggleHovered = acceptsInput && layout.onToggle(mouseX, mouseY);
+		if (toggleHovered && mouseButtonClick == 1) {
+			abilityWheel.set(abilityWheelIndex(book, SpellbookLayoutSettings.mode(book)), 0);
+			SpellbookLayoutSettings.cycleMode(book);
+			saveSpellbookLayoutSettings();
+			mouseButtonClick = 0;
+		}
+		SpellbookLayoutSettings.Mode mode = SpellbookLayoutSettings.mode(book);
+		boolean text = mode == SpellbookLayoutSettings.Mode.TEXT;
+		int width = layout.right - layout.left;
+		surface.drawBoxAlpha(layout.left, layout.top, width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
+		surface.drawBoxBorder(layout.left, width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
+		drawSidebarTitle(book.title, layout.left, layout.top, width, layout.headerHeight);
+		int toggleFont = sidebarHeaderFont(layout.toggleHeight());
+		drawInterfacePreviewTab(layout.toggleLeft, layout.toggleTop(), layout.right - layout.padding - layout.toggleLeft,
+			layout.toggleHeight(), text ? "Icon view" : "Text view", toggleFont,
+			layout.toggleTop() + (layout.toggleHeight() + surface.fontHeight(toggleFont)) / 2 - 3, false, toggleHovered);
+
+		int bookIndex = book.ordinal();
+		int count = abilityCount(book);
+		int maxScroll = layout.maxScroll(count, text);
+		int scroll = Math.max(0, Math.min(maxScroll,
+			abilityScroll[bookIndex][mode.ordinal()] + abilityWheel.getAndSet(abilityWheelIndex(book, mode), 0)));
+		int listHeight = layout.lastRowY - layout.firstRowY;
+		if (maxScroll > 0 && acceptsInput && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
+			&& mouseX < layout.right - layout.padding && mouseY >= layout.firstRowY && mouseY < layout.lastRowY) {
+			scroll = (mouseY - layout.firstRowY) * maxScroll / Math.max(1, listHeight - 1);
+			mouseButtonClick = 0;
+		}
+		abilityScroll[bookIndex][mode.ordinal()] = scroll;
+		int hovered = acceptsInput ? layout.entryAt(mouseX, mouseY, scroll, count, text) : -1;
+		if (hovered >= 0 && abilityFocus[bookIndex] != hovered) {
+			abilityFocus[bookIndex] = hovered;
+			abilityDetailScroll[bookIndex] = 0;
+			abilityDetailWheel.set(bookIndex, 0);
+		}
+		int columns = layout.columns(text);
+		int first = scroll * columns;
+		int last = Math.min(count, first + layout.visibleRows(text) * columns);
+		int summonLevel = book == AbilityBook.SUMMONING ? summoningBaseLevel() : 0;
+		int prayerFree = book == AbilityBook.PRAYER
+			? Math.max(0, getPrayerAllocationPoints() - getAllocatedPrayerPoints()) : 0;
+		for (int index = first; index < last; index++) {
+			int id = abilityId(book, index);
+			drawAbilityEntry(layout, book, id, index - first, text, index == hovered,
+				abilityState(book, id, summonLevel, prayerFree));
+		}
+		if (maxScroll > 0) {
+			int thumbSize = Math.min(listHeight, Math.max(layout.padding * 2, listHeight * layout.visibleRows(text)
+				/ (layout.visibleRows(text) + maxScroll)));
+			int thumbY = layout.firstRowY + (listHeight - thumbSize) * scroll / maxScroll;
+			surface.drawBox(layout.scrollbarLeft() + 1, layout.firstRowY, layout.scrollWidth - 2, listHeight, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbY, layout.scrollWidth - 4, thumbSize, InterfacePalette.SCROLL_THUMB);
+		}
+		if (count > 0) {
+			int focus = Math.min(abilityFocus[bookIndex], count - 1);
+			drawAbilityDetails(layout, book, abilityId(book, focus), prayerFree);
+		} else {
+			surface.drawString("No abilities available", layout.left + layout.padding, layout.firstRowY + layout.lineHeight,
+				InterfacePalette.MUTED_TEXT, layout.bodyFont);
+		}
+		if (hovered >= 0 && mouseButtonClick == 1) {
+			int id = abilityId(book, hovered);
+			switch (book) {
+				case MAGE: activateMagicMenuSpell(id); break;
+				case CLERIC: activateClericSpell(id); break;
+				case PRAYER: togglePrayerMenuPrayer(id); break;
+				case SUMMONING: castSummon(id); break;
+			}
+			mouseButtonClick = 0;
+		}
+	}
+
+	private int abilityCount(AbilityBook book) {
+		switch (book) {
+			case MAGE: return getVisibleMagicSpellCount();
+			case CLERIC: return clericSpellbook.size();
+			case PRAYER: return EntityHandler.prayerCount();
+			case SUMMONING: return SUMMONING_NAMES.length;
+			default: throw new AssertionError(book);
+		}
+	}
+
+	private int abilityId(AbilityBook book, int index) {
+		if (book == AbilityBook.MAGE) return getMagicMenuSpellIndex(index);
+		if (book == AbilityBook.CLERIC) return clericSpellbook.codeAtIndex(index);
+		return index;
+	}
+
+	private String abilityName(AbilityBook book, int id) {
+		switch (book) {
+			case MAGE: return EntityHandler.getSpellDef(id).getName();
+			case CLERIC: return clericSpellbook.get(id).getName();
+			case PRAYER: return EntityHandler.getPrayerDef(id).getName();
+			case SUMMONING: return SUMMONING_NAMES[id];
+			default: throw new AssertionError(book);
+		}
+	}
+
+	private int abilityRequirement(AbilityBook book, int id) {
+		switch (book) {
+			case MAGE: return EntityHandler.getSpellDef(id).getReqLevel();
+			case CLERIC: return clericSpellbook.get(id).getWorshipLevel();
+			case PRAYER: return getPrayerPointCost(id);
+			case SUMMONING: return SUMMONING_LEVELS[id];
+			default: throw new AssertionError(book);
+		}
+	}
+
+	private int summoningBaseLevel() {
+		int index = skillNameLongArray.indexOf("Summoning");
+		return index < 0 ? Integer.MAX_VALUE : playerStatBase[index];
+	}
+
+	private enum AbilityState {
+		READY("", 0xFFFFFF), LOCKED("", InterfacePalette.DISABLED_TEXT), SELECTED("Selected", 0xFFDC82),
+		AUTO_CAST("Auto-cast", 0x9FE0AC), ACTIVE("Active", 0x9FE0AC);
+		final String label;
+		final int color;
+		AbilityState(String label, int color) {
+			this.label = label;
+			this.color = color;
+		}
+	}
+
+	private AbilityState abilityState(AbilityBook book, int id, int summonLevel, int prayerFree) {
+		switch (book) {
+			case MAGE:
+				if (autoCastSpell == id) return AbilityState.AUTO_CAST;
+				if (selectedSpell == id) return AbilityState.SELECTED;
+				return playerStatCurrent[6] >= abilityRequirement(book, id) && hasSpellRunes(id)
+					? AbilityState.READY : AbilityState.LOCKED;
+			case CLERIC:
+				ClericSpellDef spell = clericSpellbook.get(id);
+				return hasClericWorshipLevel(spell) && hasClericSigils(spell) ? AbilityState.READY : AbilityState.LOCKED;
+			case PRAYER:
+				if (prayerOn[id]) return AbilityState.ACTIVE;
+				return prayerFree >= getPrayerPointCost(id) && (id != GOD_BOLTS_PRAYER_INDEX || hasMatchingGodCrossbow())
+					? AbilityState.READY : AbilityState.LOCKED;
+			case SUMMONING:
+				if (summonLevel < SUMMONING_LEVELS[id]) return AbilityState.LOCKED;
+				for (int item = 0; item < SUMMONING_COST_ITEM_IDS[id].length; item++) {
+					if (getInventoryCount(SUMMONING_COST_ITEM_IDS[id][item], false) < SUMMONING_COST_AMOUNTS[id][item]) {
+						return AbilityState.LOCKED;
+					}
+				}
+				return AbilityState.READY;
+			default: throw new AssertionError(book);
+		}
+	}
+
+	private void drawAbilityEntry(AbilityPanelLayout layout, AbilityBook book, int id, int visible,
+								  boolean text, boolean hovered, AbilityState state) {
+		MudClientGraphics surface = getSurface();
+		int x = layout.entryX(visible, text);
+		int y = layout.entryY(visible, text);
+		int width = text ? layout.scrollbarLeft() - x - 1 : layout.iconSize;
+		int height = text ? layout.rowHeight - 1 : layout.iconSize;
+		boolean active = !state.label.isEmpty();
+		surface.drawBoxAlpha(x, y, width, height,
+			hovered ? InterfacePalette.CONTROL_SELECTED : active ? 0x345949 : state == AbilityState.LOCKED ? InterfacePalette.CONTROL_DISABLED : InterfacePalette.ROW, 230);
+		if (hovered || active || !text) {
+			surface.drawBoxBorder(x, width, y, height, hovered ? 0xFFDC82 : active ? state.color : InterfacePalette.BORDER);
+		}
+
+		if (text) {
+			int baseline = y + (height + layout.lineHeight) / 2 - 3;
+			String status = active ? state.label : (book == AbilityBook.PRAYER ? "Pts " : "Lv. ") + abilityRequirement(book, id);
+			int statusX = x + width - layout.padding - surface.stringWidth(layout.bodyFont, status);
+			surface.drawString(status, statusX, baseline, state.color, layout.bodyFont);
+			surface.setClip(x + 1, statusX - layout.padding, y + height, y);
+			try {
+				surface.drawString(abilityName(book, id), x + layout.padding, baseline, state.color, layout.bodyFont);
+			} finally {
+				surface.clearClip();
+			}
+			return;
+		}
+
+		Sprite icon;
+		switch (book) {
+			case MAGE: icon = getSpellIconSprite(id); break;
+			case CLERIC: icon = getClericIconSprite(id); break;
+			case PRAYER: icon = getPrayerIconSprite(id); break;
+			case SUMMONING: icon = getSummoningIconSprite(id); break;
+			default: throw new AssertionError(book);
+		}
+		int inset = Math.max(3, layout.iconSize / 10);
+		int iconSize = layout.iconSize - 2 * inset;
+		if (icon != null) {
+			surface.drawSprite(icon, x + inset, y + inset, iconSize, iconSize, 5924);
+		} else if (book == AbilityBook.CLERIC) {
+			ItemDef def = EntityHandler.getItemDef(clericSpellbook.get(id).getSpellbookIconItemId());
+			if (def != null) drawInventoryPreviewIcon(def, false, x + inset, y + inset, iconSize, iconSize);
+		} else {
+			surface.drawColoredStringCentered(x + width / 2, getSpellInitials(abilityName(book, id)), state.color,
+				0, layout.labelFont, y + (height + layout.labelHeight) / 2 - 2);
+		}
+		if (state == AbilityState.LOCKED && (icon != null || book == AbilityBook.CLERIC)) {
+			surface.drawBoxAlpha(x + 1, y + 1, width - 2, height - 2, InterfacePalette.INSET, 120);
+		}
+	}
+
+	private static final String ABILITY_COST_LABEL = "Cost:";
+
+	private void drawAbilityDetails(AbilityPanelLayout layout, AbilityBook book, int id, int prayerFree) {
+		MudClientGraphics surface = getSurface();
+		int x = layout.left + layout.padding;
+		int contentRight = layout.right - layout.padding - layout.scrollWidth;
+		int width = contentRight - x;
+		ToIntFunction<String> measure = text -> surface.stringWidth(layout.bodyFont, text);
+		List<String> lines = new ArrayList<>();
+		List<AbilityCost> costs = new ArrayList<>();
+		int required = abilityRequirement(book, id);
+		switch (book) {
+			case MAGE:
+				SpellDef spell = EntityHandler.getSpellDef(id);
+				ElementalSpellDisplayMetadata metadata = ElementalSpellDisplayMetadata.resolve(id, spell);
+				lines.add("Magic level " + required);
+				if (metadata != null) {
+					lines.add("Max hit " + getElementalSpellMaxHit(metadata));
+					lines.addAll(ClericTextLayout.wrap("Applies " + metadata.getEffectName(), width, measure));
+				} else {
+					lines.addAll(ClericTextLayout.wrap(getGeneralSpellDescription(spell), width, measure));
+				}
+				for (Entry<Integer, Integer> reagent : spell.getRunesRequired()) {
+					costs.add(abilityCost(reagent.getKey(), reagent.getValue(), null));
+				}
+				costs.sort(Comparator.comparingInt(cost -> cost.itemId));
+				break;
+			case CLERIC:
+				ClericSpellDef cleric = clericSpellbook.get(id);
+				String requirement = "Worship level " + required
+					+ (clericHolyPowerKnown ? "   Holy Power " + playerStatEquipment[7] : "");
+				lines.addAll(ClericTextLayout.wrap(requirement, width, measure));
+				lines.addAll(ClericTextLayout.wrap(ClericSpellSummary.describe(cleric), width, measure));
+				for (ClericCostDef cost : cleric.getCosts()) {
+					costs.add(abilityCost(cost.getItemId(), cost.getCount(), false));
+				}
+				break;
+			case PRAYER:
+				PrayerDef prayer = EntityHandler.getPrayerDef(id);
+				String description = prayer.getDescription();
+				String baseCost = "Reserve " + prayer.getPointCost() + " prayer points. ";
+				if (description != null) {
+					if (description.startsWith(baseCost)) {
+						description = description.substring(baseCost.length());
+					}
+					lines.addAll(ClericTextLayout.wrap(description, width, measure));
+				}
+				String reservation = ABILITY_COST_LABEL + " " + required + " Prayer "
+					+ (required == 1 ? "point" : "points") + " reserved (" + prayerFree + "/" + getPrayerAllocationPoints() + " free)";
+				lines.addAll(ClericTextLayout.wrap(reservation, width, measure));
+				break;
+			case SUMMONING:
+				lines.addAll(ClericTextLayout.wrap("Summoning level " + required, width, measure));
+				lines.addAll(ClericTextLayout.wrap(SUMMONING_DESCRIPTIONS[id], width, measure));
+				for (int item = 0; item < SUMMONING_COST_ITEM_IDS[id].length; item++) {
+					costs.add(abilityCost(SUMMONING_COST_ITEM_IDS[id][item], SUMMONING_COST_AMOUNTS[id][item], false));
+				}
+				break;
+			default: throw new AssertionError(book);
+		}
+
+		int titleY = layout.lastRowY + layout.labelHeight + layout.padding;
+		int contentTop = titleY + 3;
+		surface.drawLineHoriz(x, layout.lastRowY + 2, layout.right - layout.padding - x, InterfacePalette.BORDER);
+		surface.drawString(abilityName(book, id), x, titleY - 3, 0xFFDC82, layout.labelFont);
+
+		int iconHeight = Math.max(1, layout.lineHeight - 2);
+		int iconWidth = iconHeight * 3 / 2;
+		int gap = Math.max(2, layout.padding / 2);
+		int costStart = lines.size();
+		int totalLines = costStart + positionAbilityCosts(costs, width, iconWidth, gap, measure);
+		int bookIndex = book.ordinal();
+		int height = layout.bottom - contentTop - 2;
+		int visible = Math.max(1, height / layout.lineHeight);
+		int max = Math.max(0, totalLines - visible);
+		int scroll = Math.max(0, Math.min(max, abilityDetailScroll[bookIndex] + abilityDetailWheel.getAndSet(bookIndex, 0)));
+		abilityDetailScroll[bookIndex] = scroll;
+		surface.setClip(x, contentRight, layout.bottom - 2, contentTop);
+		try {
+			for (int index = scroll; index < Math.min(costStart, scroll + visible); index++) {
+				int baseline = contentTop + (index - scroll + 1) * layout.lineHeight - 3;
+				surface.drawString(lines.get(index), x, baseline, 0xFFFFFF, layout.bodyFont);
+			}
+			if (!costs.isEmpty() && costStart >= scroll && costStart < scroll + visible) {
+				int baseline = contentTop + (costStart - scroll + 1) * layout.lineHeight - 3;
+				surface.drawString(ABILITY_COST_LABEL, x, baseline, 0xFFFFFF, layout.bodyFont);
+			}
+			for (AbilityCost cost : costs) {
+				int row = costStart + cost.row - scroll;
+				if (row < 0 || row >= visible) continue;
+				int y = contentTop + row * layout.lineHeight;
+				int baseline = y + layout.lineHeight - 3;
+				int costX = x + cost.offset;
+				if (cost.definition == null) {
+					surface.drawString(cost.fallbackName, costX, baseline, 0xFFFFFF, layout.bodyFont);
+				} else {
+					drawInventoryPreviewIcon(cost.definition, false, costX, y, iconWidth, iconHeight);
+				}
+				surface.drawString(cost.quantity, costX + cost.iconSpace, baseline, cost.color, layout.bodyFont);
+			}
+		} finally {
+			surface.clearClip();
+		}
+		if (max > 0 && height > 0) {
+			int thumb = Math.min(height, Math.max(8, height * visible / totalLines));
+			int thumbY = contentTop + (height - thumb) * scroll / max;
+			surface.drawBox(contentRight + 2, contentTop, layout.scrollWidth - 3, height, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(contentRight + 3, thumbY, layout.scrollWidth - 5, thumb, InterfacePalette.SCROLL_THUMB);
+		}
+	}
+
+	private static int positionAbilityCosts(List<AbilityCost> costs, int width, int iconWidth, int gap,
+											ToIntFunction<String> measure) {
+		if (costs.isEmpty()) return 0;
+		int row = 0;
+		int offset = measure.applyAsInt(ABILITY_COST_LABEL) + gap;
+		for (AbilityCost cost : costs) {
+			cost.iconSpace = cost.definition == null
+				? measure.applyAsInt(cost.fallbackName) + gap
+				: iconWidth;
+			int pairWidth = cost.iconSpace + measure.applyAsInt(cost.quantity);
+			if (offset > 0 && offset + pairWidth > width) {
+				row++;
+				offset = 0;
+			}
+			cost.row = row;
+			cost.offset = offset;
+			offset += pairWidth + 2 * gap;
+		}
+		return row + 1;
+	}
+
+	private AbilityCost abilityCost(int id, int required, Boolean noted) {
+		return new AbilityCost(id, EntityHandler.getItemDef(id), getInventoryCount(id, noted), required);
+	}
+
+	private static final class AbilityCost {
+		final int itemId;
+		final ItemDef definition;
+		final String fallbackName;
+		final String quantity;
+		final int color;
+		int row;
+		int offset;
+		int iconSpace;
+
+		AbilityCost(int itemId, ItemDef definition, int available, int required) {
+			this.itemId = itemId;
+			this.definition = definition;
+			this.fallbackName = definition == null ? "Item " + itemId : "";
+			this.quantity = available + "/" + required;
+			this.color = available >= required ? 0x00FF00 : 0xFF0000;
+		}
+	}
+
 	// spells menu
 	private int getAbilitiesExtraHeight() {
 		return isAndroid() && this.magicOrPrayerList == 0
@@ -14604,13 +16727,13 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getAbilitiesPanelHeight() {
-		int available = C_CUSTOM_UI ? getUITabsY() : getGameHeight() - 36 - 4;
+		int available = C_CUSTOM_UI ? getUITabsY() : getGameHeight() - getAuthenticSidebarPanelTop() - 4;
 		return Math.max(132, Math.min(CUSTOM_UI_MAGIC_PANEL_HEIGHT,
 			available - getAbilitiesExtraHeight()));
 	}
 
 	private int getAbilitiesPanelTop() {
-		return C_CUSTOM_UI ? getUITabsY() - getAbilitiesPanelHeight() - getAbilitiesExtraHeight() : 36;
+		return C_CUSTOM_UI ? getUITabsY() - getAbilitiesPanelHeight() - getAbilitiesExtraHeight() : getAuthenticSidebarPanelTop();
 	}
 
 	private void drawUiTabMagic(boolean var1, byte var2) {
@@ -14619,7 +16742,7 @@ public final class mudclient implements Runnable {
 			int magicPanelYStart = getAbilitiesPanelTop();
 			int magicPanelHeight = getAbilitiesPanelHeight();
 			if (!C_CUSTOM_UI)
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.MENUSPELLS.getDef()), magicPanelX - 49, 3);
+				drawAuthenticSidebarHeader(GUIPARTS.MENUSPELLS, "Magic and Prayer", magicPanelX, 196);
 			short magicPanelWidth = 196;
 			int inactiveTabColor = GenUtil.buildColor(160, 160, 160);
 			int activeTabColor = GenUtil.buildColor(220, 220, 220);
@@ -14935,7 +17058,7 @@ public final class mudclient implements Runnable {
 
 				if (var1) {
 					magicPanelX = 199 - this.getSurface().width2 + this.mouseX;
-					int relativeMouseY = this.mouseY - 36;
+					int relativeMouseY = this.mouseY - getAuthenticSidebarPanelTop();
 					int maxClickableY = magicPanelHeight + getAbilitiesExtraHeight();
 					if (C_CUSTOM_UI)
 						relativeMouseY = this.mouseY - magicPanelYStart;
@@ -14943,7 +17066,7 @@ public final class mudclient implements Runnable {
 						if (C_CUSTOM_UI)
 							this.panelMagic.handleMouse(this.getMouseX(), this.getMouseY(), this.getMouseButtonDown(), this.getLastMouseDown());
 						else
-							this.panelMagic.handleMouse(magicPanelX + (this.getSurface().width2 - 199), relativeMouseY + 36,
+							this.panelMagic.handleMouse(magicPanelX + (this.getSurface().width2 - 199), relativeMouseY + magicPanelYStart,
 								this.currentMouseButtonDown, this.lastMouseButtonDown);
 						if (relativeMouseY <= 24 && this.mouseButtonClick == 1) {
 							int clickedList = magicPanelX < firstTabWidth
@@ -15276,7 +17399,7 @@ public final class mudclient implements Runnable {
 		this.packetHandler.getClientStream().finishPacket();
 		this.selectedSpell = -1;
 		this.selectedItemInventoryIndex = -1;
-		this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+		this.showUiTab = chatLayout == null ? Config.MAGIC_AND_PRAYER_TAB : AbilityBook.CLERIC.toolbarTab;
 		this.magicOrPrayerList = 0;
 	}
 
@@ -15553,7 +17676,7 @@ public final class mudclient implements Runnable {
 		this.packetHandler.getClientStream().finishPacket();
 		this.selectedSpell = -1;
 		this.selectedItemInventoryIndex = -1;
-		this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+		this.showUiTab = chatLayout == null ? Config.MAGIC_AND_PRAYER_TAB : AbilityBook.SUMMONING.toolbarTab;
 		this.magicOrPrayerList = 2;
 	}
 
@@ -15777,6 +17900,10 @@ public final class mudclient implements Runnable {
 			return "Max hit: " + this.getElementalSpellMaxHit(metadata) + ". Applies "
 				+ metadata.getEffectName() + ".";
 		}
+		return this.shortenTooltipDescription(getGeneralSpellDescription(spellDef));
+	}
+
+	private String getGeneralSpellDescription(SpellDef spellDef) {
 		String name = spellDef.getName().toLowerCase(Locale.ENGLISH);
 		if (name.contains("teleport")) {
 			return "Teleports you after a short charge.";
@@ -15787,7 +17914,7 @@ public final class mudclient implements Runnable {
 		if (name.contains("alchemy")) {
 			return "Turns items into coins.";
 		}
-		return this.shortenTooltipDescription(spellDef.getDescription());
+		return spellDef.getDescription() == null ? "" : spellDef.getDescription();
 	}
 
 	private int getElementalSpellMaxHit(ElementalSpellDisplayMetadata metadata) {
@@ -16083,6 +18210,25 @@ public final class mudclient implements Runnable {
 		return this.prayerIconSprites[prayerIndex];
 	}
 
+	public SkillGuideWindow.Icon skillGuideItemIcon(int itemId) {
+		ItemDef def = EntityHandler.getItemDef(itemId);
+		return def == null ? null : (x, y, size) ->
+			drawInventoryPreviewIcon(def, false, x, y + size / 6, size, size * 2 / 3);
+	}
+
+	public SkillGuideWindow.Icon skillGuidePrayerIcon(String prayerName) {
+		String assetName = getPrayerIconAssetName(prayerName);
+		Sprite sprite = guidePrayerIcons.computeIfAbsent(assetName,
+			name -> loadExternalPrayerIcon(name, 2, new HashMap<>()));
+		return sprite == null ? null : (x, y, size) -> getSurface().drawSprite(sprite, x, y, size, size, 5924);
+	}
+
+	public SkillGuideWindow.Icon skillGuideClericIcon(ClericSpellDef spell) {
+		Sprite sprite = getClericIconSprite(spell.getStableCode());
+		return sprite == null ? skillGuideItemIcon(spell.getSpellbookIconItemId())
+			: (x, y, size) -> getSurface().drawSprite(sprite, x, y, size, size, 5924);
+	}
+
 	private Sprite getSummoningIconSprite(int summonIndex) {
 		if (summonIndex < 0 || summonIndex >= this.summoningIconSprites.length) {
 			return null;
@@ -16108,6 +18254,135 @@ public final class mudclient implements Runnable {
 		return initials.toString();
 	}
 
+	private MinimapFrameLayout minimapFrameLayout() {
+		ChatPanelLayout chat = chatLayout;
+		if (chat == null) return null;
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar == null) return null;
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		if (minimapFrame == null || minimapFrameToolbar != toolbar || minimapFrameText != text) {
+			MudClientGraphics surface = getSurface();
+			int anchor = C_CUSTOM_UI ? toolbar.top : toolbar.bottom();
+			minimapFrame = new MinimapFrameLayout(surface.width2, getGameHeight(), anchor, C_CUSTOM_UI,
+				chat.left + chat.width, chat.entryTop(), GameInterfaceSettings.size(), text,
+				surface.fontHeight(text.labelFont));
+			minimapFrameToolbar = toolbar;
+			minimapFrameText = text;
+		}
+		return minimapFrame;
+	}
+
+	private void drawMinimapFrame(MinimapFrameLayout frame, boolean acceptInput) {
+		MapViewport viewport = frame.viewport;
+		if (frame.bottom <= frame.top || viewport.bottom <= viewport.top) return;
+		MudClientGraphics surface = getSurface();
+		surface.drawBoxAlpha(frame.left, frame.top, frame.width, frame.bottom - frame.top, InterfacePalette.PANEL, 244);
+		surface.drawBoxBorder(frame.left, frame.width, frame.top, frame.bottom - frame.top, InterfacePalette.BORDER);
+		drawSidebarTitle("Minimap", frame.left, frame.top, frame.width, frame.headerHeight);
+		boolean expandHovered = frame.expand.contains(mouseX, mouseY);
+		WorldMapWindow.drawControl(surface, frame.expand, acceptInput && expandHovered, false);
+		if (acceptInput && expandHovered) {
+			String label = "Open world map";
+			int font = sidebarHeaderFont(frame.headerHeight);
+			int baseline = frame.top + (frame.headerHeight + surface.fontHeight(font)) / 2 - 3;
+			int labelX = frame.expand.x - frame.padding - surface.stringWidth(font, label);
+			surface.drawString(label, labelX, baseline, InterfacePalette.TEXT, font);
+		}
+		if (localPlayer == null) return;
+		int tileX = Math.floorDiv(localPlayer.currentX, tileSize);
+		int tileY = Math.floorDiv(localPlayer.currentZ, tileSize);
+		int compatibilityX = midRegionBaseX + tileX;
+		int compatibilityY = midRegionBaseZ + tileY;
+		int logicalX = packetHandler.getLogicalWorldX(compatibilityX);
+		int logicalY = packetHandler.getLogicalWorldY(compatibilityX, compatibilityY);
+		double worldX = logicalX + Math.floorMod(localPlayer.currentX, tileSize) / (double) tileSize;
+		double worldY = logicalY + Math.floorMod(localPlayer.currentZ, tileSize) / (double) tileSize;
+		if (minimapView == null) minimapView = new MinimapView();
+		minimapView.draw(surface, viewport, world.getWholeOverworldSourceSnapshot(), worldX, worldY,
+			localPlayer, players, playerCount, npcs, npcCount, tileSize, mouseX, mouseY);
+
+		if (acceptInput && frame.contains(mouseX, mouseY) && mouseButtonClick != 0) {
+			if (mouseButtonClick == 1 && expandHovered && !loadingArea) {
+				closeTopMouseMenu();
+				clearWorldMapGameInput();
+				worldMapWindow = new WorldMapWindow(worldX, worldY);
+			} else if (mouseButtonClick == 1 && minimapView.hasTerrain() && !loadingArea
+				&& viewport.contains(mouseX, mouseY)) {
+				int destinationX = tileX + minimapView.targetTileX(mouseX) - logicalX;
+				int destinationY = tileY + minimapView.targetTileY(mouseY) - logicalY;
+				if (destinationX >= 0 && destinationX < World.LOCAL_TILE_COUNT
+					&& destinationY >= 0 && destinationY < World.LOCAL_TILE_COUNT) {
+					walkToActionSource(playerLocalX, playerLocalZ, destinationX, destinationY, false);
+				}
+			}
+			mouseButtonClick = 0;
+		}
+	}
+
+	private void drawWorldMap(WorldMapWindow map) {
+		int tileX = Math.floorDiv(localPlayer.currentX, tileSize);
+		int tileY = Math.floorDiv(localPlayer.currentZ, tileSize);
+		int compatibilityX = midRegionBaseX + tileX;
+		int compatibilityY = midRegionBaseZ + tileY;
+		double worldX = packetHandler.getLogicalWorldX(compatibilityX)
+			+ Math.floorMod(localPlayer.currentX, tileSize) / (double) tileSize;
+		double worldY = packetHandler.getLogicalWorldY(compatibilityX, compatibilityY)
+			+ Math.floorMod(localPlayer.currentZ, tileSize) / (double) tileSize;
+		getSurface().loggedIn = false;
+		map.draw(getSurface(), minimapView, world.getWholeOverworldSourceSnapshot(), worldX, worldY);
+		if (map.shouldClose()) closeWorldMap();
+	}
+
+	private void clearWorldMapGameInput() {
+		currentMouseButtonDown = lastMouseButtonDown = mouseButtonClick = 0;
+		mouseButtonDownTime = mouseButtonItemCountIncrement = 0;
+		keyLeft = keyRight = keyUp = keyDown = pageUp = pageDown = false;
+	}
+
+	private void closeWorldMap() {
+		if (worldMapWindow != null) {
+			clearWorldMapGameInput();
+			worldMapWindow = null;
+		}
+	}
+
+	public boolean handleWorldMapPress(int x, int y, boolean primary) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		map.press(x, y, primary);
+		lastMouseAction = 0;
+		return true;
+	}
+
+	public boolean handleWorldMapMove(int x, int y) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		map.move(x, y);
+		lastMouseAction = 0;
+		return true;
+	}
+
+	public boolean handleWorldMapRelease(int x, int y, boolean primary) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		if (primary) map.release(x, y);
+		return true;
+	}
+
+	public boolean handleWorldMapWheel(int x, int y, int amount) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		map.scroll(x, y, amount);
+		return true;
+	}
+
+	public boolean handleWorldMapKey(int code) {
+		WorldMapWindow map = worldMapWindow;
+		if (map == null) return false;
+		if (code == java.awt.event.KeyEvent.VK_ESCAPE) map.requestClose();
+		return true;
+	}
+
 	// mini map menu
 	private void drawUiTabMinimap(boolean var1, byte var2) {
 		try {
@@ -16122,7 +18397,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawBox(posX - borderSize, posY - borderSize,
 					var4 + (borderSize * 2), var5 + (borderSize * 2), 0);
 			} else {
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.MINIMAPTAB.getDef()), posX - 89, 3);
+				drawAuthenticSidebarHeader(GUIPARTS.MINIMAPTAB, "Minimap", posX, MINIMAP_WIDTH);
 			}
 			this.getSurface().drawBox(posX, posY, var4, var5, 0);
 			this.getSurface().setClip(posX, var4 + posX, posY + var5, posY);
@@ -16252,90 +18527,158 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private int hudPixels(int baseline) {
+		return chatLayout == null ? baseline : GameInterfaceSettings.size().pixels((baseline * 7 + 2) / 4);
+	}
+
+	private int hudLabelFont() {
+		return chatLayout == null ? 1 : GameInterfaceSettings.textSize().labelFont;
+	}
+
 	private void drawPlayerStatusHud() {
-		int x = this.getSurface().width2 - TOP_MENU_BAR_WIDTH - HEALTH_HUD_WIDTH - HEALTH_HUD_RIGHT_OF_MENU_GAP;
-		int y = HEALTH_HUD_TOP_MARGIN;
-		x = Math.max(7 + AUTO_ATTACK_HUD_SIZE + AUTO_ATTACK_HUD_GAP, x);
-		this.drawAutoAttackHudButton(x - AUTO_ATTACK_HUD_SIZE - AUTO_ATTACK_HUD_GAP, y - 1);
-		this.drawPlayerHealthBar(x, y);
-		y += HEALTH_HUD_HEIGHT + HEALTH_HUD_COORDINATE_GAP;
-		if (this.showCoordinatesOverlay) {
-			int compatibilityX = this.playerLocalX + this.midRegionBaseX;
-			int compatibilityY = this.playerLocalZ + this.midRegionBaseZ;
-			int logicalX = this.packetHandler.getLogicalPlayerX(compatibilityX);
-			int logicalY = this.packetHandler.getLogicalPlayerY(
-				compatibilityX, compatibilityY);
-			int logicalLevel =
-				this.packetHandler.getLogicalWorldLevel(compatibilityY);
-			this.getSurface().drawString(
-				"Tile: @gre@(@whi@" + logicalX
-					+ "@gre@,@whi@" + logicalY
-					+ "@gre@,L@whi@" + logicalLevel + "@gre@)",
-				x, y, 0xFFFFFF, 1);
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		int right = toolbar != null && !C_CUSTOM_UI ? toolbar.left : getSurface().width2 - TOP_MENU_BAR_WIDTH;
+		int font = hudLabelFont();
+		int lineHeight = getSurface().fontHeight(font);
+		int width = hudPixels(HEALTH_HUD_WIDTH);
+		int height = chatLayout == null ? HEALTH_HUD_HEIGHT : Math.max(hudPixels(HEALTH_HUD_HEIGHT), lineHeight + 3);
+		int toggleSize = chatLayout == null ? AUTO_ATTACK_HUD_SIZE : Math.max(hudPixels(AUTO_ATTACK_HUD_SIZE), height);
+		int gap = hudPixels(AUTO_ATTACK_HUD_GAP);
+		int barRight = right - hudPixels(HEALTH_HUD_RIGHT_OF_MENU_GAP);
+		int minX = 7 + toggleSize + gap;
+		int y = hudPixels(HEALTH_HUD_TOP_MARGIN);
+		int available = barRight - minX;
+		if (toolbar != null && !C_CUSTOM_UI && available < width) {
+			int labelWidth = getSurface().stringWidth(font, "999/999") + 2 * gap;
+			if (available >= labelWidth) width = available;
+			else y = toolbar.bottom() + gap;
+		}
+		int x = Math.max(minX, barRight - width);
+		drawAutoAttackHudButton(x - toggleSize - gap, y + (height - toggleSize) / 2, toggleSize, font);
+		drawPlayerHealthBar(x, y, width, height, font);
+		if (showCoordinatesOverlay) {
+			int compatibilityX = playerLocalX + midRegionBaseX;
+			int compatibilityY = playerLocalZ + midRegionBaseZ;
+			int logicalX = packetHandler.getLogicalPlayerX(compatibilityX);
+			int logicalY = packetHandler.getLogicalPlayerY(compatibilityX, compatibilityY);
+			int logicalLevel = packetHandler.getLogicalWorldLevel(compatibilityY);
+			int baseline = y + height + (chatLayout == null ? HEALTH_HUD_COORDINATE_GAP : lineHeight + 3);
+			getSurface().drawString("Tile: @gre@(@whi@" + logicalX + "@gre@,@whi@" + logicalY
+				+ "@gre@,L@whi@" + logicalLevel + "@gre@)", x, baseline, 0xFFFFFF, font);
 		}
 	}
 
-	private void drawActivePotionEffectsHud() {
-		ActiveStatusHudModel.Snapshot snapshot =
-			this.activeStatusHud.snapshot(System.currentTimeMillis());
+	private int drawActivePotionEffectsHud() {
+		ActiveStatusHudModel.Snapshot snapshot = activeStatusHud.snapshot(System.currentTimeMillis());
 		List<ActiveStatusHudModel.Row> rows = snapshot.getRows();
-		int columns = Math.max(1, (rows.size() + POTION_HUD_ROWS_PER_COLUMN - 1)
-			/ POTION_HUD_ROWS_PER_COLUMN);
+		if (rows.isEmpty() && snapshot.getOverflowCount() == 0) return 0;
+
+		MudClientGraphics surface = getSurface();
+		int font = hudLabelFont();
+		int line = surface.fontHeight(font);
+		int left = POTION_HUD_X;
+		int gap = hudPixels(POTION_HUD_COLUMN_GAP);
+		int iconWidth = hudPixels(POTION_HUD_ICON_WIDTH);
+		int iconHeight = hudPixels(POTION_HUD_ICON_HEIGHT);
+		int borderGap = hudPixels(2);
+		int rowHeight = hudPixels(POTION_HUD_ROW_HEIGHT);
+		int width = hudPixels(POTION_HUD_WIDTH);
+		int top = POTION_HUD_Y;
+		int rowsPerColumn = POTION_HUD_ROWS_PER_COLUMN;
+		if (chatLayout != null) {
+			rowHeight = Math.max(rowHeight, line + 2 * gap);
+			width = Math.max(width, iconWidth + surface.stringWidth(font, "000:00:00") + 3 * gap);
+			top = xpFocusTop() + 5 * GameplayHud.focusRowHeight(surface) + gap;
+			rowsPerColumn = Math.max(1, Math.min(rowsPerColumn, (chatLayout.historyTop() - top - rowHeight) / rowHeight));
+		}
+
+		ActiveStatusHudModel.Row hoveredStatus = null;
+		int hoverY = 0;
+		int columns = Math.max(1, (rows.size() + rowsPerColumn - 1) / rowsPerColumn);
 		for (int i = 0; i < rows.size(); i++) {
 			ActiveStatusHudModel.Row status = rows.get(i);
-			int column = i / POTION_HUD_ROWS_PER_COLUMN;
-			int row = i % POTION_HUD_ROWS_PER_COLUMN;
-			int x = POTION_HUD_X + column * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP);
-			int y = POTION_HUD_Y + row * POTION_HUD_ROW_HEIGHT;
-			boolean hovered = mouseX >= x && mouseX < x + POTION_HUD_WIDTH
-				&& mouseY >= y && mouseY < y + POTION_HUD_ROW_HEIGHT - 2;
-			getSurface().drawBoxAlpha(x, y, POTION_HUD_WIDTH, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
-			getSurface().drawBoxBorder(x, POTION_HUD_WIDTH, y, POTION_HUD_ROW_HEIGHT - 2,
-				hovered ? 0xFFFF00 : 0xB7B7B7);
-
+			int x = left + i / rowsPerColumn * (width + gap);
+			int y = top + i % rowsPerColumn * rowHeight;
+			int height = rowHeight - borderGap;
+			boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+			surface.drawBoxAlpha(x, y, width, height, 0x111111, 190);
+			surface.drawBoxBorder(x, width, y, height, hovered ? 0xFFFF00 : 0xB7B7B7);
 			ItemDef itemDef = EntityHandler.getItemDef(status.getIconItemId());
-			Sprite clericIcon = status.isCleric()
-				? this.getClericIconSprite(status.getStableIdentity()) : null;
+			Sprite clericIcon = status.isCleric() ? getClericIconSprite(status.getStableIdentity()) : null;
+			int iconX = x + borderGap;
+			int iconY = y + (height - iconHeight) / 2;
 			if (clericIcon != null) {
-				getSurface().drawSprite(clericIcon, x + 2, y + 3,
-					POTION_HUD_ICON_WIDTH, POTION_HUD_ICON_HEIGHT, 5924);
+				surface.drawSprite(clericIcon, iconX, iconY, iconWidth, iconHeight, 5924);
 			} else if (itemDef != null) {
-				Sprite sprite = spriteSelect(itemDef);
-				getSurface().drawSpriteClipping(sprite, x + 2, y + 3, POTION_HUD_ICON_WIDTH, POTION_HUD_ICON_HEIGHT,
+				surface.drawSpriteClipping(spriteSelect(itemDef), iconX, iconY, iconWidth, iconHeight,
 					itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
 			}
-			getSurface().drawColoredStringCentered(x + POTION_HUD_ICON_WIDTH + 2
-				+ (POTION_HUD_WIDTH - POTION_HUD_ICON_WIDTH - 4) / 2,
-				formatPotionCountdown(status.getRemainingSeconds()), 0xFFFFFF, 0, 1, y + 15);
+			int timerX = x + (width + iconWidth) / 2;
+			int baseline = chatLayout == null ? y + 15 : y + (height + line) / 2 - 3;
+			surface.drawColoredStringCentered(timerX, formatPotionCountdown(status.getRemainingSeconds()),
+				0xFFFFFF, 0, font, baseline);
 			String badge = status.getCounterBadge();
 			if (!badge.isEmpty()) {
-				getSurface().drawBoxAlpha(x + 11, y + 11, 13, 10, 0x111111, 220);
-				getSurface().drawColoredStringCentered(x + 17, badge, 0xFFFF00, 0, 0, y + 20);
+				int badgeFont = chatLayout == null ? 0 : Math.max(3, font - 1);
+				int badgeWidth = Math.max(hudPixels(13), surface.stringWidth(badgeFont, badge) + 2 * borderGap);
+				int badgeHeight = chatLayout == null ? 10 : surface.fontHeight(badgeFont);
+				int badgeX = iconX + iconWidth - badgeWidth / 2;
+				int badgeY = y + height - badgeHeight - 1;
+				surface.drawBoxAlpha(badgeX, badgeY, badgeWidth, badgeHeight, 0x111111, 220);
+				surface.drawColoredStringCentered(badgeX + badgeWidth / 2, badge, 0xFFFF00, 0,
+					badgeFont, badgeY + badgeHeight - 2);
 			}
 			if (hovered && (status.isCleric() || itemDef != null)) {
-				int tooltipX = POTION_HUD_X + columns * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP) + 1;
-				String tooltip = status.isCleric()
-					? status.getClericHoverText() : itemDef.getName();
-				if (status.getSlayerHoverText() != null) tooltip = status.getSlayerHoverText();
-				java.util.List<String> lines=new java.util.ArrayList<String>();
-                java.util.List<String> details=status.getClericHoverLines();
-                if(details==null)details=java.util.Collections.singletonList(tooltip);
-                for(String detail:details)lines.addAll(ClericTextLayout.wrap(detail,Math.max(80,getGameWidth()-tooltipX-16),text->getSurface().stringWidth(1,text)));
-                int top=Math.max(16,Math.min(y+15,getGameHeight()-lines.size()*14-8));
-                int width=0;for(String line:lines)width=Math.max(width,getSurface().stringWidth(1,line));
-                getSurface().drawBoxAlpha(tooltipX-4,top-12,width+10,lines.size()*14+6,0x111111,225);
-                for(int line=0;line<lines.size();line++)getSurface().drawString(lines.get(line),tooltipX,top+line*14,line==0&&status.isCleric()?0xFFFF00:0xFFFFFF,1);
+				hoveredStatus = status;
+				hoverY = y;
 			}
 		}
+		int bottom = top + Math.min(rows.size(), rowsPerColumn) * rowHeight;
 		if (snapshot.getOverflowCount() > 0) {
-			int overflowY = POTION_HUD_Y + POTION_HUD_ROWS_PER_COLUMN * POTION_HUD_ROW_HEIGHT;
+			int y = top + rowsPerColumn * rowHeight;
 			String label = "+" + snapshot.getOverflowCount() + " more effects";
-			this.getSurface().drawBoxAlpha(POTION_HUD_X, overflowY,
-				POTION_HUD_WIDTH + 20, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
-			this.getSurface().drawBoxBorder(POTION_HUD_X, POTION_HUD_WIDTH + 20,
-				overflowY, POTION_HUD_ROW_HEIGHT - 2, 0xB7B7B7);
-			this.getSurface().drawColoredStringCentered(POTION_HUD_X + (POTION_HUD_WIDTH + 20) / 2,
-				label, 0xFFFFFF, 0, 1, overflowY + 15);
+			int overflowWidth = Math.max(width + hudPixels(20), surface.stringWidth(font, label) + 2 * gap);
+			surface.drawBoxAlpha(left, y, overflowWidth, rowHeight - borderGap, 0x111111, 190);
+			surface.drawBoxBorder(left, overflowWidth, y, rowHeight - borderGap, 0xB7B7B7);
+			surface.drawColoredStringCentered(left + overflowWidth / 2, label, 0xFFFFFF, 0, font,
+				chatLayout == null ? y + 15 : y + (rowHeight + line) / 2 - 4);
+			bottom = y + rowHeight;
+		}
+		if (hoveredStatus != null) {
+			drawActiveEffectTooltip(hoveredStatus, left + columns * (width + gap) + gap,
+				hoverY, font, gap, line);
+		}
+		return bottom;
+	}
+
+	private void drawActiveEffectTooltip(ActiveStatusHudModel.Row status, int x, int y, int font, int gap, int line) {
+		MudClientGraphics surface = getSurface();
+		List<String> details = status.getClericHoverLines();
+		if (details == null) {
+			String tooltip = status.getSlayerHoverText();
+			if (tooltip == null) {
+				ItemDef itemDef = EntityHandler.getItemDef(status.getIconItemId());
+				tooltip = status.isCleric() ? status.getClericHoverText() : itemDef.getName();
+			}
+			details = Collections.singletonList(tooltip);
+		}
+		int maxWidth = Math.min(hudPixels(290), Math.max(80, getGameWidth() - x - 2 * gap));
+		List<String> lines = new ArrayList<>();
+		int width = 0;
+		for (String detail : details) {
+			for (String row : ClericTextLayout.wrap(detail, maxWidth, text -> surface.stringWidth(font, text))) {
+				lines.add(row);
+				width = Math.max(width, surface.stringWidth(font, row));
+			}
+		}
+		int height = lines.size() * line + 2 * gap;
+		x = Math.min(x, getGameWidth() - width - 2 * gap);
+		int bottom = chatLayout == null ? getGameHeight() : chatLayout.historyTop();
+		y = Math.max(0, Math.min(y, bottom - height));
+		surface.drawBoxAlpha(x, y, width + 2 * gap, height, 0x111111, 225);
+		for (int i = 0; i < lines.size(); i++) {
+			surface.drawString(lines.get(i), x + gap, y + gap + (i + 1) * line - 3,
+				i == 0 && status.isCleric() ? 0xFFFF00 : 0xFFFFFF, font);
 		}
 	}
 
@@ -16347,7 +18690,12 @@ public final class mudclient implements Runnable {
 			return hours + ":" + (minutes < 10L ? "0" : "") + minutes
 				+ ":" + (remainder < 10L ? "0" : "") + remainder;
 		}
-		return minutes + ":" + (remainder < 10L ? "0" : "") + remainder;
+		return formatMinutesCountdown(seconds);
+	}
+
+	private String formatMinutesCountdown(long seconds) {
+		long remainder = seconds % 60L;
+		return seconds / 60L + ":" + (remainder < 10L ? "0" : "") + remainder;
 	}
 
 	public void setActivePotionEffects(int[] itemIds, int[] remainingSeconds) {
@@ -16368,26 +18716,26 @@ public final class mudclient implements Runnable {
 		this.activeStatusHud.clear();
 	}
 
-	private void drawAutoAttackHudButton(int x, int y) {
-		boolean hovered = this.mouseX >= x && this.mouseX < x + AUTO_ATTACK_HUD_SIZE
-			&& this.mouseY >= y && this.mouseY < y + AUTO_ATTACK_HUD_SIZE;
+	private void drawAutoAttackHudButton(int x, int y, int size, int font) {
+		boolean hovered = mouseX >= x && mouseX < x + size && mouseY >= y && mouseY < y + size;
 		int borderColor = hovered ? 0xFFFF00 : (C_AUTO_RETALIATE ? 0x55DD55 : 0xCC5555);
 		int backgroundColor = C_AUTO_RETALIATE ? 0x163A16 : 0x3A1616;
-		this.getSurface().drawBoxAlpha(x, y, AUTO_ATTACK_HUD_SIZE, AUTO_ATTACK_HUD_SIZE, backgroundColor, 210);
-		this.getSurface().drawBoxBorder(x, AUTO_ATTACK_HUD_SIZE, y, AUTO_ATTACK_HUD_SIZE, borderColor);
+		getSurface().drawBoxAlpha(x, y, size, size, backgroundColor, 210);
+		getSurface().drawBoxBorder(x, size, y, size, borderColor);
 
 		Sprite icon = getAutoAttackHudSprite();
+		int inset = hudPixels(2);
 		if (icon != null) {
-			this.getSurface().drawSprite(icon, x + 2, y + 2, AUTO_ATTACK_HUD_SIZE - 4, AUTO_ATTACK_HUD_SIZE - 4,
-				5924);
+			getSurface().drawSprite(icon, x + inset, y + inset, size - 2 * inset, size - 2 * inset, 5924);
 		}
-		if (hovered) {
+		if (hovered && !hasGameplayPromptInput() && !hasSessionNoticeInput() && !hasContextMenuInput()) {
 			String hoverText = "Auto attack: " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off");
-			this.getSurface().drawString(hoverText,
-				x - 4 - this.getSurface().stringWidth(1, hoverText), y + 12, 0xFFFFFF, 1);
-			if (this.mouseButtonClick == 1) {
+			int baseline = chatLayout == null ? y + 12 : y + (size + getSurface().fontHeight(font)) / 2 - 3;
+			getSurface().drawString(hoverText, x - hudPixels(4) - getSurface().stringWidth(font, hoverText),
+				baseline, 0xFFFFFF, font);
+			if (mouseButtonClick == 1) {
 				toggleAutoRetaliate();
-				this.mouseButtonClick = 0;
+				mouseButtonClick = 0;
 			}
 		}
 	}
@@ -16419,19 +18767,18 @@ public final class mudclient implements Runnable {
 		this.packetHandler.getClientStream().finishPacket();
 	}
 
-	private void drawPlayerHealthBar(int x, int y) {
-		int maxHealth = Math.max(1, this.playerStatBase[3]);
-		int currentHealth = Math.max(0, Math.min(this.playerStatCurrent[3], maxHealth));
-		int fillWidth = currentHealth * (HEALTH_HUD_WIDTH - 2) / maxHealth;
-
-		this.getSurface().drawBoxAlpha(x, y, HEALTH_HUD_WIDTH, HEALTH_HUD_HEIGHT, 0x000000, 160);
-		this.getSurface().drawBoxAlpha(x + 1, y + 1, HEALTH_HUD_WIDTH - 2, HEALTH_HUD_HEIGHT - 2, 0x4A1010, 220);
+	private void drawPlayerHealthBar(int x, int y, int width, int height, int font) {
+		int maxHealth = Math.max(1, playerStatBase[3]);
+		int currentHealth = Math.max(0, Math.min(playerStatCurrent[3], maxHealth));
+		int fillWidth = currentHealth * (width - 2) / maxHealth;
+		getSurface().drawBoxAlpha(x, y, width, height, 0x000000, 160);
+		getSurface().drawBoxAlpha(x + 1, y + 1, width - 2, height - 2, 0x4A1010, 220);
 		if (fillWidth > 0) {
-			this.getSurface().drawBoxAlpha(x + 1, y + 1, fillWidth, HEALTH_HUD_HEIGHT - 2, 0xC62828, 230);
+			getSurface().drawBoxAlpha(x + 1, y + 1, fillWidth, height - 2, 0xC62828, 230);
 		}
-		this.getSurface().drawBoxBorder(x, HEALTH_HUD_WIDTH, y, HEALTH_HUD_HEIGHT, 0xFFFFFF);
-		this.getSurface().drawColoredStringCentered(x + HEALTH_HUD_WIDTH / 2,
-			currentHealth + "/" + maxHealth, 0xFFFFFF, 0, 1, y + 11);
+		getSurface().drawBoxBorder(x, width, y, height, 0xFFFFFF);
+		int baseline = chatLayout == null ? y + 11 : y + (height + getSurface().fontHeight(font)) / 2 - 3;
+		getSurface().drawColoredStringCentered(x + width / 2, currentHealth + "/" + maxHealth, 0xFFFFFF, 0, font, baseline);
 	}
 
 	private boolean shouldDrawMinimapPanel() {
@@ -16463,7 +18810,7 @@ public final class mudclient implements Runnable {
 
 	private int[] getMinimapContentBounds(boolean floatingMinimap) {
 		if (!floatingMinimap) {
-			return new int[] {this.getSurface().width2 - 159, 36};
+			return new int[] {this.getSurface().width2 - 159, getAuthenticSidebarPanelTop()};
 		}
 		int margin = 8;
 		int topY = C_CUSTOM_UI ? 10 + MINIMAP_FLOATING_BORDER : 36;
@@ -16565,6 +18912,222 @@ public final class mudclient implements Runnable {
 	}
 
 	// wrench settings menu
+	private static final String[] SETTINGS_TAB_LABELS = {"Social", "General", "Graphics"};
+
+	private SettingsPanelLayout settingsPanelLayout() {
+		if (chatLayout == null) return null;
+		MudClientGraphics surface = getSurface();
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		int anchor = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatTop = chatLayout.entryTop();
+		if (settingsPanelLayout == null || !settingsPanelLayout.matches(surface.width2, anchor, C_CUSTOM_UI,
+			chatRight, chatTop, size, text)) {
+			settingsPanelLayout = new SettingsPanelLayout(surface.width2, anchor, C_CUSTOM_UI, chatRight,
+				chatTop, size, text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont));
+		}
+		return settingsPanelLayout;
+	}
+
+	private void drawSettingsPreview(SettingsPanelLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		if (!C_CUSTOM_UI) drawToolbarPanelTitle("Settings", layout.left, layout.right - layout.left);
+		boolean canClick = acceptInput && !settingsTuningDrag.isActive();
+		int hoveredTab = canClick ? layout.tabAt(mouseX, mouseY) : -1;
+		if (hoveredTab >= 0 && mouseButtonClick == 1) {
+			settingTab = hoveredTab;
+			mouseButtonClick = 0;
+		}
+		surface.drawBoxAlpha(layout.left, layout.top, layout.right - layout.left, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
+		surface.drawBoxBorder(layout.left, layout.right - layout.left, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
+		for (int tab = 0; tab < SETTINGS_TAB_LABELS.length; tab++) {
+			drawInterfacePreviewTab(layout.tabLeft(tab), layout.top, layout.tabLeft(tab + 1) - layout.tabLeft(tab),
+				layout.tabHeight, SETTINGS_TAB_LABELS[tab], layout.labelFont,
+				layout.top + (layout.tabHeight + layout.labelLine) / 2 - 3, tab == settingTab, tab == hoveredTab);
+		}
+
+		RendererSettingsPanel.State graphics = settingTab == SettingsPanelLayout.GRAPHICS ? rendererSettingsState() : null;
+		List<RendererSettingsPanel.Row> settings;
+		if (graphics != null) settings = RendererSettingsPanel.previewRows(graphics);
+		else if (settingTab == SettingsPanelLayout.GENERAL) settings = generalSettingsRows();
+		else settings = socialSettingsRows();
+		SettingsPreviewRow[] rows = new SettingsPreviewRow[settings.size()];
+		int[] heights = new int[rows.length];
+		for (int i = 0; i < rows.length; i++) {
+			rows[i] = new SettingsPreviewRow(settings.get(i), layout, surface, graphics != null);
+			heights[i] = rows[i].height;
+		}
+		int maxScroll = layout.maxScroll(heights);
+		int scroll = Math.max(0, Math.min(maxScroll, settingsScroll[settingTab] + settingsWheel.getAndSet(settingTab, 0)));
+		if (maxScroll > 0 && canClick && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
+			&& layout.overList(mouseX, mouseY)) {
+			scroll = (mouseY - layout.listTop()) * maxScroll / Math.max(1, layout.listHeight() - 1);
+			mouseButtonClick = 0;
+		}
+		settingsScroll[settingTab] = scroll;
+
+		int selected = RendererSettingsPanel.SECTION_ROW;
+		int rowTop = layout.listTop();
+		surface.setClip(layout.listLeft(), layout.scrollbarLeft(), layout.listBottom(), rowTop);
+		try {
+			for (int i = scroll; i < rows.length && rowTop < layout.listBottom(); i++) {
+				SettingsPreviewRow row = rows[i];
+				boolean hovered = canClick && layout.overList(mouseX, mouseY) && mouseX < layout.scrollbarLeft()
+					&& mouseY >= rowTop && mouseY < rowTop + row.height;
+				if (row.slider) {
+					boolean onTrack = hovered && layout.overSlider(mouseX, mouseY, rowTop);
+					if (onTrack && mouseButtonClick == 1) {
+						settingsTuningDrag.begin(row.action, layout.sliderLeft(), layout.sliderRight(), mouseX);
+						mouseButtonClick = 0;
+					}
+					drawSettingsSlider(layout, row, rowTop, onTrack || settingsTuningDrag.isActive(row.action));
+				} else if (row.action == RendererSettingsPanel.ACTION_SCALING_ROW && graphics != null) {
+					drawSettingsScaleButtons(layout, graphics, rowTop, hovered);
+				} else {
+					drawSettingsRow(layout, row, rowTop, hovered && row.action != RendererSettingsPanel.SECTION_ROW);
+					if (hovered && mouseButtonClick == 1) selected = row.action;
+				}
+				rowTop += row.height;
+			}
+		} finally {
+			surface.clearClip();
+		}
+		if (maxScroll > 0) {
+			int height = layout.listHeight();
+			int thumb = Math.max(layout.padding * 2, height * (rows.length - maxScroll) / rows.length);
+			int y = layout.listTop();
+			int x = layout.scrollbarLeft();
+			surface.drawBox(x + 1, y, layout.scrollWidth - 2, height, InterfacePalette.SCROLL_TRACK);
+			surface.drawBox(x + 2, y + (height - thumb) * scroll / maxScroll, layout.scrollWidth - 4, thumb, InterfacePalette.SCROLL_THUMB);
+		}
+
+		int logoutTop = layout.logoutTop();
+		int logoutWidth = layout.right - layout.padding - layout.listLeft();
+		boolean overLogout = canClick && mouseX >= layout.listLeft() && mouseX < layout.listLeft() + logoutWidth
+			&& mouseY >= logoutTop && mouseY < logoutTop + layout.logoutHeight;
+		drawInterfacePreviewTab(layout.listLeft(), logoutTop, logoutWidth, layout.logoutHeight, "Log out",
+			layout.labelFont, logoutTop + (layout.logoutHeight + layout.labelLine) / 2 - 3, false, overLogout);
+		if (mouseButtonClick == 1) {
+			if (overLogout) sendLogout(0);
+			else if (selected != RendererSettingsPanel.SECTION_ROW) {
+				if (graphics != null) {
+					RendererSettingsPanel.Action action = RendererSettingsPanel.actionFor(selected, graphics);
+					if (action != null) applyRendererSettingsAction(action);
+				} else if (settingTab == SettingsPanelLayout.GENERAL) {
+					applyGeneralSettingsRow(selected);
+				} else {
+					applySocialSetting(SocialSetting.values()[selected]);
+				}
+			}
+			if (canClick && layout.contains(mouseX, mouseY)) mouseButtonClick = 0;
+		}
+		if (settingsTuningDrag.isActive() && getMouseButtonDown() != 1) {
+			settingsTuningDrag.finish(rendererSettingsActions);
+		}
+	}
+
+	private static final class SettingsPreviewRow {
+		final int action;
+		final boolean section;
+		final boolean slider;
+		final int height;
+		final String value;
+		final List<String> labelLines;
+		final boolean stacked;
+
+		SettingsPreviewRow(RendererSettingsPanel.Row row, SettingsPanelLayout layout, MudClientGraphics surface,
+						   boolean graphics) {
+			action = row.action;
+			section = action == RendererSettingsPanel.SECTION_ROW && row.label.startsWith("@yel@");
+			slider = graphics && RendererSettingsPanel.isRendererTuningSlider(action);
+			int separator = row.label.indexOf(" - ");
+			int separatorLength = 3;
+			if (separator < 0 && row.label.startsWith("@whi@Sprites: ")) {
+				separator = row.label.indexOf(": ");
+				separatorLength = 2;
+			}
+			String title = separator < 0 ? row.label : row.label.substring(0, separator);
+			if (title.startsWith("@whi@") || (section && title.startsWith("@yel@"))) title = title.substring(5);
+			value = separator < 0 ? "" : row.label.substring(separator + separatorLength);
+			int width = layout.scrollbarLeft() - layout.listLeft() - 2 * layout.padding;
+			int titleWidth = surface.stringWidth(layout.bodyFont, title);
+			labelLines = titleWidth <= width ? Collections.singletonList(title)
+				: ClericTextLayout.wrap(title, width, label -> surface.stringWidth(layout.bodyFont, label));
+			stacked = !value.isEmpty() && (labelLines.size() > 1
+				|| titleWidth + surface.stringWidth(layout.bodyFont, value) + layout.padding > width);
+			if (slider) height = layout.sliderHeight;
+			else height = layout.rowHeight + (Math.max(0, labelLines.size() - 1) + (stacked ? 1 : 0)) * layout.bodyLine;
+		}
+	}
+
+	private void drawSettingsRow(SettingsPanelLayout layout, SettingsPreviewRow row, int y, boolean hovered) {
+		MudClientGraphics surface = getSurface();
+		int left = layout.listLeft();
+		int right = layout.scrollbarLeft();
+		if (!row.section) {
+			surface.drawBoxAlpha(left, y, right - left, row.height - 1, hovered ? InterfacePalette.CONTROL_HOVER : InterfacePalette.ROW, 192);
+		}
+		int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
+		for (int i = 0; i < row.labelLines.size(); i++) {
+			surface.drawString(row.labelLines.get(i), left + layout.padding, baseline + i * layout.bodyLine,
+				row.section ? 0xFFDC82 : 0xFFFFFF, layout.bodyFont);
+		}
+		if (!row.value.isEmpty()) {
+			int x = right - layout.padding - surface.stringWidth(layout.bodyFont, row.value);
+			surface.drawString(row.value, x, baseline + (row.stacked ? row.labelLines.size() * layout.bodyLine : 0),
+				InterfacePalette.MUTED_TEXT, layout.bodyFont);
+		}
+	}
+
+	private void drawSettingsSlider(SettingsPanelLayout layout, SettingsPreviewRow row, int y, boolean highlight) {
+		MudClientGraphics surface = getSurface();
+		drawSettingsRow(layout, row, y, highlight);
+		int level = RendererSettingsPanel.getRendererTuningLevel(row.action);
+		int min = RendererSettingsPanel.getRendererTuningMinLevel(row.action);
+		int max = RendererSettingsPanel.getRendererTuningMaxLevel(row.action);
+		String value = level + " / " + max;
+		int valueX = layout.scrollbarLeft() - layout.padding - surface.stringWidth(layout.bodyFont, value);
+		surface.drawString(value, valueX, y + (layout.rowHeight + layout.bodyLine) / 2 - 3, 0xFFDC82, layout.bodyFont);
+
+		int left = layout.sliderLeft();
+		int right = layout.sliderRight();
+		int centerY = layout.sliderY(y);
+		int thumbX = SettingsPanelLayout.sliderX(level, left, right, min, max);
+		int trackY = centerY - layout.trackHeight / 2;
+		surface.drawBox(left, trackY, right - left + 1, layout.trackHeight, InterfacePalette.SCROLL_TRACK);
+		surface.drawBox(left, trackY, thumbX - left + 1, layout.trackHeight, highlight ? 0xD2B873 : InterfacePalette.SCROLL_THUMB);
+		int half = layout.thumbSize / 2;
+		surface.drawBox(thumbX - half, centerY - half, layout.thumbSize, layout.thumbSize,
+			highlight ? 0xF3D589 : InterfacePalette.TEXT);
+		surface.drawBoxBorder(thumbX - half, layout.thumbSize, centerY - half, layout.thumbSize, InterfacePalette.BORDER);
+	}
+
+	private void drawSettingsScaleButtons(SettingsPanelLayout layout, RendererSettingsPanel.State graphics,
+										 int y, boolean hovered) {
+		MudClientGraphics surface = getSurface();
+		int left = layout.listLeft();
+		int right = layout.scrollbarLeft();
+		int baseline = y + (layout.rowHeight + layout.bodyLine) / 2 - 3;
+		surface.drawBoxAlpha(left, y, right - left, layout.rowHeight - 1, InterfacePalette.ROW, 192);
+		surface.drawString("Window scale", left + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
+		String value = graphics.renderingScalar + "x";
+		int buttonWidth = layout.rowHeight;
+		int plusX = right - layout.padding - buttonWidth;
+		int valueWidth = surface.stringWidth(layout.bodyFont, value);
+		int valueX = plusX - layout.padding - valueWidth;
+		int minusX = valueX - layout.padding - buttonWidth;
+		surface.drawString(value, valueX, baseline, 0xFFDC82, layout.bodyFont);
+		boolean overMinus = hovered && mouseX >= minusX && mouseX < minusX + buttonWidth;
+		boolean overPlus = hovered && mouseX >= plusX && mouseX < plusX + buttonWidth;
+		drawInterfacePreviewTab(minusX, y, buttonWidth, layout.rowHeight, "-", layout.bodyFont, baseline, false, overMinus);
+		drawInterfacePreviewTab(plusX, y, buttonWidth, layout.rowHeight, "+", layout.bodyFont, baseline, false, overPlus);
+		if (mouseButtonClick == 1 && (overMinus || overPlus)) {
+			applyRendererSettingsAction(overMinus ? RendererSettingsPanel.Action.SCALE_DOWN : RendererSettingsPanel.Action.SCALE_UP);
+			mouseButtonClick = 0;
+		}
+	}
+
 	private void drawUiTabOptions(int var1, boolean mustTrackMouse) {
 
 		int maxY = getUITabsY();
@@ -16572,8 +19135,9 @@ public final class mudclient implements Runnable {
 		try {
 			int var3 = this.getSurface().width2 - 199;
 			if (!C_CUSTOM_UI)
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.SETTINGSTAB.getDef()), var3 - 49, 3);
-			int var4 = 36 + 25;
+				drawAuthenticSidebarHeader(GUIPARTS.SETTINGSTAB, "Settings", var3, 196);
+			int panelTop = getAuthenticSidebarPanelTop();
+			int var4 = panelTop + 25;
 			if (C_CUSTOM_UI)
 				var4 = maxY - 240;
 			short var5 = 196;
@@ -16591,11 +19155,11 @@ public final class mudclient implements Runnable {
 
 				// authentic settings GUI
 				if (this.authenticSettings) {
-					var4 = 36;
-					this.getSurface().drawBoxAlpha(var3, 36, var5, 65, GenUtil.buildColor(181, 181, 181), 160);
-					this.getSurface().drawBoxAlpha(var3, 101, var5, 65, GenUtil.buildColor(201, 201, 201), 160);
-					this.getSurface().drawBoxAlpha(var3, 166, var5, 95, GenUtil.buildColor(181, 181, 181), 160);
-					this.getSurface().drawBoxAlpha(var3, 261, var5, (this.insideTutorial || this.insideBlackHole) ? 55 : 40, GenUtil.buildColor(201, 201, 201), 160);
+					var4 = panelTop;
+					this.getSurface().drawBoxAlpha(var3, panelTop, var5, 65, GenUtil.buildColor(181, 181, 181), 160);
+					this.getSurface().drawBoxAlpha(var3, panelTop + 65, var5, 65, GenUtil.buildColor(201, 201, 201), 160);
+					this.getSurface().drawBoxAlpha(var3, panelTop + 130, var5, 95, GenUtil.buildColor(181, 181, 181), 160);
+					this.getSurface().drawBoxAlpha(var3, panelTop + 225, var5, (this.insideTutorial || this.insideBlackHole) ? 55 : 40, GenUtil.buildColor(201, 201, 201), 160);
 				}
 
 				// custom settings GUI
@@ -16634,7 +19198,7 @@ public final class mudclient implements Runnable {
 			// mouse tracking for option buttons
 			if (mustTrackMouse) {
 				var3 = 199 - this.getSurface().width2 + this.mouseX; // relative X
-				int var13 = this.mouseY - 36; // relative Y
+				int var13 = this.mouseY - panelTop; // relative Y
 				if (C_CUSTOM_UI)
 					var13 = this.mouseY - var4 + 25; // relative Y
 				// within panel
@@ -16671,7 +19235,7 @@ public final class mudclient implements Runnable {
 
 					int var9 = this.getSurface().width2 - 199;
 					var6 = var9 + 3;
-					int var10 = 36;
+					int var10 = panelTop;
 					if (C_CUSTOM_UI)
 						var10 = var4 - 24;
 					var5 = 184;
@@ -16780,23 +19344,6 @@ public final class mudclient implements Runnable {
 			securityColor = 0xFFFF00;
 		}
 		this.getSurface().drawString("Change password", 3 + baseX, y, securityColor, 1);
-
-		// change recovery questions
-		y += 15;
-		securityColor = 0xFFFFFF;
-		if (this.mouseX > x && this.mouseX < x + boxWidth && this.mouseY > y - 12
-			&& this.mouseY < y + 4) {
-			securityColor = 0xFFFF00;
-		}
-		this.getSurface().drawString("Change recovery questions", 3 + baseX, y, securityColor, 1);
-
-		// change contact details
-		y += 15;
-		securityColor = 0xFFFFFF;
-		if (this.mouseX > x && this.mouseX < x + boxWidth && this.mouseY > y - 12 && this.mouseY < y + 4) {
-			securityColor = 0xFFFF00;
-		}
-		this.getSurface().drawString("Change contact details", 3 + baseX, y, securityColor, 1);
 
 		// privacy settings text
 		y += 20;
@@ -16911,226 +19458,182 @@ public final class mudclient implements Runnable {
 		this.getSurface().drawString("Click here to logout", baseX + 3, y, logoutColor, 1);
 	}
 
-	// custom general menu tab
-	private int addSettingsSection(int index, String label) {
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@yel@" + label, RendererSettingsPanel.SECTION_ROW, null, null);
-		return index;
-	}
-
-	private int addSettingsRow(int index, String label, int action) {
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++, label, action, null, null);
-		return index;
-	}
-
-	private void drawGeneralSettingsOptions(int baseX, short boxWidth, int x, int y) {
-		int var4 = y - 15;
-		this.panelSettings.clearList(this.controlSettingPanel);
-		int index = 0;
-		this.getSurface().drawString("Game options", 3 + baseX, y, 0, 1);
-
-		index = addSettingsSection(index, "Gameplay");
+	// General rows share their action IDs across both layouts.
+	private List<RendererSettingsPanel.Row> generalSettingsRows() {
+		List<RendererSettingsPanel.Row> rows = new ArrayList<>();
+		java.util.function.BiConsumer<String, Integer> add =
+			(label, action) -> rows.add(new RendererSettingsPanel.Row(label, action));
+		add.accept("@yel@" + "Gameplay", RendererSettingsPanel.SECTION_ROW);
 
 		// camera angle mode - byte index 1
 		if (this.optionCameraModeAuto) {
-			index = addSettingsRow(index, "@whi@Camera angle mode - @gre@Auto", 0);
+			add.accept("@whi@Camera angle mode - @gre@Auto", 0);
 		} else {
-			index = addSettingsRow(index, "@whi@Camera angle mode - @red@Manual", 0);
+			add.accept("@whi@Camera angle mode - @red@Manual", 0);
 		}
 
 		// sound effects - byte index 2
 		if (wantMembers()) {
 			if (optionSoundDisabled) {
-				index = addSettingsRow(index, "@whi@Sound effects - @red@off", 2);
+				add.accept("@whi@Sound effects - @red@off", 2);
 			} else {
-				index = addSettingsRow(index, "@whi@Sound effects - @gre@on", 2);
+				add.accept("@whi@Sound effects - @gre@on", 2);
 			}
 		}
 
-		index = addSettingsSection(index, "Interface");
+		add.accept("@yel@" + "Interface", RendererSettingsPanel.SECTION_ROW);
 		// Keep the Android row subject to the same temporary availability gate
 		// as desktop Graphics.
 		if (RemasteredSpriteSettings.isAvailable()
 			&& isAndroid() && !ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
-			index = addSettingsRow(index, "@whi@Sprites: "
+			add.accept("@whi@Sprites: "
 				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
 				RendererSettingsPanel.REMASTERED_SPRITES);
 		}
 
-		index = addSettingsRow(index,
-			"@whi@Middle mouse - " + DesktopMiddleMouseSettings.getMode().label,
+		add.accept("@whi@Middle mouse - " + DesktopMiddleMouseSettings.getMode().label,
 			RendererSettingsPanel.MIDDLE_MOUSE);
 
 		// mouse button(s) - byte index 1
 		if (this.optionMouseButtonOne) {
-			index = addSettingsRow(index, "@whi@Mouse buttons - @red@One", 1);
+			add.accept("@whi@Mouse buttons - @red@One", 1);
 		} else {
-			index = addSettingsRow(index, "@whi@Mouse buttons - @gre@Two", 1);
+			add.accept("@whi@Mouse buttons - @gre@Two", 1);
 		}
 
-		index = addSettingsRow(index,
-			"@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
+		add.accept("@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
 
-		index = addSettingsRow(index,
-			"@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65);
+		if (chatLayout == null) {
+			add.accept("@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65);
+		}
 
-		index = addSettingsRow(index, HitSplatDisplaySettings.optionLabel(), HitSplatDisplaySettings.OPTION_ACTION);
+		add.accept(HitSplatDisplaySettings.optionLabel(), HitSplatDisplaySettings.OPTION_ACTION);
 
 		// custom UI
 		if (S_WANT_CUSTOM_UI) {
 			if (!C_CUSTOM_UI) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Custom UI - @red@Off", 39, null, null);
+				add.accept("@whi@Custom UI - @red@Off", 39);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Custom UI - @gre@On", 39, null, null);
+				add.accept("@whi@Custom UI - @gre@On", 39);
 			}
 		}
 
 		// batch progress bar
 		if (S_BATCH_PROGRESSION) {
 			if (!C_BATCH_PROGRESS_BAR) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Batch Progress Bar - @red@Off", 24, null, null);
+				add.accept("@whi@Batch Progress Bar - @red@Off", 24);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Batch Progress Bar - @gre@On", 24, null, null);
+				add.accept("@whi@Batch Progress Bar - @gre@On", 24);
 			}
 		}
 
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@whi@Tool Focus Menu - " + getGatheringFocusMenuLabel(), 52, null, null);
+		add.accept("@whi@Tool Focus Menu - " + getGatheringFocusMenuLabel(), 52);
 
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@whi@Hits XP Focus Menu - " + getHitsXpFocusMenuLabel(), 53, null, null);
+		add.accept("@whi@Hits XP Focus Menu - " + getHitsXpFocusMenuLabel(), 53);
 
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@whi@Summon Health Bars - " + (C_SUMMON_HEALTH_BARS ? "@gre@On" : "@red@Off"), 54, null, null);
+		add.accept("@whi@Summon Health Bars - " + (C_SUMMON_HEALTH_BARS ? "@gre@On" : "@red@Off"), 54);
 
 		// experience drops
 		if (S_EXPERIENCE_DROPS_TOGGLE) {
 			if (!C_EXPERIENCE_DROPS) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Experience Drops - @red@Off", 25, null, null);
+				add.accept("@whi@Experience Drops - @red@Off", 25);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Experience Drops - @gre@On", 25, null, null);
+				add.accept("@whi@Experience Drops - @gre@On", 25);
 			}
 		}
 
 		// npc kill count messages
 		if (S_NPC_KILL_COUNTERS) {
 			if (!C_TOTAL_NPC_KC) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Total NPC Killcounter - @red@Off", 38, null, null);
+				add.accept("@whi@Total NPC Killcounter - @red@Off", 38);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Total NPC Killcounter - @gre@On", 38, null, null);
+				add.accept("@whi@Total NPC Killcounter - @gre@On", 38);
 			}
 			if (!C_RECENT_NPC_KC) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Last NPC Killcounter - @red@Off", 44, null, null);
+				add.accept("@whi@Last NPC Killcounter - @red@Off", 44);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Last NPC Killcounter - @gre@On", 44, null, null);
+				add.accept("@whi@Last NPC Killcounter - @gre@On", 44);
 			}
 		}
 		// show roof
 		if (isAndroid() && S_SHOW_ROOF_TOGGLE) {
 			if (!C_HIDE_ROOFS) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Roofs - @red@Off", 26, null, null);
+				add.accept("@whi@Hide Roofs - @red@Off", 26);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Roofs - @gre@On", 26, null, null);
+				add.accept("@whi@Hide Roofs - @gre@On", 26);
 			}
 		}
 
 		// underground lighting flicker toggle
 		if (isAndroid() && S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
 			if (!C_HIDE_UNDERGROUND_FLICKER) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Underground Flicker - @red@Off", 42, null, null);
+				add.accept("@whi@Hide Underground Flicker - @red@Off", 42);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Underground Flicker - @gre@On", 42, null, null);
+				add.accept("@whi@Hide Underground Flicker - @gre@On", 42);
 			}
 		}
 
 		// ground items
 		if (S_GROUND_ITEM_TOGGLE) {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Ground Items - " + (C_SHOW_GROUND_ITEMS == 0 ? "@gre@Show ALL"
+			add.accept("@whi@Ground Items - " + (C_SHOW_GROUND_ITEMS == 0 ? "@gre@Show ALL"
 					: C_SHOW_GROUND_ITEMS == 1 ? "@red@Hide ALL"
 					: C_SHOW_GROUND_ITEMS == 2 ? "@gr1@Only Bones"
-					: C_SHOW_GROUND_ITEMS == 3 ? "@ora@No Bones" : "@or1@No Ashes"), 8, null, null);
+					: C_SHOW_GROUND_ITEMS == 3 ? "@ora@No Bones" : "@or1@No Ashes"), 8);
 		}
 
 		// Ground item names
 		if (S_GROUND_ITEM_NAMES) {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Ground Item Names - " + (C_GROUND_ITEM_NAMES ? "@gre@On" : "@red@Off"),
-				45, null, null);
+			add.accept("@whi@Ground Item Names - " + (C_GROUND_ITEM_NAMES ? "@gre@On" : "@red@Off"),
+				45);
 		}
 
 		// auto message switch
 		if (S_AUTO_MESSAGE_SWITCH_TOGGLE) {
 			if (!C_MESSAGE_TAB_SWITCH) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Auto Message Switch - @red@Off", 9, null, null);
+				add.accept("@whi@Auto Message Switch - @red@Off", 9);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Auto Message Switch - @gre@On", 9, null, null);
+				add.accept("@whi@Auto Message Switch - @gre@On", 9);
 			}
 		}
 
 		// side menu
 		if (S_SIDE_MENU_TOGGLE) {
 			if (!C_SIDE_MENU_OVERLAY) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Side Menu - @red@Off", 10, null, null);
+				add.accept("@whi@Side Menu - @red@Off", 10);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Side Menu - @gre@On", 10, null, null);
+				add.accept("@whi@Side Menu - @gre@On", 10);
 			}
 		}
 
 		// kill feed
 		if (S_WANT_KILL_FEED) {
 			if (!C_KILL_FEED) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Kill Feed - @red@Off", 11, null, null);
+				add.accept("@whi@Kill Feed - @red@Off", 11);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Kill Feed - @gre@On", 11, null, null);
+				add.accept("@whi@Kill Feed - @gre@On", 11);
 			}
 		}
 
 		// experience counter
 		if (S_EXPERIENCE_COUNTER_TOGGLE)
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Experience Counter - " + (C_EXPERIENCE_COUNTER == 0 ? "@red@Never"
-					: C_EXPERIENCE_COUNTER == 1 ? "@yel@Recent" : "@gre@Always"), 14, null, null);
+			add.accept("@whi@Experience Counter - " + (C_EXPERIENCE_COUNTER == 0 ? "@red@Never"
+					: C_EXPERIENCE_COUNTER == 1 ? "@yel@Recent" : "@gre@Always"), 14);
 
 		// inventory count
 		if (S_INVENTORY_COUNT_TOGGLE) {
 			if (!C_INV_COUNT) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Inventory Count - @red@Off", 15, null, null);
+				add.accept("@whi@Inventory Count - @red@Off", 15);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Inventory Count - @gre@On", 15, null, null);
+				add.accept("@whi@Inventory Count - @gre@On", 15);
 			}
 		}
 
 		// Hide Login Box
 		if (S_HIDE_LOGIN_BOX) {
 			if (C_HIDE_LOGIN_BOX) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Login Box - @gre@Yes", 20, null, null);
+				add.accept("@whi@Hide Login Box - @gre@Yes", 20);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Hide Login Box - @red@No", 20, null, null);
+				add.accept("@whi@Hide Login Box - @red@No", 20);
 			}
 		}
 
@@ -17140,48 +19643,51 @@ public final class mudclient implements Runnable {
 			if (S_SHOW_FLOATING_NAMETAGS) {
 				// name and clan tag overlay
 				if (!C_NAME_CLAN_TAG_OVERLAY) {
-					this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-						"@whi@Name and Clan Tag - @red@Off", 16, null, null);
+					add.accept("@whi@Name and Clan Tag - @red@Off", 16);
 				} else {
-					this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-						"@whi@Name and Clan Tag - @gre@On", 16, null, null);
+					add.accept("@whi@Name and Clan Tag - @gre@On", 16);
 				}
 			}
 
 			// clan invite blocking
 			if (!this.clanInviteBlockSetting) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Clan Invitation - @red@Block", 17, null, null);
+				add.accept("@whi@Clan Invitation - @red@Block", 17);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Clan Invitation - @gre@Receive", 17, null, null);
+				add.accept("@whi@Clan Invitation - @gre@Receive", 17);
 			}
 
 			if (C_PARTY_INV) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Party Invitation - @red@Block", 19, null, null);
+				add.accept("@whi@Party Invitation - @red@Block", 19);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Party Invitation - @gre@Receive", 19, null, null);
+				add.accept("@whi@Party Invitation - @gre@Receive", 19);
 			}
 
 			//Only display this setting if we're on a non-authentic client.
 			if (!authenticSettings) {
 				if (!C_WANT_NATURE_RUNE_PROTECTION) {
-					this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-						"@whi@Nat Rune Alch Protection - @red@Off", 47, null, null);
+					add.accept("@whi@Nat Rune Alch Protection - @red@Off", 47);
 				} else {
-					this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-						"@whi@Nat Rune Alch Protection - @gre@On", 47, null, null);
+					add.accept("@whi@Nat Rune Alch Protection - @gre@On", 47);
 				}
 
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Auto Retaliate - " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off"), 48, null, null);
+				add.accept("@whi@Auto Retaliate - " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off"), 48);
 			}
 
 			// report abuse - keep at bottom of list since it's not a toggle
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Report Abuse", 18, null, null);
+			add.accept("@whi@" + reportEntryLabel(), 18);
+		}
+
+		return rows;
+	}
+
+	private void drawGeneralSettingsOptions(int baseX, short boxWidth, int x, int y) {
+		int var4 = y - 15;
+		this.panelSettings.clearList(this.controlSettingPanel);
+		this.getSurface().drawString("Game options", 3 + baseX, y, 0, 1);
+		List<RendererSettingsPanel.Row> rows = generalSettingsRows();
+		for (int index = 0; index < rows.size(); index++) {
+			RendererSettingsPanel.Row row = rows.get(index);
+			this.panelSettings.setListEntry(this.controlSettingPanel, index, row.label, row.action, null, null);
 		}
 
 		// items on death menu option OR logout text if not enabled
@@ -17294,6 +19800,14 @@ public final class mudclient implements Runnable {
 				break;
 			case BROWSER_FULLSCREEN:
 				BrowserPresentationSettings.request(BrowserPresentationSettings.FULLSCREEN);
+				break;
+			case INTERFACE_SIZE:
+				GameInterfaceSettings.cycleSize();
+				this.applyGameInterfaceSizing();
+				break;
+			case INTERFACE_TEXT_SIZE:
+				GameInterfaceSettings.cycleTextSize();
+				this.applyGameInterfaceSizing();
 				break;
 			case HIDE_ROOFS:
 				this.toggleRoofVisibilitySetting();
@@ -17493,13 +20007,14 @@ public final class mudclient implements Runnable {
 		else
 			settingIndex = checkPosition;
 
-		//System.out.println("Setting index is: " + settingIndex); // DO NOT REMOVE THIS, IT IS VERY HELPFUL
-		if (settingIndex == RendererSettingsPanel.SECTION_ROW) {
-			return;
-		}
+		if (settingIndex == RendererSettingsPanel.SECTION_ROW) return;
+		if (mouseButtonClick == 1) applyGeneralSettingsRow(settingIndex);
+		this.handleSettingsLogout(var5, var6, yFromTopDistance);
+	}
 
+	private void applyGeneralSettingsRow(int settingIndex) {
 		// camera mode - byte index 0
-		if (settingIndex == 0 && this.mouseButtonClick == 1) {
+		if (settingIndex == 0) {
 			this.optionCameraModeAuto = !this.optionCameraModeAuto;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(0);
@@ -17508,7 +20023,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// sound on/off - byte index 2
-		if (wantMembers() && settingIndex == 2 && this.mouseButtonClick == 1) {
+		if (wantMembers() && settingIndex == 2) {
 			optionSoundDisabled = !optionSoundDisabled;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(2);
@@ -17516,16 +20031,16 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == RendererSettingsPanel.REMASTERED_SPRITES && this.mouseButtonClick == 1) {
+		if (settingIndex == RendererSettingsPanel.REMASTERED_SPRITES) {
 			toggleRemasteredSprites();
 		}
 
-		if (settingTab == 1 && settingIndex == RendererSettingsPanel.MIDDLE_MOUSE && this.mouseButtonClick == 1) {
+		if (settingTab == 1 && settingIndex == RendererSettingsPanel.MIDDLE_MOUSE) {
 			this.cycleDesktopMiddleMouseMode();
 		}
 
 		// one or two mouse button(s) - byte index 1
-		if (settingIndex == 1 && this.mouseButtonClick == 1) {
+		if (settingIndex == 1) {
 			this.optionMouseButtonOne = !this.optionMouseButtonOne;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(1);
@@ -17533,22 +20048,22 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 51 && this.mouseButtonClick == 1) {
+		if (settingIndex == 51) {
 			this.toggleCoordinatesOverlay();
 		}
 
-		if (settingIndex == 65 && this.mouseButtonClick == 1) {
+		if (settingIndex == 65) {
 			this.cycleSpellbookLayoutMode();
 		}
 
-		if (settingIndex == HitSplatDisplaySettings.OPTION_ACTION && this.mouseButtonClick == 1) {
+		if (settingIndex == HitSplatDisplaySettings.OPTION_ACTION) {
 			HitSplatDisplaySettings.cycleStyle();
 			saveHitSplatDisplaySettings();
 		}
 
 		// custom UI - byte index 39
 		if (S_WANT_CUSTOM_UI) {
-			if (settingIndex == 39 && this.mouseButtonClick == 1) {
+			if (settingIndex == 39) {
 				C_CUSTOM_UI = !C_CUSTOM_UI;
 				if (C_CUSTOM_UI)
 					repositionCustomUI();
@@ -17563,17 +20078,17 @@ public final class mudclient implements Runnable {
 		}
 
 		// hide roofs toggle - byte index 26
-		if (settingIndex == 26 && this.mouseButtonClick == 1 && S_SHOW_ROOF_TOGGLE) {
+		if (settingIndex == 26 && S_SHOW_ROOF_TOGGLE) {
 			this.toggleRoofVisibilitySetting();
 		}
 
 		// hide underground flicker toggle - byte index 42
-		if (settingIndex == 42 && this.mouseButtonClick == 1 && S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
+		if (settingIndex == 42 && S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
 			this.toggleUndergroundFlickerSetting();
 		}
 
 		// ground items toggle - byte index 28
-		if (settingIndex == 8 && this.mouseButtonClick == 1 && S_GROUND_ITEM_TOGGLE) {
+		if (settingIndex == 8 && S_GROUND_ITEM_TOGGLE) {
 			C_SHOW_GROUND_ITEMS = ++C_SHOW_GROUND_ITEMS%5;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(28);
@@ -17582,7 +20097,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// auto message tab switch - byte index 29
-		if (settingIndex == 9 && this.mouseButtonClick == 1 && S_AUTO_MESSAGE_SWITCH_TOGGLE) {
+		if (settingIndex == 9 && S_AUTO_MESSAGE_SWITCH_TOGGLE) {
 			C_MESSAGE_TAB_SWITCH = !C_MESSAGE_TAB_SWITCH;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(29);
@@ -17592,7 +20107,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// side menu - byte index 30
-		if (settingIndex == 10 && this.mouseButtonClick == 1 && S_SIDE_MENU_TOGGLE) {
+		if (settingIndex == 10 && S_SIDE_MENU_TOGGLE) {
 			C_SIDE_MENU_OVERLAY = !C_SIDE_MENU_OVERLAY;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(30);
@@ -17602,7 +20117,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// kill feed - byte index 31
-		if (settingIndex == 11 && this.mouseButtonClick == 1 && S_WANT_KILL_FEED) {
+		if (settingIndex == 11 && S_WANT_KILL_FEED) {
 			C_KILL_FEED = !C_KILL_FEED;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(31);
@@ -17612,7 +20127,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// experience counter - byte index 33
-		if (settingIndex == 14 && this.mouseButtonClick == 1 && S_EXPERIENCE_COUNTER_TOGGLE) {
+		if (settingIndex == 14 && S_EXPERIENCE_COUNTER_TOGGLE) {
 			C_EXPERIENCE_COUNTER++;
 			if (C_EXPERIENCE_COUNTER == 3)
 				C_EXPERIENCE_COUNTER = 0;
@@ -17623,7 +20138,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// inventory count - byte index 34
-		if (settingIndex == 15 && this.mouseButtonClick == 1 && S_INVENTORY_COUNT_TOGGLE) {
+		if (settingIndex == 15 && S_INVENTORY_COUNT_TOGGLE) {
 			C_INV_COUNT = !C_INV_COUNT;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(34);
@@ -17633,7 +20148,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// Show Login Box - byte index 40
-		if (settingIndex == 20 && this.mouseButtonClick == 1 && S_HIDE_LOGIN_BOX) {
+		if (settingIndex == 20 && S_HIDE_LOGIN_BOX) {
 			C_HIDE_LOGIN_BOX = !C_HIDE_LOGIN_BOX;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(40);
@@ -17642,7 +20157,7 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 45 && this.mouseButtonClick == 1 && S_GROUND_ITEM_NAMES) {
+		if (settingIndex == 45 && S_GROUND_ITEM_NAMES) {
 			C_GROUND_ITEM_NAMES = !C_GROUND_ITEM_NAMES;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(45);
@@ -17653,7 +20168,7 @@ public final class mudclient implements Runnable {
 
 		// batch progress bar - byte index 24
 		if (S_BATCH_PROGRESSION) {
-			if (settingIndex == 24 && this.mouseButtonClick == 1) {
+			if (settingIndex == 24) {
 				C_BATCH_PROGRESS_BAR = !C_BATCH_PROGRESS_BAR;
 				this.packetHandler.getClientStream().newPacket(111);
 				this.packetHandler.getClientStream().bufferBits.putByte(24);
@@ -17663,7 +20178,7 @@ public final class mudclient implements Runnable {
 			}
 		}
 
-		if (settingIndex == 52 && this.mouseButtonClick == 1) {
+		if (settingIndex == 52) {
 			C_GATHERING_FOCUS_MENU = (C_GATHERING_FOCUS_MENU + 1) % 3;
 			if (C_GATHERING_FOCUS_MENU == 0) {
 				this.gatheringFocusMenuHideAt = 0L;
@@ -17676,7 +20191,7 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 53 && this.mouseButtonClick == 1) {
+		if (settingIndex == 53) {
 			C_HITS_XP_FOCUS_MENU = (C_HITS_XP_FOCUS_MENU + 1) % 3;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(49);
@@ -17684,7 +20199,7 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 54 && this.mouseButtonClick == 1) {
+		if (settingIndex == 54) {
 			C_SUMMON_HEALTH_BARS = !C_SUMMON_HEALTH_BARS;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(50);
@@ -17693,7 +20208,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// experience drops - byte index 25
-		if (settingIndex == 25 && this.mouseButtonClick == 1 && S_EXPERIENCE_DROPS_TOGGLE) {
+		if (settingIndex == 25 && S_EXPERIENCE_DROPS_TOGGLE) {
 			C_EXPERIENCE_DROPS = !C_EXPERIENCE_DROPS;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(25);
@@ -17704,14 +20219,14 @@ public final class mudclient implements Runnable {
 
 		// npc killcount shows
 		if (S_NPC_KILL_COUNTERS) {
-			if (settingIndex == 38 && this.mouseButtonClick == 1) {
+			if (settingIndex == 38) {
 				C_TOTAL_NPC_KC = !C_TOTAL_NPC_KC;
 				this.packetHandler.getClientStream().newPacket(111);
 				this.packetHandler.getClientStream().bufferBits.putByte(38);
 				this.packetHandler.getClientStream().bufferBits.putByte(C_TOTAL_NPC_KC ? 1 : 0);
 				this.packetHandler.getClientStream().finishPacket();
 			}
-			if (settingIndex == 44 && this.mouseButtonClick == 1) {
+			if (settingIndex == 44) {
 				C_RECENT_NPC_KC = !C_RECENT_NPC_KC;
 				this.packetHandler.getClientStream().newPacket(111);
 				this.packetHandler.getClientStream().bufferBits.putByte(44);
@@ -17724,7 +20239,7 @@ public final class mudclient implements Runnable {
 		if (S_WANT_CLANS) {
 			// floating clan name tag overlay - byte index 35
 			if (S_SHOW_FLOATING_NAMETAGS) {
-				if (settingIndex == 16 && this.mouseButtonClick == 1) {
+				if (settingIndex == 16) {
 					C_NAME_CLAN_TAG_OVERLAY = !C_NAME_CLAN_TAG_OVERLAY;
 					this.packetHandler.getClientStream().newPacket(111);
 					this.packetHandler.getClientStream().bufferBits.putByte(35);
@@ -17735,7 +20250,7 @@ public final class mudclient implements Runnable {
 			}
 
 			// clan invite blocking - byte index 11
-			if (settingIndex == 17 && this.mouseButtonClick == 1) {
+			if (settingIndex == 17) {
 				this.clanInviteBlockSetting = !this.clanInviteBlockSetting;
 				this.packetHandler.getClientStream().newPacket(111);
 				this.packetHandler.getClientStream().bufferBits.putByte(11);
@@ -17744,14 +20259,12 @@ public final class mudclient implements Runnable {
 			}
 
 			// report abuse
-			if (settingIndex == 18 && this.mouseButtonClick == 1) {
-				this.inputTextFinal = "";
-				this.inputTextCurrent = "";
-				this.reportAbuse_State = 1;
+			if (settingIndex == 18) {
+				openReportPlayer("");
 			}
 
 			// party invite blocking
-			if (settingIndex == 19 && this.mouseButtonClick == 1) {
+			if (settingIndex == 19) {
 				this.partyInviteBlockSetting = !this.partyInviteBlockSetting;
 				C_PARTY_INV = !C_PARTY_INV;
 				this.packetHandler.getClientStream().newPacket(111);
@@ -17762,7 +20275,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// nature rune protection toggle - byte index 47
-		if (settingIndex == 47 && this.mouseButtonClick == 1 && S_WANT_NATURE_RUNE_PROTECTION) {
+		if (settingIndex == 47 && S_WANT_NATURE_RUNE_PROTECTION) {
 			C_WANT_NATURE_RUNE_PROTECTION = !C_WANT_NATURE_RUNE_PROTECTION;
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(46);
@@ -17770,18 +20283,17 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 48 && this.mouseButtonClick == 1) {
+		if (settingIndex == 48) {
 			toggleAutoRetaliate();
 		}
 
-		this.handleSettingsLogout(var5, var6, yFromTopDistance);
 	}
 
 	private void handleSettingsLogout(short boxWidth, int x, int yFromTopDistance) {
 		if (C_CUSTOM_UI) {
 			yFromTopDistance = getUITabsY() - 240 + 214;
 		} else {
-			yFromTopDistance = 275;
+			yFromTopDistance = getAuthenticSidebarPanelTop() + 239;
 		}
 
 		yFromTopDistance += 15;
@@ -17791,149 +20303,136 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	// custom social menu tab
-	private void handleSocialSettingsClicks(short var5, int var6, int yFromTopDistance) {
-		boolean var11 = false;
+	private enum SocialSetting {
+		PASSWORD, CHAT, PRIVATE_CHAT, GLOBAL_FRIEND, GLOBAL_CHAT, TRADE,
+		ONLINE_LIST, IGNORED_LIST, SKIP_TUTORIAL, EXIT_BLACK_HOLE
+	}
 
-		// change password
-		yFromTopDistance += 2 * 15 + 5;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.panelPasswordChange_Mode = PasswordChangeMode.OLD_PASSWORD;
-			this.inputTextCurrent = "";
-			this.inputTextFinal = "";
-			if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) {
-				clientPort.drawKeyboard();
-			}
-		}
-
-		// change recovery questions
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.packetHandler.getClientStream().newPacket(197);
-			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		// change contact details
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.packetHandler.getClientStream().newPacket(247);
-			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		// privacy divider text
-		yFromTopDistance += 17;
-
-		// block chat toggle
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12
-			&& 4 + yFromTopDistance > this.mouseY && this.mouseButtonClick == 1) {
-			this.settingsBlockChat = ++this.settingsBlockChat %3;
-			var11 = true;
-		}
-
-		// block private toggle
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
-			&& yFromTopDistance + 4 > this.mouseY && this.mouseButtonClick == 1) {
-			this.settingsBlockPrivate = ++this.settingsBlockPrivate %3;
-			var11 = true;
-		}
-
-		// Block global friend chat toggle
+	private List<RendererSettingsPanel.Row> socialSettingsRows() {
+		List<RendererSettingsPanel.Row> rows = new ArrayList<>();
+		rows.add(new RendererSettingsPanel.Row("@yel@Security", RendererSettingsPanel.SECTION_ROW));
+		addSocialSetting(rows, SocialSetting.PASSWORD, "Change password");
+		rows.add(new RendererSettingsPanel.Row("@yel@Privacy", RendererSettingsPanel.SECTION_ROW));
+		addSocialSetting(rows, SocialSetting.CHAT, "Allow chat messages - " + privacySettingLabel(settingsBlockChat));
+		addSocialSetting(rows, SocialSetting.PRIVATE_CHAT,
+			"Allow private messages - " + privacySettingLabel(settingsBlockPrivate));
 		if (S_WANT_GLOBAL_FRIEND && !S_WANT_GLOBAL_CHAT) {
-			yFromTopDistance += 15;
-			if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
-				&& yFromTopDistance + 4 > this.mouseY && this.mouseButtonClick == 1) {
+			addSocialSetting(rows, SocialSetting.GLOBAL_FRIEND, "Allow global messages - "
+				+ (C_BLOCK_GLOBAL_FRIEND ? "@red@Off" : "@gre@On"));
+		} else if (S_WANT_GLOBAL_CHAT && !S_WANT_GLOBAL_FRIEND) {
+			String hidden;
+			switch (settingsBlockGlobal) {
+				case 2: hidden = "@red@All"; break;
+				case 3: hidden = "@or1@PKing"; break;
+				case 4: hidden = "@ora@General"; break;
+				default: hidden = "@gre@None"; break;
+			}
+			addSocialSetting(rows, SocialSetting.GLOBAL_CHAT, "Hide global messages - " + hidden);
+		}
+		addSocialSetting(rows, SocialSetting.TRADE, "Allow trade requests - " + privacySettingLabel(settingsBlockTrade));
+		if (!insideTutorial) {
+			rows.add(new RendererSettingsPanel.Row("@yel@Player lists", RendererSettingsPanel.SECTION_ROW));
+			if (S_WANT_PLAYER_COMMANDS && !onlineSidebarSupported) addSocialSetting(rows, SocialSetting.ONLINE_LIST, "Display online list");
+			addSocialSetting(rows, SocialSetting.IGNORED_LIST, "View ignored list");
+		}
+		if (insideTutorial) addSocialSetting(rows, SocialSetting.SKIP_TUTORIAL, "Skip the tutorial");
+		else if (insideBlackHole) addSocialSetting(rows, SocialSetting.EXIT_BLACK_HOLE, "Exit the black hole");
+		return rows;
+	}
+
+	private static void addSocialSetting(List<RendererSettingsPanel.Row> rows, SocialSetting setting, String label) {
+		rows.add(new RendererSettingsPanel.Row(label, setting.ordinal()));
+	}
+
+	private static String privacySettingLabel(int value) {
+		return value == 2 ? "@red@Off" : value == 1 ? "@yel@Friends" : "@gre@On";
+	}
+
+	private void applySocialSetting(SocialSetting setting) {
+		switch (setting) {
+			case PASSWORD:
+				openPasswordChange();
+				break;
+			case CHAT:
+				settingsBlockChat = (settingsBlockChat + 1) % 3;
+				createPacket64(settingsBlockChat, settingsBlockPrivate, settingsBlockTrade, 0);
+				break;
+			case PRIVATE_CHAT:
+				settingsBlockPrivate = (settingsBlockPrivate + 1) % 3;
+				createPacket64(settingsBlockChat, settingsBlockPrivate, settingsBlockTrade, 0);
+				break;
+			case TRADE:
+				settingsBlockTrade = (settingsBlockTrade + 1) % 3;
+				createPacket64(settingsBlockChat, settingsBlockPrivate, settingsBlockTrade, 0);
+				break;
+			case GLOBAL_FRIEND:
 				C_BLOCK_GLOBAL_FRIEND = !C_BLOCK_GLOBAL_FRIEND;
-				this.packetHandler.getClientStream().newPacket(111);
-				this.packetHandler.getClientStream().bufferBits.putByte(41);
-				this.packetHandler.getClientStream().bufferBits.putByte(C_BLOCK_GLOBAL_FRIEND ? 1 : 0);
-				this.packetHandler.getClientStream().finishPacket();
+				packetHandler.getClientStream().newPacket(111);
+				packetHandler.getClientStream().bufferBits.putByte(41);
+				packetHandler.getClientStream().bufferBits.putByte(C_BLOCK_GLOBAL_FRIEND ? 1 : 0);
+				packetHandler.getClientStream().finishPacket();
+				break;
+			case GLOBAL_CHAT:
+				settingsBlockGlobal = settingsBlockGlobal >= 4 ? 1 : settingsBlockGlobal + 1;
+				packetHandler.getClientStream().newPacket(111);
+				packetHandler.getClientStream().bufferBits.putByte(9);
+				packetHandler.getClientStream().bufferBits.putByte(settingsBlockGlobal);
+				packetHandler.getClientStream().finishPacket();
+				break;
+			case ONLINE_LIST:
+				sendCommandString("onlinelist");
+				break;
+			case IGNORED_LIST:
+				showIgnoredList();
+				break;
+			case SKIP_TUTORIAL:
+				openTravelConfirmation(InputXAction.SKIP_TUTORIAL);
+				if (!C_CUSTOM_UI) showUiTab = 0;
+				break;
+			case EXIT_BLACK_HOLE:
+				openTravelConfirmation(InputXAction.EXIT_BLACK_HOLE);
+				if (!C_CUSTOM_UI) showUiTab = 0;
+				break;
+		}
+	}
+
+	private void handleSocialSettingsClicks(short width, int left, int y) {
+		if (mouseButtonClick != 1 || mouseX <= left || mouseX >= left + width) return;
+		y += 35;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.PASSWORD);
+		y += 32;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.CHAT);
+		y += 15;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.PRIVATE_CHAT);
+
+		if (S_WANT_GLOBAL_FRIEND && !S_WANT_GLOBAL_CHAT) {
+			y += 15;
+			if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.GLOBAL_FRIEND);
+		} else if (S_WANT_GLOBAL_CHAT && !S_WANT_GLOBAL_FRIEND) {
+			y += 15;
+			if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.GLOBAL_CHAT);
+		}
+
+		y += 15;
+		if (hitsLegacySocialSetting(y)) applySocialSetting(SocialSetting.TRADE);
+		if (!insideTutorial) {
+			y += 25;
+			if (S_WANT_PLAYER_COMMANDS && mouseY > y - 18 && mouseY < y + 7) {
+				applySocialSetting(SocialSetting.ONLINE_LIST);
 			}
+			if (hitsLegacySocialSetting(y + 14)) applySocialSetting(SocialSetting.IGNORED_LIST);
 		}
+		int specialY = C_CUSTOM_UI ? getUITabsY() - 240 + 194 : getAuthenticSidebarPanelTop() + 219;
+		if (hitsLegacySocialSetting(specialY)) {
+			if (insideTutorial) applySocialSetting(SocialSetting.SKIP_TUTORIAL);
+			else if (insideBlackHole) applySocialSetting(SocialSetting.EXIT_BLACK_HOLE);
+		}
+		int logoutY = C_CUSTOM_UI ? getUITabsY() - 240 + 229 : getAuthenticSidebarPanelTop() + 254;
+		if (hitsLegacySocialSetting(logoutY)) sendLogout(0);
+	}
 
-		// block global chat toggle
-		if (S_WANT_GLOBAL_CHAT && !S_WANT_GLOBAL_FRIEND) {
-			yFromTopDistance += 15;
-			if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
-				&& yFromTopDistance + 4 > this.mouseY && this.mouseButtonClick == 1) {
-				if (this.settingsBlockGlobal >= 4) {
-					this.settingsBlockGlobal = 0;
-				}
-				this.settingsBlockGlobal = this.settingsBlockGlobal + 1;
-				this.packetHandler.getClientStream().newPacket(111);
-				this.packetHandler.getClientStream().bufferBits.putByte(9);
-				this.packetHandler.getClientStream().bufferBits.putByte(this.settingsBlockGlobal);
-				this.packetHandler.getClientStream().finishPacket();
-			}
-		}
-
-		// block trade toggle
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var6 + var5 && yFromTopDistance - 12 < this.mouseY
-			&& this.mouseY < 4 + yFromTopDistance && this.mouseButtonClick == 1) {
-			this.settingsBlockTrade = ++this.settingsBlockTrade %3;
-			var11 = true;
-		}
-
-		// block chat toggle
-		if (var11) {
-			this.createPacket64(this.settingsBlockChat, this.settingsBlockPrivate,
-				this.settingsBlockTrade, 0);
-		}
-
-		// handle online list click
-		if (!this.insideTutorial) {
-			yFromTopDistance += 25;
-			if (S_WANT_PLAYER_COMMANDS && this.mouseX > var6 && this.mouseX < var6 + var5
-				&& yFromTopDistance - 18 < this.mouseY && this.mouseY < yFromTopDistance + 7 && this.mouseButtonClick == 1) {
-				this.sendCommandString("onlinelist");
-			}
-		}
-
-		if (!this.insideTutorial) {
-			yFromTopDistance += 14;
-			if (this.mouseX > var6 && this.mouseX < var6 + var5
-				&& yFromTopDistance - 12 < this.mouseY && this.mouseY < yFromTopDistance + 4
-				&& this.mouseButtonClick == 1) {
-				this.showIgnoredList();
-			}
-		}
-
-		// skip tutorial button or exit blackhole button
-		if (this.insideTutorial) {
-			yFromTopDistance = 255;
-			if (C_CUSTOM_UI)
-				yFromTopDistance = getUITabsY() - 240 + 194;
-			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
-				&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-				this.showItemModX(InputXPrompt.promptSkipTutorial, InputXAction.SKIP_TUTORIAL, false);
-				if (!C_CUSTOM_UI)
-					this.showUiTab = 0;
-			}
-		} else if (this.insideBlackHole) {
-			yFromTopDistance = 255;
-			if (C_CUSTOM_UI)
-				yFromTopDistance = getUITabsY() - 240 + 194;
-			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
-				&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-				this.showItemModX(InputXPrompt.promptExitBlackHole, InputXAction.EXIT_BLACK_HOLE, false);
-				if (!C_CUSTOM_UI)
-					this.showUiTab = 0;
-			}
-		}
-
-		// logout menu option
-		yFromTopDistance = 290;
-		if (C_CUSTOM_UI)
-			yFromTopDistance = getUITabsY() - 240 + 229;
-		if (this.mouseX > var6 && var5 + var6 > this.mouseX && this.mouseY > yFromTopDistance - 12
-			&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-			this.sendLogout(0);
-		}
+	private boolean hitsLegacySocialSetting(int baseline) {
+		return mouseY > baseline - 12 && mouseY < baseline + 4;
 	}
 
 	// android menu tab
@@ -18083,35 +20582,6 @@ public final class mudclient implements Runnable {
 		}
 		this.getSurface().drawString("Change password", 3 + baseX, y, securityColor, 1);
 
-		// change recovery questions
-		y += 15;
-		securityColor = 0xFFFFFF;
-		if (this.mouseX > x && this.mouseX < x + boxWidth && this.mouseY > y - 12
-			&& this.mouseY < y + 4) {
-			securityColor = 0xFFFF00;
-		}
-		this.getSurface().drawString("Change recovery questions", 3 + baseX, y, securityColor, 1);
-
-		// change contact details
-		y += 15;
-		securityColor = 0xFFFFFF;
-		if (this.mouseX > x && this.mouseX < x + boxWidth && this.mouseY > y - 12 && this.mouseY < y + 4) {
-			securityColor = 0xFFFF00;
-		}
-		this.getSurface().drawString("Change contact details", 3 + baseX, y, securityColor, 1);
-
-		/*
-		// this section is left for reference only
-		y += 20;
-		this.getSurface().drawString("To change you contact details,", 3 + baseX, y, 0xFFFFFF, 0);
-		y += 15;
-		this.getSurface().drawString("password, recovery questions, etc..", 3 + baseX, y, 0xFFFFFF, 0);
-		y += 15;
-		this.getSurface().drawString("please contact the administrators of", 3 + baseX, y, 0xFFFFFF, 0);
-		y += 15;
-		this.getSurface().drawString("the server you are playing.", 3 + baseX, y, 0xFFFFFF, 0);
-		*/
-
 		// privacy setting text
 		y += 20;
 		this.getSurface().drawString("Privacy settings. May be applied to all", 3 + baseX, y, 0, 1);
@@ -18226,25 +20696,7 @@ public final class mudclient implements Runnable {
 		yFromTopDistance += 2 * 15 + 5;
 		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
 			&& mouseButtonClick == 1) {
-			this.panelPasswordChange_Mode = PasswordChangeMode.OLD_PASSWORD;
-			this.inputTextCurrent = "";
-			this.inputTextFinal = "";
-		}
-
-		// change recovery questions
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.packetHandler.getClientStream().newPacket(197);
-			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		// change contact details
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12 && this.mouseY < yFromTopDistance + 4
-			&& mouseButtonClick == 1) {
-			this.packetHandler.getClientStream().newPacket(247);
-			this.packetHandler.getClientStream().finishPacket();
+			openPasswordChange();
 		}
 
 		// divider
@@ -18285,7 +20737,7 @@ public final class mudclient implements Runnable {
 		if (this.insideTutorial) { // tutorial menu option
 			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
 				&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-				this.showItemModX(InputXPrompt.promptSkipTutorial, InputXAction.SKIP_TUTORIAL, false);
+				openTravelConfirmation(InputXAction.SKIP_TUTORIAL);
 				if (!C_CUSTOM_UI)
 					this.showUiTab = 0;
 			}
@@ -18293,7 +20745,7 @@ public final class mudclient implements Runnable {
 		} else if (this.insideBlackHole) { // blackhole menu option
 			if (this.mouseX > var6 && var5 + var6 > this.mouseX && yFromTopDistance - 12 < this.mouseY
 				&& this.mouseY < yFromTopDistance + 4 && this.mouseButtonClick == 1) {
-				this.showItemModX(InputXPrompt.promptExitBlackHole, InputXAction.EXIT_BLACK_HOLE, false);
+				openTravelConfirmation(InputXAction.EXIT_BLACK_HOLE);
 				if (!C_CUSTOM_UI)
 					this.showUiTab = 0;
 			}
@@ -18345,20 +20797,257 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawEquipmentStatusValue(int statIndex, int x, int y, int color) {
+		drawEquipmentStatusValue(statIndex, x, y, color, 1);
+	}
+
+	private void drawEquipmentStatusValue(int statIndex, int x, int y, int color, int font) {
 		int value = statIndex < this.playerStatEquipment.length ? this.playerStatEquipment[statIndex] : 0;
-		this.getSurface().drawString(this.equipmentStatNames[statIndex] + ":@yel@" + value, x, y, color, 1);
+		this.getSurface().drawString(this.equipmentStatNames[statIndex] + ":@yel@" + value, x, y, color, font);
+	}
+
+	private boolean isAccomplishmentsPreviewEnabled() {
+		return chatLayout != null && !Config.S_WANT_OPENPK_POINTS;
+	}
+
+	private AccomplishmentsLayout accomplishmentsLayout() {
+		if (!isAccomplishmentsPreviewEnabled()) return null;
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+		int width = getSurface().width2;
+		int anchor = C_CUSTOM_UI ? getUITabsY() : getAuthenticSidebarPanelTop();
+		int chatRight = chatLayout.left + chatLayout.width;
+		int chatTop = chatLayout.entryTop();
+		if (accomplishmentsLayout == null || !accomplishmentsLayout.matches(width, anchor, C_CUSTOM_UI,
+			chatRight, chatTop, size, text)) {
+			int[] skills = getDisplayedSkillIndices();
+			MudClientGraphics surface = getSurface();
+			int labelWidth = surface.stringWidth(text.bodyFont, "Combat level: 999");
+			for (int skill : skills) {
+				labelWidth = Math.max(labelWidth, surface.stringWidth(text.bodyFont, skillNameLong[skill]));
+			}
+			int skillColumn = labelWidth + surface.stringWidth(text.bodyFont, "999/999") + size.pixels(12);
+			int statusWidth = Math.max(surface.stringWidth(text.bodyFont, "In progress"),
+				Math.max(surface.stringWidth(text.bodyFont, "Completed"), surface.stringWidth(text.bodyFont, "Not started")));
+			accomplishmentsLayout = new AccomplishmentsLayout(width, anchor, C_CUSTOM_UI, chatRight, chatTop, size,
+				text, surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont), skillColumn, statusWidth,
+				skills, questNames, value -> surface.stringWidth(text.bodyFont, value));
+		}
+		return accomplishmentsLayout;
+	}
+
+	private void drawAccomplishmentsPreview(AccomplishmentsLayout layout, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		if (!C_CUSTOM_UI) drawToolbarPanelTitle("Accomplishments", layout.left, layout.width);
+		surface.drawBoxAlpha(layout.left, layout.top, layout.width, layout.bottom - layout.top, InterfacePalette.PANEL, 228);
+		surface.drawBoxBorder(layout.left, layout.width, layout.top, layout.bottom - layout.top, InterfacePalette.BORDER);
+
+		int hoveredTab = acceptInput ? layout.tabAt(mouseX, mouseY) : -1;
+		if (hoveredTab >= 0 && mouseButtonClick == 1) {
+			uiTabPlayerInfoSubTab = hoveredTab;
+			accomplishmentsWheel.set(0);
+			mouseButtonClick = 0;
+		}
+		int tab = uiTabPlayerInfoSubTab;
+		int half = layout.width / 2;
+		drawInterfacePreviewTab(layout.left, layout.top, half, layout.tabHeight, "Stats",
+			layout.labelFont, layout.top + layout.tabBaseline, tab == AccomplishmentsLayout.STATS,
+			hoveredTab == AccomplishmentsLayout.STATS);
+		drawInterfacePreviewTab(layout.left + half, layout.top, layout.width - half, layout.tabHeight, "Quests",
+			layout.labelFont, layout.top + layout.tabBaseline, tab == AccomplishmentsLayout.QUESTS,
+			hoveredTab == AccomplishmentsLayout.QUESTS);
+
+		int scroll = layout.clampScroll(tab, accomplishmentsScroll[tab] + accomplishmentsWheel.getAndSet(0) * layout.rowHeight / 2);
+		int listTop = layout.listTop(tab);
+		int listHeight = layout.listBottom() - listTop;
+		int maxScroll = layout.maxScroll(tab);
+		if (maxScroll > 0 && acceptInput && mouseButtonClick == 1 && mouseX >= layout.scrollbarLeft()
+			&& mouseX < layout.scrollbarLeft() + layout.scrollbarWidth && mouseY >= listTop && mouseY < layout.listBottom()) {
+			scroll = (mouseY - listTop) * maxScroll / Math.max(1, listHeight - 1);
+			mouseButtonClick = 0;
+		}
+		accomplishmentsScroll[tab] = scroll;
+
+		int hoveredSkill = acceptInput && tab == AccomplishmentsLayout.STATS ? layout.skillAt(mouseX, mouseY, scroll) : -1;
+		if (tab == AccomplishmentsLayout.QUESTS) {
+			surface.drawString("Quest points: @yel@" + questPoints, layout.bodyLeft() + layout.padding,
+				listTop - layout.padding, 0xFFFFFF, layout.bodyFont);
+		}
+		surface.setClip(layout.bodyLeft(), layout.scrollbarLeft(), layout.listBottom(), listTop);
+		try {
+			if (tab == AccomplishmentsLayout.QUESTS) {
+				drawAccomplishmentsQuests(layout, scroll, acceptInput);
+			} else {
+				drawAccomplishmentsStats(layout, scroll, hoveredSkill, acceptInput);
+			}
+		} finally {
+			surface.clearClip();
+		}
+		if (maxScroll > 0) {
+			int thumbHeight = Math.max(layout.padding * 2, listHeight * listHeight / (listHeight + maxScroll));
+			int thumbTop = listTop + (listHeight - thumbHeight) * scroll / maxScroll;
+			surface.drawBoxAlpha(layout.scrollbarLeft() + 1, listTop, layout.scrollbarWidth - 1, listHeight, InterfacePalette.SCROLL_TRACK, 230);
+			surface.drawBox(layout.scrollbarLeft() + 2, thumbTop, layout.scrollbarWidth - 3, thumbHeight, InterfacePalette.SCROLL_THUMB);
+		}
+		if (hoveredSkill >= 0 && !skillGuideInterface.isVisible()) {
+			drawAccomplishmentsSkillDetails(layout, hoveredSkill);
+		}
+	}
+
+	private void drawAccomplishmentsQuests(AccomplishmentsLayout layout, int scroll, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int hovered = acceptInput ? layout.questAt(mouseX, mouseY, scroll) : -1;
+		for (AccomplishmentsLayout.QuestRow quest : layout.quests) {
+			int y = layout.listTop(AccomplishmentsLayout.QUESTS) + quest.offset - scroll;
+			if (y + quest.height <= layout.listTop(AccomplishmentsLayout.QUESTS) || y >= layout.listBottom()) continue;
+
+			if (hovered == quest.id && S_WANT_QUEST_MENUS) {
+				surface.drawBoxAlpha(layout.bodyLeft(), y, layout.scrollbarLeft() - layout.bodyLeft(), quest.height, InterfacePalette.CONTROL_SELECTED, 200);
+			}
+			int baseline = y + (quest.height - quest.lines.size() * layout.bodyHeight) / 2 + layout.bodyHeight - 3;
+			int nameX = layout.bodyLeft() + layout.padding;
+			for (String line : quest.lines) {
+				surface.drawString(line, nameX, baseline, 0xFFFFFF, layout.bodyFont);
+				baseline += layout.bodyHeight;
+			}
+			int stage = questStages[quest.id];
+			int progressColor = stage < 0 ? 0x9FE0AC : stage > 0 && S_WANT_QUEST_STARTED_INDICATOR ? 0xFFDC82 : InterfacePalette.MUTED_TEXT;
+			String progress = stage < 0 ? "Completed" : S_WANT_QUEST_STARTED_INDICATOR
+				? (stage > 0 ? "In progress" : "Not started") : "Incomplete";
+			int progressX = layout.questStatusRight() - surface.stringWidth(layout.bodyFont, progress);
+			surface.drawString(progress, progressX, y + (quest.height + layout.bodyHeight) / 2 - 3,
+				progressColor, layout.bodyFont);
+			surface.drawLineHoriz(layout.bodyLeft(), y + quest.height - 1, layout.scrollbarLeft() - layout.bodyLeft(), InterfacePalette.SEAM);
+		}
+		if (hovered >= 0 && S_WANT_QUEST_MENUS && mouseButtonClick == 1) {
+			openQuestGuideFromSidebar(hovered);
+			mouseButtonClick = 0;
+		}
+	}
+
+	private void drawAccomplishmentsStats(AccomplishmentsLayout layout, int scroll, int hovered, boolean acceptInput) {
+		MudClientGraphics surface = getSurface();
+		int levels = 0;
+		long xp = 0;
+		for (int index = 0; index < layout.skills.length; index++) {
+			int skill = layout.skills[index];
+			levels += playerStatBase[skill];
+			xp += playerExperience[skill];
+			int y = layout.statsRowY(index % layout.skillRows, scroll);
+			if (y + layout.rowHeight <= layout.listTop(AccomplishmentsLayout.STATS) || y >= layout.listBottom()) continue;
+			int column = index / layout.skillRows;
+			int x = layout.columnLeft(column);
+			if (skill == hovered && S_WANT_SKILL_MENUS) {
+				surface.drawBoxAlpha(x, y, layout.columnWidth() - 1, layout.rowHeight, InterfacePalette.CONTROL_SELECTED, 200);
+			}
+			int baseline = y + (layout.rowHeight + layout.bodyHeight) / 2 - 3;
+			surface.drawString(skillNameLong[skill], x + layout.padding, baseline, 0xFFFFFF, layout.bodyFont);
+			String levelsText = playerStatCurrent[skill] + "/" + playerStatBase[skill];
+			surface.drawString(levelsText, x + layout.columnWidth() - layout.padding - surface.stringWidth(layout.bodyFont, levelsText),
+				baseline, 0xFFDC82, layout.bodyFont);
+			surface.drawLineHoriz(x + 1, y + layout.rowHeight - 1, layout.columnWidth() - 2, InterfacePalette.SEAM);
+		}
+		int row = layout.skillRows;
+		drawAccomplishmentsStatRow(layout, scroll, row++, "Equipment status", null, 0xFFDC82);
+		int left = layout.columnLeft(0) + layout.padding;
+		int right = layout.columnLeft(1) + layout.padding;
+		for (int offset = 0; offset < 4; offset++) {
+			int baseline = layout.statsRowY(row++, scroll) + (layout.rowHeight + layout.bodyHeight) / 2 - 3;
+			drawEquipmentStatusValue(offset == 3 ? 4 : offset, left, baseline, 0xFFFFFF, layout.bodyFont);
+			drawEquipmentStatusValue(offset == 0 ? 3 : offset + 4, right, baseline, 0xFFFFFF, layout.bodyFont);
+		}
+		boolean overallHovered = acceptInput && S_WANT_SKILL_MENUS && S_WANT_HISCORES
+			&& mouseX < layout.columnLeft(1) && layout.statsRowAt(mouseX, mouseY, scroll) == row;
+		drawAccomplishmentsStatRow(layout, scroll, row++, "Overall levels", null, overallHovered ? 0xFFFFFF : 0xFFDC82);
+		drawAccomplishmentsStatRow(layout, scroll, row++, "Skill total: " + levels, "Combat level: " + localPlayer.level, 0xFFFFFF);
+		drawAccomplishmentsStatRow(layout, scroll, row++, "Quest points: " + questPoints,
+			S_WANT_EXP_INFO ? "Total XP: " + xp : null, 0xFFFFFF);
+		String fatigue = S_WANT_FATIGUE ? "Fatigue: " + statFatigue + "%"
+			: S_FEATURES_SLEEP ? (experienceOff ? "XP gain off" : "XP gain on") : null;
+		if (fatigue != null) drawAccomplishmentsStatRow(layout, scroll, row, fatigue, null, 0xFFFFFF);
+
+		if (mouseButtonClick == 1 && S_WANT_SKILL_MENUS && (hovered >= 0 || overallHovered)) {
+			openSkillGuideFromSidebar(overallHovered ? "Overall" : skillNameLong[hovered], overallHovered);
+			mouseButtonClick = 0;
+		}
+	}
+
+	private void drawAccomplishmentsStatRow(AccomplishmentsLayout layout, int scroll, int row, String left, String right, int color) {
+		int baseline = layout.statsRowY(row, scroll) + (layout.rowHeight + layout.bodyHeight) / 2 - 3;
+		getSurface().drawString(left, layout.columnLeft(0) + layout.padding, baseline, color, layout.bodyFont);
+		if (right != null) {
+			getSurface().drawString(right, layout.columnLeft(1) + layout.padding, baseline, color, layout.bodyFont);
+		}
+	}
+
+	private void drawAccomplishmentsSkillDetails(AccomplishmentsLayout layout, int skill) {
+		MudClientGraphics surface = getSurface();
+		int xp = playerExperience[skill];
+		int nextLevel = experienceArray[0];
+		for (int level = 0; level + 1 < experienceArray.length; level++) {
+			if (experienceArray[level] <= xp) nextLevel = experienceArray[level + 1];
+		}
+		java.util.List<String> lines = new java.util.ArrayList<>(5);
+		lines.add(skillNameLong[skill]);
+		lines.add("Total XP: " + xp);
+		lines.add("Next level: " + nextLevel);
+		if (S_WANT_EXP_INFO) lines.add("XP to next level: " + (nextLevel - xp));
+		if ("Worship".equalsIgnoreCase(skillNameLong[skill])) {
+			lines.add("Devotion: " + formatDevotionHalfOfferingUnits(currentDevotionHalfOfferingUnits));
+		}
+		int width = 0;
+		for (String line : lines) width = Math.max(width, surface.stringWidth(layout.bodyFont, line));
+		width += 2 * layout.padding;
+		int x = Math.max(layout.padding, layout.left - layout.padding - width);
+		int height = lines.size() * layout.bodyHeight + 2 * layout.padding;
+		int y = Math.max(layout.top, Math.min(mouseY, layout.bottom - height));
+		surface.drawBoxAlpha(x, y, width, height, InterfacePalette.PANEL, 245);
+		surface.drawBoxBorder(x, width, y, height, InterfacePalette.BORDER);
+		for (int row = 0; row < lines.size(); row++) {
+			surface.drawString(lines.get(row), x + layout.padding,
+				y + layout.padding + (row + 1) * layout.bodyHeight - 3, row == 0 ? 0xFFDC82 : 0xFFFFFF, layout.bodyFont);
+		}
+	}
+
+	private void openSkillGuideFromSidebar(String skillName, boolean hiscores) {
+		setSkillGuideChosen(skillName);
+		skillGuideInterface.curTab = 0;
+		skillGuideWheel.set(0);
+		skillGuidePreview = chatLayout == null || hiscores ? null : skillGuideInterface.createGuideWindow();
+		skillGuideInterface.setHiscoresMode(hiscores);
+		hiscoresPreview = hiscores && chatLayout != null ? new HiscoresWindow(skillName, hiscoreGuideSkillId) : null;
+		skillGuideInterface.setVisible(true);
+		if (!C_CUSTOM_UI) showUiTab = 0;
+	}
+
+	private void openQuestGuideFromSidebar(int quest) {
+		setQuestGuideChosen(questNames[quest]);
+		setQuestGuideProgress(questStages[quest]);
+		setQuestGuideStartWho(quest);
+		setQuestGuideStartWhere(quest);
+		setQuestGuideRequirement(quest);
+		setQuestGuideReward(quest);
+		questGuideWheel.set(0);
+		questGuideDismiss = false;
+		questGuidePreview = chatLayout == null ? null : createQuestGuide(quest);
+		questGuideInterface.setVisible(true);
+		if (!C_CUSTOM_UI) showUiTab = 0;
 	}
 
 	private void drawUiTabPlayerInfo(boolean var1, int var2) {
+		AccomplishmentsLayout preview = accomplishmentsLayout();
+		if (preview != null) {
+			drawAccomplishmentsPreview(preview, var1);
+			return;
+		}
 
 		int maxY = getUITabsY();
 
 		try {
 
 			int x = this.surface.width2 - 199;
-			int y = 36;
+			int y = getAuthenticSidebarPanelTop();
 			if (!C_CUSTOM_UI)
-				this.getSurface().drawSprite(spriteSelect(GUIPARTS.SKILLSTAB.getDef()), x - 49, 3);
+				drawAuthenticSidebarHeader(GUIPARTS.SKILLSTAB, "Accomplishments", x, 196);
 			if (C_CUSTOM_UI)
 				y = maxY - 287;
 			short width = 196;
@@ -18417,18 +21106,10 @@ public final class mudclient implements Runnable {
 						currentlyHoveredSkill = currSkill;
 						if (isAndroid() && this.mouseButtonClick == 1 && this.uiTabPlayerInfoSubTab == 0) {
 							if (doubleClick() && S_WANT_SKILL_MENUS) {
-								setSkillGuideChosen(skillNameLong[currSkill]);
-								skillGuideInterface.setHiscoresMode(false);
-								skillGuideInterface.setVisible(true);
-								if (!C_CUSTOM_UI)
-									this.showUiTab = 0;
+								openSkillGuideFromSidebar(skillNameLong[currSkill], false);
 							}
 						} else if (!isAndroid() && this.mouseButtonClick == 1 && this.uiTabPlayerInfoSubTab == 0 && S_WANT_SKILL_MENUS) {
-							setSkillGuideChosen(skillNameLong[currSkill]);
-							skillGuideInterface.setHiscoresMode(false);
-							skillGuideInterface.setVisible(true);
-							if (!C_CUSTOM_UI)
-								this.showUiTab = 0;
+							openSkillGuideFromSidebar(skillNameLong[currSkill], false);
 						}
 
 						if (isAndroid() && this.mouseButtonClick == 1 && this.uiTabPlayerInfoSubTab == 0 && S_WANT_OPENPK_POINTS) {
@@ -18517,11 +21198,7 @@ public final class mudclient implements Runnable {
 						overallHovered ? textColourHovered : textColourHeading, 1);
 					if (overallHovered && this.mouseButtonClick == 1) {
 						this.mouseButtonClick = 0;
-						setSkillGuideChosen("Overall");
-						skillGuideInterface.setHiscoresMode(true);
-						skillGuideInterface.setVisible(true);
-						if (!C_CUSTOM_UI)
-							this.showUiTab = 0;
+						openSkillGuideFromSidebar("Overall", true);
 					}
 					heightMargin += 12;
 					int currSkillTotal = 0;
@@ -18611,15 +21288,7 @@ public final class mudclient implements Runnable {
 					&& this.getMouseX() > x && this.getMouseY() > y + 36
 					&& this.getMouseX() < x + this.getSurface().stringWidth(1, this.questNames[position])
 					&& this.getMouseY() < height + y + 8) {
-					setQuestGuideChosen(this.questNames[position]);
-					setQuestGuideProgress(this.questStages[position]);
-					setQuestGuideStartWho(position);
-					setQuestGuideStartWhere(position);
-					setQuestGuideRequirement(position);
-					setQuestGuideReward(position);
-					questGuideInterface.setVisible(true);
-					if (!C_CUSTOM_UI)
-						this.showUiTab = 0;
+					openQuestGuideFromSidebar(position);
 					setMouseClick(0);
 				}
 
@@ -18627,16 +21296,14 @@ public final class mudclient implements Runnable {
 			}
 
 			if (var1) {
-				int mouseYOffset = this.mouseY - 36;
-				if (C_CUSTOM_UI)
-					mouseYOffset = this.mouseY - y; // relative Y
+				int mouseYOffset = this.mouseY - y;
 				x = -this.getSurface().width2 - (-199 - this.mouseX);
 				if (x >= 0 && mouseYOffset >= 0 && x < width && mouseYOffset < height) {
 					if (this.uiTabPlayerInfoSubTab == 1) {
 						if (C_CUSTOM_UI)
 							this.panelQuestInfo.handleMouse(this.getMouseX(), this.getMouseY(), this.getMouseButtonDown(), this.getLastMouseDown());
 						else
-							this.panelQuestInfo.handleMouse(x + this.getSurface().width2 - 199, 36 + mouseYOffset,
+							this.panelQuestInfo.handleMouse(x + this.getSurface().width2 - 199, y + mouseYOffset,
 								this.currentMouseButtonDown, this.lastMouseButtonDown);
 					}
 					if (mouseYOffset <= 24 && this.mouseButtonClick == 1) {
@@ -19012,6 +21679,7 @@ public final class mudclient implements Runnable {
 	}
 
 	void repositionCustomUI() {
+		repositionChat(true);
 		int var3 = this.getSurface().width2 - 199;
 		int maxY = getUITabsY();
 		panelSettings.reposition(controlSettingPanel, var3 + 1, (maxY - 240) + 16, 195, 184);
@@ -19020,17 +21688,15 @@ public final class mudclient implements Runnable {
 			getAbilitiesPanelTop() + 24 + SPELLS_SUBTAB_HEIGHT, 196, 90);
 		panelPlayerInfo.reposition(controlPlayerInfoPanel, var3, (maxY - 287) + 24, 196, 251);
 		panelQuestInfo.reposition(controlQuestInfoPanel, var3, (maxY - 287) + 24, 196, 251);
-		int offX = 300;
-		panelMessageTabs.reposition(panelMessageChat, 5, getGameHeight() - 65, getGameWidth() - offX, 56);
-		panelMessageTabs.reposition(panelMessageEntry, 7, getGameHeight() - 10, getGameWidth() - offX, 14);
-		panelMessageTabs.reposition(panelMessageQuest, 5, getGameHeight() - 65, getGameWidth() - offX, 56);
-		panelMessageTabs.reposition(panelMessagePrivate, 5, getGameHeight() - 65, getGameWidth() - offX, 56);
-		panelMessageTabs.reposition(panelMessageClan, 5, getGameHeight() - 65, getGameWidth() - offX, 56);
 	}
 
 	void repositionAuthenticUI() {
 		int var3 = this.getSurface().width2 - 199;
-		byte var12 = 36;
+		int var12 = getAuthenticSidebarPanelTop();
+		if (sideToolbarLayout() != null) {
+			panelClan.reposition(controlClanPanel, var3, var12 + 72, 196, 128);
+			panelPlayerTaskInfo.reposition(controlPlayerTaskInfoPanel, var3, 24 + var12 + 27, 196, 224);
+		}
 		if (!authenticSettings) {
 			panelSettings.reposition(controlSettingPanel, var3 + 1, 24 + var12 + 16, 195, 184);
 		}
@@ -19038,11 +21704,47 @@ public final class mudclient implements Runnable {
 		panelMagic.reposition(controlMagicPanel, var3, 24 + var12 + SPELLS_SUBTAB_HEIGHT, 196, 90);
 		panelPlayerInfo.reposition(controlPlayerInfoPanel, var3, 24 + var12, 196, 251);
 		panelQuestInfo.reposition(controlQuestInfoPanel, var3, 24 + var12, 196, 251);
-		panelMessageTabs.reposition(panelMessageChat, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
-		panelMessageTabs.reposition(panelMessageEntry, 7, getGameHeight() - 10, getGameWidth() - 14, 14);
-		panelMessageTabs.reposition(panelMessageQuest, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
-		panelMessageTabs.reposition(panelMessagePrivate, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
-		panelMessageTabs.reposition(panelMessageClan, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
+		repositionChat(false);
+	}
+
+	private boolean usesNativeHdInterface() {
+		return !isAndroid() && RenderSurfaceSettings.usesNativeHdInterface(gameHeight + 12);
+	}
+
+	private void repositionChat(boolean customInterface) {
+		chatLayoutDirty = false;
+		chatLayout = null;
+		if (!isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled()) {
+			GameInterfaceSettings.TextSize text = GameInterfaceSettings.textSize();
+			MudClientGraphics surface = getSurface();
+			chatLayout = new ChatPanelLayout(gameWidth, gameHeight + 12, GameInterfaceSettings.size(), text,
+				surface.fontHeight(text.bodyFont), surface.fontHeight(text.labelFont),
+				surface.stringWidth(text.labelFont, ReportPlayerWindow.TITLE));
+		}
+		int listX = chatLayout == null ? 5 : chatLayout.left + chatLayout.textInset - 2;
+		int listY = chatLayout == null ? gameHeight - 65 : chatLayout.historyTop();
+		int listWidth = chatLayout == null ? gameWidth - (customInterface ? 300 : 10)
+			: chatLayout.width - 2 * chatLayout.textInset + 2;
+		int listHeight = chatLayout == null ? 56 : chatLayout.historyHeight;
+		int font = chatLayout == null ? 1 : chatLayout.bodyFont;
+		panelMessageTabs.setChatScrollbarWidth(chatLayout == null ? 12 : chatLayout.scrollbarWidth);
+		for (int control : new int[] {panelMessageChat, panelMessageQuest, panelMessagePrivate, panelMessageClan}) {
+			panelMessageTabs.reposition(control, listX, listY, listWidth, listHeight);
+			panelMessageTabs.setTextFont(control, font);
+		}
+		int entryWidth = chatLayout == null ? gameWidth - (customInterface ? 300 : 14) : listWidth;
+		int entryHeight = chatLayout == null ? 14 : chatLayout.entryHeight;
+		int entryY = chatLayout == null ? gameHeight - 10 : chatLayout.entryTop() + entryHeight / 2;
+		panelMessageTabs.reposition(panelMessageEntry, listX + 2, entryY, entryWidth, entryHeight);
+		panelMessageTabs.setTextFont(panelMessageEntry, font);
+	}
+
+	private void resizeSceneViewport() {
+		// The legacy focal length is a power of two. At twice the render height
+		// use twice the focal length to preserve the wide viewport's framing.
+		int projectionShift = usesNativeHdInterface() ? m_qd + 1 : m_qd;
+		scene.setMidpoints(halfGameHeight(), true, gameWidth, halfGameWidth(),
+			halfGameHeight(), projectionShift, halfGameWidth());
 	}
 
 	boolean reposition() {
@@ -19051,13 +21753,15 @@ public final class mudclient implements Runnable {
 		}
 		gameWidth = resizeWidth;
 		gameHeight = resizeHeight - 12;
+		dialogueChoicesPanel = null;
+		inventoryEquipmentLayout = null;
+		accomplishmentsLayout = null;
 
 		resizeWidth = resizeHeight = -1;
 
 		getSurface().resize(this.gameWidth, this.gameHeight + 12);
 		this.getSurface().setClip(0, this.getGameWidth(), this.getGameHeight() + 12, 0);
-		this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(), this.halfGameWidth(),
-			this.halfGameHeight(), this.m_qd, this.halfGameWidth());
+		resizeSceneViewport();
 
 		clientPort.resized();
 		int var3 = this.getSurface().width2 - 199;
@@ -19186,6 +21890,7 @@ public final class mudclient implements Runnable {
 
 	private void handleAppearancePanelControls(int var1) {
 		try {
+			ensureAppearancePanel(Config.S_CHARACTER_CREATION_MODE);
 			this.panelAppearance.handleMouse(this.mouseX, this.mouseY, this.currentMouseButtonDown,
 				this.lastMouseButtonDown);
 
@@ -19701,7 +22406,12 @@ public final class mudclient implements Runnable {
 				this.preloadTerrainForActiveMovementContext();
 
 				if (!this.isSleeping) {
-					if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
+					if (chatLayout != null) {
+						if (worldMapWindow == null && !hasBankPinInput() && !hasSessionNoticeInput() && !hasItemQuantityInput()
+								&& !hasReportPlayerInput() && !hasPasswordChangeInput() && !hasGameplayPromptInput() && !hasSocialPromptInput()) {
+							handleScaledChatTabSelection();
+						}
+					} else if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
 						if (mouseX > 15 + (halfGameWidth() - 256) && mouseX < 96 + (halfGameWidth() - 256)
 							&& lastMouseButtonDown == 1)
 							this.messageTabSelected = MessageTab.ALL;
@@ -19726,9 +22436,7 @@ public final class mudclient implements Runnable {
 								this.messageTabSelected = MessageTab.CLAN;
 								this.panelMessageTabs.controlScrollAmount[this.panelMessageClan] = 999999;
 							} else {
-								this.inputTextFinal = "";
-								this.inputTextCurrent = "";
-								this.reportAbuse_State = 1;
+								openReportPlayer("");
 							}
 						}
 
@@ -19736,24 +22444,32 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 
-					this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					auctionHouse.myAuctions.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					auctionHouse.auctionMenu.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					clan.getClanInterface().clanSetupPanel.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					party.getPartyInterface().partySetupPanel.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					bank.bank.handleMouse(this.mouseX, this.mouseY,
-						this.currentMouseButtonDown, this.lastMouseButtonDown);
-					if (this.messageTabSelected != MessageTab.ALL && this.mouseX >= 494
+					boolean modalOwnsInput = worldMapWindow != null || hasBankPinInput() || hasSessionNoticeInput() || hasItemQuantityInput()
+						|| hasReportPlayerInput() || hasPasswordChangeInput() || hasGameplayPromptInput() || auctionHouse.hasReviewInput();
+					if (!modalOwnsInput) {
+						if (!hasContextMenuInput() && !hasQuestRewardInput()
+							&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
+							&& !hasDeathItemsInput()) {
+							this.panelMessageTabs.handleMouse(this.mouseX, this.mouseY,
+								this.currentMouseButtonDown, this.lastMouseButtonDown);
+						}
+						auctionHouse.myAuctions.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						auctionHouse.auctionMenu.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						clan.getClanInterface().clanSetupPanel.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						party.getPartyInterface().partySetupPanel.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						bank.bank.handleMouse(this.mouseX, this.mouseY,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+					}
+					if (chatLayout == null && this.messageTabSelected != MessageTab.ALL && this.mouseX >= 494
 						&& this.mouseY >= this.getGameHeight() - 66) {
 						this.lastMouseButtonDown = 0;
 					}
 
-					if (this.panelMessageTabs.isClicked(this.panelMessageEntry)) {
+					if (!modalOwnsInput && this.panelMessageTabs.isClicked(this.panelMessageEntry)) {
 						String var11 = this.panelMessageTabs.getControlText(this.panelMessageEntry);
 						this.panelMessageTabs.setText(this.panelMessageEntry, "");
 						if (var11.startsWith("::")) {
@@ -19875,14 +22591,20 @@ public final class mudclient implements Runnable {
 					} else if (this.lastMouseButtonDown == 2) {
 						this.mouseButtonClick = 2;
 					}
-					if (mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
+					if (!shopPreviewOpen() && !hasContextMenuInput() && !hasQuestRewardInput()
+						&& !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
+						&& !hasDeathItemsInput() && !modalOwnsInput
+						&& mainComponent.checkMouseInput(getMouseX(), getMouseY(), getMouseButtonDown(),
 						getMouseClick()) && !this.isShowDialogBank()) {
 						this.currentMouseButtonDown = 0;
 						this.mouseButtonClick = 0;
 						this.lastMouseButtonDown = 0;
 					}
 					this.scene.setMouseLoc(0, this.mouseX, this.mouseY);
-					if(updateWorldEditorTerrainDrag()){this.mouseButtonClick=0;this.lastMouseButtonDown=0;}
+					if (worldMapWindow == null && !hasBankPinInput() && updateWorldEditorTerrainDrag()) {
+						this.mouseButtonClick = 0;
+						this.lastMouseButtonDown = 0;
+					}
 					this.lastMouseButtonDown = 0;
 					if (this.optionCameraModeAuto && !this.isInFirstPersonView()) {
 						if (this.m_Wc == 0 || this.cameraAutoAngleDebug) {
@@ -20180,6 +22902,10 @@ public final class mudclient implements Runnable {
 		try {
 
 			if (this.currentViewMode == GameMode.LOGIN) {
+				if (accountEntryPreview != null && (loginScreenNumber == 1 || loginScreenNumber == 4)) {
+					accountEntryPreview.keyPressed(loginScreenNumber, key, desktopKeyCode);
+					return;
+				}
 				if (this.loginScreenNumber == 0 && this.panelLoginWelcome != null) {
 					this.panelLoginWelcome.keyPress(key);
 				}
@@ -20196,6 +22922,20 @@ public final class mudclient implements Runnable {
 
 			if (var1 > 105) {
 				if (this.currentViewMode == GameMode.GAME) {
+					if (hasQuestRewardInput()) {
+						if (key == 27 || key == '\n' || key == '\r' || desktopKeyCode == 27 || desktopKeyCode == 10) {
+							questRewardDismiss = true;
+						}
+						return;
+					}
+					if (hasQuestGuidePreviewInput()) {
+						if (key == 27 || desktopKeyCode == 27) questGuideDismiss = true;
+						return;
+					}
+					if (hasSkillGuidePreviewInput()) {
+						if (key == 27 || desktopKeyCode == 27) closeSkillGuidePreview();
+						return;
+					}
 					if (this.showAppearanceChange) {
 						this.panelAppearance.keyPress(key);
 						return;
@@ -20220,7 +22960,8 @@ public final class mudclient implements Runnable {
 							clientPort.closeKeyboard();
 						}
 					}
-					if (auctionHouse.isVisible() && (auctionHouse.auctionMenu.focusOn(auctionHouse.auctionSearchHandle)
+					if (auctionHouse.isVisible() && (auctionHouse.hasReviewInput() || auctionHouse.usesWorkspace() && key == 27
+						|| auctionHouse.auctionMenu.focusOn(auctionHouse.auctionSearchHandle)
 						|| auctionHouse.myAuctions.focusOn(auctionHouse.textField_priceEach)
 						|| auctionHouse.auctionMenu.focusOn(auctionHouse.textField_buyAmount)
 						|| auctionHouse.myAuctions.focusOn(auctionHouse.textField_amount)
@@ -20248,20 +22989,22 @@ public final class mudclient implements Runnable {
 						return;
 					}
 
-					if (optionsMenuShow && S_WANT_KEYBOARD_SHORTCUTS > 0) {
-						try {
-							int option = Integer.parseInt("" + (char) key) - 1;
-							if (option >= 0 && option < optionsMenuCount) {
-								this.packetHandler.getClientStream().newPacket(116);
-								this.packetHandler.getClientStream().bufferBits.putByte(option);
-								this.packetHandler.getClientStream().finishPacket();
-								mouseButtonClick = 0;
-								optionsMenuShow = false;
-								return;
-							}
-						} catch (Exception e) {
-
+					if (hasDialogueChoiceInput() && (key == 27 || desktopKeyCode == 27)) {
+						submitDialogueChoice(DialogueChoicesPanel.CANCEL);
+						return;
+					}
+					if (optionsMenuShow && S_WANT_KEYBOARD_SHORTCUTS > 0 && key >= '1' && key <= '9') {
+						int option = key - '1';
+						if (option < optionsMenuCount) {
+							submitDialogueChoice(option);
+							return;
 						}
+					}
+					if (isTradePreviewQuantityPrompt() && (key == 27 || desktopKeyCode == 27)) {
+						tradePreviewTarget = null;
+						inputX_Action = InputXAction.ACT_0;
+						inputTextCurrent = inputTextFinal = "";
+						return;
 					}
 					if ((key == '\n' || key == '\r') && (this.inputX_Action == InputXAction.BANK_DEPOSIT || this.inputX_Action == InputXAction.BANK_WITHDRAW)) {
 						this.inputX_OK = true;
@@ -20301,6 +23044,11 @@ public final class mudclient implements Runnable {
 				--this.m_Zb;
 			}
 
+
+			if (accountEntryPreview != null && (loginScreenNumber == 1 || loginScreenNumber == 4)) {
+				handleAccountEntryPreview();
+				return;
+			}
 
 			if (this.loginScreenNumber != 0) {
 				if (loginScreenNumber == 1) {
@@ -20413,6 +23161,11 @@ public final class mudclient implements Runnable {
 					}
 
 					if (this.panelLogin.isClicked(this.lostPasswordButtonIdx)) {
+						if (accountEntryPreview != null) {
+							accountEntryPreview.startRecovery(panelLogin.getControlText(controlLoginUser));
+							loginScreenNumber = 4;
+							return;
+						}
 						this.username = this.panelLogin.getControlText(this.controlLoginUser);
 						this.username = DataOperations.addCharacters(this.username, 20);
 						if (this.username.trim().length() == 0) {
@@ -20598,6 +23351,12 @@ public final class mudclient implements Runnable {
 				} else if (panelLoginWelcome.isClicked(loginButtonNewUser)) {
 					if (isAndroid()) clientPort.drawKeyboard();
 					loginScreenNumber = 1;
+					if (accountEntryPreview != null) {
+						panelLoginWelcome.setText(accountEntryWelcomeStatus, "");
+						accountEntryPreview.startRegistration();
+						enterPressed = false;
+						return;
+					}
 					this.menuNewUser.setText(this.menuNewUserStatus, "Please fill in all fields");
 					this.menuNewUser.setText(this.menuNewUserStatus2, "and click submit.");
 					menuNewUser.setFocus(menuNewUserUsername);
@@ -20612,11 +23371,33 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void handleAccountEntryPreview() {
+		boolean enter = enterPressed;
+		enterPressed = false;
+		if (loginScreenNumber == 4) {
+			if (accountEntryPreview.updateRecovery(mouseX, mouseY, currentMouseButtonDown, lastMouseButtonDown, enter)) {
+				loginScreenNumber = 2;
+				panelLogin.setFocus(controlLoginUser);
+			}
+			return;
+		}
+		AccountEntryPreview.RegistrationAction action = accountEntryPreview.updateRegistration(
+			mouseX, mouseY, currentMouseButtonDown, lastMouseButtonDown, enter, !wantEmail());
+		if (action == AccountEntryPreview.RegistrationAction.CANCEL) {
+			accountEntryPreview.startRegistration();
+			loginScreenNumber = 0;
+		} else if (action == AccountEntryPreview.RegistrationAction.CREATE) {
+			showLoginScreenStatus("Please wait...", "Creating new account");
+			sendRegister(accountEntryPreview.username(), accountEntryPreview.password(), accountEntryPreview.repeatPassword(), "");
+		}
+	}
+
 	private void sendRegister(String user, String pass, String confirm, String email) {
 		this.m_Zb = 1500;
-		username = user;
+		boolean preview = accountEntryPreview != null;
+		if (!preview) username = user;
 		user = DataOperations.addCharacters(user, 20);
-		password = pass;
+		if (!preview) password = pass;
 		pass = DataOperations.addCharacters(pass, 20);
 		confirm = DataOperations.addCharacters(confirm, 20);
 
@@ -20644,7 +23425,7 @@ public final class mudclient implements Runnable {
 			showLoginScreenStatus("Password is too long, please use", "password with length of 4-20");
 			return;
 		}
-		if (!isValidEmailAddress(email)) {
+		if (wantEmail() && !isValidEmailAddress(email)) {
 			showLoginScreenStatus("Invalid email address", "please use a valid email address");
 		}
 		try {
@@ -20662,7 +23443,7 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().newPacket(2);
 			this.packetHandler.getClientStream().bufferBits.putString(user);
 			this.packetHandler.getClientStream().bufferBits.putString(pass);
-			if (wantEmail()) {
+			if (wantEmail() || preview) {
 				this.packetHandler.getClientStream().bufferBits.putString(email);
 			}
 			this.packetHandler.getClientStream().finishPacketAndFlush();
@@ -20671,6 +23452,13 @@ public final class mudclient implements Runnable {
 
 			System.out.println("Registration response:" + registerResponse);
 			if (registerResponse == 0) {
+				if (preview) {
+					accountEntryPreview.startRegistration();
+					loginScreenNumber = 0;
+					panelLoginWelcome.setText(accountEntryWelcomeStatus, "@gre@Account created");
+					drawLogin();
+					return;
+				}
 				// panelLogin.setText(controlLoginUser, username.replaceAll("[^=,\\da-zA-Z\\s]|(?<!,)\\s", " ").trim());
 				// panelLogin.setText(controlLoginPass, password);
 
@@ -20713,6 +23501,8 @@ public final class mudclient implements Runnable {
 		} catch (Exception e) {
 			this.showLoginScreenStatus("Sorry! Unable to connect.", "Check internet settings");
 			e.printStackTrace();
+		} finally {
+			if (preview) closeClientStreamOnly();
 		}
 	}
 
@@ -20904,9 +23694,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case ITEM_UNEQUIP_FROM_EQUIPMENT: {
-					this.packetHandler.getClientStream().newPacket(Opcodes.Out.ITEM_UNEQUIP_FROM_EQUIPMENT.getOpcode());
-					this.packetHandler.getClientStream().bufferBits.putByte(indexOrX);
-					this.packetHandler.getClientStream().finishPacket();
+					sendUnequipFromEquipment(indexOrX);
 					break;
 				}
 				case ITEM_UNEQUIP_FROM_INVENTORY: {
@@ -20980,8 +23768,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case ITEM_DROP_X: {
-					dropInventorySlot = indexOrX;
-					this.showItemModX(InputXPrompt.dropX, InputXAction.DROP_X, true);
+					promptDropQuantity(indexOrX);
 					break;
 				}
 				case ITEM_DROP_ALL: {
@@ -21206,13 +23993,15 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case REPORT_ABUSE: {
-					this.inputTextFinal = "";
-					this.reportAbuse_State = 1;
-					this.inputTextCurrent = var9;
+					openReportPlayer(var9 == null ? "" : var9);
 					break;
 				}
 
 
+				case ONLINE_PLAYER_ACTION: {
+					OnlinePlayerAction.values()[dir].execute(this, var9);
+					break;
+				}
 				case CHAT_ADD_FRIEND: {
 					this.addFriend(var9);
 					break;
@@ -21222,10 +24011,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case CHAT_MESSAGE: {
-					this.chatMessageTarget = var9;
-					this.chatMessageInput = "";
-					this.panelSocialPopup_Mode = SocialPopupMode.MESSAGE_FRIEND;
-					this.chatMessageInputCommit = "";
+					openFriendMessagePrompt(var9);
 					break;
 				}
 				case LANDSCAPE_CAST_SPELL: {
@@ -21393,6 +24179,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case CLAN_MENU_KICK: {
+					if (openClanConfirmation(ClanWindow.Confirmation.KICK, var9)) break;
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");
 					kickClanPlayer(playerName);
@@ -21608,11 +24395,7 @@ public final class mudclient implements Runnable {
 			}
 
 			if (this.mouseButtonClick != 0 && this.reportAbuse_AbuseType != 0) {
-				this.packetHandler.getClientStream().newPacket(206);
-				this.packetHandler.getClientStream().bufferBits.putString(this.reportAbuse_Name);
-				this.packetHandler.getClientStream().bufferBits.putByte(this.reportAbuse_AbuseType);
-				this.packetHandler.getClientStream().bufferBits.putByte(this.reportAbuse_isMute ? 1 : 0);
-				this.packetHandler.getClientStream().finishPacket();
+				sendPlayerReport(reportAbuse_Name, reportAbuse_AbuseType, reportAbuse_isMute);
 				this.reportAbuse_State = 0;
 				this.inputTextFinal = "";
 				this.inputTextCurrent = "";
@@ -21864,18 +24647,174 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private SideToolbarLayout sideToolbarLayout() {
+		if (getSurface() == null || isAndroid() || !RenderSurfaceSettings.isInterfacePreviewEnabled()) return null;
+		GameInterfaceSettings.Size size = GameInterfaceSettings.size();
+		int width = getSurface().width2;
+		int chatRight = C_CUSTOM_UI && chatLayout != null ? chatLayout.left + chatLayout.width : 0;
+		int chatEntryTop = C_CUSTOM_UI && chatLayout != null ? chatLayout.entryTop() : 0;
+		if (sideToolbarLayout == null || !sideToolbarLayout.matches(width, getGameHeight(), C_CUSTOM_UI, size,
+			chatRight, chatEntryTop)) {
+			sideToolbarLayout = new SideToolbarLayout(width, getGameHeight(), C_CUSTOM_UI, size, chatRight, chatEntryTop);
+		}
+		return sideToolbarLayout;
+	}
+
+	private int getAuthenticSidebarPanelTop() {
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		return toolbar == null ? 36 : toolbar.panelTop();
+	}
+
+	private void drawSideToolbar(SideToolbarLayout toolbar) {
+		MudClientGraphics surface = getSurface();
+		Sprite strip = spriteSelect(GUIPARTS.MENUBAR.getDef());
+		int hovered = toolbar.buttonAt(mouseX, mouseY);
+		int active = getVisibleSideMenuTab();
+		int iconInset = (toolbar.buttonSize - toolbar.iconSize) / 2;
+		for (int index = 0; index < SideToolbarLayout.BUTTON_COUNT; index++) {
+			int x = toolbar.leftOf(index);
+			int tab = SideToolbarLayout.tabAtIndex(index);
+			boolean pinned = tab == Config.MINIMAP_AND_COMPASS_TAB ? minimapPinned : pinnedSideMenuTab == tab;
+			boolean selected = active == tab || pinned;
+			surface.drawVerticalGradient(x, toolbar.top, toolbar.buttonSize, toolbar.buttonSize,
+				selected ? InterfacePalette.CONTROL_SELECTED : InterfacePalette.CONTROL,
+				selected ? InterfacePalette.CONTROL : InterfacePalette.CONTROL_LOW);
+			if (index > 0) surface.drawLineVert(x, toolbar.top, InterfacePalette.SEAM, toolbar.buttonSize);
+			if (selected || hovered == index) {
+				int border = hovered == index ? InterfacePalette.TEXT : 0xD2B873;
+				surface.drawBoxBorder(x + 1, toolbar.buttonSize - 2, toolbar.top + 1, toolbar.buttonSize - 2, border);
+			}
+			AbilityBook book = AbilityBook.forTab(tab);
+			Sprite icon = book == null ? sideToolbarArtwork.icon(strip, Config.OPTIONS_TAB - tab)
+				: sideToolbarArtwork.icon(book, externalAssetLoader);
+			if (icon != null) {
+				int iconX = x + iconInset;
+				int iconY = toolbar.top + iconInset;
+				if (book != null) {
+					surface.drawBox(iconX, iconY, toolbar.iconSize, toolbar.iconSize, SideToolbarArtwork.ICON_BACKING);
+				}
+				surface.drawSprite(icon, iconX, iconY, toolbar.iconSize, toolbar.iconSize, 5924);
+			} else if (book != null) {
+				int font = toolbar.iconSize > SideToolbarLayout.ICON_SIZE ? 7 : 6;
+				surface.drawColoredStringCentered(x + toolbar.buttonSize / 2, book.letter,
+					selected ? 0xFFDC82 : 0xFFFFFF, 0, font, toolbar.top + (toolbar.buttonSize + surface.fontHeight(font)) / 2 - 3);
+			}
+			if (pinned) {
+				surface.drawLineHoriz(x + 3, toolbar.bottom() - 3, toolbar.buttonSize - 6, 0xD2B873);
+			}
+		}
+		surface.drawBoxBorder(toolbar.left, toolbar.width, toolbar.top, toolbar.buttonSize, InterfacePalette.BORDER);
+		if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
+			String count = inventoryItemCount + "/" + inventoryCapacity;
+			int color = (0x00FFFFFF << (inventoryItemCount / 15 * 8)) & 0x00FFFFFF;
+			int font = hudLabelFont();
+			int inset = GameInterfaceSettings.size().pixels(3);
+			int width = surface.stringWidth(font, count);
+			while (font > 1 && width > toolbar.buttonSize - 2 * inset) {
+				width = surface.stringWidth(--font, count);
+			}
+			surface.drawShadowText(count, toolbar.right - inset - width,
+				toolbar.bottom() - inset, color, font, false);
+		}
+	}
+
+	private void drawLegacySideToolbarSelection() {
+		int tab = getVisibleSideMenuTab();
+		if (tab == 0 || tab == Config.MINIMAP_AND_COMPASS_TAB) return;
+		int x = getSurface().width2 - 200 + (Config.OPTIONS_TAB - tab) * 33;
+		getSurface().drawBox(x, getUITabsY(), 32, 32, 0xFF0000);
+	}
+
+	private void drawAuthenticSidebarHeader(GUIPARTS part, String label, int left, int width) {
+		if (sideToolbarLayout() == null) {
+			getSurface().drawSprite(spriteSelect(part.getDef()), getSurface().width2 - 248, 3);
+		} else {
+			drawToolbarPanelTitle(label, left, width);
+		}
+	}
+
+	private void drawToolbarPanelTitle(String title, int left, int width) {
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar != null) drawSidebarTitle(title, left, toolbar.bottom(), width, toolbar.headerHeight);
+	}
+
+	private void drawSidebarTitle(String title, int x, int y, int width, int height) {
+		MudClientGraphics surface = getSurface();
+		int font = sidebarHeaderFont(height);
+		int padding = GameInterfaceSettings.size().pixels(8);
+		surface.drawVerticalGradient(x, y, width, height, 0x961D1C, 0x691513);
+		surface.drawBoxBorder(x, width, y, height, 0xB34A42);
+		surface.drawString(title, x + padding, y + (height + surface.fontHeight(font)) / 2 - 3, 0xFFFFFF, font);
+	}
+
+	private int sidebarHeaderFont(int height) {
+		MudClientGraphics surface = getSurface();
+		int preferredFont = GameInterfaceSettings.textSize().labelFont;
+		int textHeight = Math.min(height - 2, GameInterfaceSettings.size().pixels(surface.fontHeight(preferredFont)));
+		int font = 7;
+		while (font > 0 && surface.fontHeight(font) > textHeight) font--;
+		return font;
+	}
+
+	private boolean handlePreviewToolbar(SideToolbarLayout toolbar) {
+		int index = toolbar.buttonAt(mouseX, mouseY);
+		if (index >= 0 && (!C_CUSTOM_UI || mouseButtonClick == 1)) {
+			int tab = SideToolbarLayout.tabAtIndex(index);
+			if (tab == Config.MINIMAP_AND_COMPASS_TAB) {
+				if (mouseButtonClick == 1) {
+					togglePinnedMinimap();
+					if (!C_CUSTOM_UI) showUiTab = 0;
+				} else {
+					showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
+				}
+			} else {
+				handleSideMenuTabInteraction(tab);
+			}
+		}
+		return mouseButtonClick != 0;
+	}
+
 	int getUITabsY() {
-		if (C_CUSTOM_UI)
-			return getGameHeight() - 32 - 10;
-		else
-			return 3;
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar != null) return toolbar.top;
+		return C_CUSTOM_UI ? getGameHeight() - 32 - 10 : 3;
 	}
 
 	public boolean isMouseOverOpenUiTabPanel(int x, int y) {
+		if (shouldDrawMinimapPanel()) {
+			MinimapFrameLayout frame = minimapFrameLayout();
+			if (frame != null && frame.contains(x, y)) return true;
+		}
 		if (this.getVisibleSideMenuTab() == 0 || this.getSurface() == null) {
 			return false;
 		}
 
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (!C_CUSTOM_UI && toolbar != null && y >= toolbar.bottom() && y < toolbar.panelTop()) {
+			y = toolbar.panelTop();
+		}
+
+		if (this.getVisibleSideMenuTab() == Config.INVENTORY_TAB) {
+			InventoryEquipmentLayout preview = inventoryEquipmentLayout();
+			if (preview != null) return preview.contains(x, y);
+		}
+
+		if (this.getVisibleSideMenuTab() == Config.SKILLS_AND_QUESTS_TAB) {
+			AccomplishmentsLayout preview = accomplishmentsLayout();
+			if (preview != null) return preview.contains(x, y);
+		}
+
+		if (chatLayout != null && AbilityBook.forTab(getVisibleSideMenuTab()) != null) {
+			return abilityPanelLayout().contains(x, y);
+		}
+		if (getVisibleSideMenuTab() == Config.FRIENDS_TAB) {
+			SocialPanelLayout preview = socialPanelLayout();
+			if (preview != null) return preview.contains(x, y);
+		}
+		if (getVisibleSideMenuTab() == Config.OPTIONS_TAB) {
+			SettingsPanelLayout preview = settingsPanelLayout();
+			if (preview != null) return settingsTuningDrag.isActive() || preview.contains(x, y);
+		}
 		if (C_CUSTOM_UI) {
 			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
@@ -21934,7 +24873,8 @@ public final class mudclient implements Runnable {
 
 		int panelRight = this.getSurface().width2;
 		int panelLeft = panelRight - TOP_MENU_BAR_WIDTH;
-		int panelTop = 36;
+		int panelTop = getAuthenticSidebarPanelTop();
+		int panelOffset = panelTop - 36;
 		int panelBottom;
 		switch (visibleSideMenuTab) {
 			case Config.INVENTORY_TAB:
@@ -21950,16 +24890,16 @@ public final class mudclient implements Runnable {
 				int playerInfoHeight = Config.S_WANT_OPENPK_POINTS
 					? 186
 					: S_WANT_EXP_INFO ? 275 : 262;
-				panelBottom = 36 + playerInfoHeight + 12;
+				panelBottom = panelTop + playerInfoHeight + 12;
 				break;
 			case Config.MAGIC_AND_PRAYER_TAB:
 				panelBottom = getAbilitiesPanelTop() + getAbilitiesPanelHeight() + getAbilitiesExtraHeight();
 				break;
 			case Config.FRIENDS_TAB:
-				panelBottom = this.panelSocialTab == 1 ? 307 : 240;
+				panelBottom = panelOffset + (this.panelSocialTab == 1 ? 307 : 240);
 				break;
 			case Config.OPTIONS_TAB:
-				panelBottom = 325;
+				panelBottom = 325 + panelOffset;
 				break;
 			case Config.MINIMAP_AND_COMPASS_TAB:
 			default:
@@ -22010,6 +24950,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean handleTabUIClick() {
+		if (hasContextMenuInput()) return false;
+		if (settingsTuningDrag.isActive()) return mouseButtonClick != 0;
 		if (C_CUSTOM_UI) {
 			repositionCustomUI();
 			return handleTabUIClick_CUSTOM();
@@ -22017,95 +24959,112 @@ public final class mudclient implements Runnable {
 		if (!C_CUSTOM_UI) {
 			repositionAuthenticUI();
 		}
-		boolean clickedMenuBar = this.mouseButtonClick != 0
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar != null && toolbar.contains(mouseX, mouseY)) {
+			return handlePreviewToolbar(toolbar);
+		}
+		boolean clickedMenuBar = toolbar == null && this.mouseButtonClick != 0
 			&& this.mouseX >= this.getSurface().width2 - TOP_MENU_BAR_WIDTH
 			&& this.mouseX < this.getSurface().width2
 			&& this.mouseY >= 3
 			&& this.mouseY < 35;
-		try {
-			int requestedTab = this.getSideMenuTabAt(this.mouseX, this.mouseY, 3, 35);
-			if (this.handleSideMenuTabInteraction(requestedTab)) {
-				return clickedMenuBar;
-			}
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 3 && this.mouseY < 35) {
-				this.showUiTab = Config.INVENTORY_TAB;
-			}
+		try {			if (toolbar == null) {
+				int requestedTab = this.getSideMenuTabAt(this.mouseX, this.mouseY, 3, 35);
+				if (this.handleSideMenuTabInteraction(requestedTab)) {
+					return clickedMenuBar;
+				}
+				if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 3 && this.mouseY < 35) {
+					this.showUiTab = Config.INVENTORY_TAB;
+				}
 
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 - 33 && this.mouseY >= 3
-				&& this.getSurface().width2 - 3 - 33 > this.mouseX && this.mouseY < 35) {
-				if (this.mouseButtonClick == 1) {
-					this.togglePinnedMinimap();
-					this.showUiTab = 0;
-				} else {
-					this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
-					if (!Config.S_DISABLE_MINIMAP_ROTATION) {
-						this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6; // random rotation of the minimap as anti-bot?
-						this.minimapRandom_2 = (int) (Math.random() * 23.0D) - 11;
+				if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 - 33 && this.mouseY >= 3
+					&& this.getSurface().width2 - 3 - 33 > this.mouseX && this.mouseY < 35) {
+					if (this.mouseButtonClick == 1) {
+						this.togglePinnedMinimap();
+						this.showUiTab = 0;
+					} else {
+						this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
+						if (!Config.S_DISABLE_MINIMAP_ROTATION) {
+							this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6; // random rotation of the minimap as anti-bot?
+							this.minimapRandom_2 = (int) (Math.random() * 23.0D) - 11;
+						}
 					}
 				}
-			}
 
-			if (this.showUiTab == 0 && this.getSurface().width2 - 101 <= this.mouseX && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 3 - 66 && this.mouseY < 35) {
-				this.showUiTab = Config.SKILLS_AND_QUESTS_TAB;
-			}
+				if (this.showUiTab == 0 && this.getSurface().width2 - 101 <= this.mouseX && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 3 - 66 && this.mouseY < 35) {
+					this.showUiTab = Config.SKILLS_AND_QUESTS_TAB;
+				}
 
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 99 - 35 && this.mouseY >= 3
-				&& this.getSurface().width2 - 3 - 99 > this.mouseX && this.mouseY < 35) {
-				this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
-			}
+				if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 99 - 35 && this.mouseY >= 3
+					&& this.getSurface().width2 - 3 - 99 > this.mouseX && this.mouseY < 35) {
+					this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+				}
 
-			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 - 132 && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 135 && this.mouseY < 35) {
-				this.showUiTab = Config.FRIENDS_TAB;
-			}
+				if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 - 132 && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 135 && this.mouseY < 35) {
+					this.showUiTab = Config.FRIENDS_TAB;
+				}
 
-			if (this.showUiTab == 0 && this.getSurface().width2 - 35 - 165 <= this.mouseX && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 165 - 3 && this.mouseY < 35) {
-				this.showUiTab = Config.OPTIONS_TAB;
-			}
+				if (this.showUiTab == 0 && this.getSurface().width2 - 35 - 165 <= this.mouseX && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 165 - 3 && this.mouseY < 35) {
+					this.showUiTab = Config.OPTIONS_TAB;
+				}
 
-			if (this.showUiTab != 0 && this.getSurface().width2 - 35 <= this.mouseX && this.mouseY >= 3
-				&& this.getSurface().width2 - 3 > this.mouseX && this.mouseY < 26) {
-				this.showUiTab = Config.INVENTORY_TAB;
-			}
+				if (this.showUiTab != 0 && this.getSurface().width2 - 35 <= this.mouseX && this.mouseY >= 3
+					&& this.getSurface().width2 - 3 > this.mouseX && this.mouseY < 26) {
+					this.showUiTab = Config.INVENTORY_TAB;
+				}
 
-			if (this.showUiTab != 0 && this.getSurface().width2 - 68 <= this.mouseX
-				&& this.mouseY >= 3 && this.getSurface().width2 - 33 - 3 > this.mouseX && this.mouseY < 26) {
-				if (this.mouseButtonClick == 1) {
-					this.togglePinnedMinimap();
-					this.showUiTab = 0;
-				} else {
-					this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
-					if (!Config.S_DISABLE_MINIMAP_ROTATION) {
-						this.minimapRandom_2 = (int) (23.0D * Math.random()) - 11; // random rotation of the minimap as anti-bot?
-						this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6;
+				if (this.showUiTab != 0 && this.getSurface().width2 - 68 <= this.mouseX
+					&& this.mouseY >= 3 && this.getSurface().width2 - 33 - 3 > this.mouseX && this.mouseY < 26) {
+					if (this.mouseButtonClick == 1) {
+						this.togglePinnedMinimap();
+						this.showUiTab = 0;
+					} else {
+						this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
+						if (!Config.S_DISABLE_MINIMAP_ROTATION) {
+							this.minimapRandom_2 = (int) (23.0D * Math.random()) - 11; // random rotation of the minimap as anti-bot?
+							this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6;
+						}
 					}
 				}
+
+				if (this.showUiTab != 0 && this.mouseX >= this.getSurface().width2 - 66 - 35 && this.mouseY >= 3
+					&& this.getSurface().width2 - 3 - 66 > this.mouseX && this.mouseY < 26) {
+					this.showUiTab = Config.SKILLS_AND_QUESTS_TAB;
+				}
+
+				if (this.showUiTab != 0 && this.getSurface().width2 - 35 - 99 <= this.mouseX && this.mouseY >= 3
+					&& this.getSurface().width2 - 102 > this.mouseX && this.mouseY < 26) {
+					this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+				}
+
+				if (this.showUiTab != 0 && this.getSurface().width2 - 167 <= this.mouseX && this.mouseY >= 3
+					&& this.getSurface().width2 - 132 - 3 > this.mouseX && this.mouseY < 26) {
+					this.showUiTab = Config.FRIENDS_TAB;
+				}
+
+				if (this.showUiTab != 0 && this.getSurface().width2 - 35 - 165 <= this.mouseX && this.mouseY >= 3
+					&& this.mouseX < this.getSurface().width2 - 168 && this.mouseY < 26) {
+					this.showUiTab = Config.OPTIONS_TAB;
+				}
+			}
+			int panelOffset = getAuthenticSidebarPanelTop() - 36;
+			int hoverLeft = getSurface().width2 - TOP_MENU_BAR_WIDTH;
+			int toolbarIndex = SideToolbarLayout.indexOf(showUiTab);
+			if (toolbar != null && toolbarIndex >= 0) {
+				hoverLeft = Math.min(hoverLeft, toolbar.leftOf(toolbarIndex));
 			}
 
-			if (this.showUiTab != 0 && this.mouseX >= this.getSurface().width2 - 66 - 35 && this.mouseY >= 3
-				&& this.getSurface().width2 - 3 - 66 > this.mouseX && this.mouseY < 26) {
-				this.showUiTab = Config.SKILLS_AND_QUESTS_TAB;
-			}
-
-			if (this.showUiTab != 0 && this.getSurface().width2 - 35 - 99 <= this.mouseX && this.mouseY >= 3
-				&& this.getSurface().width2 - 102 > this.mouseX && this.mouseY < 26) {
-				this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
-			}
-
-			if (this.showUiTab != 0 && this.getSurface().width2 - 167 <= this.mouseX && this.mouseY >= 3
-				&& this.getSurface().width2 - 132 - 3 > this.mouseX && this.mouseY < 26) {
-				this.showUiTab = Config.FRIENDS_TAB;
-			}
-
-			if (this.showUiTab != 0 && this.getSurface().width2 - 35 - 165 <= this.mouseX && this.mouseY >= 3
-				&& this.mouseX < this.getSurface().width2 - 168 && this.mouseY < 26) {
-				this.showUiTab = Config.OPTIONS_TAB;
-			}
-
-			if (!S_WANT_EQUIPMENT_TAB) {
+			InventoryEquipmentLayout inventory = this.showUiTab == Config.INVENTORY_TAB ? inventoryEquipmentLayout() : null;
+			if (inventory != null) {
+				if (!this.isCurrentSideMenuHomeTab()
+					&& (this.mouseX < inventory.left || this.mouseY >= inventory.bottom())) {
+					this.closeOrRestorePinnedSideMenu();
+				}
+			} else if (!S_WANT_EQUIPMENT_TAB) {
 				if (this.showUiTab == Config.INVENTORY_TAB && !this.isCurrentSideMenuHomeTab()
 					&& (this.mouseX < this.getSurface().width2 - 248 || 36 + this.m_cl / 5 * 34 < this.mouseY)) {
 					this.closeOrRestorePinnedSideMenu();
@@ -22120,30 +25079,45 @@ public final class mudclient implements Runnable {
 				}
 			}
 
-			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && !this.isCurrentSideMenuHomeTab() && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 324)) {
-				this.closeOrRestorePinnedSideMenu();
+			if (showUiTab == Config.SKILLS_AND_QUESTS_TAB && !isCurrentSideMenuHomeTab()) {
+				AccomplishmentsLayout preview = accomplishmentsLayout();
+				int left = preview == null ? hoverLeft : Math.min(hoverLeft, preview.left);
+				int bottom = preview == null ? 325 + panelOffset : preview.bottom;
+				if (mouseX < left || mouseY >= bottom) closeOrRestorePinnedSideMenu();
 			}
 
 			// If we are on Android, this area needs to be larger in the Y direction for the "cast last spell" box
-			if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isCurrentSideMenuHomeTab()) {
+			if (slotUsesAbilityPreview(showUiTab) && !isCurrentSideMenuHomeTab()) {
+				AbilityPanelLayout panel = abilityPanelLayout();
+				if (mouseX < Math.min(hoverLeft, panel.left) || mouseY >= panel.bottom) closeOrRestorePinnedSideMenu();
+			} else if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isCurrentSideMenuHomeTab()) {
 				if (isAndroid()) {
-					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 300) {
+					if (this.mouseX < hoverLeft || this.mouseY > 300 + panelOffset) {
 						this.closeOrRestorePinnedSideMenu();
 					}
 				} else {
-					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 240) {
+					if (this.mouseX < hoverLeft || this.mouseY > 240 + panelOffset) {
 						this.closeOrRestorePinnedSideMenu();
 					}
 				}
 			}
 
-			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isCurrentSideMenuHomeTab()))
-				&& (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > (this.panelSocialTab == 1 ? 307 : 240))) {
+			SocialPanelLayout social = showUiTab == Config.FRIENDS_TAB ? socialPanelLayout() : null;
+			MinimapFrameLayout map = showUiTab == Config.MINIMAP_AND_COMPASS_TAB ? minimapFrameLayout() : null;
+			if (map != null) {
+				if (mouseX < Math.min(hoverLeft, map.left) || mouseY >= map.bottom) closeOrRestorePinnedSideMenu();
+			} else if (social != null && !isCurrentSideMenuHomeTab()) {
+				if (mouseX < Math.min(hoverLeft, social.left) || mouseY >= social.bottom) closeOrRestorePinnedSideMenu();
+			} else if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isCurrentSideMenuHomeTab()))
+				&& (this.mouseX < hoverLeft || this.mouseY > panelOffset + (this.panelSocialTab == 1 ? 307 : 240))) {
 				this.closeOrRestorePinnedSideMenu();
 			}
 
-			if (this.showUiTab == Config.OPTIONS_TAB && !this.isCurrentSideMenuHomeTab() && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 325)) {
-				this.closeOrRestorePinnedSideMenu();
+			if (showUiTab == Config.OPTIONS_TAB && !isCurrentSideMenuHomeTab()) {
+				SettingsPanelLayout settings = settingsPanelLayout();
+				int left = settings == null ? hoverLeft : Math.min(hoverLeft, settings.left);
+				int bottom = settings == null ? 326 + panelOffset : settings.bottom;
+				if (mouseX < left || mouseY >= bottom) closeOrRestorePinnedSideMenu();
 			}
 
 		} catch (RuntimeException var3) {
@@ -22153,6 +25127,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean handleTabUIClick_CUSTOM() {
+		SideToolbarLayout toolbar = sideToolbarLayout();
+		if (toolbar != null) {
+			return toolbar.contains(mouseX, mouseY) && handlePreviewToolbar(toolbar);
+		}
 		boolean clicked = mouseButtonClick == 1;
 		int minY = getUITabsY();
 		int maxY = minY + 32;
@@ -22297,19 +25275,19 @@ public final class mudclient implements Runnable {
 
 	private boolean mouseInTabArea_CUSTOM() {
 		try {
-			boolean mouseOverTabBar = C_CUSTOM_UI
-				? this.isMouseOverCustomTabBar(this.mouseX, this.mouseY)
-				: this.isMouseOverAuthenticTabBar(this.mouseX, this.mouseY);
+			SideToolbarLayout toolbar = sideToolbarLayout();
+			boolean mouseOverTabBar = toolbar != null ? toolbar.contains(mouseX, mouseY)
+				: C_CUSTOM_UI ? isMouseOverCustomTabBar(mouseX, mouseY) : isMouseOverAuthenticTabBar(mouseX, mouseY);
 			if (mouseOverTabBar
 				|| this.isMouseOverOpenUiTabPanel(this.mouseX, this.mouseY)) {
 				return true;
 			}
-			if (this.shouldDrawMinimapPanel()) {
+			if (chatLayout == null && this.shouldDrawMinimapPanel()) {
 				boolean floatingMinimap = this.isFloatingMinimap();
 				int[] minimapBounds = this.getMinimapContentBounds(floatingMinimap);
 				int borderSize = floatingMinimap ? MINIMAP_FLOATING_BORDER : 0;
 				int minX = minimapBounds[0] - borderSize;
-				int minY = minimapBounds[1] - borderSize;
+				int minY = !floatingMinimap && toolbar != null ? toolbar.bottom() : minimapBounds[1] - borderSize;
 				int maxX = minimapBounds[0] + MINIMAP_WIDTH + borderSize;
 				int maxY = minimapBounds[1] + MINIMAP_HEIGHT + borderSize;
 				if (this.mouseX >= minX && this.mouseY >= minY && this.mouseX < maxX
@@ -22357,6 +25335,8 @@ public final class mudclient implements Runnable {
 	private void jumpToLogin() {
 		try {
 			boolean endingGameSession = this.currentViewMode == GameMode.GAME;
+			resetPasswordChange();
+			resetGameplayPrompts();
 			if (endingGameSession) {
 				RenderTelemetry.recordDiagnosticBoundary("client-logout");
 				RendererDiagnosticSession.recordEvent("client.logout", null);
@@ -22364,6 +25344,7 @@ public final class mudclient implements Runnable {
 			this.logoutTimeout = 0;
 			this.loginScreenNumber = 0;
 			this.currentViewMode = GameMode.LOGIN;
+			setOptionsMenuShow(false);
 
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
@@ -24198,55 +27179,40 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-		private void loadExternalPrayerIconSprites() {
-			Arrays.fill(this.prayerIconSprites, null);
-			HashMap<String, Sprite[]> loadedSheets = new HashMap<String, Sprite[]>();
-			int loadedIcons = 0;
-			int prayerCount = Math.min(EntityHandler.prayerCount(), this.prayerIconSprites.length);
+	private void loadExternalPrayerIconSprites() {
+		Arrays.fill(this.prayerIconSprites, null);
+		HashMap<String, Sprite[]> loadedSheets = new HashMap<>();
+		int prayerCount = Math.min(EntityHandler.prayerCount(), this.prayerIconSprites.length);
 		for (int prayerIndex = 0; prayerIndex < prayerCount; prayerIndex++) {
 			PrayerDef prayerDef = EntityHandler.getPrayerDef(prayerIndex);
-			if (prayerDef == null) {
-				continue;
-			}
+			if (prayerDef == null) continue;
 			String assetName = getPrayerIconAssetName(prayerDef.getName());
-				if (assetName.length() == 0) {
-					continue;
-				}
-				if (isSinglePrayerIconAsset(assetName)) {
-					File iconFile = getPrayerIconFile(assetName);
-					if (this.externalAssetLoader.assetFileExists(iconFile)) {
-						Sprite sprite = this.externalAssetLoader.loadExternalPrayerIconFile(iconFile);
-						if (sprite != null) {
-							this.prayerIconSprites[prayerIndex] = sprite;
-							loadedIcons++;
-							continue;
-						}
-					}
-				}
-				int tierIndex = prayerIndex % 5;
-				File tierIconFile = getPrayerTierIconFile(assetName, tierIndex + 1);
-				if (this.externalAssetLoader.assetFileExists(tierIconFile)) {
-					Sprite sprite = this.externalAssetLoader.loadExternalPrayerIconFile(tierIconFile);
-					if (sprite != null) {
-						this.prayerIconSprites[prayerIndex] = sprite;
-						loadedIcons++;
-						continue;
-					}
-				}
-				Sprite[] tierIcons = loadedSheets.get(assetName);
-				if (tierIcons == null) {
-					File iconFile = getPrayerIconFile(assetName);
-					tierIcons = this.externalAssetLoader.assetFileExists(iconFile)
-						? this.externalAssetLoader.loadExternalPrayerIconSheet(iconFile)
-						: new Sprite[0];
-					loadedSheets.put(assetName, tierIcons);
-				}
-				if (tierIndex >= 0 && tierIndex < tierIcons.length && tierIcons[tierIndex] != null) {
-					this.prayerIconSprites[prayerIndex] = tierIcons[tierIndex];
-					loadedIcons++;
-				}
+			this.prayerIconSprites[prayerIndex] = loadExternalPrayerIcon(assetName, prayerIndex % 5, loadedSheets);
 		}
+	}
+
+	private Sprite loadExternalPrayerIcon(String assetName, int tierIndex, Map<String, Sprite[]> loadedSheets) {
+		if (assetName.isEmpty()) return null;
+		if (isSinglePrayerIconAsset(assetName)) {
+			File iconFile = getPrayerIconFile(assetName);
+			if (externalAssetLoader.assetFileExists(iconFile)) {
+				Sprite sprite = externalAssetLoader.loadExternalPrayerIconFile(iconFile);
+				if (sprite != null) return sprite;
+			}
 		}
+		File tierFile = getPrayerTierIconFile(assetName, tierIndex + 1);
+		if (externalAssetLoader.assetFileExists(tierFile)) {
+			Sprite sprite = externalAssetLoader.loadExternalPrayerIconFile(tierFile);
+			if (sprite != null) return sprite;
+		}
+		Sprite[] tierIcons = loadedSheets.computeIfAbsent(assetName, name -> {
+			File iconFile = getPrayerIconFile(name);
+			return externalAssetLoader.assetFileExists(iconFile)
+				? externalAssetLoader.loadExternalPrayerIconSheet(iconFile)
+				: new Sprite[0];
+		});
+		return tierIndex < tierIcons.length ? tierIcons[tierIndex] : null;
+	}
 
 	private boolean isSinglePrayerIconAsset(String assetName) {
 		return "divine-grace".equals(assetName)
@@ -25252,8 +28218,7 @@ public final class mudclient implements Runnable {
 							if (isAndroid())
 								clientPort.closeKeyboard(); // close the keyboard if still open
 						} else {
-							this.drawTextBox("Attempting to re-establish", (byte) -64,
-								"Connection lost! Please wait...");
+							drawReconnectNotice();
 						}
 
 						this.closeClientStreamOnly();
@@ -25272,16 +28237,17 @@ public final class mudclient implements Runnable {
 						}
 
 						boolean stagedLoginRequested=BrowserStagedLogin.enabled();
-						if (!stagedLoginRequested && Boolean.getBoolean("spoiledmilk.desktopWorldStreaming")
+						if (!stagedLoginRequested && (Boolean.getBoolean("spoiledmilk.releaseBuild")
+							|| Boolean.getBoolean("spoiledmilk.desktopWorldStreaming"))
 							&& !BrowserStagedLogin.supportDesktopWorldStreaming(this.packetHandler.getClientStream())) {
 							this.closeClientStreamOnly();
-							this.showLoginScreenStatus("World Streaming is unavailable.", "Launch with World Chunks to connect.");
+							this.showLoginScreenStatus("World Streaming is unavailable.", "Check for an update and try again.");
 							return;
 						}
 						if (BrowserWorldStreaming.enabled()
 							&& (!stagedLoginRequested || !BrowserStagedLogin.supportWorldStreaming(this.packetHandler.getClientStream()))) {
 							this.closeClientStreamOnly();
-							this.showLoginScreenStatus("World Streaming is unavailable.", "You can play with World Chunks.");
+							this.showLoginScreenStatus("World Streaming is unavailable.", "Refresh the game and try again.");
 							return;
 						}
 						if(stagedLoginRequested&&!BrowserWorldStreaming.enabled()&&!BrowserStagedLogin.support(this.packetHandler.getClientStream())) {
@@ -25585,6 +28551,7 @@ public final class mudclient implements Runnable {
 			if (var1 <= 59) {
 				this.drawDialogOptionsMenu(-85);
 			}
+			setOptionsMenuShow(false);
 
 			if (this.logoutTimeout != 0) {
 				this.closeClientStreamOnly();
@@ -25813,8 +28780,40 @@ public final class mudclient implements Runnable {
 
 	private void resetGame(int var1, boolean preparingBrowser) {
 		try {
+			setShowDialogMessage(false);
+			setShowDialogServerMessage(false);
 			this.browserPreparedLogin=null;this.browserPreparedLoginSequence=0;
             if(this.playerMovementRatePercent!=null)java.util.Arrays.fill(this.playerMovementRatePercent,0);
+			clearDialoguePresentation();
+			if (doSkillInterface != null) {
+				doSkillInterface.clearCraftingProgress();
+				doSkillInterface.closeProductionInterface();
+			}
+			craftingTabsRegistered = false;
+			socialTextPrompt = null;
+			partyWindow = null;
+			partyInvitation = null;
+			clanWindow = null;
+			clanInvitation = null;
+			if (fishingTrawlerInterface != null) fishingTrawlerInterface.hide();
+			closeDeathItemsWindow();
+			itemQuantityPrompt = null;
+			reportPlayerWindow = null;
+			resetPasswordChange();
+			resetGameplayPrompts();
+			onlineSidebarPlayers = null;
+			lastOnlineSidebarRequest = 0;
+			socialScroll[SocialPanelLayout.ONLINE] = 0;
+			socialWheel.set(SocialPanelLayout.ONLINE, 0);
+			setOptionsMenuShow(false);
+			accomplishmentsLayout = null;
+			java.util.Arrays.fill(accomplishmentsScroll, 0);
+			accomplishmentsWheel.set(0);
+			for (int[] scroll : abilityScroll) java.util.Arrays.fill(scroll, 0);
+			java.util.Arrays.fill(abilityFocus, 0);
+			java.util.Arrays.fill(abilityDetailScroll, 0);
+			for (int index = 0; index < abilityWheel.length(); index++) abilityWheel.set(index, 0);
+			for (int index = 0; index < abilityDetailWheel.length(); index++) abilityDetailWheel.set(index, 0);
 			this.packetHandler.resetLayeredSceneProtocolState();
 			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.systemUpdate = 0;
@@ -25914,6 +28913,27 @@ public final class mudclient implements Runnable {
 
 	private void resetLoginScreenVariables(byte var1) {
 		try {
+			setShowDialogMessage(false);
+			setShowDialogServerMessage(false);
+			socialTextPrompt = null;
+			partyWindow = null;
+			partyInvitation = null;
+			clanWindow = null;
+			clanInvitation = null;
+			if (fishingTrawlerInterface != null) fishingTrawlerInterface.hide();
+			closeDeathItemsWindow();
+			itemQuantityPrompt = null;
+			reportPlayerWindow = null;
+			resetPasswordChange();
+			resetGameplayPrompts();
+			questRewardWindow = null;
+			pendingQuestRewards.clear();
+			questRewardWheel.set(0);
+			questRewardDismiss = false;
+			closeQuestGuidePreview();
+			closeSkillGuidePreview();
+			clearDialoguePresentation();
+			setOptionsMenuShow(false);
 			setWorldEditorBuildMode(false);
 			this.npcCount = 0;
 			this.playerCount = 0;
@@ -25960,6 +28980,13 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "client.sendHiscoreRequest(" + skillId + ')');
+		}
+	}
+
+	public void requestHiscoresIfNeeded() {
+		if (hiscoreGuideSkillId >= 0 && hiscoreData.shouldRequest()) {
+			hiscoreData.markRequested(hiscoreGuideSkillId);
+			sendHiscoreRequest(hiscoreGuideSkillId);
 		}
 	}
 
@@ -26268,7 +29295,9 @@ public final class mudclient implements Runnable {
 					this.panelLogin.setText(this.controlLoginStatus2, a);
 				}
 			}
-			if (loginScreenNumber == 1) {
+			if (loginScreenNumber == 1 && accountEntryPreview != null) {
+				accountEntryPreview.showRegistrationStatus(a, b == null ? "" : b);
+			} else if (loginScreenNumber == 1) {
 				if (b != null && b.length() >= 1) {
 					menuNewUser.setText(menuNewUserStatus, a);
 					menuNewUser.setText(menuNewUserStatus2, b);
@@ -26646,33 +29675,57 @@ public final class mudclient implements Runnable {
 		this.extendGatheringFocusMenuLinger();
 	}
 
-	private void drawActionProgressBar(int centerX, int actorTopY, int scale) {
-		if (!this.actionProgressActive || this.actionProgressItemId < 0) {
-			return;
-		}
-		ItemDef itemDef = EntityHandler.getItemDef(this.actionProgressItemId);
-		if (itemDef == null) {
-			return;
-		}
-
-		long elapsed = System.currentTimeMillis() - this.actionProgressStartTime;
-		int fillWidth = (int) Math.min(40L, Math.max(0L, elapsed * 40L / this.actionProgressDurationMs));
-		int offsetY = scale * 31 / 100;
-		int x = centerX - 32;
-		int y = actorTopY - offsetY - 9;
-
-		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+	private int drawOverheadCraftingProgress(int centerX, int actorTopY, int scale, int overheadTop) {
+		int font = GameInterfaceSettings.textSize().labelFont;
+		int width = Math.max(GameInterfaceSettings.size().pixels(78), getSurface().stringWidth(font, "30 / 30") + 10);
+		int height = getSurface().fontHeight(font) + 4;
+		int top = actorTopY - scale * 39 / 100 - height;
+		if (chatLayout != null) top = Math.min(top, overheadTop - height - hudPixels(2));
+		getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
-			this.getSurface().drawBoxAlpha(x, y, 64, 14, 0x000000, 170);
-			this.getSurface().drawBoxAlpha(x + 1, y + 1, 12, 12, 0xd8d8d8, 210);
-			this.getSurface().drawBoxAlpha(x + 2, y + 2, 10, 10, 0xffffff, 90);
-			this.getSurface().drawSpriteClipping(spriteSelect(itemDef), x + 2, y + 2, 10, 10,
-				itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
-			this.getSurface().drawBoxAlpha(x + 15, y + 3, 42, 8, 0x202020, 220);
-			this.getSurface().drawBoxAlpha(x + 16, y + 4, fillWidth, 6, 0x4aa3ff, 230);
+			doSkillInterface.drawCraftingProgress(centerX - width / 2, top, width, height, font);
 		} finally {
-			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
+			getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 		}
+		return top;
+	}
+
+	private int drawActionProgressBar(int centerX, int actorTopY, int scale, int overheadTop) {
+		if (!actionProgressActive || actionProgressItemId < 0) return overheadTop;
+		ItemDef itemDef = EntityHandler.getItemDef(actionProgressItemId);
+		if (itemDef == null) return overheadTop;
+
+		int width = hudPixels(64);
+		int height = hudPixels(14);
+		int barWidth = hudPixels(40);
+		int inset = hudPixels(1);
+		int x = centerX - width / 2;
+		int y = actorTopY - scale * 31 / 100 - hudPixels(9);
+		if (chatLayout != null) y = Math.min(y, overheadTop - height - hudPixels(2));
+		long elapsed = System.currentTimeMillis() - actionProgressStartTime;
+		int fillWidth = (int) Math.min(barWidth, Math.max(0L, elapsed * barWidth / actionProgressDurationMs));
+
+		MudClientGraphics surface = getSurface();
+		Renderer2DFrame.Phase previousPhase = surface.getRenderer2DPhase();
+		surface.setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		try {
+			int iconSize = hudPixels(10);
+			int iconX = x + hudPixels(2);
+			int iconY = y + (height - iconSize) / 2;
+			int trackX = x + hudPixels(15);
+			int trackHeight = hudPixels(8);
+			int trackY = y + (height - trackHeight) / 2;
+			surface.drawBoxAlpha(x, y, width, height, 0x000000, 170);
+			surface.drawBoxAlpha(iconX - inset, iconY - inset, iconSize + 2 * inset, iconSize + 2 * inset, 0xD8D8D8, 210);
+			surface.drawBoxAlpha(iconX, iconY, iconSize, iconSize, 0xFFFFFF, 90);
+			surface.drawSpriteClipping(spriteSelect(itemDef), iconX, iconY, iconSize, iconSize,
+				itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
+			surface.drawBoxAlpha(trackX, trackY, barWidth + 2 * inset, trackHeight, 0x202020, 220);
+			surface.drawBoxAlpha(trackX + inset, trackY + inset, fillWidth, trackHeight - 2 * inset, 0x4AA3FF, 230);
+		} finally {
+			surface.setRenderer2DPhase(previousPhase);
+		}
+		return y;
 	}
 
 	public final void initializeBatchProgressVariables(int repeatFor, int delay) {
@@ -26680,11 +29733,49 @@ public final class mudclient implements Runnable {
 	}
 
 	public void showBankPinInterface() {
-		bankPinInterface.show();
+		if (chatLayout == null || isAndroid()) {
+			bankPinInterface.show();
+			return;
+		}
+		closeWorldMap();
+		closeTopMouseMenu();
+		mouseButtonClick = lastMouseButtonDown = 0;
+		bankPinWindow = new BankPinWindow();
 	}
 
 	public void hideBankPinInterface() {
+		bankPinWindow = null;
 		bankPinInterface.hide();
+	}
+
+	public boolean hasBankPinInput() {
+		return bankPinWindow != null && chatLayout != null && currentViewMode == GameMode.GAME;
+	}
+
+	public boolean handleBankPinKey(int code) {
+		BankPinWindow pin = bankPinWindow;
+		if (pin == null || !hasBankPinInput()) return false;
+		if (code == java.awt.event.KeyEvent.VK_ESCAPE) pin.cancel();
+		return true;
+	}
+
+	private void drawBankPinWindow() {
+		BankPinWindow pin = bankPinWindow;
+		if (pin == null) return;
+		String response = pin.draw(this, chatLayout.entryTop());
+		mouseButtonClick = 0;
+		if (response != null) {
+			bankPinWindow = null;
+			sendBankPinResponse(response);
+		}
+	}
+
+	public void sendBankPinResponse(String response) {
+		packetHandler.getClientStream().newPacket(199);
+		packetHandler.getClientStream().bufferBits.putByte(8);
+		packetHandler.getClientStream().bufferBits.putByte(BankPinWindow.CANCEL.equals(response) ? 1 : 0);
+		packetHandler.getClientStream().bufferBits.putString(response);
+		packetHandler.getClientStream().finishPacket();
 	}
 
 	public IronManInterface getIronmanInterface() {
@@ -27275,6 +30366,7 @@ public final class mudclient implements Runnable {
 			int capacity = growEntityCapacity(this.characterDialogString.length, requiredCapacity);
 			this.characterDialogHalfWidth = Arrays.copyOf(this.characterDialogHalfWidth, capacity);
 			this.characterDialogHeight = Arrays.copyOf(this.characterDialogHeight, capacity);
+			this.characterDialogRows = Arrays.copyOf(this.characterDialogRows, capacity);
 			this.characterDialogString = Arrays.copyOf(this.characterDialogString, capacity);
 			this.characterDialogX = Arrays.copyOf(this.characterDialogX, capacity);
 			this.characterDialogY = Arrays.copyOf(this.characterDialogY, capacity);
@@ -27584,7 +30676,8 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean isFullScreenModalUiActive() {
-		return this.deathScreenTimeout != 0
+		return drawingReconnectNotice
+			|| this.deathScreenTimeout != 0
 			|| this.showAppearanceChange
 			|| this.showSetRecoveryQuestion
 			|| this.showSetContactDetails
@@ -27679,8 +30772,63 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	public void setOptionsMenuShow(boolean show) {
-		this.optionsMenuShow = show;
+	private void drawDialoguePortrait(int x, int y, int size, boolean player) {
+		if (player) {
+			if (localPlayer == null) return;
+			DialoguePortrait.drawPlayer(this, localPlayer.layerAnimation,
+				getPlayerHairColors()[localPlayer.colourHair], getPlayerSkinColors()[localPlayer.colourSkin],
+				x, y, size, dialoguePlayerSpeaking);
+		} else if (dialogueNpc != null) {
+			DialoguePortrait.drawNpc(this, dialogueNpc, x, y, size, !dialoguePlayerSpeaking);
+		}
+	}
+
+	void openDialoguePresentation(int id, int npcId) {
+		if (id != dialogueId) clearDialoguePresentation();
+		dialogueId = id;
+		dialogueNpc = npcId < EntityHandler.npcCount() ? EntityHandler.getNpcDef(npcId) : null;
+		clearDialogueLine();
+	}
+
+	void updateDialogueLine(int id, boolean playerSpeaking, String line) {
+		if (dialogueId != id) return;
+		dialoguePlayerSpeaking = playerSpeaking;
+		dialogueLine = line;
+		dialogueChoicesPanel = null;
+	}
+
+	void closeDialoguePresentation(int id) {
+		if (dialogueId == id) {
+			if (dialogueMenuId == id) setOptionsMenuShow(false);
+			clearDialoguePresentation();
+		}
+	}
+
+	private void clearDialoguePresentation() {
+		dialogueId = 0;
+		dialogueMenuId = 0;
+		dialogueNpc = null;
+		clearDialogueLine();
+	}
+
+	private void clearDialogueLine() {
+		dialogueLine = null;
+		dialogueChoicesPanel = null;
+	}
+
+	void showOptionsMenu(int id) {
+		if (id == 0 || id != dialogueId) clearDialogueLine();
+		dialogueMenuId = id;
+		setOptionsMenuShow(true);
+	}
+
+	public synchronized void setOptionsMenuShow(boolean show) {
+		dialogueChoicesPanel = null;
+		dialogueScroll.set(0);
+		if (show && usesDialogueChoicesPanel()) {
+			closeTopMouseMenu();
+		}
+		optionsMenuShow = show;
 	}
 
 	public void setOptionsMenuCount(int i) {
@@ -27701,6 +30849,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void beginAreaLoad() {
+		clearDialogueLine();
 		clearClericCursePlaybacks();
 		this.loadingArea = true;
 		this.groundItemCount = this.groundItemAreaEpoch.begin();
@@ -28064,6 +31213,7 @@ public final class mudclient implements Runnable {
 
 	public void setDeathScreenTimeout(int i) {
 		this.deathScreenTimeout = i;
+		if (i > 0) resetGameplayPrompts();
 	}
 
 	public int getGroundItemCount() {
@@ -28133,6 +31283,14 @@ public final class mudclient implements Runnable {
 
 	public void setShowDialogTrade(boolean show) {
 		this.showDialogTrade = show;
+		tradePreviewMenu = null;
+		tradePreviewTarget = null;
+		tradePreviewWheel.set(0);
+		if (chatLayout != null && (inputX_Action == InputXAction.TRADE_OFFER || inputX_Action == InputXAction.TRADE_REMOVE)) {
+			inputX_Action = InputXAction.ACT_0;
+			inputX_OK = false;
+			inputTextCurrent = inputTextFinal = "";
+		}
 	}
 
 	public int getTradeRecipientItemsCount() {
@@ -28203,6 +31361,8 @@ public final class mudclient implements Runnable {
 
 	public void setShowDialogTradeConfirm(boolean confirm) {
 		this.showDialogTradeConfirm = confirm;
+		tradeReviewFirstRow = 0;
+		tradePreviewWheel.set(0);
 	}
 
 	public void setTradeConfirmAccepted(boolean confirm) {
@@ -28268,10 +31428,8 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setShowAppearanceChange(boolean show) {
-		if (show && this.panelAppearance == null) {
-			this.createAppearancePanel(-24595, Config.S_CHARACTER_CREATION_MODE);
-		}
 		if (show) {
+			ensureAppearancePanel(Config.S_CHARACTER_CREATION_MODE);
 			this.appearanceInputBlockTicks = 2;
 			this.currentMouseButtonDown = 0;
 			this.lastMouseButtonDown = 0;
@@ -28281,7 +31439,69 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setShowDialogShop(boolean show) {
+		if (!show || !showDialogShop) {
+			ItemQuantityPrompt prompt = itemQuantityPrompt;
+			if (show || prompt != null && prompt.action.isShop()) itemQuantityPrompt = null;
+			shopPreview = null;
+			shopPreviewTradeExtension = false;
+			if (usesCraftingInterfacePreview()) {
+				setShopSelectedItemIndex(-1);
+				setShopSelectedItemType(-2);
+			}
+		}
 		this.showDialogShop = show;
+	}
+
+	public void updateShopPreview(boolean general, boolean tradeExtension, String[] categories, int count) {
+		if (shopPreview == null) shopPreview = new StandardShopWindow(this);
+		shopPreviewTradeExtension = tradeExtension;
+		shopPreview.update(general, categories, count);
+	}
+
+	public int getShopSlotCapacity() {
+		return shopCategoryID.length;
+	}
+
+	public int getShopStock(int slot) {
+		return shopItemCount[slot];
+	}
+
+	public int getShopUnitPrice(int slot, boolean buy) {
+		return GenUtil.computeItemCost(EntityHandler.getItemDef(shopCategoryID[slot]).getBasePrice(),
+			shopItemPrice[slot], buy ? shopBuyPriceMod : shopSellPriceMod, -30910, buy, 1,
+			shopItemCount[slot], shopPriceMultiplier);
+	}
+
+	private boolean shopPreviewOpen() {
+		return combatTimeout == 0 && (showDialogShop && shopPreview != null
+			|| doSkillInterface != null && doSkillInterface.isPointShopPreviewVisible());
+	}
+
+	public boolean shopPreviewInputAvailable() {
+		return inputX_Action == InputXAction.ACT_0 && itemQuantityPrompt == null;
+	}
+
+	public void closeShopPreview() {
+		packetHandler.getClientStream().newPacket(166);
+		packetHandler.getClientStream().finishPacket();
+		setShowDialogShop(false);
+	}
+
+	public void promptShopQuantity(int slot, boolean buy) {
+		int id = shopCategoryID[slot];
+		if (id < 0) return;
+		ItemQuantityPrompt.Action action = buy ? ItemQuantityPrompt.Action.BUY : ItemQuantityPrompt.Action.SELL;
+		openItemQuantityPrompt(action, id, slot, !buy && getInventoryCount(id, true) > 0);
+	}
+
+	public void sendShopTransaction(int slot, boolean buy, int amount, boolean all) {
+		if (amount <= 0 || shopCategoryID[slot] < 0 || !shopPreviewInputAvailable()) return;
+		packetHandler.getClientStream().newPacket(buy ? 236 : 221);
+		packetHandler.getClientStream().bufferBits.putShort(shopCategoryID[slot]);
+		packetHandler.getClientStream().bufferBits.putShort(shopItemCount[slot]);
+		packetHandler.getClientStream().bufferBits.putShort(Math.min(0xffff, amount));
+		if (!buy && all && shopPreviewTradeExtension) packetHandler.getClientStream().bufferBits.putByte(1);
+		packetHandler.getClientStream().finishPacket();
 	}
 
 	public void setShowPointsToGp(boolean show) {
@@ -28686,7 +31906,10 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setQuestName(int i, String s) {
-		this.questNames[i] = s;
+		if (!java.util.Objects.equals(questNames[i], s)) {
+			questNames[i] = s;
+			accomplishmentsLayout = null;
+		}
 	}
 
 	public void setQuestStage(int i, int n) {
@@ -28957,6 +32180,8 @@ public final class mudclient implements Runnable {
 
 	public void setShowDialogMessage(boolean show) {
 		this.showDialogMessage = show;
+		welcomeNotice = null;
+		if (show && usesSessionNotices()) closeTopMouseMenu();
 	}
 
 	public void setWelcomeLastLoggedInHost(String i) {
@@ -28965,10 +32190,13 @@ public final class mudclient implements Runnable {
 
 	public void setServerMessage(String i) {
 		this.serverMessage = i;
+		serverNotice = null;
 	}
 
 	public void setShowDialogServerMessage(boolean show) {
 		this.showDialogServerMessage = show;
+		if (!show) serverNotice = null;
+		else if (usesSessionNotices()) closeTopMouseMenu();
 	}
 
 	public void setServerMessageBoxTop(boolean boxTop) {
@@ -29694,6 +32922,7 @@ public final class mudclient implements Runnable {
 						public void render() {
 							if (C_EXPERIENCE_DROPS) {
 								time = System.currentTimeMillis();
+								boolean drewScaledCounter = false;
 								for (Iterator<XPNotification> iterator = xpNotifications.iterator(); iterator.hasNext(); ) {
 									XPNotification xpdrop = iterator.next();
 									if (!xpdrop.isActive) {
@@ -29714,8 +32943,9 @@ public final class mudclient implements Runnable {
 										}
 									}
 
-									if (C_EXPERIENCE_COUNTER == 1) {
-										drawExperienceCounter(xpdrop.skill);
+									if (C_EXPERIENCE_COUNTER == 1 && (chatLayout == null || !drewScaledCounter)) {
+										drawExperienceCounter(chatLayout == null ? xpdrop.skill : recentSkill);
+										drewScaledCounter = true;
 									}
 
 									int textColor = getExperienceCounterColor();
@@ -29804,15 +33034,14 @@ public final class mudclient implements Runnable {
 							this.loadSlayerMovementPreviewSprites();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);
-							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),
-								this.halfGameWidth(), this.halfGameHeight(), this.m_qd,
-								this.halfGameWidth());
+							resizeSceneViewport();
 							this.scene.fogLandscapeDistance = 2400;
 							this.scene.fogEntityDistance = 2400;
 							this.scene.fogSmoothingStartDistance = 2300;
 							this.scene.fogZFalloff = 1;
 							this.scene.setDiffuseDir(-50, -10, true, -50);
-							this.world = new World(this.scene, this.getSurface());
+							this.world = new World(this.scene, this.getSurface(),
+								isAndroid() || !RenderSurfaceSettings.isInterfacePreviewEnabled());
 							this.world.baseMediaSprite = mudclient.spriteMedia;
 							this.loadTexturesAuthentic();
 							this.loadExternalAltarWorldSprites();
@@ -29829,7 +33058,6 @@ public final class mudclient implements Runnable {
 										clientPort.showLoadingProgress(100, "Starting game...");
 										this.createMessageTabPanel(56);
 										this.createLoginPanels(3845);
-										this.createAppearancePanel(var1 ^ 24649, Config.S_CHARACTER_CREATION_MODE);
 										this.createRecoveryQuestionPanel();
 										this.createPasswordRecoveryPanel();
 										this.createContactDetailsPanel();
@@ -29846,15 +33074,14 @@ public final class mudclient implements Runnable {
 						if (!this.errorLoadingData) {
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);
-							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),
-								this.halfGameWidth(), this.halfGameHeight(), this.m_qd,
-								this.halfGameWidth());
+							resizeSceneViewport();
 							this.scene.fogLandscapeDistance = 2400;
 							this.scene.fogEntityDistance = 2400;
 							this.scene.fogSmoothingStartDistance = 2300;
 							this.scene.fogZFalloff = 1;
 							this.scene.setDiffuseDir(-50, -10, true, -50);
-							this.world = new World(this.scene, this.getSurface());
+							this.world = new World(this.scene, this.getSurface(),
+								isAndroid() || !RenderSurfaceSettings.isInterfacePreviewEnabled());
 							this.world.baseMediaSprite = mudclient.spriteMedia;
 							this.loadTextures();
 							this.loadExternalAltarWorldSprites();
@@ -29871,7 +33098,6 @@ public final class mudclient implements Runnable {
 										clientPort.showLoadingProgress(100, "Starting game...");
 										this.createMessageTabPanel(56);
 										this.createLoginPanels(3845);
-										this.createAppearancePanel(var1 ^ 24649, Config.S_CHARACTER_CREATION_MODE);
 										this.createRecoveryQuestionPanel();
 										this.createPasswordRecoveryPanel();
 										this.createContactDetailsPanel();
@@ -29886,6 +33112,8 @@ public final class mudclient implements Runnable {
 			}
 			if (C_CUSTOM_UI) {
 				repositionCustomUI();
+			} else if (!isAndroid() && RenderSurfaceSettings.isInterfacePreviewEnabled()) {
+				repositionChat(false);
 			}
 			startWorldBuilderSession();
 		} catch (RuntimeException var9) {
@@ -29925,10 +33153,7 @@ public final class mudclient implements Runnable {
 				if (id == getTradeItemID(tSlot) && item.getNoted() == getTradeItem(tSlot).getNoted()) {
 					if (def.isStackable() || item.getNoted()) {
 						if (count >= 0) {
-							setTradeItemSize(tSlot, getTradeItemSize(tSlot) + count);
-							if (getTradeItemSize(tSlot) > getInventoryItemSize(slot)) {
-								setTradeItemSize(tSlot, getInventoryItemSize(slot));
-							}
+							setTradeItemSize(tSlot, (int) Math.min((long) getTradeItemSize(tSlot) + count, getInventoryItemSize(slot)));
 
 							offerSuccess = true;
 						} else {
@@ -30538,8 +33763,50 @@ public final class mudclient implements Runnable {
 		return gameState;
 	}
 
+	private boolean hasSkillGuidePreviewInput() {
+		return (skillGuidePreview != null || hiscoresPreview != null) && chatLayout != null && skillGuideInterface.isVisible()
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !optionsMenuShow
+			&& inputX_Action == InputXAction.ACT_0 && logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage
+			&& showUiWildWarn != 1 && !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank()
+			&& !showDialogShop && !showAppearanceChange;
+	}
+
+	private void closeSkillGuidePreview() {
+		if (skillGuideInterface != null) skillGuideInterface.setVisible(false);
+		skillGuidePreview = null;
+		hiscoresPreview = null;
+		hiscoreData.clear();
+		skillGuideWheel.set(0);
+	}
+
 	private void drawSkillGuide() {
-		skillGuideInterface.onRender(this.getSurface());
+		if (!skillGuideInterface.isVisible()) return;
+		SkillGuideWindow guide = skillGuidePreview;
+		HiscoresWindow rankings = hiscoresPreview;
+		if (chatLayout == null || (guide == null && rankings == null)) {
+			skillGuideInterface.onRender(getSurface());
+			if ((guide != null || rankings != null) && !skillGuideInterface.isVisible()) closeSkillGuidePreview();
+			return;
+		}
+		if (!hasSkillGuidePreviewInput()) return;
+		int wheel = skillGuideWheel.getAndSet(0);
+		if (rankings != null) {
+			HiscoresWindow.Action action = rankings.draw(this, chatLayout.entryTop(), wheel);
+			if (action == HiscoresWindow.Action.CLOSE) closeSkillGuidePreview();
+			if (action == HiscoresWindow.Action.GUIDE) {
+				skillGuideInterface.setHiscoresMode(false);
+				hiscoresPreview = null;
+			}
+		} else {
+			SkillGuideWindow.Action action = guide.draw(this, chatLayout.entryTop(),
+				Config.S_WANT_HISCORES && hiscoreGuideSkillId >= 0, wheel);
+			if (action == SkillGuideWindow.Action.CLOSE) closeSkillGuidePreview();
+			if (action == SkillGuideWindow.Action.HISCORES) {
+				skillGuideInterface.setHiscoresMode(true);
+				hiscoresPreview = new HiscoresWindow(skillGuideChosen, hiscoreGuideSkillId);
+			}
+		}
+		mouseButtonClick = 0;
 	}
 
 	private void drawPointConfig() {
@@ -30629,13 +33896,7 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Info");
 		} else if (skillGuideChosen.equalsIgnoreCase("Smithing")) {
 			skillGuideChosenTabs.add("Smelting");
-			skillGuideChosenTabs.add("Tin/Copper");
-			skillGuideChosenTabs.add("Bronze/Iron");
-			skillGuideChosenTabs.add("Steel/Mithril");
-			skillGuideChosenTabs.add("Titan/Adam");
-			skillGuideChosenTabs.add("Orich/Rune");
-			skillGuideChosenTabs.add("Special");
-			skillGuideChosenTabs.add("Info");
+			skillGuideChosenTabs.add("Smithing");
 		} else if (skillGuideChosen.equalsIgnoreCase("Mining")) {
 			skillGuideChosenTabs.add("Ores");
 			skillGuideChosenTabs.add("Pickaxes");
@@ -30670,12 +33931,12 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Info");
 
 		} else if (skillGuideChosen.equalsIgnoreCase("Harvest")) {
+			skillGuideChosenTabs.add("Shears");
 			skillGuideChosenTabs.add("Allotments");
 			skillGuideChosenTabs.add("Fruits");
 			skillGuideChosenTabs.add("Bushes");
 			skillGuideChosenTabs.add("Herbs");
-			skillGuideChosenTabs.add("Brawn");
-			skillGuideChosenTabs.add("Shears");
+			skillGuideChosenTabs.add("Wild plants");
 			if (S_WANT_CUSTOM_SPRITES) {
 				skillGuideChosenTabs.add("Info");
 			}
@@ -30702,8 +33963,67 @@ public final class mudclient implements Runnable {
 		hiscoreData.clear();
 	}
 
+	private QuestGuideWindow createQuestGuide(int quest) {
+		if (quest == COOKS_ASSISTANT_QUEST) return cooksAssistantGuide();
+		String start = null;
+		if (quest < questGuideStartWhos.length && quest < questGuideStartWheres.length) {
+			start = "Speak to " + questGuideStartWhos[quest] + " " + questGuideStartWheres[quest] + ".";
+		}
+		String[] requirements = questGuideEntries(questGuideRequirements, quest, "Requirement details are unavailable.");
+		String[] rewards = questGuideEntries(questGuideRewards, quest, "Reward details are unavailable.");
+		return new QuestGuideWindow(quest, questNames[quest], new QuestGuideWindow.Section[] {
+			new QuestGuideWindow.Section("Start", start == null ? "Start details are unavailable." : start),
+			new QuestGuideWindow.Section("Requirements", requirements)
+		}, start, null, null, new QuestGuideWindow.Section[] {
+			new QuestGuideWindow.Section("Quest rewards", rewards)
+		});
+	}
+
+	private static String[] questGuideEntries(String[][] table, int quest, String unavailable) {
+		if (table != null && quest < table.length && table[quest] != null && table[quest].length > 0) {
+			return table[quest];
+		}
+		return new String[] {unavailable};
+	}
+
+	private QuestGuideWindow cooksAssistantGuide() {
+		return new QuestGuideWindow(COOKS_ASSISTANT_QUEST, "Cook's Assistant", new QuestGuideWindow.Section[] {
+			new QuestGuideWindow.Section("Start", "Speak to " + getQuestGuideStartWho() + " in the Lumbridge Castle kitchen."),
+			new QuestGuideWindow.Section("Requirements", "No quests or skill levels are required to start."),
+			new QuestGuideWindow.Section("Items to bring", "An egg, a bucket of milk, and a pot of flour.")
+		}, "Speak to the Cook in the Lumbridge Castle kitchen.",
+			"Bring the Cook an egg, a bucket of milk, and a pot of flour.",
+			"You helped the Cook prepare for the banquet. You can now use the Cook's range.",
+			new QuestGuideWindow.Section[] {
+				new QuestGuideWindow.Section("Quest rewards", "1 quest point", "An apron and a chef's hat", "Access to the Cook's range"),
+				new QuestGuideWindow.Section("Cooking experience",
+					"Base Cooking XP is 250 plus 50 per Cooking level. World XP rates affect the final award.")
+			});
+	}
+
+	private boolean hasQuestGuidePreviewInput() {
+		return questGuidePreview != null && chatLayout != null && questGuideInterface.isVisible() && !hasQuestRewardInput()
+			&& !optionsMenuShow && inputX_Action == InputXAction.ACT_0 && !showDialogMessage && !showDialogServerMessage
+			&& showUiWildWarn != 1 && !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank() && !showDialogShop;
+	}
+
+	private void drawQuestGuidePreview() {
+		QuestGuideWindow guide = questGuidePreview;
+		if (questGuideDismiss || guide.draw(this, chatLayout.entryTop(), questStages[guide.questId], questGuideWheel.getAndSet(0))) {
+			closeQuestGuidePreview();
+		}
+		mouseButtonClick = 0;
+	}
+
+	private void closeQuestGuidePreview() {
+		if (questGuidePreview != null && questGuideInterface != null) questGuideInterface.setVisible(false);
+		questGuidePreview = null;
+		questGuideWheel.set(0);
+		questGuideDismiss = false;
+	}
+
 	private void drawQuestGuide() {
-		questGuideInterface.onRender(this.getSurface());
+		if (questGuidePreview == null) questGuideInterface.onRender(getSurface());
 	}
 
 	public String getQuestGuideChosen() {
@@ -30880,11 +34200,222 @@ public final class mudclient implements Runnable {
 		lostOnDeathInterface.onRender();
 	}
 
+	private void openItemsOnDeath() {
+		if (!deathItemsSupported || chatLayout == null || isAndroid()) {
+			lostOnDeathInterface.setVisible(true);
+			return;
+		}
+		closeTopMouseMenu();
+		deathItemsWheel.set(0);
+		deathItemsRequestId = deathItemsRequestId == Integer.MAX_VALUE ? 1 : deathItemsRequestId + 1;
+		deathItemsWindow = new DeathItemsWindow(deathItemsRequestId);
+		packetHandler.getClientStream().newPacket(Opcodes.Out.DEATH_ITEMS_REQUEST.getOpcode());
+		packetHandler.getClientStream().bufferBits.putInt(deathItemsRequestId);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	void receiveDeathItems(int requestId, List<DeathItemsWindow.Entry> items, int kept, boolean inDuel) {
+		DeathItemsWindow window = deathItemsWindow;
+		if (window != null && window.requestId == requestId) window.receive(items, kept, inDuel);
+	}
+
+	public boolean hasDeathItemsInput() {
+		return deathItemsWindow != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput() && !hasSocialPromptInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !isShowDialogBank() && !showDialogShop
+			&& !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails;
+	}
+
+	public boolean handleDeathItemsKey(int code) {
+		if (!hasDeathItemsInput()) return false;
+		if (code == java.awt.event.KeyEvent.VK_ESCAPE) closeDeathItemsWindow();
+		return true;
+	}
+
+	private void drawDeathItemsWindow() {
+		DeathItemsWindow window = deathItemsWindow;
+		if (window != null && window.draw(this, chatLayout.entryTop(), deathItemsWheel.getAndSet(0))) closeDeathItemsWindow();
+		mouseButtonClick = 0;
+	}
+
+	private void closeDeathItemsWindow() {
+		deathItemsWindow = null;
+		deathItemsWheel.set(0);
+	}
+
+	private void promptDropQuantity(int slot) {
+		if (chatLayout == null) {
+			dropInventorySlot = slot;
+			showItemModX(InputXPrompt.dropX, InputXAction.DROP_X, true);
+		} else if (slot >= 0 && slot < inventoryItemCount) {
+			Item item = getInventoryItem(slot);
+			openItemQuantityPrompt(ItemQuantityPrompt.Action.DROP, item.getCatalogID(), slot, item.getNoted());
+		}
+	}
+
+	private void sendInventoryDrop(int slot, int amount) {
+		packetHandler.getClientStream().newPacket(246);
+		packetHandler.getClientStream().bufferBits.putShort(slot);
+		packetHandler.getClientStream().bufferBits.putInt(amount);
+		packetHandler.getClientStream().finishPacket();
+	}
+
+	private void openItemQuantityPrompt(ItemQuantityPrompt.Action action, int id, int slot, boolean noted) {
+		closeTopMouseMenu();
+		itemQuantityPrompt = new ItemQuantityPrompt(action, id, slot, noted);
+		mouseButtonClick = 0;
+	}
+
+	public boolean hasItemQuantityInput() {
+		ItemQuantityPrompt prompt = itemQuantityPrompt;
+		return prompt != null && chatLayout != null && currentViewMode == GameMode.GAME
+			&& logoutTimeout == 0 && !showDialogMessage && !showDialogServerMessage && !isSleeping
+			&& !hasQuestRewardInput() && !hasQuestGuidePreviewInput() && !hasSkillGuidePreviewInput()
+			&& !hasSocialPromptInput() && !hasDeathItemsInput()
+			&& showUiWildWarn != 1 && !optionsMenuShow && inputX_Action == InputXAction.ACT_0
+			&& !showDialogTrade && !showDialogTradeConfirm && !showDialogDuel && !showDialogDuelConfirm
+			&& !isShowDialogBank() && !showAppearanceChange && !showSetRecoveryQuestion && !showSetContactDetails
+			&& (prompt.action.isShop() ? showDialogShop && shopPreview != null : !showDialogShop);
+	}
+
+	public boolean handleItemQuantityKey(char key, int code, boolean shortcut) {
+		ItemQuantityPrompt prompt = itemQuantityPrompt;
+		if (prompt == null || !hasItemQuantityInput()) return false;
+		prompt.keyPressed(key, code, shortcut);
+		return true;
+	}
+
+	private void drawItemQuantityPrompt() {
+		ItemQuantityPrompt prompt = itemQuantityPrompt;
+		if (prompt == null) return;
+		if (prompt.action.isShop() && combatTimeout == 0) drawDialogShop();
+		int slot = resolveQuantitySlot(prompt);
+		int maximum = slot < 0 ? 0 : quantityLimit(prompt, slot);
+		ItemDef item = EntityHandler.getItemDef(prompt.itemId);
+		String itemName = item.getName();
+		if (prompt.noted) itemName += S_WANT_CERT_AS_NOTES ? " (noted)" : " (certificate)";
+		int amount = prompt.draw(this, chatLayout.entryTop(), item, itemName, maximum);
+		mouseButtonClick = 0;
+		if (amount == ItemQuantityPrompt.OPEN) return;
+		itemQuantityPrompt = null;
+		if (amount == ItemQuantityPrompt.CANCEL) return;
+		if (prompt.action.isShop()) {
+			sendShopTransaction(slot, prompt.action == ItemQuantityPrompt.Action.BUY, amount, false);
+		} else {
+			sendInventoryDrop(slot, amount);
+		}
+	}
+
+	private int resolveQuantitySlot(ItemQuantityPrompt prompt) {
+		if (prompt.action.isShop()) {
+			// The shop may restock while the prompt is open. Its selection follows the item ID.
+			int slot = getShopSelectedItemIndex();
+			return combatTimeout == 0 && slot >= 0 && shopCategoryID[slot] == prompt.itemId ? slot : -1;
+		}
+		if (matchesDropItem(prompt, prompt.originalSlot)) return prompt.originalSlot;
+		for (int slot = 0; slot < inventoryItemCount; slot++) {
+			if (matchesDropItem(prompt, slot)) return slot;
+		}
+		return -1;
+	}
+
+	private boolean matchesDropItem(ItemQuantityPrompt prompt, int slot) {
+		return slot >= 0 && slot < inventoryItemCount && getInventoryItemID(slot) == prompt.itemId
+			&& getInventoryItem(slot).getNoted() == prompt.noted;
+	}
+
+	private int quantityLimit(ItemQuantityPrompt prompt, int slot) {
+		if (prompt.action == ItemQuantityPrompt.Action.BUY) {
+			return Math.max(0, Math.min(0xffff, getShopStock(slot)));
+		}
+		int owned = getInventoryCount(prompt.itemId, prompt.noted);
+		if (prompt.action == ItemQuantityPrompt.Action.SELL) {
+			// The existing sell packet always targets notes first if they are present.
+			if ((getInventoryCount(prompt.itemId, true) > 0) != prompt.noted) return 0;
+			return Math.max(0, Math.min(owned, 0xffff - getShopStock(slot)));
+		}
+		return Math.max(0, owned);
+	}
+
 	private void drawTerritorySignup() {
 		territorySignupInterface.onRender();
 	}
 
+	public boolean usesCraftingInterfacePreview() {
+		return chatLayout != null;
+	}
+
+	public int getCraftingPanelBottom() {
+		return chatLayout == null ? getGameHeight() : Math.min(getGameHeight(), chatLayout.tabsTop());
+	}
+
+	public boolean hasTradePreviewInput() {
+		return usesTradePreview();
+	}
+
 	public void runScroll(int x) {
+		if (hasSessionNoticeInput()) {
+			SessionNoticeWindow notice = activeSessionNotice();
+			if (notice != null) notice.scroll(x);
+			return;
+		}
+		if (hasGameplayPromptInput()) {
+			ExperienceTrackerWindow tracker = experienceTrackerWindow;
+			if (showUiWildWarn == 1) wildernessWarning.scroll(x);
+			else if (tracker != null && travelConfirmation == null) tracker.scroll(x);
+			return;
+		}
+		if (hasSocialPromptInput()) {
+			ClanWindow window = clanWindow;
+			if (window != null && clanInvitation == null && partyInvitation == null && socialTextPrompt == null) {
+				window.scroll(mouseX, mouseY, x);
+			}
+			return;
+		}
+		if (hasItemQuantityInput() || hasPasswordChangeInput()) return;
+		ReportPlayerWindow report = reportPlayerWindow;
+		if (report != null && hasReportPlayerInput()) {
+			report.scroll(x);
+			return;
+		}
+		if (hasDeathItemsInput()) {
+			deathItemsWheel.addAndGet(x);
+			return;
+		}
+		if (hasQuestRewardInput()) {
+			questRewardWheel.addAndGet(x);
+			return;
+		}
+		if (hasQuestGuidePreviewInput()) {
+			questGuideWheel.addAndGet(x);
+			return;
+		}
+		if (hasSkillGuidePreviewInput()) {
+			skillGuideWheel.addAndGet(x);
+			return;
+		}
+		if (usesTradePreview()) {
+			if (tradePreviewMenu != null || showDialogTradeConfirm) tradePreviewWheel.addAndGet(x);
+			return;
+		}
+		if (hasDialogueChoiceInput()) {
+			dialogueScroll.addAndGet(Integer.signum(x));
+			return;
+		}
+		ContextMenuLayout menu = contextMenuLayout;
+		if (menu != null && topMouseMenuVisible) {
+			if (menu.keepsOpenAt(mouseX, mouseY)) contextMenuWheel.addAndGet(x);
+			return;
+		}
+		StandardShopWindow window = shopPreview;
+		if (showDialogShop && window != null) {
+			window.scroll(x);
+			return;
+		}
+		if (isShowDialogBank() && bank.scrollWorkspace(x)) return;
+		if (doSkillInterface != null && doSkillInterface.scrollCraftingWindow(x)) return;
 		if (x > 1)
 			x += x;
 		else if (x < -1)
@@ -30892,13 +34423,39 @@ public final class mudclient implements Runnable {
 		if (worldEditorInterface != null && worldEditorInterface.scrollDefinitionBrowser(x)) {
 			return;
 		}
+		if (chatLayout != null && !controlPressed && chatLayout.containsHistory(mouseX, mouseY)
+			&& !isMouseOverOpenUiTabPanel(mouseX, mouseY)) {
+			int chatControl = chatHistoryControl(messageTabSelected);
+			if (chatControl >= 0) {
+				panelMessageTabs.scrollMethodList(chatControl, x);
+				return;
+			}
+		}
 		int visibleSideMenuTab = getVisibleSideMenuTab();
 		if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) { // Quest list.
-			if (uiTabPlayerInfoSubTab == 1) {
+			if (isAccomplishmentsPreviewEnabled()) {
+				if (skillGuideInterface.isVisible()) {
+					skillGuideInterface.skillGuide.scrollMethodList(skillGuideInterface.activeScrollControl(), x);
+				} else if (questGuideInterface.isVisible()) {
+					questGuideInterface.questGuide.scrollMethodList(questGuideInterface.questGuideScroll, x);
+				} else if (isMouseOverOpenUiTabPanel(mouseX, mouseY)) {
+					accomplishmentsWheel.addAndGet(x);
+				}
+			} else if (uiTabPlayerInfoSubTab == 1) {
 				panelQuestInfo.scrollMethodList(controlQuestInfoPanel, x);
 			}
-		} else if (visibleSideMenuTab == Config.OPTIONS_TAB) { // Settings wrench menu
+		} else if (visibleSideMenuTab == Config.OPTIONS_TAB && chatLayout == null) {
 			panelSettings.scrollMethodCustomList(controlSettingPanel, x, 1);
+		} else if (slotUsesAbilityPreview(visibleSideMenuTab)) {
+			AbilityBook book = AbilityBook.forTab(visibleSideMenuTab);
+			AbilityPanelLayout panel = abilityPanelLayout();
+			if (panel.contains(mouseX, mouseY) && !skillGuideInterface.isVisible() && !questGuideInterface.isVisible()) {
+				if (mouseY >= panel.lastRowY) {
+					abilityDetailWheel.addAndGet(book.ordinal(), x);
+				} else if (mouseY >= panel.firstRowY) {
+					abilityWheel.addAndGet(abilityWheelIndex(book, SpellbookLayoutSettings.mode(book)), x);
+				}
+			}
 		} else if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) { // Magic and prayer book list.
 			if (SpellbookLayoutSettings.usesTextLayout()) {
 				this.panelMagic.scrollMethodList(this.controlMagicPanel, x);
@@ -30913,7 +34470,7 @@ public final class mudclient implements Runnable {
 			} else {
 				this.scrollSummoningIconMenu(x);
 			}
-		} else if (visibleSideMenuTab == Config.FRIENDS_TAB) { // Friend list and ignore list.
+		} else if (visibleSideMenuTab == Config.FRIENDS_TAB && chatLayout == null) {
 			if (this.panelSocialTab == 2 || this.panelSocialTab == 0) {
 				panelSocial.scrollMethodList(controlSocialPanel, x);
 			} else if (this.panelSocialTab == 1) {
@@ -30930,11 +34487,7 @@ public final class mudclient implements Runnable {
 				bank.bank.scrollMethodList(bank.bankScroll, x);
 			}
 		} else if (auctionHouse.isVisible()) {
-			if (auctionHouse.activeInterface == 0) {
-				auctionHouse.auctionMenu.scrollMethodList(auctionHouse.auctionScrollHandle, x);
-			} else {
-				auctionHouse.myAuctions.scrollMethodList(auctionHouse.myAuctionScrollHandle, x);
-			}
+			auctionHouse.scroll(x);
 		} else if (clan.getClanInterface().isVisible()) {
 			if (clan.getClanInterface().clanActivePanel == 3) {
 				clan.getClanInterface().clanSetupPanel.scrollMethodList(clan.getClanInterface().clanSearchScroll, x);
@@ -30949,14 +34502,26 @@ public final class mudclient implements Runnable {
 			}
 		} else if (experienceConfigInterface.isVisible() && experienceConfigInterface.selectSkillMenu) {
 			experienceConfigInterface.experienceConfig.scrollMethodList(experienceConfigInterface.experienceConfigScroll, x);
-		} else if (messageTabSelected == MessageTab.QUEST && !this.controlPressed)
-			panelMessageTabs.scrollMethodList(panelMessageQuest, x);
-		else if (this.messageTabSelected == MessageTab.CHAT && !this.controlPressed)
-			panelMessageTabs.scrollMethodList(panelMessageChat, x);
-		else if (this.messageTabSelected == MessageTab.PRIVATE && !this.controlPressed)
-			panelMessageTabs.scrollMethodList(panelMessagePrivate, x);
-		else if (this.messageTabSelected == MessageTab.CLAN && !this.controlPressed)
-			panelMessageTabs.scrollMethodList(panelMessageClan, x);
+		} else if (visibleSideMenuTab == Config.OPTIONS_TAB && chatLayout != null
+			&& inputX_Action == InputXAction.ACT_0 && !settingsTuningDrag.isActive()) {
+			SettingsPanelLayout layout = settingsPanelLayout();
+			if (layout.overList(mouseX, mouseY)) settingsWheel.addAndGet(settingTab, x);
+		} else if (visibleSideMenuTab == Config.FRIENDS_TAB && chatLayout != null
+			&& inputX_Action == InputXAction.ACT_0 && panelSocialPopup_Mode == SocialPopupMode.NONE) {
+			int tab = panelSocialTab;
+			SocialPanelLayout layout = socialPanelLayout();
+			boolean hasList = tab == SocialPanelLayout.FRIENDS || (tab == SocialPanelLayout.CLAN && clan.inClan())
+				|| (tab == SocialPanelLayout.PARTY && party.inParty())
+				|| (tab == SocialPanelLayout.ONLINE && onlineSidebarPlayers != null);
+			if (hasList && layout.isOverList(tab, mouseX, mouseY, layout.listTop(tab, clan.inClan()))) {
+				socialWheel.addAndGet(tab, x);
+			}
+		} else if (!controlPressed && chatLayout == null) {
+			int control = chatHistoryControl(messageTabSelected);
+			if (control >= 0) {
+				panelMessageTabs.scrollMethodList(control, x);
+			}
+		}
 	}
 
 	public boolean isShowDialogBank() {

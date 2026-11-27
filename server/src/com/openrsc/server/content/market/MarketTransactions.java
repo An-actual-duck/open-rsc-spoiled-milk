@@ -12,6 +12,7 @@ import com.openrsc.server.net.rsc.ActionSender;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,13 +22,24 @@ public final class MarketTransactions {
     private final World world;
     private final MarketJdbcStore store;
 
+    private static final class Receipt {
+        MarketItem listing;
+        String message;
+        final List<CollectibleItem> collected = new ArrayList<>();
+        int uncollected;
+    }
+
+    private static final class CollectionBlocked extends SQLException {
+        CollectionBlocked(String message) { super(message); }
+    }
+
     public MarketTransactions(World world, MarketJdbcStore store) { this.world = world; this.store = store; }
 
     public void execute(MarketOperation op) {
         Player p = op.actor;
         if (p == null || p.getWorld() != world || !op.hasCurrentActor()) return;
         if (p.getConfig().WANT_THREADING__BREAK_PID_PRIORITY) {
-            p.message("The auction is unavailable with experimental concurrent player events enabled.");
+            AuctionFeedback.warning(p, "The Auction House is unavailable with concurrent player events enabled.");
             return;
         }
         // Tick-owned gameplay and the save economic boundary exclude other
@@ -50,10 +62,10 @@ public final class MarketTransactions {
         java.util.List<Item> equipped = new ArrayList<>();
         for (Item item : p.getCarriedItems().getEquipment().getList()) if (item != null) equipped.add(item.copyForTransaction());
         boolean committed = false;
-        MarketItem[] notice = new MarketItem[1];
+        Receipt receipt = new Receipt();
         try {
             committed = store.transact(op, c -> {
-                settle(c, op, inventory, bank, notice);
+                settle(c, op, inventory, bank, receipt);
                 store.saveContainers(c, op.actorId, inventory.getItems(), bank.getItems(), equipped);
             });
             if (committed) {
@@ -65,12 +77,17 @@ public final class MarketTransactions {
             LOGGER.error("Unresolved market commit {}; detaching player {} for ordinary reload", op.id, op.actorId, ex);
             p.requireEconomicReload();
             return;
+        } catch (CollectionBlocked ex) {
+            AuctionFeedback.collection(p, ex.getMessage());
+            return;
         } catch (SQLException | RuntimeException ex) {
             if (committed) {
                 LOGGER.error("Committed market state could not be published {}; detaching player {}", op.id, op.actorId, ex);
                 p.requireEconomicReload();
             } else {
-                p.message("The auction could not be completed. Your items and coins have not changed. Please refresh and try again.");
+                String message = "The auction action could not be completed. Your items and coins have not changed.";
+                if (op.kind == MarketOperation.Kind.COLLECT) AuctionFeedback.collection(p, message);
+                else AuctionFeedback.warning(p, message + " Refresh the listings and try again.");
                 LOGGER.warn("Market operation {} did not commit", op.id, ex);
             }
             return;
@@ -80,23 +97,32 @@ public final class MarketTransactions {
         if (committed) {
             ActionSender.sendInventory(p);
             if (p.accessingBank()) ActionSender.showBank(p);
-            p.message("Auction transaction completed.");
+            if (op.kind == MarketOperation.Kind.COLLECT) {
+                AuctionFeedback.collection(p, receipt.collected, true, receipt.uncollected);
+                return;
+            }
+            AuctionFeedback.status(p, receipt.message);
             try {
-                world.getMarket().addRequestOpenAuctionHouseTask(p);
-                if (notice[0] != null && op.kind == MarketOperation.Kind.BUY) {
-                    Player seller = world.getPlayerID(notice[0].getSeller());
-                    if (seller != null) seller.message("An auction sale completed. You can collect your earnings from a bank.");
+                if (p.getAttribute("auctionhouse", false)) world.getMarket().addRequestOpenAuctionHouseTask(p);
+                if (receipt.listing != null && (op.kind == MarketOperation.Kind.BUY || op.kind == MarketOperation.Kind.MODERATE)) {
+                    Player seller = world.getPlayerID(receipt.listing.getSeller());
+                    if (seller != null) {
+                        String message = op.kind == MarketOperation.Kind.BUY
+                            ? "Auction sold. Collect your proceeds from a banker."
+                            : "A moderator removed your listing. Collect the items from a banker.";
+                        AuctionFeedback.status(seller, message);
+                    }
                 }
                 com.openrsc.server.net.DiscordService discord = world.getServer().getDiscordService();
-                if (discord != null && notice[0] != null) {
-                    if (op.kind == MarketOperation.Kind.CREATE) discord.auctionAdd(notice[0]);
-                    else if (op.kind == MarketOperation.Kind.BUY) discord.auctionBuy(notice[0]);
+                if (discord != null && receipt.listing != null) {
+                    if (op.kind == MarketOperation.Kind.CREATE) discord.auctionAdd(receipt.listing);
+                    else if (op.kind == MarketOperation.Kind.BUY) discord.auctionBuy(receipt.listing);
                 }
             } catch (RuntimeException notification) { LOGGER.warn("Auction committed; notification failed for {}", op.id, notification); }
-        } else p.message("That auction request was already completed.");
+        } else AuctionFeedback.status(p, "That auction request was already completed.");
     }
 
-    private void settle(Connection c, MarketOperation op, Inventory inventory, Bank bank, MarketItem[] notice) throws SQLException {
+    private void settle(Connection c, MarketOperation op, Inventory inventory, Bank bank, Receipt receipt) throws SQLException {
         Player p = op.actor;
         if (!op.hasCurrentActor()) throw new SQLException("Auction session changed");
         if (p.isIronMan(IronmanMode.Ironman.id()) || p.isIronMan(IronmanMode.Ultimate.id())
@@ -114,14 +140,18 @@ public final class MarketTransactions {
                 long total = (long) amount * unit;
                 if (unit <= 0 || total <= 0 || total > Integer.MAX_VALUE) throw new SQLException("Invalid auction price");
                 debit(inventory, ItemId.COINS.id(), (int) total, false);
-                credit(p, inventory, bank, listing.getCatalogID(), amount, false);
+                boolean banked = credit(p, inventory, bank, listing.getCatalogID(), amount, false);
                 store.checkpoint("buyer-stage");
                 store.creditClaim(c, listing.getSeller(), ItemId.COINS.id(), (int) total, "Auction sale");
                 int remaining = listing.getAmountLeft() - amount;
                 String buyer = "[" + (System.currentTimeMillis()/1000) + ": " + p.getUsername() + ": x" + amount + "]";
                 listing.setBuyers(listing.getBuyers().isEmpty() ? buyer : listing.getBuyers() + ", \n" + buyer);
                 store.changeListing(c, listing, remaining, Math.multiplyExact(remaining, unit), false);
-                listing.setAmountLeft(remaining); listing.setPrice(Math.multiplyExact(remaining, unit)); notice[0] = listing;
+                listing.setAmountLeft(remaining);
+                listing.setPrice(Math.multiplyExact(remaining, unit));
+                receipt.listing = listing;
+                receipt.message = "Bought " + AuctionFeedback.describe(p, listing.getCatalogID(), amount)
+                    + " for " + AuctionFeedback.number((int) total) + " gp. Sent to your " + (banked ? "bank." : "inventory.");
                 break;
             }
             case CREATE: {
@@ -131,14 +161,17 @@ public final class MarketTransactions {
                 debit(inventory, op.catalogId, op.amount, true);
                 store.checkpoint("seller-stage");
                 store.createListing(c, op, p.getUsername());
-                notice[0] = new MarketItem(-1, op.catalogId, op.amount, op.amount, op.price, op.actorId, p.getUsername(), "", System.currentTimeMillis()/1000);
+                receipt.listing = new MarketItem(-1, op.catalogId, op.amount, op.amount, op.price, op.actorId, p.getUsername(), "", System.currentTimeMillis()/1000);
+                receipt.message = "Listed " + AuctionFeedback.describe(p, op.catalogId, op.amount)
+                    + " for " + AuctionFeedback.number(op.price) + " gp.";
                 break;
             }
             case CANCEL: {
                 MarketItem listing = requireListing(c, op.auctionId);
                 if (listing.getSeller() != op.actorId) throw new SQLException("Only the seller may cancel this auction");
-                credit(p, inventory, bank, listing.getCatalogID(), listing.getAmountLeft(), false);
+                boolean banked = credit(p, inventory, bank, listing.getCatalogID(), listing.getAmountLeft(), false);
                 store.changeListing(c, listing, 0, 0, true);
+                receipt.message = "Listing cancelled. Returned to your " + (banked ? "bank." : "inventory.");
                 break;
             }
             case MODERATE: {
@@ -146,17 +179,22 @@ public final class MarketTransactions {
                 MarketItem listing = requireListing(c, op.auctionId);
                 store.creditClaim(c, listing.getSeller(), listing.getCatalogID(), listing.getAmountLeft(), "Removed by moderator");
                 store.changeListing(c, listing, 0, 0, true);
+                receipt.listing = listing;
+                receipt.message = "Listing removed. The seller can collect their items from a banker.";
                 break;
             }
             case COLLECT: {
-                int count = 0;
-                for (CollectibleItem claim : store.claims(c, op.actorId)) {
+                List<CollectibleItem> claims = store.claims(c, op.actorId);
+                if (claims.isEmpty()) throw new CollectionBlocked("You have no auction proceeds or items to collect.");
+                for (CollectibleItem claim : claims) {
                     if (claim.item_amount <= 0) throw new SQLException("Invalid auction claim amount");
                     if (!bank.canHold(new Item(claim.item_id, claim.item_amount))) break;
                     credit(p, inventory, bank, claim.item_id, claim.item_amount, true);
-                    store.claim(c, op.actorId, claim.claim_id); count++;
+                    store.claim(c, op.actorId, claim.claim_id);
+                    receipt.collected.add(claim);
                 }
-                if (count == 0) throw new SQLException("No auction claims fit in the bank");
+                if (receipt.collected.isEmpty()) throw new CollectionBlocked("Make room in your bank before collecting your auction items.");
+                receipt.uncollected = claims.size() - receipt.collected.size();
                 break;
             }
             default: throw new SQLException("Unsupported player auction operation");
@@ -176,7 +214,7 @@ public final class MarketTransactions {
         return def;
     }
 
-    private void credit(Player player, Inventory inventory, Bank bank, int catalog, int amount, boolean bankOnly) throws SQLException {
+    private boolean credit(Player player, Inventory inventory, Bank bank, int catalog, int amount, boolean bankOnly) throws SQLException {
         ItemDefinition def = definition(catalog);
         if (amount <= 0 || (player.getConfig().RESTRICT_ITEM_ID >= 0 && player.getConfig().RESTRICT_ITEM_ID < catalog))
             throw new SQLException("Item is not available in this world");
@@ -185,10 +223,11 @@ public final class MarketTransactions {
         if (!bankOnly && catalog <= player.getClientLimitations().maxItemId && (!note || def.isNoteable())
                 && MarketInventoryAdmission.canReceive(inventory, catalog, amount, def.isStackable())) {
             if (!inventory.add(delivery, false)) throw new SQLException("Auction inventory admission failed");
-            return;
+            return false;
         }
         if (!bank.canHold(new Item(catalog, amount)) || !bank.add(new Item(catalog, amount), false))
             throw new SQLException("No space in inventory or bank");
+        return true;
     }
 
     private void debit(Inventory inventory, int catalog, int amount, boolean allowNotes) throws SQLException {

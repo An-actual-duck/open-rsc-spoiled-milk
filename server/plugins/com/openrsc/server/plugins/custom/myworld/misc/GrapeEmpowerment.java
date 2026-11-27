@@ -6,6 +6,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.plugins.custom.skills.harvesting.Harvesting;
 import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.util.rsc.Formulae;
 import com.openrsc.server.util.rsc.MessageType;
@@ -41,11 +42,7 @@ public class GrapeEmpowerment implements UseInvTrigger {
 				return;
 			}
 
-			if (player.getLevel(Skill.HARVESTING.id()) < 70) {
-				player.playerServerMessage(MessageType.QUEST, "Your harvesting level is not high enough");
-				player.playerServerMessage(MessageType.QUEST, "to hold blessed grapes and they would just wither");
-				delay(2);
-				player.playerServerMessage(MessageType.QUEST, "You need a harvesting level of 70 to bless the grapes");
+			if (!hasGrapeShears(player, "bless the grapes")) {
 				return;
 			}
 
@@ -90,11 +87,7 @@ public class GrapeEmpowerment implements UseInvTrigger {
 				return;
 			}
 
-			if (player.getLevel(Skill.HARVESTING.id()) < 70) {
-				player.playerServerMessage(MessageType.QUEST, "Your harvesting level is not high enough");
-				player.playerServerMessage(MessageType.QUEST, "to hold cursed grapes and they would just wither");
-				delay(2);
-				player.playerServerMessage(MessageType.QUEST, "You need a harvesting level of 70 to curse the grapes");
+			if (!hasGrapeShears(player, "curse the grapes")) {
 				return;
 			}
 
@@ -176,6 +169,11 @@ public class GrapeEmpowerment implements UseInvTrigger {
 		}
 	}
 
+	private static boolean hasGrapeShears(Player player, String action) {
+		int runeShearsTier = Harvesting.getShearsTier(ItemId.RUNE_SHEARS.id());
+		return Harvesting.getToolForResource(player, runeShearsTier, action) != ItemId.NOTHING.id();
+	}
+
 	private void batchPower(Player player, Item grapes, int poweredGrapesId, String processString) {
 		grapes = player.getCarriedItems().getInventory().get(
 			player.getCarriedItems().getInventory().getLastIndexById(grapes.getCatalogId(), Optional.of(false)));
@@ -194,7 +192,11 @@ public class GrapeEmpowerment implements UseInvTrigger {
 
 		updatebatch();
 		if (!ifinterrupted() && !isbatchcomplete()) {
-			batchPower(player, grapes, poweredGrapesId, processString);
+			String action = poweredGrapesId == ItemId.GRAPES_OF_SARADOMIN.id()
+				? "bless the grapes" : "curse the grapes";
+			if (hasGrapeShears(player, action)) {
+				batchPower(player, grapes, poweredGrapesId, processString);
+			}
 		}
 	}
 

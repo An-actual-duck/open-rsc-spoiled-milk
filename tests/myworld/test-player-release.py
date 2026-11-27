@@ -272,17 +272,12 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 expected_root_entries = {
                     "README.txt",
                     "Play Spoiled Milk.cmd",
-                    "Play Spoiled Milk - World Chunks.cmd",
-                    "Play Spoiled Milk - World Streaming.cmd",
                     "game-files",
                 }
                 if archive == generic:
                     expected_root_entries.update({
                         "play-spoiled-milk.sh",
-                        "play-spoiled-milk-world-chunks.sh",
-                        "play-spoiled-milk-world-streaming.sh",
-                        "Play Spoiled Milk - World Chunks.command",
-                        "Play Spoiled Milk - World Streaming.command",
+                        "Play Spoiled Milk.command",
                     })
                 root_entries = {
                     member[len(package_name) + 1:].split("/", 1)[0]
@@ -351,7 +346,8 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 for snippet in [
                     "Launch with play-spoiled-milk.sh on Linux or macOS.",
                     "Launch with Play Spoiled Milk.cmd on Windows.",
-                    "automatically check for updates",
+                    "The game uses World Streaming.",
+                    "check for updates",
                 ]:
                     if snippet not in readme:
                         fail(f"{archive.name} README should explain launch/update flow: {snippet!r}")
@@ -362,7 +358,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     'if exist "%~dp0Cache" rmdir /s /q',
                     'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0game-files\\update-spoiled-milk.ps1"',
                     "if errorlevel 1 (\n    pause\n    exit /b 1\n  )",
-                    "-Dspoiledmilk.desktopWorldStreaming=%WORLD_STREAMING%",
+                    "-Dspoiledmilk.desktopWorldStreaming=true",
                     'cd /d "%~dp0game-files"',
                     "Spoiled_Milk_Client.jar",
                     *CLIENT_JVM_MEMORY_FLAGS,

@@ -38,6 +38,7 @@ public class ScriptContext {
 	// Batching related
 	private volatile Boolean interrupted;
 	private volatile Batch batch;
+	private int productionProgressItem = -1;
 
 	public ScriptContext(final World world, final PluginTask pluginTask, final Integer ownerIndex) {
 		this.world = world;
@@ -484,6 +485,13 @@ public class ScriptContext {
 			return;
 		}
 		batch = newBatch;
+		if (newBatch != null && productionProgressItem >= 0) {
+			newBatch.startProductionProgress(productionProgressItem);
+		}
+	}
+
+	public void setProductionProgressItem(int itemId) {
+		productionProgressItem = itemId;
 	}
 
 	public synchronized Boolean getInterrupted() {

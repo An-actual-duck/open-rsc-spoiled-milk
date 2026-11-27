@@ -17,4 +17,4 @@ macOS (Intel or Apple silicon)
   Open Play Spoiled Milk.command.
   Requires Java 17 or newer for your Mac's processor.
 
-All launchers automatically check for updates before starting the game.
+The game uses World Streaming. Launchers check for updates before starting.
