@@ -19,12 +19,12 @@ final class ChatPanelLayout {
 
 	ChatPanelLayout(int surfaceWidth, int surfaceHeight, GameInterfaceSettings.Size size,
 					GameInterfaceSettings.TextSize text, int lineHeight, int labelHeight, int widestLabel) {
-		left = size.pixels(12);
+		left = 0;
 		textInset = size.pixels(10);
 		int minimumTabWidth = widestLabel + 2 * textInset;
-		width = Math.min(Math.max(1, surfaceWidth - 2 * left),
+		width = Math.min(Math.max(1, surfaceWidth - 2 * size.pixels(12)),
 			Math.max(size.pixels(900), TAB_COUNT * minimumTabWidth));
-		bottom = surfaceHeight - left;
+		bottom = surfaceHeight;
 		bodyFont = text.bodyFont;
 		labelFont = text.labelFont;
 		tabsHeight = Math.max(size.pixels(32), labelHeight + size.pixels(8));

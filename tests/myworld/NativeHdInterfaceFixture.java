@@ -27,9 +27,9 @@ public final class NativeHdInterfaceFixture {
 		for (GameInterfaceSettings.Size size : GameInterfaceSettings.Size.values()) {
 			GameInterfaceSettings.Size fitted = size.fits(540);
 			for (GameInterfaceSettings.TextSize text : GameInterfaceSettings.TextSize.values()) {
-				verifyChatBounds(chat(1920, 1080, size, text), 1920);
-				verifyChatBounds(chat(960, 540, fitted, text), 960);
-				verifyChatBounds(chat(800, 600, fitted, text), 800);
+				verifyChatBounds(chat(1920, 1080, size, text), 1920, 1080);
+				verifyChatBounds(chat(960, 540, fitted, text), 960, 540);
+				verifyChatBounds(chat(800, 600, fitted, text), 800, 600);
 				verifyInventoryBounds(1920, 1080, size, text, false);
 				verifyInventoryBounds(960, 540, fitted, text, false);
 				verifyInventoryBounds(960, 540, fitted, text, true);
@@ -549,7 +549,8 @@ public final class NativeHdInterfaceFixture {
 			"Key can show its first and last markers");
 	}
 
-	private static void verifyChatBounds(ChatPanelLayout chat, int width) {
+	private static void verifyChatBounds(ChatPanelLayout chat, int width, int height) {
+		check(chat.left == 0 && chat.bottom == height, "Chat is flush to the bottom-left corner");
 		for (int tab = 0; tab < ChatPanelLayout.TAB_COUNT; tab++) {
 			check(chat.tabAt(chat.tabBoundary(tab), chat.tabsTop()) == tab, "Tab starts " + tab);
 			check(chat.tabAt(chat.tabBoundary(tab + 1) - 1, chat.bottom - 1) == tab, "Tab ends " + tab);
@@ -558,7 +559,7 @@ public final class NativeHdInterfaceFixture {
 		check(right <= width - chat.left, "Panel fits the frame");
 		check(chat.tabAt(right, chat.tabsTop()) == -1, "Tabs exclude right margin");
 		check(chat.tabAt(chat.left, chat.tabsTop() - 1) == -1, "Entry and tabs don't overlap");
-		check(chat.tabAt(chat.left, chat.bottom) == -1, "Tabs exclude bottom margin");
+		check(chat.tabAt(chat.left, chat.bottom) == -1, "Tabs stop at the viewport edge");
 		check(chat.contains(chat.left, chat.entryTop(), false), "Entry owns pointer");
 		check(!chat.contains(chat.left, chat.historyTop(), false), "Empty history leaves world input");
 		check(chat.contains(chat.left, chat.historyTop(), true), "Visible history owns pointer");
