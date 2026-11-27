@@ -10,6 +10,9 @@ import orsc.SkillGuideWindow.Article;
 import orsc.mudclient;
 
 final class SkillGuideTopics {
+	private static final String TOOL_FOCUS_HELP =
+		"Set Tool Focus Menu to Always in Options to keep it visible while your gathering tool is equipped.";
+
 	private SkillGuideTopics() {
 	}
 
@@ -199,8 +202,9 @@ final class SkillGuideTopics {
 	private static void woodcutting(String section, Map<String, List<Article>> topics) {
 		if ("Trees".equals(section) && topics.containsKey("Seed rewards")) {
 			page(topics, "Seed rewards", article("Finding seeds while chopping",
-				"Choose a Seed Focus in Options to control how often seeds appear. Higher focus gives you more chances at seed rewards.",
-				"Resource seeds can be up to two tiers above your hatchet, with rarer rolls above its tier. Knowledge and Money seeds scale with your level."));
+				"Use the woodcutting focus menu to choose how often seeds appear. Higher focus gives you more chances at seed rewards.",
+				"Resource seeds can be up to two tiers above your hatchet, with rarer rolls above its tier. Knowledge and Money seeds scale with your level.",
+				TOOL_FOCUS_HELP));
 		}
 	}
 
@@ -211,8 +215,9 @@ final class SkillGuideTopics {
 				"A rod catches fish at its own tier and up to three tiers below. Fishing shops stock rods through tier 6. The Fishing Guild stocks rods through tier 10."));
 		} else if ("Catches".equals(section) && topics.containsKey("Side rewards")) {
 			page(topics, "Side rewards", article("More than fish",
-				"You can reel in oysters, seaweed, caskets, leather gloves and boots. Loot Focus changes how often you find these extras.",
-				"Side loot can be up to two tiers above your rod. Above-tier finds are rarer."));
+				"You can reel in oysters, seaweed, caskets, leather gloves and boots. The fishing focus menu changes how often you find these extras.",
+				"Side loot can be up to two tiers above your rod. Above-tier finds are rarer.",
+				TOOL_FOCUS_HELP));
 		}
 	}
 
@@ -266,7 +271,8 @@ final class SkillGuideTopics {
 	private static void mining(String section, Map<String, List<Article>> topics) {
 		if ("Ores".equals(section) && topics.containsKey("Geodes")) {
 			page(topics, "Geodes", article("Finding geodes",
-				"Raise Geode Focus to get more chances at rare geodes while mining. Choose Just the ore when you only want your mining supplies."));
+				"Use the mining focus menu to look for more geodes. Choose Just the ore when you want to skip geode rewards.",
+				TOOL_FOCUS_HELP));
 		}
 	}
 
@@ -340,7 +346,8 @@ final class SkillGuideTopics {
 					"Each crop lists the minimum shears tier. Tin shears are enough to pick flax for bowstrings.",
 					"Harvesting experience still comes from gathering. Your level helps determine which shears you can equip and how much produce you gather."));
 				page(topics, "Seed rewards", article("Finding seeds",
-					"Seed Focus controls how often seeds appear while harvesting. Resource seeds can be up to two tiers above your shears, with rarer rolls above their tier. Knowledge and Money seeds scale with your level."));
+					"Use the harvesting focus menu to choose how often seeds appear. Resource seeds can be up to two tiers above your shears, with rarer rolls above their tier. Knowledge and Money seeds scale with your level.",
+					TOOL_FOCUS_HELP));
 				break;
 			case "Herbs":
 				page(topics, "Herb patches", article("What patches can give you",
