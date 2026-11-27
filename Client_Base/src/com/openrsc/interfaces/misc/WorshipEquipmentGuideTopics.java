@@ -79,7 +79,7 @@ final class WorshipEquipmentGuideTopics {
 				"Bless a plain wooden staff at your god's altar. To equip it, worship that god and meet its Worship and Magic requirements. "
 					+ "Higher woods grant more Prayer points, Magic power, and Holy Power. These stats are fixed by wood tier.",
 				"From the basic staff through Blood, the ten tiers give 1 to 10 Prayer points, "
-					+ "4 to 28 Magic power, and 8 to 56 Holy Power. See Blessing for the production requirements."),
+					+ "4 to 28 magic power, and 8 to 56 Holy Power."),
 			article("Other weapons with Prayer bonuses",
 				"Regular metal maces give 1 to 10 Prayer points from tin through rune. Smith them at an anvil.",
 				"Crafted crossbows give 1 to 9 Prayer points from pine through blood. "
@@ -96,7 +96,8 @@ final class WorshipEquipmentGuideTopics {
 			article("Gifts of Devotion", "Each god has a cape, staff, mace, and crossbow that can be bestowed at high Devotion. "
 				+ "Equipment effects require worshipping the matching god. The artifact stats are fixed."),
 			article("God capes", "Give 10 Prayer points and reduce the cost of their god's mace prayer from 90 to 60 points. "
-				+ "The cape also reduces the crossbow prayer from 80 to 60 points and upgrades its holy bolts to tier 8."),
+				+ "The cape also reduces the crossbow prayer from 80 to 60 points and upgrades its holy bolts to tier 8.",
+				"A god cape raises base maximum damage for regular god spells from 18 to 25 and for advanced god spells from 24 to 32."),
 			article("God staves", "Give 28 magic power, 64 Holy Power, and 11 Prayer points. "
 				+ "They let you cast the matching god spells in the Magic spellbook when you meet the spell requirements."),
 			article("God maces", "Give 72 melee power and 11 Prayer points. "

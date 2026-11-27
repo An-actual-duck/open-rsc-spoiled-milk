@@ -103,14 +103,16 @@ final class WorshipGuideTopics {
 					+ "At 100 Devotion, ordinary bones or ashes give 100 bonus XP. Big bones, bat bones, demon ash, and dragon bones give larger bonuses."),
 				article("Stronger equipment", "After 250 Devotion, aligned knight armor, knight weapons, and blessed wool gain "
 					+ "combat stats and more Prayer points. Each piece can gain up to 10 extra Prayer points at 1,000 Devotion.",
-					"Devotion also lets you bless higher-tier equipment. See the Blessing skill guide for the production details."),
+					"Higher-tier blessings require more Devotion."),
 				article("Artifacts", "With high Devotion, the god you worship may bestow a unique artifact. "
 					+ "See Equipment > Artifacts for what the items do.")),
 			topic("More info",
 				article("Negative Devotion", "A god's followers can turn hostile when your Devotion with that god falls below zero. "
-					+ "The more negative it gets, the more likely normally peaceful followers are to attack."),
+					+ "The more negative it gets, the more likely normally peaceful followers are to attack. "
+					+ "The Devotion XP bonus returns once your standing turns positive."),
 				article("Rebuilding standing", "Devotion ranges from -1,000 to 1,000 for each god. "
-					+ "Worship that god and make offerings to rebuild your standing.")));
+					+ "Worship that god and make offerings to rebuild your standing. "
+					+ "Hover Worship in Stats to see your active god's Devotion.")));
 	}
 
 	private static List<Topic> cleric(List<ClericSpellDef> spells, IntFunction<String> itemName) {
