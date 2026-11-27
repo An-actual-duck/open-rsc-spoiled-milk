@@ -116,15 +116,15 @@ def main() -> None:
 	guide = SKILL_GUIDE.read_text(encoding="utf-8")
 	for snippet in (
 		'"fern leaf", "mushroom", "fungus", "limpwurt root", "red flower", "blue flower"',
-		'new SkillMenuItem(3256, "T1", "Fern leaf")',
-		'new SkillMenuItem(3260, "T10", "Blue flower")',
-		'} else if (curTab == 5) {',
-		'} else if (curTab == 6) {',
+		'addHarvestProduce(3256, 1, "Fern leaf")',
+		'addHarvestProduce(3260, 10, "Blue flower")',
+		'addHarvestProduce(622, 4, "Seaweed")',
+		'addHarvestProduce(469, 8, "Snape grass")',
 	):
 		require_text(guide, snippet, "Guide should expose Brawn ingredient progression")
 
 	mudclient = MUDCLIENT.read_text(encoding="utf-8")
-	require_text(mudclient, 'skillGuideChosenTabs.add("Brawn");', "Harvest guide should include Brawn tab")
+	require_text(mudclient, 'skillGuideChosenTabs.add("Wild plants");', "Harvest guide should include wild plants")
 
 	print("PASS: Herblaw Brawn harvestable ingredients validated")
 

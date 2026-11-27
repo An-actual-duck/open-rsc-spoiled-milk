@@ -264,7 +264,7 @@ final class SkillGuideTopics {
 		if ("Smelting".equals(section) && topics.containsKey("Lava forge")) {
 			page(topics, "Lava forge", article("Dragon and Purified Rune",
 				"Smelt Dragon bars and Purified Rune Bars at the repaired lava forge. You can repair the forge after Dwarf Youth Rescue with 100 black dragon scales and 1,000,000 coins.",
-				"Take the finished bars to an ordinary anvil. The Special section shows the Dragon and Exalted Rune recipes."));
+				"Take the finished bars to an ordinary anvil. The Smithing tab lists their recipes under Dragon and Exalted Rune."));
 		}
 	}
 
@@ -280,7 +280,7 @@ final class SkillGuideTopics {
 		if ("Herbs".equals(section)) {
 			page(topics, "Preparing herbs", article("Identifying and mixing",
 				"Identify a herb before using it. Add the prepared herb to a vial of water and then add the secondary ingredient for the recipe."),
-				article("Finding supplies", "Herb patches give a chance at herbs. See Harvest for herb and Brawn ingredient sources."));
+				article("Finding supplies", "Herb patches give a chance at herbs. See Harvest for herb patches and wild plants."));
 		} else if ("Potions".equals(section)) {
 			List<Article> otherRecipes = topics.remove("Unlocks");
 			if (otherRecipes != null) {
@@ -343,8 +343,8 @@ final class SkillGuideTopics {
 		switch (section) {
 			case "Allotments":
 				page(topics, "Gathering", article("Equip your shears",
-					"Each crop lists the minimum shears tier. Tin shears are enough to pick flax for bowstrings.",
-					"Harvesting experience still comes from gathering. Your level helps determine which shears you can equip and how much produce you gather."));
+					"Each crop lists the shears you need. Tin Shears are enough to pick flax for bowstrings or shear sheep for wool.",
+					"Harvesting experience still comes from gathering. Your Harvesting level and the shears you use affect how much produce you gather. The Harvesting skill cape unlocks at level 99."));
 				page(topics, "Seed rewards", article("Finding seeds",
 					"Use the harvesting focus menu to choose how often seeds appear. Resource seeds can be up to two tiers above your shears, with rarer rolls above their tier. Knowledge and Money seeds scale with your level.",
 					TOOL_FOCUS_HELP));
@@ -353,15 +353,13 @@ final class SkillGuideTopics {
 				page(topics, "Herb patches", article("What patches can give you",
 					"Herb patches roll for herbs at your shears' tier and up to three tiers below. Identify the herbs before using them in potions."));
 				break;
-			case "Brawn":
-				page(topics, "Uses", article("Potion ingredients",
-					"These ingredients go into Brawn potions. See the Brawn side tab in Herblaw for the herb and secondary ingredient at each strength."));
+			case "Wild plants":
+				page(topics, "Uses", article("Gathering wild ingredients",
+					"These ingredients grow at individual gathering spots. For Brawn potion recipes, see the Brawn side tab in Herblaw."));
 				break;
-			case "Shears":
-				if (Config.S_WANT_CUSTOM_SPRITES) {
-					page(topics, "Progression", article("Better shears",
-						"Equip the shears that your Harvesting level allows. Higher tiers open up more gatherable plants. The Harvesting skill cape unlocks at level 99."));
-				}
+			case "Fruits":
+				page(topics, "Blessing grapes", article("Blessing or cursing grapes",
+					"Harvest regular grapes with Mithril Shears or better. Equip Rune Shears or better to bless or curse grapes with the corresponding holy symbol at its monastery."));
 				break;
 			default:
 				break;

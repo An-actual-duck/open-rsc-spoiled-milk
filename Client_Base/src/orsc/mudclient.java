@@ -33810,13 +33810,7 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Info");
 		} else if (skillGuideChosen.equalsIgnoreCase("Smithing")) {
 			skillGuideChosenTabs.add("Smelting");
-			skillGuideChosenTabs.add("Tin/Copper");
-			skillGuideChosenTabs.add("Bronze/Iron");
-			skillGuideChosenTabs.add("Steel/Mithril");
-			skillGuideChosenTabs.add("Titan/Adam");
-			skillGuideChosenTabs.add("Orich/Rune");
-			skillGuideChosenTabs.add("Special");
-			skillGuideChosenTabs.add("Info");
+			skillGuideChosenTabs.add("Smithing");
 		} else if (skillGuideChosen.equalsIgnoreCase("Mining")) {
 			skillGuideChosenTabs.add("Ores");
 			skillGuideChosenTabs.add("Pickaxes");
@@ -33851,12 +33845,12 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Info");
 
 		} else if (skillGuideChosen.equalsIgnoreCase("Harvest")) {
+			skillGuideChosenTabs.add("Shears");
 			skillGuideChosenTabs.add("Allotments");
 			skillGuideChosenTabs.add("Fruits");
 			skillGuideChosenTabs.add("Bushes");
 			skillGuideChosenTabs.add("Herbs");
-			skillGuideChosenTabs.add("Brawn");
-			skillGuideChosenTabs.add("Shears");
+			skillGuideChosenTabs.add("Wild plants");
 			if (S_WANT_CUSTOM_SPRITES) {
 				skillGuideChosenTabs.add("Info");
 			}

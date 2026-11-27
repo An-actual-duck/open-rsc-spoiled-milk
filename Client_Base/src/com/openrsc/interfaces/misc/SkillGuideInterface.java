@@ -605,7 +605,6 @@ public final class SkillGuideInterface {
 			case "Woodcutting":
 			case "Fishing":
 			case "Crafting":
-			case "Smithing":
 			case "Mining":
 			case "Summoning":
 				return true;
@@ -648,8 +647,7 @@ public final class SkillGuideInterface {
 			}
 			String topic = entry.contextSection == null ? entry.topic : null;
 			if (topic == null) {
-				topic = mc.getSkillGuideChosen().equals("Smithing") && curTab == 6
-					? "Other recipes" : defaultTopic;
+				topic = defaultTopic;
 			}
 			byTopic.computeIfAbsent(topic, key -> new ArrayList<>()).add(guideArticle(entry));
 		}
@@ -698,10 +696,6 @@ public final class SkillGuideInterface {
 						isSummonGuideSideFacingNpc(npcId) ? 3 : 0);
 				};
 			}
-		}
-		if ("Harvest".equals(mc.getSkillGuideChosen()) && curTab < 5
-			&& entry.getSkillDetail().toLowerCase(java.util.Locale.ROOT).contains(" shears")) {
-			return SkillGuideWindow.Article.unlock(entry.getSkillDetail(), "", icon);
 		}
 		return SkillGuideWindow.Article.unlock(entry.getSkillDetail(), level, icon);
 	}
@@ -1354,72 +1348,72 @@ public final class SkillGuideInterface {
 		}
 		if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvest")) {
 			if (curTab == 0) {
-				skillMenuEntries.add(new SkillMenuItem(29, "T1", "Grain"));
-				skillMenuEntries.add(new SkillMenuItem(348, "T1", "Potato"));
-				skillMenuEntries.add(new SkillMenuItem(241, "T1", "Onion"));
-				skillMenuEntries.add(new SkillMenuItem(18, "T1", "Cabbage"));
-				skillMenuEntries.add(new SkillMenuItem(675, "T1", "Flax"));
-				skillMenuEntries.add(new SkillMenuItem(218, "T2", "Garlic"));
-				skillMenuEntries.add(new SkillMenuItem(320, "T3", "Tomato"));
-				skillMenuEntries.add(new SkillMenuItem(1353, "T4", "Corn"));
-				skillMenuEntries.add(new SkillMenuItem(1569, "T1", "Lily's Pumpkin"));
-				skillMenuEntries.add(new SkillMenuItem(422, "T1", "Event Pumpkin (bonus XP)"));
-				skillMenuEntries.add(new SkillMenuItem(1352, "T5", "Red Cabbage"));
-				skillMenuEntries.add(new SkillMenuItem(1354, "T7", "White Pumpkin"));
-				skillMenuEntries.add(new SkillMenuItem(1456, "T7", "Sugar Cane"));
+				skillMenuEntries.add(new SkillMenuEntry("", "Shears must be equipped to harvest. You can equip any shears at Harvesting level 1."));
+				addShears(144, 1);
+				addShears(2215, 2);
+				addShears(2216, 3);
+				addShears(2217, 4);
+				addShears(2218, 5);
+				addShears(2219, 6);
+				addShears(2220, 7);
+				addShears(2221, 8);
+				addShears(2222, 9);
+				addShears(2223, 10);
+				addShears(3272, 11);
 			} else if (curTab == 1) {
-				skillMenuEntries.add(new SkillMenuItem(855, "T3", "Lemon Tree"));
-				skillMenuEntries.add(new SkillMenuItem(863, "T4", "Lime Tree"));
-				skillMenuEntries.add(new SkillMenuItem(1348, "T5", "Apple Tree"));
-				skillMenuEntries.add(new SkillMenuItem(249, "T5", "Banana Palm"));
-				skillMenuEntries.add(new SkillMenuItem(143, "T6", "Grape Vine"));
-				skillMenuEntries.add(new SkillMenuItem(857, "T6", "Orange Tree"));
-				skillMenuEntries.add(new SkillMenuItem(861, "T8", "Pineapple Plant"));
-				skillMenuEntries.add(new SkillMenuItem(1349, "T8", "Grapefruit Tree"));
-				skillMenuEntries.add(new SkillMenuItem(1350, "T8", "Papaya Palm"));
-				skillMenuEntries.add(new SkillMenuItem(1351, "T9", "Coconut Palm"));
-				skillMenuEntries.add(new SkillMenuItem(1457, "T10", "Dragonfruit Tree"));
-				skillMenuEntries.add(new SkillMenuItem(1465, "", "Bless/Curse Grapes (level 70)"));
+				addHarvestProduce(29, 1, "Grain");
+				addHarvestProduce(348, 1, "Potato");
+				addHarvestProduce(241, 1, "Onion");
+				addHarvestProduce(18, 1, "Cabbage");
+				addHarvestProduce(675, 1, "Flax");
+				addHarvestProduce(218, 2, "Garlic");
+				addHarvestProduce(320, 3, "Tomato");
+				addHarvestProduce(1353, 4, "Corn");
+				addHarvestProduce(1569, 1, "Lily's Pumpkin");
+				addHarvestProduce(422, 1, "Event Pumpkin (bonus XP)");
+				addHarvestProduce(1352, 5, "Red Cabbage");
+				addHarvestProduce(1354, 7, "White Pumpkin");
+				addHarvestProduce(1456, 7, "Sugar Cane");
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(236, "T2", "Redberry Bush"));
-				skillMenuEntries.add(new SkillMenuItem(55, "T4", "Cadavaberry Bush"));
-				skillMenuEntries.add(new SkillMenuItem(765, "T6", "Dwellberry Bush"));
-				skillMenuEntries.add(new SkillMenuItem(936, "T7", "Jangerberry Bush"));
-				skillMenuEntries.add(new SkillMenuItem(471, "T9", "Whiteberry Bush"));
+				addHarvestProduce(855, 3, "Lemon Tree");
+				addHarvestProduce(863, 4, "Lime Tree");
+				addHarvestProduce(1348, 5, "Apple Tree");
+				addHarvestProduce(249, 5, "Banana Palm");
+				addHarvestProduce(143, 6, "Grape Vine");
+				addHarvestProduce(857, 6, "Orange Tree");
+				addHarvestProduce(861, 8, "Pineapple Plant");
+				addHarvestProduce(1349, 8, "Grapefruit Tree");
+				addHarvestProduce(1350, 8, "Papaya Palm");
+				addHarvestProduce(1351, 9, "Coconut Palm");
+				addHarvestProduce(1457, 10, "Dragonfruit Tree");
+				addHarvestProduce(1465, 10, "Bless or curse grapes");
 			} else if (curTab == 3) {
-				skillMenuEntries.add(new SkillMenuItem(165, "T1", "Guam herb chance"));
-				skillMenuEntries.add(new SkillMenuItem(435, "T2", "Marrentill chance"));
-				skillMenuEntries.add(new SkillMenuItem(436, "T3", "Tarromin chance"));
-				skillMenuEntries.add(new SkillMenuItem(622, "T4", "Sea weed"));
-				skillMenuEntries.add(new SkillMenuItem(437, "T4", "Harralander chance"));
-				skillMenuEntries.add(new SkillMenuItem(438, "T5", "Ranarr Weed chance"));
-				skillMenuEntries.add(new SkillMenuItem(220, "T6", "Limpwurt Root"));
-				skillMenuEntries.add(new SkillMenuItem(439, "T6", "Irit Leaf chance"));
-				skillMenuEntries.add(new SkillMenuItem(440, "T7", "Avantoe chance"));
-				skillMenuEntries.add(new SkillMenuItem(441, "T8", "Kwuarm chance"));
-				skillMenuEntries.add(new SkillMenuItem(469, "T8", "Snape Grass"));
-				skillMenuEntries.add(new SkillMenuItem(442, "T8", "Cadantine chance"));
-				skillMenuEntries.add(new SkillMenuItem(443, "T10", "Dwarf Weed chance"));
-				skillMenuEntries.add(new SkillMenuItem(933, "T10", "Torstol rare chance"));
+				addHarvestProduce(236, 2, "Redberry Bush");
+				addHarvestProduce(55, 4, "Cadavaberry Bush");
+				addHarvestProduce(765, 6, "Dwellberry Bush");
+				addHarvestProduce(936, 7, "Jangerberry Bush");
+				addHarvestProduce(471, 9, "Whiteberry Bush");
 			} else if (curTab == 4) {
-				skillMenuEntries.add(new SkillMenuItem(3256, "T1", "Fern leaf"));
-				skillMenuEntries.add(new SkillMenuItem(3257, "T2", "Mushroom"));
-				skillMenuEntries.add(new SkillMenuItem(3258, "T5", "Fungus"));
-				skillMenuEntries.add(new SkillMenuItem(220, "T6", "Limpwurt Root"));
-				skillMenuEntries.add(new SkillMenuItem(3259, "T8", "Red flower"));
-				skillMenuEntries.add(new SkillMenuItem(3260, "T10", "Blue flower"));
+				addHarvestProduce(165, 1, "Guam leaf (chance)");
+				addHarvestProduce(435, 2, "Marrentill (chance)");
+				addHarvestProduce(436, 3, "Tarromin (chance)");
+				addHarvestProduce(437, 4, "Harralander (chance)");
+				addHarvestProduce(438, 5, "Ranarr Weed (chance)");
+				addHarvestProduce(439, 6, "Irit Leaf (chance)");
+				addHarvestProduce(440, 7, "Avantoe (chance)");
+				addHarvestProduce(441, 8, "Kwuarm (chance)");
+				addHarvestProduce(442, 8, "Cadantine (chance)");
+				addHarvestProduce(443, 10, "Dwarf Weed (chance)");
+				addHarvestProduce(933, 10, "Torstol (rare chance)");
 			} else if (curTab == 5) {
-				skillMenuEntries.add(new SkillMenuItem(144, "T1", "Tin shears"));
-				skillMenuEntries.add(new SkillMenuItem(2215, "T2", "Copper shears"));
-				skillMenuEntries.add(new SkillMenuItem(2216, "T3", "Bronze shears"));
-				skillMenuEntries.add(new SkillMenuItem(2217, "T4", "Iron shears"));
-				skillMenuEntries.add(new SkillMenuItem(2218, "T5", "Steel shears"));
-				skillMenuEntries.add(new SkillMenuItem(2219, "T6", "Mithril shears"));
-				skillMenuEntries.add(new SkillMenuItem(2220, "T7", "Titan steel shears"));
-				skillMenuEntries.add(new SkillMenuItem(2221, "T8", "Adamantite shears"));
-				skillMenuEntries.add(new SkillMenuItem(2222, "T9", "Orichalcum shears"));
-				skillMenuEntries.add(new SkillMenuItem(2223, "T10", "Rune shears"));
-				skillMenuEntries.add(new SkillMenuItem(3272, "T11", "Exalted Rune shears"));
+				addHarvestProduce(3256, 1, "Fern leaf");
+				addHarvestProduce(3257, 2, "Mushroom");
+				addHarvestProduce(622, 4, "Seaweed");
+				addHarvestProduce(3258, 5, "Fungus");
+				addHarvestProduce(220, 6, "Limpwurt Root");
+				addHarvestProduce(469, 8, "Snape grass");
+				addHarvestProduce(3259, 8, "Red flower");
+				addHarvestProduce(3260, 10, "Blue flower");
 			} else if (curTab == 6) {
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1526, "Harvesting");
@@ -2011,6 +2005,19 @@ public final class SkillGuideInterface {
 		addGuideRecipe("Crossbows", crossbowId, crossbowLevel, name + " crossbow");
 	}
 
+	private static final String[] SHEARS_NAMES = {
+		"Tin Shears", "Copper Shears", "Bronze Shears", "Iron Shears", "Steel Shears", "Mithril Shears",
+		"Titan Steel Shears", "Adamantite Shears", "Orichalcum Shears", "Rune Shears", "Exalted Rune Shears"
+	};
+
+	private void addHarvestProduce(int itemId, int minimumShears, String name) {
+		skillMenuEntries.add(new SkillMenuItem(itemId, "", name + " - " + SHEARS_NAMES[minimumShears - 1]));
+	}
+
+	private void addShears(int itemId, int shearsTier) {
+		skillMenuEntries.add(new SkillMenuItem(itemId, "1", SHEARS_NAMES[shearsTier - 1]));
+	}
+
 	private void populateSmithingGuide() {
 		if (curTab == 0) {
 			skillMenuEntries.add(new SkillMenuItem(1955, "1", "Tin bar - 1 tin ore"));
@@ -2032,33 +2039,27 @@ public final class SkillGuideInterface {
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1383, "Smithing");
 			}
+			SkillMenuEntry forge = new SkillMenuEntry("",
+				"Dragon and Purified Rune bars require the repaired lava forge after Dwarf Youth Rescue. "
+					+ "Repair costs 100 black dragon scales and 1,000,000 coins.");
+			forge.topic = "Lava forge";
+			skillMenuEntries.add(forge);
 		} else if (curTab == 1) {
 			addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 3181, 2207, -1, 1959, 1960, 1961, 2224, 1962, 1963, 1964);
 			addSmithingTier("Copper", 8, 2006, 2008, 2009, 2010, 2011, 2012, 2047, 2013, 2014, 3182, 2208, 2178, 1965, 1966, 1967, 2225, 1968, 1969, 1970);
-		} else if (curTab == 2) {
 			addSmithingTier("Bronze", 15, 62, 66, 70, 82, 76, 87, 156, 205, 94, 3183, 827, 2180, 108, 1983, 1984, 124, 128, 206, 117);
+			addGuideRecipe("Bronze", 979, 4, "Bronze wire - 1 bronze bar");
 			addSmithingTier("Iron", 22, 28, 1, 71, 83, 77, 12, 1258, 89, 0, 3184, 1088, 2182, 6, 1985, 1986, 3, 2, 9, 8);
-		} else if (curTab == 3) {
 			addSmithingTier("Steel", 30, 63, 67, 72, 84, 78, 88, 1259, 90, 95, 3185, 1089, 2184, 109, 698, 1988, 125, 129, 121, 118);
+			addGuideRecipe("Steel", 419, 34, "Nails - 1 steel bar makes 2");
 			addSmithingTier("Mithril", 38, 64, 68, 73, 85, 79, 203, 1260, 91, 96, 3186, 1090, 2186, 110, 1989, 1990, 126, 130, 122, 119);
-		} else if (curTab == 4) {
 			addSmithingTier("Titan steel", 46, 2017, 2019, 2020, 2021, 2022, 2023, 2048, 2024, 2025, 3187, 2209, 2188, 1971, 1972, 1973, 2226, 1974, 1975, 1976);
 			addSmithingTier("Adamantite", 54, 65, 69, 74, 86, 80, 204, 1261, 92, 97, 3188, 1091, 2190, 111, 1991, 1992, 127, 131, 123, 120);
-		} else if (curTab == 5) {
 			addSmithingTier("Orichalcum", 62, 2028, 2030, 2031, 2032, 2033, 2034, 2049, 2035, 2036, 3189, 2210, 2192, 1977, 1978, 1979, 2227, 1980, 1981, 1982);
 			addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 98, 3190, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);
-		} else if (curTab == 6) {
 			addSmithingTier("Dragon", 80, 1447, -1, 593, -1, 1346, 594, -1, 2752, -1, -1, -1, -1, 1425, -1, -1, 1278, 1426, 1429, 1427);
+			addGuideRecipe("Dragon", 1278, 60, "Dragon square shield - smith the two halves together");
 			addSmithingTier("Exalted Rune", 90, 3262, 3263, 3264, 3265, 3266, 3267, 3268, 3269, 3271, 3270, 3273, -1, 3274, 3275, 3276, 3277, 3278, 3279, 3280);
-			skillMenuEntries.add(new SkillMenuItem(979, "4", "Bronze wire - 1 bronze bar"));
-			skillMenuEntries.add(new SkillMenuItem(419, "34", "Nails - 1 steel bar makes 2"));
-			skillMenuEntries.add(new SkillMenuItem(1278, "60", "Dragon square shield - smith the 2 halves together"));
-		} else if (curTab == 7) {
-			addContextNote("Smelting", "Lava forge", new SkillMenuEntry("", "Dragon bars require the repaired lava forge"));
-			addContextNote("Smelting", "Lava forge", new SkillMenuEntry("", "Purified Rune Bars require the repaired lava forge"));
-			addContextNote("Smelting", "Lava forge", new SkillMenuEntry("", "Repair the forge after Dwarf Youth Rescue"));
-			addContextNote("Smelting", "Lava forge", new SkillMenuEntry("", "Repair cost: 100 black dragon scales and 1,000,000 coins"));
-			addContextNote("Special", "More info", new SkillMenuEntry("", "Dragon and Exalted Rune gear are smithed at normal anvils"));
 		}
 	}
 
