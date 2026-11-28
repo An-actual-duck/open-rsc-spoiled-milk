@@ -2354,19 +2354,19 @@ public class Crafting implements UseInvTrigger,
 	private List<RangedMouldRecipe> getAvailableRangedMouldRecipes(Player player, int barId, int categoryId) {
 		List<RangedMouldRecipe> recipes = new ArrayList<>();
 		if (categoryId < 0 || categoryId == Smelting.FURNACE_CATEGORY_BOLTS) {
-			addRangedMouldRecipe(recipes, player, barId, getBoltId(barId), ItemId.BOLT_MOULD.id(), "Bolts", 5, 0);
+			addRangedMouldRecipe(recipes, player, barId, getBoltId(barId));
 		}
 		if (categoryId < 0 || categoryId == Smelting.FURNACE_CATEGORY_ARROWHEADS) {
-			addRangedMouldRecipe(recipes, player, barId, getArrowHeadsId(barId), ItemId.ARROWHEAD_MOULD.id(), "Arrow heads", 5, 0);
+			addRangedMouldRecipe(recipes, player, barId, getArrowHeadsId(barId));
 		}
 		if (categoryId < 0 || categoryId == Smelting.FURNACE_CATEGORY_DARTS) {
-			addRangedMouldRecipe(recipes, player, barId, getDartTipsId(barId), ItemId.DART_MOULD.id(), "Dart tips", 5, 2);
+			addRangedMouldRecipe(recipes, player, barId, getDartTipsId(barId));
 		}
 		if (categoryId < 0 || categoryId == Smelting.FURNACE_CATEGORY_THROWING_KNIVES) {
-			addRangedMouldRecipe(recipes, player, barId, getThrowingKnifeId(barId), ItemId.THROWING_KNIFE_MOULD.id(), "Throwing knives", 5, 4);
+			addRangedMouldRecipe(recipes, player, barId, getThrowingKnifeId(barId));
 		}
 		if (categoryId < 0 || categoryId == Smelting.FURNACE_CATEGORY_SHURIKEN) {
-			addRangedMouldRecipe(recipes, player, barId, getShurikenId(barId), ItemId.SHURIKEN_MOULD.id(), "Shuriken", 9, 4);
+			addRangedMouldRecipe(recipes, player, barId, getShurikenId(barId));
 		}
 		return recipes;
 	}
@@ -2445,21 +2445,14 @@ public class Crafting implements UseInvTrigger,
 		return null;
 	}
 
-	private void addRangedMouldRecipe(List<RangedMouldRecipe> recipes, Player player, int barId, int resultId, int mouldId,
-									 String optionName, int amount, int levelOffset) {
+	private void addRangedMouldRecipe(List<RangedMouldRecipe> recipes, Player player, int barId, int resultId) {
 		if (resultId <= 0 || MathUtil.maxUnsigned(player.getConfig().RESTRICT_ITEM_ID, resultId) != player.getConfig().RESTRICT_ITEM_ID) {
 			return;
 		}
-		int tier = getMetalTier(barId);
-		if (tier < 1) {
-			return;
+		RangedMouldRecipe recipe = getRangedMouldRecipeByItemId(barId, resultId);
+		if (recipe != null && hasRangedMould(player, recipe.mouldId)) {
+			recipes.add(recipe);
 		}
-		if (!hasRangedMould(player, mouldId)) {
-			return;
-		}
-		int reqLvl = getModernMetalBaseLevel(tier) + levelOffset;
-		int exp = getRangedMouldCraftingExp(tier, amount, levelOffset);
-		recipes.add(new RangedMouldRecipe(optionName, resultId, mouldId, amount, reqLvl, exp));
 	}
 
 	private RangedMouldRecipe getRangedMouldRecipeByItemId(int barId, int itemId) {
@@ -2480,7 +2473,8 @@ public class Crafting implements UseInvTrigger,
 			return new RangedMouldRecipe("Throwing knives", itemId, ItemId.THROWING_KNIFE_MOULD.id(), 5, getModernMetalBaseLevel(tier) + 4, getRangedMouldCraftingExp(tier, 5, 4));
 		}
 		if (getShurikenId(barId) == itemId) {
-			return new RangedMouldRecipe("Shuriken", itemId, ItemId.SHURIKEN_MOULD.id(), 9, getModernMetalBaseLevel(tier) + 4, getRangedMouldCraftingExp(tier, 9, 4));
+			int requiredLevel = itemId == ItemId.TIN_SHURIKEN.id() ? 1 : getModernMetalBaseLevel(tier) + 4;
+			return new RangedMouldRecipe("Shuriken", itemId, ItemId.SHURIKEN_MOULD.id(), 9, requiredLevel, getRangedMouldCraftingExp(tier, 9, 4));
 		}
 		return null;
 	}
