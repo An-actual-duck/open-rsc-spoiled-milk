@@ -13,21 +13,27 @@ public class ScotRuth implements
 	TalkNpcTrigger {
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
+		final boolean myWorld = player.getConfig().WANT_MYWORLD;
 		if (player.getCache().hasKey("scotruth_to_chaos_altar")) {
-			player.message("Thanks for yer business. The tunnel's just over there");
+			player.message(myWorld
+				? "Thanks for yer business. The tunnel to the Death altar's just over there."
+				: "Thanks for yer business. The tunnel's just over there");
 		} else {
 			int tick = config().GAME_TICK;
 			npcsay(player, n, "Hey, " + player.getUsername() + "!",
 				"You like savin' time? I can help",
 				"Took me a while, but I just finished this here tunnel",
-				"If yer lookin to reach the chaos altar, there's no better way",
+				myWorld ? "It takes ye to the Death altar beneath Karamja Volcano"
+					: "If yer lookin to reach the chaos altar, there's no better way",
 				"For a small 200,000gp investment, I'll let ye use it forever",
 				"What do ya say? Do we have a deal?"
 				);
 			int choice = multi(player, n, "Yes", "No, 200,000gp is a rip-off");
 			if (choice == 0) {
 				if (ifheld(player, ItemId.COINS.id(), 200000)) {
-					npcsay(player, n, "Excellent. Keep in mind ye'll appear in the deep wilderness",
+					npcsay(player, n, myWorld
+						? "Excellent. Ye'll come out beside the Death altar"
+						: "Excellent. Keep in mind ye'll appear in the deep wilderness",
 						"and ye can't use this tunnel te come back");
 					player.getCarriedItems().remove(new Item(ItemId.COINS.id(), 200000));
 					player.getCache().store("scotruth_to_chaos_altar", true);

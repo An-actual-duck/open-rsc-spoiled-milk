@@ -124,9 +124,16 @@ public class RandomObjects implements OpLocTrigger {
 			case 1241:
 				if (player.getCache().hasKey("scotruth_to_chaos_altar")) {
 					player.message("You step into the tunnel...");
-					player.teleport(331,213, false);
+					final boolean myWorld = player.getConfig().WANT_MYWORLD;
+					if (myWorld) {
+						player.teleport(391, 708, -1, false);
+					} else {
+						player.teleport(331, 213, false);
+					}
 					delay(4);
-					player.message("And find your way into the wilderness");
+					player.message(myWorld
+						? "You emerge beside the Death altar beneath Karamja Volcano."
+						: "And find your way into the wilderness");
 				} else {
 					player.message("You don't have permission to use this");
 				}
@@ -215,7 +222,7 @@ public class RandomObjects implements OpLocTrigger {
 		if (obj.getID() == 450) {
 			return true;
 		}
-		if (obj.getID() == 1241) { // Scotruth to chaos altar shortcut
+		if (obj.getID() == 1241) { // Scot Ruth's paid altar shortcut
 			return true;
 		}
 		if (obj.getID() == 1242) { //Rowboat with a travel option (used for Lum->Edge)
