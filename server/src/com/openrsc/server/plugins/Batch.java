@@ -7,7 +7,6 @@ import com.openrsc.server.net.rsc.ActionSender;
 
 public class Batch {
 
-	private static final int MAX_BATCH_SIZE = 30;
 	private static final int UNLIMITED_BATCH_SIZE = -1;
 	private Player player;
 	private int current;
@@ -32,7 +31,7 @@ public class Batch {
 	 */
 	public void initialize(int totalBatch) {
 		this.current = 0;
-		this.totalBatch = Math.min(totalBatch, MAX_BATCH_SIZE);
+		this.totalBatch = Math.min(totalBatch, player.getCarriedItems().getInventory().getCapacity());
 		this.completed = false;
 	}
 
