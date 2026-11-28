@@ -1991,7 +1991,8 @@ public final class SkillGuideInterface {
 		addGuideRecipe("Arrows", arrowId, baseLevel, name + " arrows - headless arrows and arrowheads");
 		addGuideRecipe("Thrown weapons", dartsId, baseLevel + 2, name + " throwing darts - 1 bar makes 7");
 		addGuideRecipe("Thrown weapons", knivesId, baseLevel + 4, name + " throwing knives - 1 bar makes 2");
-		addGuideRecipe("Thrown weapons", shurikenId, baseLevel + 4, name + " shuriken - 1 bar makes 9");
+		int shurikenLevel = shurikenId == 3208 ? 1 : baseLevel + 4;
+		addGuideRecipe("Thrown weapons", shurikenId, shurikenLevel, name + " shuriken - 1 bar makes 9");
 	}
 
 	private void addWoodcraftGuide(String name, int shaftAmount, int shaftLevel, int shortbowId, int shortbowLevel,
